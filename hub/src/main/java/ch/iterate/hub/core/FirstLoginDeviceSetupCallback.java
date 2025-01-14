@@ -12,11 +12,20 @@ import ch.iterate.hub.model.AccountKeyAndDeviceName;
 public interface FirstLoginDeviceSetupCallback {
 
     /**
+     * Prompt user for device name
+     *
      * @return Device name
      * @throws ConnectionCanceledException Canceled prompt by user
      */
     String displayAccountKeyAndAskDeviceName(Host bookmark, AccountKeyAndDeviceName accountKeyAndDeviceName) throws ConnectionCanceledException;
 
+    /**
+     * Prompt user for existing account key
+     *
+     * @param initialDeviceName Default device name
+     * @return Account key and device name
+     * @throws ConnectionCanceledException Canceled prompt by user
+     */
     AccountKeyAndDeviceName askForAccountKeyAndDeviceName(Host bookmark, String initialDeviceName) throws ConnectionCanceledException;
 
 }
