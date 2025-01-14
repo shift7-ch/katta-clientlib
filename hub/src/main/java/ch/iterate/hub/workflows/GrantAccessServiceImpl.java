@@ -66,7 +66,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
     public void grantAccessToUsersRequiringAccessGrant(final Host hub, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         final List<VaultDto> accessibleVaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
         final UserDto me = usersResourceApi.apiUsersMeGet(true);
-        log.info("grantAccessToUsersRequiringAccessGrant for hub {} ({})", usersResourceApi.getApiClient().getBasePath(), me);
+        log.info("For hub {} ({})", usersResourceApi.getApiClient().getBasePath(), me);
 
         for(final VaultDto accessibleVault : accessibleVaults) {
             if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
@@ -78,18 +78,18 @@ public class GrantAccessServiceImpl implements GrantAccessService {
 
     protected void grantAccessToUsersRequiringAccessGrant(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
-        log.info("grantAccessToUsersRequiringAccessGrant users requiring access grant for vault {}: {}}", vaultId, usersRequiringAccessGrant);
+        log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
         final UvfMetadataPayload vaultMetadata = userKeysService.getVaultMetadataJWE(hub, vaultId, prompt);
         final UvfAccessTokenPayload uvfAccessToken = userKeysService.getVaultAccessTokenJWE(hub, vaultId, prompt);
         if(vaultMetadata.automaticAccessGrant() == null || !Optional.ofNullable(vaultMetadata.automaticAccessGrant().getEnabled()).orElse(false)) {
-            log.debug("grantAccessToUsersRequiringAccessGrant Ignoring vault {}} - automatic access grant disabled", vaultId);
+            log.debug("Ignoring vault {} - automatic access grant disabled", vaultId);
             return;
         }
         // 1. Get Ids of trusted and verified users
         // maxWotDepth must be non-negative
         final int maxWotDepth = Optional.ofNullable(vaultMetadata.automaticAccessGrant().getMaxWotDepth()).orElse(-1);
         if(maxWotDepth < 0) {
-            log.warn("grantAccessToUsersRequiringAccessGrant Ignoring vault {}} - invalid maxWotDepth value \"{}\"", vaultId, vaultMetadata.automaticAccessGrant().getMaxWotDepth());
+            log.warn("Ignoring vault {} - invalid maxWotDepth value \"{}\"", vaultId, vaultMetadata.automaticAccessGrant().getMaxWotDepth());
             return;
         }
         final Map<String, Integer> verifiedTrustedUsers = woTService.getTrustLevelsPerUserId(userKeysService.getUserKeys(hub, prompt));
@@ -97,17 +97,17 @@ public class GrantAccessServiceImpl implements GrantAccessService {
         final Map<String, String> accessTokens = new HashMap<>();
         for(final MemberDto user : usersRequiringAccessGrant) {
             if(user.getEcdhPublicKey() == null) {
-                log.debug("grantAccessToUsersRequiringAccessGrant Ignoring user {}} for vault {} - no user key yet", user, vaultId);
+                log.debug("Ignoring user {} for vault {} - no user key yet", user, vaultId);
                 continue;
             }
             final Integer trustLevel = verifiedTrustedUsers.getOrDefault(user.getId(), -1);
             if(trustLevel == null) {
-                log.warn("grantAccessToUsersRequiringAccessGrant Ignoring user {} for vault {} - not verified", user, vaultId);
+                log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
                 continue;
             }
             // trustLevel must be <= maxWotDepth for automatic access grant
             if(trustLevel > maxWotDepth) {
-                log.warn("grantAccessToUsersRequiringAccessGrant Ignoring user {} for vault {} - not verified", user, vaultId);
+                log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
                 continue;
             }
             final String userSpecificJWE;
@@ -120,13 +120,13 @@ public class GrantAccessServiceImpl implements GrantAccessService {
             accessTokens.put(user.getId(), userSpecificJWE);
         }
         if(accessTokens.isEmpty()) {
-            log.info("grantAccessToUsersRequiringAccessGrant for vault {} - nothing to upload", vaultId);
+            log.info("for vault {} - nothing to upload", vaultId);
             return;
         }
         // 3. Bulk-upload the collection of these JWEs to the server. (POST /vaults/${vaultId}/access-tokens, {"user1": "jwe1", "user2": "jwe2", ...)
         vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, accessTokens);
         if(log.isInfoEnabled()) {
-            log.info("grantAccessToUsersRequiringAccessGrant uploaded JWE for users {} and vault {}", accessTokens.keySet(), vaultId);
+            log.info("Uploaded JWE for users {} and vault {}", accessTokens.keySet(), vaultId);
         }
     }
 }
