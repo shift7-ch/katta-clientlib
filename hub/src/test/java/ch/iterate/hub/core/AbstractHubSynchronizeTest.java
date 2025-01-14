@@ -97,7 +97,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
-            assertNotNull(ProtocolFactory.get().forName(hubSession.getConfigApi().apiConfigGet().getUuid().toString()));
+            assertNotNull(ProtocolFactory.get().forName(hubSession.getConfigApi().apiConfigGet().getUuid()));
 
             final ObjectMapper mapper = new ObjectMapper();
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -271,7 +271,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         final UUID vaultUuid = UUID.randomUUID();
         new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
         log.info(String.format("Getting vault bookmark for vault %s", vaultUuid));
-        final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid, new DisabledFirstLoginDeviceSetupCallback());
+        final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid, FirstLoginDeviceSetupCallback.disabled);
         log.info(String.format("Logging into vault %s with shared oauth credentials from password store", vaultBookmark));
         final Session<?> session = vaultLoginWithSharedOAuthCredentialsFromPasswordStore(vaultBookmark);
 

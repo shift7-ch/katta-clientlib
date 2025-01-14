@@ -30,7 +30,7 @@ import ch.iterate.hub.client.model.Role;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
-import ch.iterate.hub.core.DisabledFirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.SetupCodeJWE;
@@ -180,10 +180,10 @@ class HubWorkflowTest {
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 1);
 
         log.info(String.format("S04 %s alice adds trust to admin", hubTestSetupConfig));
-        new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), new DisabledFirstLoginDeviceSetupCallback()), admin);
+        new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled), admin);
 
         log.info(String.format("S04 %s alice grants access to admin", hubTestSetupConfig));
-        new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultIdSharedWithAdmin, new DisabledFirstLoginDeviceSetupCallback());
+        new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultIdSharedWithAdmin, FirstLoginDeviceSetupCallback.disabled);
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
     }
 

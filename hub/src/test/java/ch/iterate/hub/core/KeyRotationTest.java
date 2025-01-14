@@ -72,8 +72,8 @@ public class KeyRotationTest extends AbstractHubTest {
         for(VaultDto vaultDto : vaults) {
             final HashMap<String, String> tokens = new HashMap<>();
             final UserKeysService service = new UserKeysServiceImpl(hubSession);
-            final UvfMetadataPayload metadataJWE = service.getVaultMetadataJWE(hubSession.getHost(), UUID.fromString(vaultDto.getId().toString()), new DisabledFirstLoginDeviceSetupCallback());
-            final UvfAccessTokenPayload masterkeyJWE = service.getVaultAccessTokenJWE(hubSession.getHost(), UUID.fromString(vaultDto.getId().toString()), new DisabledFirstLoginDeviceSetupCallback());
+            final UvfMetadataPayload metadataJWE = service.getVaultMetadataJWE(hubSession.getHost(), UUID.fromString(vaultDto.getId().toString()), FirstLoginDeviceSetupCallback.disabled);
+            final UvfAccessTokenPayload masterkeyJWE = service.getVaultAccessTokenJWE(hubSession.getHost(), UUID.fromString(vaultDto.getId().toString()), FirstLoginDeviceSetupCallback.disabled);
 
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
             metadataJWE.storage().nickname(String.format("ZZZZ %s", vaultDto.getName()));

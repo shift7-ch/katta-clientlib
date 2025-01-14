@@ -17,7 +17,7 @@ import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.MemberDto;
-import ch.iterate.hub.core.DisabledFirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
@@ -55,13 +55,13 @@ class GrantAccessServiceImplTest {
                 .ecdsaPublicKey(bobKeys.encodedEcdsaPublicKey());
 
         Mockito.when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
-        Mockito.when(userKeysServiceMock.getUserKeys(hub, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(aliceKeys);
-        Mockito.when(userKeysServiceMock.getVaultMetadataJWE(hub, vaultId, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
-        Mockito.when(userKeysServiceMock.getVaultAccessTokenJWE(hub, vaultId, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(new UvfAccessTokenPayload());
-        Mockito.when(wotServiceMock.getTrustLevelsPerUserId(userKeysServiceMock.getUserKeys(hub, new DisabledFirstLoginDeviceSetupCallback()))).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
+        Mockito.when(userKeysServiceMock.getUserKeys(hub, FirstLoginDeviceSetupCallback.disabled)).thenReturn(aliceKeys);
+        Mockito.when(userKeysServiceMock.getVaultMetadataJWE(hub, vaultId, FirstLoginDeviceSetupCallback.disabled)).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
+        Mockito.when(userKeysServiceMock.getVaultAccessTokenJWE(hub, vaultId, FirstLoginDeviceSetupCallback.disabled)).thenReturn(new UvfAccessTokenPayload());
+        Mockito.when(wotServiceMock.getTrustLevelsPerUserId(userKeysServiceMock.getUserKeys(hub, FirstLoginDeviceSetupCallback.disabled))).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 
         final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, users, userKeysServiceMock, wotServiceMock);
-        grantAccessService.grantAccessToUsersRequiringAccessGrant(hub, vaultId, new DisabledFirstLoginDeviceSetupCallback());
+        grantAccessService.grantAccessToUsersRequiringAccessGrant(hub, vaultId, FirstLoginDeviceSetupCallback.disabled);
         Mockito.verify(vaults, times(expectedNumberOfUploads)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
     }
 }

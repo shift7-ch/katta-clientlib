@@ -24,7 +24,7 @@ import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.TrustedUserDto;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.core.DisabledFirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.workflows.UserKeysService;
@@ -149,7 +149,7 @@ class WoTTest {
         final UserKeysService userKeysServiceMock = Mockito.mock(UserKeysService.class);
         final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
-        Mockito.when(userKeysServiceMock.getUserKeys(hub, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(aliceKeys);
+        Mockito.when(userKeysServiceMock.getUserKeys(hub, FirstLoginDeviceSetupCallback.disabled)).thenReturn(aliceKeys);
 
         final String signature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
