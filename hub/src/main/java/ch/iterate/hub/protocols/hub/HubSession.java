@@ -30,6 +30,8 @@ import ch.cyberduck.core.threading.CancelCallback;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
 import java.util.EnumSet;
@@ -63,6 +65,7 @@ import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfile
  */
 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 also for refreshing (do storage sessions refresh and write to Keychain!?) - what about asymmetry?
 public class HubSession extends HttpSession<HubApiClient> {
+    private static final Logger log = LogManager.getLogger(HubSession.class);
 
     private OAuth2RequestInterceptor authorizationService;
 
