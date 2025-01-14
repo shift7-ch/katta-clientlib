@@ -7,6 +7,7 @@ package ch.iterate.hub.protocols.hub;
 import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.http.HttpConnectionPoolBuilder;
@@ -55,6 +56,7 @@ import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 
 import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
 
@@ -99,11 +101,15 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        // initialize tokens in authorizationService (standard pattern, see DropboxSession.login())
-        // do refresh and run OAuth flow if necessary (depending on OAuth tokens present/expired/refresh failure), store to PasswordStore if the tokens are refreshed/(re-)authorized tokens
-        authorizationService.validate();
-        // set username for OAuth sharing with username (findOAuthTokens)
-        host.getCredentials().setUsername(JWT.decode(host.getCredentials().getOauth().getIdToken()).getSubject());
+        final Credentials credentials = authorizationService.validate();
+        try {
+            // Set username from OAuth ID Token for saving in keychain
+            credentials.setUsername(JWT.decode(credentials.getOauth().getIdToken()).getSubject());
+        }
+        catch(JWTDecodeException e) {
+            log.warn("Failure {} decoding JWT {}", e, credentials.getOauth().getIdToken());
+            throw new LoginCanceledException(e);
+        }
         try {
             final String uuidFromHub = this.getConfigApi().apiConfigGet().getUuid();
             final String uuidFromBookmark = this.getHost().getUuid();
