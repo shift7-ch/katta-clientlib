@@ -48,18 +48,17 @@ public class FirstLoginDeviceSetupService {
 
     public static final String KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Public Device Key";
     public static final String KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Private Device Key";
+
     private final HubSession hubSession;
 
     public FirstLoginDeviceSetupService(final HubSession hubSession) {
         this.hubSession = hubSession;
     }
 
-
     private static ECKeyPair getDeviceKeysFromPasswordStore(final String userId, final String hubUUID) throws LocalAccessDeniedException, InvalidKeySpecException {
         final PasswordStore passwordStore = PasswordStoreFactory.get();
-
-        final String encodedPublicDeviceKey = passwordStore.getPassword(String.format(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), String.format("hub %s - user %s", userId, hubUUID));
-        final String encodedPrivateDeviceKey = passwordStore.getPassword(String.format(KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME), String.format("hub %s - user %s", userId, hubUUID));
+        final String encodedPublicDeviceKey = passwordStore.getPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, String.format("hub %s - user %s", userId, hubUUID));
+        final String encodedPrivateDeviceKey = passwordStore.getPassword(KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME, String.format("hub %s - user %s", userId, hubUUID));
         if((encodedPublicDeviceKey == null) && (encodedPrivateDeviceKey == null)) {
             return null;
         }
