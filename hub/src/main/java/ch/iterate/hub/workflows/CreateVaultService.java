@@ -93,7 +93,7 @@ public class CreateVaultService {
             final StorageProfileDtoWrapper backend = StorageProfileDtoWrapper.coerce(storageProfile);
 
             // prepare vault creation
-            final UserKeys userKeys = new FirstLoginDeviceSetupService(hubSession).getUserKeysWithDeviceKeys(
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(
                     hubSession.getHost(), FirstLoginDeviceSetupCallbackFactory.get());
 
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks;
