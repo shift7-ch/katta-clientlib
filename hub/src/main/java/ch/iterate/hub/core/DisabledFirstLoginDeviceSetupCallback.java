@@ -17,11 +17,6 @@ public class DisabledFirstLoginDeviceSetupCallback implements FirstLoginDeviceSe
     }
 
     @Override
-    public String generateAccountKey() {
-        return null;
-    }
-
-    @Override
     public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws ConnectionCanceledException {
         return null;
     }

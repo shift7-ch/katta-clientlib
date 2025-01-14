@@ -7,6 +7,7 @@ package ch.iterate.hub.workflows;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
+import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
 import ch.cyberduck.core.nio.LocalProtocol;
@@ -147,11 +148,11 @@ public class FirstLoginDeviceSetupService {
                 log.info("(3) Setting up new user keys and setupCode.");
 
                 log.info("(3.1) generate and display new Account Key");
-                final String accountKey = FirstLoginDeviceSetupCallbackFactory.get().generateAccountKey();
-                log.info("With setupCode={}", accountKey);
+                final String setupCode = new UUIDRandomStringService().random();
+                log.info("With setupCode={}", setupCode);
 
                 final String deviceName = FirstLoginDeviceSetupCallbackFactory.get().displayAccountKeyAndAskDeviceName(hub,
-                        new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
+                        new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(COMPUTER_NAME));
 
 
                 log.info("(3.2) generate user key pair");
@@ -170,8 +171,8 @@ public class FirstLoginDeviceSetupService {
                 log.info("(3.3) upload user keys");
                 new UsersResourceApi(session.getClient()).apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                         .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
-                        .privateKey(userKeys.encryptWithSetupCode(accountKey))
-                        .setupCode(new SetupCodeJWE(accountKey).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                        .privateKey(userKeys.encryptWithSetupCode(setupCode))
+                        .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
 
                 log.info("(3.4) Retrieve/generate device keys. Retrieve if present in keychain from another hub.");
                 final ECKeyPair deviceKeyPair;
