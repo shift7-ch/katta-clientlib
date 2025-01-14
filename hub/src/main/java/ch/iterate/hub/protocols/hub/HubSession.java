@@ -82,20 +82,21 @@ public class HubSession extends HttpSession<HubApiClient> {
     @Override
     protected HubApiClient connect(final ProxyFinder proxy, final HostKeyCallback key, final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final HttpClientBuilder configuration = builder.build(proxy, this, prompt);
-
-        // Setup authorization endpoint from configuration
-        authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
-                host.getProtocol().getOAuthTokenUrl(),
-                host.getProtocol().getOAuthAuthorizationUrl(),
-                host.getProtocol().getOAuthClientId(),
-                host.getProtocol().getOAuthClientSecret(),
-                host.getProtocol().getOAuthScopes(),
-                true,
-                prompt)
-                .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
-                .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
-        configuration.setServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService));
-        configuration.addInterceptorLast(authorizationService);
+        if(host.getProtocol().isOAuthConfigurable()) {
+            // Setup authorization endpoint from configuration
+            authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
+                    host.getProtocol().getOAuthTokenUrl(),
+                    host.getProtocol().getOAuthAuthorizationUrl(),
+                    host.getProtocol().getOAuthClientId(),
+                    host.getProtocol().getOAuthClientSecret(),
+                    host.getProtocol().getOAuthScopes(),
+                    true,
+                    prompt)
+                    .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
+                    .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
+            configuration.setServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService));
+            configuration.addInterceptorLast(authorizationService);
+        }
         return new HubApiClient(host, configuration.build());
     }
 
