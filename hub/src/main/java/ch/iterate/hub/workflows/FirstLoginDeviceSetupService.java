@@ -28,6 +28,7 @@ import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.DeviceDto;
 import ch.iterate.hub.client.model.Type1;
 import ch.iterate.hub.client.model.UserDto;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
@@ -95,6 +96,7 @@ public class FirstLoginDeviceSetupService {
             final ECKeyPair deviceKeyPairFromKeychain = getDeviceKeysFromPasswordStore(me.getId(), hub.getUuid());
             final boolean deviceKeysInKeychain = validateDeviceKeys(deviceKeyPairFromKeychain);
             log.debug(" -> deviceKeysInKeychain={}", deviceKeysInKeychain);
+            final FirstLoginDeviceSetupCallback prompt = FirstLoginDeviceSetupCallbackFactory.get();
             if(userKeysInHub && deviceKeysInKeychain) {
                 log.info("(1) Get user keys from hub and decrypt with device key from keychain.");
 
@@ -112,7 +114,7 @@ public class FirstLoginDeviceSetupService {
                         case 404:
                             log.info("(1b) Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
 
-                            final AccountKeyAndDeviceName accountKeyAndDeviceName = FirstLoginDeviceSetupCallbackFactory.get().askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
+                            final AccountKeyAndDeviceName accountKeyAndDeviceName = prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
                             final String setupCode = accountKeyAndDeviceName.accountKey();
 
                             // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
@@ -128,7 +130,7 @@ public class FirstLoginDeviceSetupService {
                 log.info("(2) Setting up new device w/ Account Key for existing user keys.");
 
                 log.info("(2.1) setup existing device w/ Account Key (e.g. same device for multiple hubs)");
-                final AccountKeyAndDeviceName accountKeyAndDeviceName = FirstLoginDeviceSetupCallbackFactory.get().askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
+                final AccountKeyAndDeviceName accountKeyAndDeviceName = prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
                 final String setupCode = accountKeyAndDeviceName.accountKey();
 
                 final UserKeys userKeys = UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), setupCode);
@@ -151,9 +153,8 @@ public class FirstLoginDeviceSetupService {
                 final String setupCode = new UUIDRandomStringService().random();
                 log.info("With setupCode={}", setupCode);
 
-                final String deviceName = FirstLoginDeviceSetupCallbackFactory.get().displayAccountKeyAndAskDeviceName(hub,
+                final String deviceName = prompt.displayAccountKeyAndAskDeviceName(hub,
                         new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(COMPUTER_NAME));
-
 
                 log.info("(3.2) generate user key pair");
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/27 @sebi private key generated with P384KeyPair causes "Unexpected Error: Data provided to an operation does not meet requirements" in `UserKeys.recover`: `const privateKey = await crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, false, UserKeys.KEY_USAGES);` WHY?
