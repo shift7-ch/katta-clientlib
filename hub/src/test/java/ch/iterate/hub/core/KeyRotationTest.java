@@ -34,7 +34,8 @@ import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
 import ch.iterate.hub.testsetup.model.HubTestConfig;
-import ch.iterate.hub.workflows.CachingUserKeysService;
+import ch.iterate.hub.workflows.UserKeysService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
 
 import static ch.iterate.hub.crypto.KeyHelper.decodePublicKey;
 import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioSTSUnattendedLocalOnly;
@@ -70,8 +71,9 @@ public class KeyRotationTest extends AbstractHubTest {
 
         for(VaultDto vaultDto : vaults) {
             final HashMap<String, String> tokens = new HashMap<>();
-            final UvfMetadataPayload metadataJWE = new CachingUserKeysService(hubSession).getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()));
-            final UvfAccessTokenPayload masterkeyJWE = new CachingUserKeysService(hubSession).getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()));
+            final UserKeysService service = new UserKeysServiceImpl(hubSession);
+            final UvfMetadataPayload metadataJWE = service.getVaultMetadataJWE(hubSession.getHost(), UUID.fromString(vaultDto.getId().toString()), new DisabledFirstLoginDeviceSetupCallback());
+            final UvfAccessTokenPayload masterkeyJWE = service.getVaultAccessTokenJWE(hubSession.getHost(), UUID.fromString(vaultDto.getId().toString()), new DisabledFirstLoginDeviceSetupCallback());
 
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
             metadataJWE.storage().nickname(String.format("ZZZZ %s", vaultDto.getName()));

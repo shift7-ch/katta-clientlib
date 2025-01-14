@@ -29,7 +29,6 @@ import ch.iterate.hub.client.model.DeviceDto;
 import ch.iterate.hub.client.model.Type1;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.model.SetupCodeJWE;
@@ -42,7 +41,6 @@ import com.nimbusds.jose.JOSEException;
 import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
 
-// TODO https://github.com/shift7-ch/katta-server/issues/4 unit and integration tests! -> refactor
 public class FirstLoginDeviceSetupService {
     private static final Logger log = LogManager.getLogger(FirstLoginDeviceSetupService.class.getName());
 
@@ -51,10 +49,16 @@ public class FirstLoginDeviceSetupService {
 
     private static final String COMPUTER_NAME = new LocalProtocol().getName();
 
-    private final HubSession session;
+    private final UsersResourceApi usersResourceApi;
+    private final DeviceResourceApi deviceResourceApi;
 
     public FirstLoginDeviceSetupService(final HubSession session) {
-        this.session = session;
+        this(new UsersResourceApi(session.getClient()), new DeviceResourceApi(session.getClient()));
+    }
+
+    public FirstLoginDeviceSetupService(final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
+        this.usersResourceApi = usersResourceApi;
+        this.deviceResourceApi = deviceResourceApi;
     }
 
     private static String toAccountName(final String userId, final String hubUUID) {
@@ -85,18 +89,15 @@ public class FirstLoginDeviceSetupService {
         log.debug("Saved device key pair for {} in keychain", accountName);
     }
 
-    // N.B. has side-effect first login!
-    public UserKeys getUserKeysWithDeviceKeys() throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeysWithDeviceKeys(final Host hub, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         try {
-            final UserDto me = new UsersResourceApi(session.getClient()).apiUsersMeGet(true);
+            final UserDto me = usersResourceApi.apiUsersMeGet(true);
             log.info("Retrieved user {}", me);
             final boolean userKeysInHub = validateUserKeys(me);
             log.debug(" -> userKeysInHub={}", userKeysInHub);
-            final Host hub = session.getHost();
             final ECKeyPair deviceKeyPairFromKeychain = getDeviceKeysFromPasswordStore(me.getId(), hub.getUuid());
             final boolean deviceKeysInKeychain = validateDeviceKeys(deviceKeyPairFromKeychain);
             log.debug(" -> deviceKeysInKeychain={}", deviceKeysInKeychain);
-            final FirstLoginDeviceSetupCallback prompt = FirstLoginDeviceSetupCallbackFactory.get();
             if(userKeysInHub && deviceKeysInKeychain) {
                 log.info("(1) Get user keys from hub and decrypt with device key from keychain.");
 
@@ -104,7 +105,7 @@ public class FirstLoginDeviceSetupService {
                 log.info("(1.1) Got device key pair from keychain with deviceId={}", deviceId);
 
                 try {
-                    final String deviceSpecificUserKeys = new DeviceResourceApi(session.getClient()).apiDevicesDeviceIdGet(deviceId).getUserPrivateKey();
+                    final String deviceSpecificUserKeys = deviceResourceApi.apiDevicesDeviceIdGet(deviceId).getUserPrivateKey();
                     final UserKeys userKeys = UserKeys.decryptOnDevice(deviceSpecificUserKeys, deviceKeyPairFromKeychain.getPrivate(), me.getEcdhPublicKey(), me.getEcdsaPublicKey());
                     log.info("(1.2) Decrypting device-specific user keys for deviceId={}", deviceId);
                     return userKeys;
@@ -170,7 +171,7 @@ public class FirstLoginDeviceSetupService {
 //                        "blabla");
 
                 log.info("(3.3) upload user keys");
-                new UsersResourceApi(session.getClient()).apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
+                usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                         .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
                         .privateKey(userKeys.encryptWithSetupCode(setupCode))
                         .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
@@ -214,7 +215,7 @@ public class FirstLoginDeviceSetupService {
         final String encodedPublicKeyDeviceKey = Base64.getEncoder().encodeToString(deviceKeys.getPublic().getEncoded());
         final String deviceSpecificUserKeyJWE = userKeys.encryptForDevice(deviceKeys.getPublic());
         final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeys);
-        new DeviceResourceApi(session.getClient()).apiDevicesDeviceIdPut(deviceId, new DeviceDto()
+        deviceResourceApi.apiDevicesDeviceIdPut(deviceId, new DeviceDto()
                 .name(deviceName)
                 .publicKey(encodedPublicKeyDeviceKey)
                 .userPrivateKey(deviceSpecificUserKeyJWE)

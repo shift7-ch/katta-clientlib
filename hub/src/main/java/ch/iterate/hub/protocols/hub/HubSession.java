@@ -49,6 +49,7 @@ import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.StorageProfileS3Dto;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.workflows.FirstLoginDeviceSetupService;
@@ -114,9 +115,9 @@ public class HubSession extends HttpSession<HubApiClient> {
             final String uuidFromHub = this.getConfigApi().apiConfigGet().getUuid();
             final String uuidFromBookmark = this.getHost().getUuid();
             if(!uuidFromHub.equals(uuidFromBookmark)) {
-                throw new LoginFailureException(String.format("UUID mismatch: UUID from hub under %s is %s, the bookmark hower has hubUUID %s", new HostUrlProvider().get(this.getHost()), uuidFromHub, uuidFromBookmark));
+                throw new LoginFailureException(String.format("UUID mismatch: UUID from hub under %s is %s, the bookmark however has hubUUID %s", new HostUrlProvider().get(this.getHost()), uuidFromHub, uuidFromBookmark));
             }
-            new FirstLoginDeviceSetupService(this).getUserKeysWithDeviceKeys();
+            new FirstLoginDeviceSetupService(this).getUserKeysWithDeviceKeys(host, FirstLoginDeviceSetupCallbackFactory.get());
         }
         catch(AccessException | SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);

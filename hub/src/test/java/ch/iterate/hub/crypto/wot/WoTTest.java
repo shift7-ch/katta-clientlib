@@ -4,6 +4,8 @@
 
 package ch.iterate.hub.crypto.wot;
 
+import ch.cyberduck.core.Host;
+
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -22,9 +24,9 @@ import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.TrustedUserDto;
 import ch.iterate.hub.client.model.UserDto;
+import ch.iterate.hub.core.DisabledFirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
-import ch.iterate.hub.workflows.CachingUserKeysService;
 import ch.iterate.hub.workflows.UserKeysService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
@@ -39,6 +41,7 @@ import static ch.iterate.hub.crypto.KeyHelper.encodePublicKey;
 import static org.junit.jupiter.api.Assertions.*;
 
 class WoTTest {
+
     @Test
     void sign() throws ParseException, JOSEException {
         final UserKeys aliceKeys = UserKeys.create();
@@ -143,9 +146,10 @@ class WoTTest {
                 .ecdsaPublicKey(encodePublicKey(oscarEcdsaKeys.getPublic()));
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final UserKeysService userKeysServiceMock = Mockito.mock(CachingUserKeysService.class);
+        final UserKeysService userKeysServiceMock = Mockito.mock(UserKeysService.class);
+        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
-        Mockito.when(userKeysServiceMock.getUserKeys()).thenReturn(aliceKeys);
+        Mockito.when(userKeysServiceMock.getUserKeys(hub, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(aliceKeys);
 
         final String signature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 

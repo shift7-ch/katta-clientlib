@@ -4,13 +4,18 @@
 
 package ch.iterate.hub.workflows;
 
+import ch.cyberduck.core.Host;
+
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.client.api.DeviceResourceApi;
+import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.VaultDto;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
@@ -25,25 +30,31 @@ import static ch.iterate.hub.crypto.uvf.UvfMetadataPayload.UniversalVaultFormatJ
 
 // TODO https://github.com/shift7-ch/katta-server/issues/4 merge with FirstLoginDeviceSetupService ?
 public class UserKeysServiceImpl implements UserKeysService {
-    protected final HubSession hubSession;
+
+    private final VaultResourceApi vaultResource;
+    private final UsersResourceApi usersResourceApi;
+    private final DeviceResourceApi deviceResourceApi;
 
     public UserKeysServiceImpl(final HubSession hubSession) {
-        this.hubSession = hubSession;
+        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()));
+    }
+
+    public UserKeysServiceImpl(final VaultResourceApi vaultResource, final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
+        this.vaultResource = vaultResource;
+        this.usersResourceApi = usersResourceApi;
+        this.deviceResourceApi = deviceResourceApi;
     }
 
     @Override
-    public UserKeys getUserKeys() throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeys(final Host hub, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         // Get user key from hub and decrypt with device-keys
-        return new FirstLoginDeviceSetupService(hubSession).getUserKeysWithDeviceKeys();
+        return new FirstLoginDeviceSetupService(usersResourceApi, deviceResourceApi).getUserKeysWithDeviceKeys(hub, prompt);
     }
 
-
     @Override
-    public UvfMetadataPayload getVaultMetadataJWE(final UUID vaultId) throws ApiException, SecurityFailure, AccessException {
+    public UvfMetadataPayload getVaultMetadataJWE(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, SecurityFailure, AccessException {
         // contains vault member key
-        final UvfAccessTokenPayload accessToken;
-        accessToken = getVaultAccessTokenJWE(vaultId);
-        final VaultResourceApi vaultResource = new VaultResourceApi(this.hubSession.getClient());
+        final UvfAccessTokenPayload accessToken = this.getVaultAccessTokenJWE(hub, vaultId, prompt);
         final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
 
         // extract and decode vault key
@@ -59,14 +70,19 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId) throws ApiException, AccessException, SecurityFailure {
+    public UvfAccessTokenPayload getVaultAccessTokenJWE(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         // Get the user-specific vault key with private user key
-        return getVaultAccessTokenJWE(vaultId, getUserKeys());
+        return this.getVaultAccessTokenJWE(vaultId, this.getUserKeys(hub, prompt));
     }
 
-    @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys privateUserKey) throws ApiException, SecurityFailure {
-        final VaultResourceApi vaultResource = new VaultResourceApi(this.hubSession.getClient());
+    /**
+     * Get the user-specific vault key with private user key.
+     *
+     * @param vaultId        vault ID
+     * @param privateUserKey private user key
+     * @return uvf metadata
+     */
+    private UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys privateUserKey) throws ApiException, SecurityFailure {
         final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
         final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vault.getId(), false);
         try {

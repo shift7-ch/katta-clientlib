@@ -28,19 +28,20 @@ import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.StorageProfileS3STSDto;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
-import ch.iterate.hub.workflows.CachingUserKeysService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.*;
 
 public class VaultProfileBookmarkService {
-
     private static final Logger log = LogManager.getLogger(VaultProfileBookmarkService.class);
+
     private final HubSession hubSession;
 
     public VaultProfileBookmarkService(final HubSession hubSession) {
@@ -160,12 +161,12 @@ public class VaultProfileBookmarkService {
         };
     }
 
-    public Host getVaultBookmark(final UUID vaultUUID) throws ApiException, AccessException, SecurityFailure {
+    public Host getVaultBookmark(final UUID vaultUUID, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         if(log.isInfoEnabled()) {
             log.info(String.format("Creating bookmark for vault %s for hub %s", vaultUUID, hubSession.getHost()));
         }
 
-        final UvfMetadataPayload jwe = new CachingUserKeysService(hubSession).getVaultMetadataJWE(vaultUUID);
+        final UvfMetadataPayload jwe = new UserKeysServiceImpl(hubSession).getVaultMetadataJWE(hubSession.getHost(), vaultUUID, prompt);
         final VaultMetadataJWEBackendDto vaultMetadata = jwe.storage();
         final ConfigResourceApi vaultResourceApi = new ConfigResourceApi(hubSession.getClient());
         final String hubUUID = vaultResourceApi.apiConfigGet().getUuid();

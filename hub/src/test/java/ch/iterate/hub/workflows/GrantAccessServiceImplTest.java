@@ -4,6 +4,8 @@
 
 package ch.iterate.hub.workflows;
 
+import ch.cyberduck.core.Host;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
@@ -15,6 +17,7 @@ import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.MemberDto;
+import ch.iterate.hub.core.DisabledFirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
@@ -26,7 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 
-class GrantAccessServiceTest {
+class GrantAccessServiceImplTest {
 
     @ParameterizedTest
     @CsvSource({
@@ -39,10 +42,10 @@ class GrantAccessServiceTest {
     public void grantAccessToUsersRequiringAccessGrant(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws ApiException, AccessException, SecurityFailure {
         final VaultResourceApi vaults = Mockito.mock(VaultResourceApi.class);
         final UsersResourceApi users = Mockito.mock(UsersResourceApi.class);
-        final UserKeysService usk = Mockito.mock(CachingUserKeysService.class);
-        final WoTService wot = Mockito.mock(CachingWoTService.class);
-        final GrantAccessService grantAccessService = new GrantAccessService(vaults, users, usk, wot);
+        final UserKeysService userKeysServiceMock = Mockito.mock(UserKeysService.class);
+        final WoTService wotServiceMock = Mockito.mock(WoTService.class);
         final UUID vaultId = UUID.randomUUID();
+        final Host hub = Mockito.mock(Host.class);
 
         final UserKeys aliceKeys = UserKeys.create();
         final UserKeys bobKeys = UserKeys.create();
@@ -51,14 +54,14 @@ class GrantAccessServiceTest {
                 .ecdhPublicKey(bobKeys.encodedEcdhPublicKey())
                 .ecdsaPublicKey(bobKeys.encodedEcdsaPublicKey());
 
-        Mockito.when(usk.getVaultMetadataJWE(vaultId)).thenReturn(new UvfMetadataPayload());
         Mockito.when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
-        Mockito.when(usk.getUserKeys()).thenReturn(aliceKeys);
-        Mockito.when(usk.getVaultMetadataJWE(vaultId)).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
-        Mockito.when(usk.getVaultAccessTokenJWE(vaultId, aliceKeys)).thenReturn(new UvfAccessTokenPayload());
-        Mockito.when(wot.getTrustLevelsPerUserId()).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
+        Mockito.when(userKeysServiceMock.getUserKeys(hub, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(aliceKeys);
+        Mockito.when(userKeysServiceMock.getVaultMetadataJWE(hub, vaultId, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
+        Mockito.when(userKeysServiceMock.getVaultAccessTokenJWE(hub, vaultId, new DisabledFirstLoginDeviceSetupCallback())).thenReturn(new UvfAccessTokenPayload());
+        Mockito.when(wotServiceMock.getTrustLevelsPerUserId(userKeysServiceMock.getUserKeys(hub, new DisabledFirstLoginDeviceSetupCallback()))).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 
-        grantAccessService.grantAccessToUsersRequiringAccessGrant(vaultId);
+        final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, users, userKeysServiceMock, wotServiceMock);
+        grantAccessService.grantAccessToUsersRequiringAccessGrant(hub, vaultId, new DisabledFirstLoginDeviceSetupCallback());
         Mockito.verify(vaults, times(expectedNumberOfUploads)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
     }
 }

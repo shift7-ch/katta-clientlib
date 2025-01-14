@@ -271,7 +271,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         final UUID vaultUuid = UUID.randomUUID();
         new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
         log.info(String.format("Getting vault bookmark for vault %s", vaultUuid));
-        final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid);
+        final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid, new DisabledFirstLoginDeviceSetupCallback());
         log.info(String.format("Logging into vault %s with shared oauth credentials from password store", vaultBookmark));
         final Session<?> session = vaultLoginWithSharedOAuthCredentialsFromPasswordStore(vaultBookmark);
 

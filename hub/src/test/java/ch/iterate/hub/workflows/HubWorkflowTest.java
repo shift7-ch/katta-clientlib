@@ -30,6 +30,7 @@ import ch.iterate.hub.client.model.Role;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
+import ch.iterate.hub.core.DisabledFirstLoginDeviceSetupCallback;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.SetupCodeJWE;
@@ -56,7 +57,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
  * Only remote hub calls are done for admin user.
  * Needs to be run separately for every storage profile because of the hard-coded vault counts.
  */
-public class HubWorkflowTest {
+class HubWorkflowTest {
     private static final Logger log = LogManager.getLogger(HubWorkflowTest.class.getName());
 
     @Nested
@@ -179,10 +180,10 @@ public class HubWorkflowTest {
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 1);
 
         log.info(String.format("S04 %s alice adds trust to admin", hubTestSetupConfig));
-        new CachingWoTService(users, new CachingUserKeysService(hubSession)).sign(admin);
+        new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), new DisabledFirstLoginDeviceSetupCallback()), admin);
 
         log.info(String.format("S04 %s alice grants access to admin", hubTestSetupConfig));
-        new GrantAccessService(hubSession).grantAccessToUsersRequiringAccessGrant(vaultIdSharedWithAdmin);
+        new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultIdSharedWithAdmin, new DisabledFirstLoginDeviceSetupCallback());
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
     }
 
