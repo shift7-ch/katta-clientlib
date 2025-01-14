@@ -70,12 +70,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         super(host, trust, key);
     }
 
-    public HubSession(final HubSession session) {
-        super(session.host, session.trust, session.key);
-        this.client = session.client;
-        this.authorizationService = session.authorizationService;
-    }
-
     public OAuthTokens refresh() throws BackgroundException {
         return authorizationService.refresh();
     }
