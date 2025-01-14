@@ -9,6 +9,7 @@ import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
+import ch.cyberduck.core.nio.LocalProtocol;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,8 +17,6 @@ import org.cryptomator.cryptolib.common.ECKeyPair;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.joda.time.DateTime;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
@@ -49,10 +48,12 @@ public class FirstLoginDeviceSetupService {
     public static final String KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Public Device Key";
     public static final String KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Private Device Key";
 
-    private final HubSession hubSession;
+    private static final String COMPUTER_NAME = new LocalProtocol().getName();
 
-    public FirstLoginDeviceSetupService(final HubSession hubSession) {
-        this.hubSession = hubSession;
+    private final HubSession session;
+
+    public FirstLoginDeviceSetupService(final HubSession session) {
+        this.session = session;
     }
 
     private static ECKeyPair getDeviceKeysFromPasswordStore(final String userId, final String hubUUID) throws LocalAccessDeniedException, InvalidKeySpecException {
@@ -76,18 +77,11 @@ public class FirstLoginDeviceSetupService {
         log.info("Generated device key pair and stored in keychain.");
     }
 
-    private static String getHostname() throws UnknownHostException {
-        final String hostName = InetAddress.getLocalHost().getHostName();
-        log.info(String.format("Local host name %s", hostName));
-        return hostName;
-    }
-
     // N.B. has side-effect first login!
     public UserKeys getUserKeysWithDeviceKeys() throws ApiException, AccessException, SecurityFailure, FirstLoginDeviceSetupException {
-
-        final UsersResourceApi usersResourceApi = new UsersResourceApi(this.hubSession.getClient());
-        final DeviceResourceApi deviceResourceApi = new DeviceResourceApi(this.hubSession.getClient());
-        final Host hub = hubSession.getHost();
+        final UsersResourceApi usersResourceApi = new UsersResourceApi(session.getClient());
+        final DeviceResourceApi deviceResourceApi = new DeviceResourceApi(session.getClient());
+        final Host hub = session.getHost();
         UserDto me = usersResourceApi.apiUsersMeGet(true);
         log.info("me before getUserKeysWithDeviceKeys: {}", me);
 
@@ -136,7 +130,7 @@ public class FirstLoginDeviceSetupService {
                     if(e.getCode() == 404) {
                         log.info("(1b) Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
 
-                        final AccountKeyAndDeviceName accountKeyAndDeviceName = FirstLoginDeviceSetupCallbackFactory.get().askForAccountKeyAndDeviceName(hub, getHostname());
+                        final AccountKeyAndDeviceName accountKeyAndDeviceName = FirstLoginDeviceSetupCallbackFactory.get().askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
                         final String setupCode = accountKeyAndDeviceName.accountKey();
 
                         // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
@@ -153,7 +147,7 @@ public class FirstLoginDeviceSetupService {
                 log.info("(2) Setting up new device w/ Account Key for existing user keys.");
 
                 log.info("(2.1) setup existing device w/ Account Key (e.g. same device for multiple hubs)");
-                final AccountKeyAndDeviceName accountKeyAndDeviceName = FirstLoginDeviceSetupCallbackFactory.get().askForAccountKeyAndDeviceName(hub, getHostname());
+                final AccountKeyAndDeviceName accountKeyAndDeviceName = FirstLoginDeviceSetupCallbackFactory.get().askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
                 final String setupCode = accountKeyAndDeviceName.accountKey();
 
                 final UserKeys userKeys = UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), setupCode);
@@ -176,7 +170,7 @@ public class FirstLoginDeviceSetupService {
                 final String accountKey = FirstLoginDeviceSetupCallbackFactory.get().generateAccountKey();
                 log.info("With setupCode={}", accountKey);
 
-                final String deviceName = FirstLoginDeviceSetupCallbackFactory.get().displayAccountKeyAndAskDeviceName(hub, new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(getHostname()));
+                final String deviceName = FirstLoginDeviceSetupCallbackFactory.get().displayAccountKeyAndAskDeviceName(hub, new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
 
 
                 log.info("(3.2) generate user key pair");
@@ -224,7 +218,7 @@ public class FirstLoginDeviceSetupService {
                 throw new FirstLoginDeviceSetupException(String.format("Cannot happen userKeysInHub=%s, deviceKeysInKeychain=%s", userKeysInHub, deviceKeysInKeychain));
             }
         }
-        catch(LocalAccessDeniedException | UnknownHostException | ConnectionCanceledException e) {
+        catch(LocalAccessDeniedException | ConnectionCanceledException e) {
             throw new AccessException(e);
         }
         catch(InvalidKeySpecException | JsonProcessingException | ParseException | JOSEException e) {
