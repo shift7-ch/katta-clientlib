@@ -154,7 +154,7 @@ class HubWorkflowTest {
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 0, 0, 1, 0, 0);
 
         log.info(String.format("S02 %s alice shares vault with admin as owner", hubTestSetupConfig));
-        final List<UserDto> userDtos = hubSession.getUsersApi().apiUsersGet();
+        final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet();
         String adminId = null;
         for(UserDto user : userDtos) {
             if(user.getName().equals("admin")) {
@@ -162,7 +162,7 @@ class HubWorkflowTest {
                 break;
             }
         }
-        hubSession.getVaultApi().apiVaultsVaultIdUsersUserIdPut(adminId, vaultIdSharedWithAdmin, Role.OWNER);
+        new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultIdSharedWithAdmin, Role.OWNER);
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
 
         log.info(String.format("S03 %s admin uploads user keys", hubTestSetupConfig));

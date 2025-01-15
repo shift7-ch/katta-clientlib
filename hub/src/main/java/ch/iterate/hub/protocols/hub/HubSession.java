@@ -44,8 +44,6 @@ import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.HubApiClient;
 import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.api.StorageProfileResourceApi;
-import ch.iterate.hub.client.api.UsersResourceApi;
-import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.StorageProfileS3Dto;
@@ -112,7 +110,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             throw new LoginCanceledException(e);
         }
         try {
-            final String uuidFromHub = this.getConfigApi().apiConfigGet().getUuid();
+            final String uuidFromHub = new ConfigResourceApi(client).apiConfigGet().getUuid();
             final String uuidFromBookmark = this.getHost().getUuid();
             if(!uuidFromHub.equals(uuidFromBookmark)) {
                 throw new LoginFailureException(String.format("UUID mismatch: UUID from hub under %s is %s, the bookmark however has hubUUID %s", new HostUrlProvider().get(this.getHost()), uuidFromHub, uuidFromBookmark));
@@ -178,22 +176,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         client.getHttpClient().close();
     }
 
-    public VaultResourceApi getVaultApi() {
-        return new VaultResourceApi(getClient());
-    }
-
-    public UsersResourceApi getUsersApi() {
-        return new UsersResourceApi(getClient());
-    }
-
-    public ConfigResourceApi getConfigApi() {
-        return new ConfigResourceApi(getClient());
-    }
-
-    public StorageProfileResourceApi getStorageProfileApi() {
-        return new StorageProfileResourceApi(getClient());
-    }
-
     public static int getPortFromHubURI(final URI hubURI) {
         return -1 != hubURI.getPort() ? hubURI.getPort() : Scheme.valueOf(hubURI.getScheme()).getPort();
     }
@@ -205,7 +187,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         if(type == ListService.class) {
             return (T) (ListService) (directory, listener) -> {
                 try {
-                    final List<StorageProfileS3Dto> storageProfiles = getStorageProfileApi().apiStorageprofileS3Get();
+                    final List<StorageProfileS3Dto> storageProfiles = new StorageProfileResourceApi(client).apiStorageprofileS3Get();
                     return new AttributedList<>(
                             storageProfiles.stream().map(p ->
                                             // ProfileFilter
@@ -225,9 +207,9 @@ public class HubSession extends HttpSession<HubApiClient> {
                 try {
                     // N.B. the RemoteProfileDescription comes with "/<UUID>.cyberduckprofile" from ListService above
                     final String uuid = FilenameUtils.removeExtension(file.getName());
-                    final StorageProfileDto storageProfile = getStorageProfileApi().apiStorageprofileProfileIdGet(UUID.fromString(uuid));
+                    final StorageProfileDto storageProfile = new StorageProfileResourceApi(client).apiStorageprofileProfileIdGet(UUID.fromString(uuid));
 
-                    final ConfigDto configDto = getConfigApi().apiConfigGet();
+                    final ConfigDto configDto = new ConfigResourceApi(client).apiConfigGet();
                     final Protocol profileProtocol = toProfileParentProtocol(storageProfile, configDto);
                     // provider = hub UUID
                     final Local l = TemporaryFileServiceFactory.get().create(profileProtocol.getProvider());

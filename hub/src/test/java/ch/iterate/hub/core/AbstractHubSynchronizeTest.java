@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import ch.iterate.hub.client.ApiClient;
 import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.api.StorageProfileResourceApi;
 import ch.iterate.hub.client.model.S3SERVERSIDEENCRYPTION;
 import ch.iterate.hub.client.model.S3STORAGECLASSES;
@@ -97,7 +98,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
-            assertNotNull(ProtocolFactory.get().forName(hubSession.getConfigApi().apiConfigGet().getUuid()));
+            assertNotNull(ProtocolFactory.get().forName(new ConfigResourceApi(hubSession.getClient()).apiConfigGet().getUuid()));
 
             final ObjectMapper mapper = new ObjectMapper();
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
