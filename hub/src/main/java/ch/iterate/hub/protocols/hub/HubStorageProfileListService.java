@@ -1,0 +1,110 @@
+
+/*
+ * Copyright (c) 2025 iterate GmbH. All rights reserved.
+ */
+
+package ch.iterate.hub.protocols.hub;
+
+import ch.cyberduck.core.AbstractPath;
+import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.ConnectionCallback;
+import ch.cyberduck.core.ListProgressListener;
+import ch.cyberduck.core.ListService;
+import ch.cyberduck.core.Local;
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
+import ch.cyberduck.core.Protocol;
+import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.InteroperabilityException;
+import ch.cyberduck.core.features.AttributesAdapter;
+import ch.cyberduck.core.features.AttributesFinder;
+import ch.cyberduck.core.features.Read;
+import ch.cyberduck.core.local.TemporaryFileServiceFactory;
+import ch.cyberduck.core.serializer.impl.dd.PlistWriter;
+import ch.cyberduck.core.transfer.TransferStatus;
+
+import java.io.InputStream;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.client.api.ConfigResourceApi;
+import ch.iterate.hub.client.api.StorageProfileResourceApi;
+import ch.iterate.hub.client.model.ConfigDto;
+import ch.iterate.hub.client.model.StorageProfileDto;
+import ch.iterate.hub.model.StorageProfileDtoWrapperException;
+import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
+
+import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
+
+public class HubStorageProfileListService implements ListService, Read, AttributesFinder, AttributesAdapter<StorageProfileDto> {
+
+    private final HubSession session;
+
+    public HubStorageProfileListService(final HubSession session) {
+        this.session = session;
+    }
+
+    /**
+     * @return IDs of storage profiles
+     */
+    @Override
+    public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
+        try {
+            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileGet(null);
+            return new AttributedList<>(
+                    storageProfiles.stream().map(model ->
+                                    new Path(String.format("%s.cyberduckprofile", model.getStorageProfileS3Dto().getId()), EnumSet.of(AbstractPath.Type.file))
+                                            .withAttributes(this.toAttributes(model))
+                            )
+                            .collect(Collectors.toList()));
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
+        }
+    }
+
+    @Override
+    public void preflight(final Path directory) throws BackgroundException {
+        //
+    }
+
+    @Override
+    public InputStream read(final Path file, final TransferStatus status, final ConnectionCallback callback) throws BackgroundException {
+        try {
+            final StorageProfileDto storageProfile = new StorageProfileResourceApi(session.getClient())
+                    .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId()));
+            final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
+            final Protocol profileProtocol = toProfileParentProtocol(storageProfile, configDto);
+            // provider = hub UUID
+            final Local l = TemporaryFileServiceFactory.get().create(profileProtocol.getProvider());
+            new PlistWriter<>().write(profileProtocol, l);
+            return l.getInputStream();
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
+        }
+        catch(StorageProfileDtoWrapperException e) {
+            throw new InteroperabilityException(e.getMessage(), e);
+        }
+    }
+
+
+    @Override
+    public PathAttributes find(final Path file, final ListProgressListener listener) throws BackgroundException {
+        try {
+            return this.toAttributes(new StorageProfileResourceApi(session.getClient())
+                    .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId())));
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
+        }
+    }
+
+    @Override
+    public PathAttributes toAttributes(final StorageProfileDto model) {
+        return new PathAttributes().withFileId(model.getStorageProfileS3Dto().getId().toString());
+    }
+}

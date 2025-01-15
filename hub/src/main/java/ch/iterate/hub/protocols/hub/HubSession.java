@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ * Copyright (c) 2025 iterate GmbH. All rights reserved.
  */
 
 package ch.iterate.hub.protocols.hub;
@@ -9,18 +9,16 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
+import ch.cyberduck.core.features.AttributesFinder;
+import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.http.HttpConnectionPoolBuilder;
 import ch.cyberduck.core.http.HttpSession;
-import ch.cyberduck.core.io.Checksum;
-import ch.cyberduck.core.io.HashAlgorithm;
-import ch.cyberduck.core.local.TemporaryFileServiceFactory;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
-import ch.cyberduck.core.serializer.impl.dd.PlistWriter;
 import ch.cyberduck.core.ssl.DefaultTrustManagerHostnameCallback;
 import ch.cyberduck.core.ssl.KeychainX509KeyManager;
 import ch.cyberduck.core.ssl.KeychainX509TrustManager;
@@ -29,34 +27,23 @@ import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.threading.CancelCallback;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.HubApiClient;
 import ch.iterate.hub.client.api.ConfigResourceApi;
-import ch.iterate.hub.client.api.StorageProfileResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
-import ch.iterate.hub.client.model.StorageProfileDto;
-import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
-
-import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
 
 /**
  * Hub session is responsible for keeping OAuth tokens in Keychain valid as long as Cipherduck is running,
@@ -185,44 +172,16 @@ public class HubSession extends HttpSession<HubApiClient> {
     public <T> T _getFeature(final Class<T> type) {
         // ListService, Read (used by RemoteProfileFinder) and ComparisonService (see ProfilesSynchronizeWorker.filter(), https://github.com/iterate-ch/cyberduck/pull/15602/files)
         if(type == ListService.class) {
-            return (T) (ListService) (directory, listener) -> {
-                try {
-                    final List<StorageProfileS3Dto> storageProfiles = new StorageProfileResourceApi(client).apiStorageprofileS3Get();
-                    return new AttributedList<>(
-                            storageProfiles.stream().map(p ->
-                                            // ProfileFilter
-                                            new Path(String.format("/%s.cyberduckprofile", p.getId()), EnumSet.of(AbstractPath.Type.file))
-                                                    .withAttributes(new PathAttributes()
-                                                            .withChecksum(new Checksum(HashAlgorithm.sha1, p.getId().toString())))
-                                    )
-                                    .collect(Collectors.toList()));
-                }
-                catch(ApiException e) {
-                    throw new HubExceptionMappingService().map(e);
-                }
-            };
+            return (T) new HubStorageProfileListService(this);
         }
         if(type == Read.class) {
-            return (T) (Read) (file, status, callback) -> {
-                try {
-                    // N.B. the RemoteProfileDescription comes with "/<UUID>.cyberduckprofile" from ListService above
-                    final String uuid = FilenameUtils.removeExtension(file.getName());
-                    final StorageProfileDto storageProfile = new StorageProfileResourceApi(client).apiStorageprofileProfileIdGet(UUID.fromString(uuid));
-
-                    final ConfigDto configDto = new ConfigResourceApi(client).apiConfigGet();
-                    final Protocol profileProtocol = toProfileParentProtocol(storageProfile, configDto);
-                    // provider = hub UUID
-                    final Local l = TemporaryFileServiceFactory.get().create(profileProtocol.getProvider());
-                    new PlistWriter<>().write(profileProtocol, l);
-                    return l.getInputStream();
-                }
-                catch(ApiException e) {
-                    throw new HubExceptionMappingService().map(e);
-                }
-                catch(StorageProfileDtoWrapperException e) {
-                    throw new BackgroundException(e);
-                }
-            };
+            return (T) new HubStorageProfileListService(this);
+        }
+        if(type == Find.class) {
+            return (T) new HubStorageProfileListService(this);
+        }
+        if(type == AttributesFinder.class) {
+            return (T) new HubStorageProfileListService(this);
         }
         return super._getFeature(type);
     }
