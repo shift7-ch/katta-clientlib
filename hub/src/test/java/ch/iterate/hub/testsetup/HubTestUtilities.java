@@ -6,6 +6,7 @@ package ch.iterate.hub.testsetup;
 
 import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.features.Scheduler;
 import ch.cyberduck.core.http.UserAgentHttpRequestInitializer;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.pool.SessionPool;
@@ -78,6 +79,7 @@ public class HubTestUtilities {
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStorePatched.class.getName());
         preferences.setProperty("factory.firstlogindevicesetupcallback.class", MockableFirstLoginDeviceSetupCallback.class.getName());
 
+        preferences.setProperty("hub.protocol.scheduler.period", SYNC_INTERVAL_SECS);
         preferences.setProperty("connection.unsecure.warning.http", false);
         try {
             preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
@@ -90,8 +92,6 @@ public class HubTestUtilities {
     }
 
     public static HubSession setupForUser(final HubTestSetupConfig hubTestSetupConfig, HubTestSetupUserConfig hubTestSetupUserConfig) throws BackgroundException, IOException {
-        PreferencesFactory.get().setProperty("hub.protocol.scheduler.period", SYNC_INTERVAL_SECS);
-
         final String setupCode = hubTestSetupUserConfig.setupCode;
         final String username = hubTestSetupUserConfig.username;
         final String password = hubTestSetupUserConfig.password;
@@ -158,7 +158,13 @@ public class HubTestUtilities {
                 new KeychainX509TrustManager(CertificateTrustCallbackFactory.get(controller), new DefaultTrustManagerHostnameCallback(hub), CertificateStoreFactory.get()),
                 new KeychainX509KeyManager(CertificateIdentityCallbackFactory.get(controller), hub, CertificateStoreFactory.get()),
                 new VaultRegistry.DisabledVaultRegistry());
-        return (HubSession) pool.borrow(BackgroundActionState.running);
+        final HubSession session = (HubSession) pool.borrow(BackgroundActionState.running);
+        final Scheduler scheduler = session.getFeature(Scheduler.class);
+        if(scheduler != null) {
+            log.info("Run repeating scheduler {}", scheduler);
+            scheduler.repeat(new DisabledPasswordCallback());
+        }
+        return session;
     }
 
     public static Session<?> vaultLoginWithSharedOAuthCredentialsFromPasswordStore(final Host bookmark) throws BackgroundException {
