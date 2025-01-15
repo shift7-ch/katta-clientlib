@@ -10,20 +10,22 @@ import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.ConnectionCallback;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.Local;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
+import ch.cyberduck.core.exception.NotfoundException;
 import ch.cyberduck.core.features.AttributesAdapter;
 import ch.cyberduck.core.features.AttributesFinder;
+import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Read;
-import ch.cyberduck.core.local.TemporaryFileServiceFactory;
-import ch.cyberduck.core.serializer.impl.dd.PlistWriter;
+import ch.cyberduck.core.serializer.impl.dd.PlistSerializer;
 import ch.cyberduck.core.transfer.TransferStatus;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -34,12 +36,13 @@ import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.api.StorageProfileResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
+import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 
 import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
 
-public class HubStorageProfileListService implements ListService, Read, AttributesFinder, AttributesAdapter<StorageProfileDto> {
+public class HubStorageProfileListService implements ListService, Read, AttributesAdapter<StorageProfileS3Dto> {
 
     private final HubSession session;
 
@@ -53,10 +56,10 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
     @Override
     public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
         try {
-            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileGet(null);
+            final List<StorageProfileS3Dto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileS3Get();
             return new AttributedList<>(
                     storageProfiles.stream().map(model ->
-                                    new Path(String.format("%s.cyberduckprofile", model.getStorageProfileS3Dto().getId()), EnumSet.of(AbstractPath.Type.file))
+                                    new Path(String.format("%s.cyberduckprofile", model.getId()), EnumSet.of(AbstractPath.Type.file))
                                             .withAttributes(this.toAttributes(model))
                             )
                             .collect(Collectors.toList()));
@@ -64,6 +67,11 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
         }
+    }
+
+    @Override
+    public PathAttributes toAttributes(final StorageProfileS3Dto model) {
+        return new PathAttributes().withFileId(model.getId().toString());
     }
 
     @Override
@@ -91,20 +99,34 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
         }
     }
 
-
-    @Override
-    public PathAttributes find(final Path file, final ListProgressListener listener) throws BackgroundException {
-        try {
-            return this.toAttributes(new StorageProfileResourceApi(session.getClient())
-                    .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId())));
-        }
-        catch(ApiException e) {
-            throw new HubExceptionMappingService().map(e);
+    public class StorageProfileFindFeature implements Find {
+        @Override
+        public boolean find(final Path file, final ListProgressListener listener) throws BackgroundException {
+            try {
+                new StorageProfileAttributesFinder().find(file, listener);
+                return true;
+            }
+            catch(NotfoundException e) {
+                return false;
+            }
         }
     }
 
-    @Override
-    public PathAttributes toAttributes(final StorageProfileDto model) {
-        return new PathAttributes().withFileId(model.getStorageProfileS3Dto().getId().toString());
+    public class StorageProfileAttributesFinder implements AttributesFinder, AttributesAdapter<StorageProfileDto> {
+        @Override
+        public PathAttributes find(final Path file, final ListProgressListener listener) throws BackgroundException {
+            try {
+                return this.toAttributes(new StorageProfileResourceApi(session.getClient())
+                        .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId())));
+            }
+            catch(ApiException e) {
+                throw new HubExceptionMappingService().map(e);
+            }
+        }
+
+        @Override
+        public PathAttributes toAttributes(final StorageProfileDto model) {
+            return new PathAttributes().withFileId(model.getStorageProfileS3Dto().getId().toString());
+        }
     }
 }

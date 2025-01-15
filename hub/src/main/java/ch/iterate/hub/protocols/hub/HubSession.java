@@ -178,10 +178,10 @@ public class HubSession extends HttpSession<HubApiClient> {
             return (T) new HubStorageProfileListService(this);
         }
         if(type == Find.class) {
-            return (T) new HubStorageProfileListService(this);
+            return (T) new HubStorageProfileListService(this).new StorageProfileFindFeature();
         }
         if(type == AttributesFinder.class) {
-            return (T) new HubStorageProfileListService(this);
+            return (T) new HubStorageProfileListService(this).new StorageProfileAttributesFinder();
         }
         return super._getFeature(type);
     }
