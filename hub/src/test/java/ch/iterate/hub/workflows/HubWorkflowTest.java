@@ -125,66 +125,70 @@ class HubWorkflowTest {
 
     public void testHubWorkflow(final HubTestConfig hubTestConfig) throws Exception {
         final HubSession hubSession = setupForUser(hubTestConfig.hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
+        try {
+            checkNumberOfVaults(hubSession, hubTestConfig, null, 0, 0, 0, 0, -1);
 
-        checkNumberOfVaults(hubSession, hubTestConfig, null, 0, 0, 0, 0, -1);
+            final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
+            log.info(String.format("S01 %s alice creates vault", hubTestSetupConfig));
+            final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
+            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
+            log.info(storageProfiles);
+            final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
+                    .map(StorageProfileDtoWrapper::coerce)
+                    .filter(p -> {
+                        try {
+                            return p.getId().toString().equals(hubTestConfig.vaultSpec.storageProfileId.toLowerCase());
+                        }
+                        catch(StorageProfileDtoWrapperException e) {
+                            log.error(e);
+                            return false;
+                        }
+                    }).findFirst().get();
 
-        final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
-        log.info(String.format("S01 %s alice creates vault", hubTestSetupConfig));
-        final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
-        final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
-        log.info(storageProfiles);
-        final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
-                .map(StorageProfileDtoWrapper::coerce)
-                .filter(p -> {
-                    try {
-                        return p.getId().toString().equals(hubTestConfig.vaultSpec.storageProfileId.toLowerCase());
-                    }
-                    catch(StorageProfileDtoWrapperException e) {
-                        log.error(e);
-                        return false;
-                    }
-                }).findFirst().get();
+            final UUID vaultIdSharedWithAdmin = UUID.randomUUID();
+            final boolean automaticAccessGrant = true;
+            // upload template (STS: create bucket first, static: existing bucket)
+            // TODO test with multiple wot levels?
+            new CreateVaultService(hubSession, new HubTestController()).createVault(
+                    new CreateVaultModel(vaultIdSharedWithAdmin, "no reason", String.format("my first vault %s S01", storageProfile.getName()), "", storageProfile.getId().toString(), hubTestConfig.vaultSpec.username, hubTestConfig.vaultSpec.password, "handmade", storageProfile.getRegion(), automaticAccessGrant, 3));
+            checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 0, 0, 1, 0, 0);
 
-        final UUID vaultIdSharedWithAdmin = UUID.randomUUID();
-        final boolean automaticAccessGrant = true;
-        // upload template (STS: create bucket first, static: existing bucket)
-        // TODO test with multiple wot levels?
-        new CreateVaultService(hubSession, new HubTestController()).createVault(
-                new CreateVaultModel(vaultIdSharedWithAdmin, "no reason", String.format("my first vault %s S01", storageProfile.getName()), "", storageProfile.getId().toString(), hubTestConfig.vaultSpec.username, hubTestConfig.vaultSpec.password, "handmade", storageProfile.getRegion(), automaticAccessGrant, 3));
-        checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 0, 0, 1, 0, 0);
-
-        log.info(String.format("S02 %s alice shares vault with admin as owner", hubTestSetupConfig));
-        final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet();
-        String adminId = null;
-        for(UserDto user : userDtos) {
-            if(user.getName().equals("admin")) {
-                adminId = user.getId();
-                break;
+            log.info(String.format("S02 %s alice shares vault with admin as owner", hubTestSetupConfig));
+            final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet();
+            String adminId = null;
+            for(UserDto user : userDtos) {
+                if(user.getName().equals("admin")) {
+                    adminId = user.getId();
+                    break;
+                }
             }
+            new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultIdSharedWithAdmin, Role.OWNER);
+            checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
+
+            log.info(String.format("S03 %s admin uploads user keys", hubTestSetupConfig));
+            final UserKeys adminKeys = UserKeys.create();
+            final String adminAccountKey = "blabla";
+            final UsersResourceApi users = new UsersResourceApi(adminApiClient);
+
+            // TODO https://github.com/shift7-ch/katta-server/issues/4 bad code smell - encapsulate initial setup
+            final UserDto admin = users.apiUsersMeGet(false)
+                    .ecdhPublicKey(adminKeys.encodedEcdhPublicKey())
+                    .ecdsaPublicKey(adminKeys.encodedEcdsaPublicKey())
+                    .privateKey(adminKeys.encryptWithSetupCode(adminAccountKey))
+                    .setupCode(new SetupCodeJWE(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
+            users.apiUsersMePut(admin);
+            checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 1);
+
+            log.info(String.format("S04 %s alice adds trust to admin", hubTestSetupConfig));
+            new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled), admin);
+
+            log.info(String.format("S04 %s alice grants access to admin", hubTestSetupConfig));
+            new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultIdSharedWithAdmin, FirstLoginDeviceSetupCallback.disabled);
+            checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
         }
-        new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultIdSharedWithAdmin, Role.OWNER);
-        checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
-
-        log.info(String.format("S03 %s admin uploads user keys", hubTestSetupConfig));
-        final UserKeys adminKeys = UserKeys.create();
-        final String adminAccountKey = "blabla";
-        final UsersResourceApi users = new UsersResourceApi(adminApiClient);
-
-        // TODO https://github.com/shift7-ch/katta-server/issues/4 bad code smell - encapsulate initial setup
-        final UserDto admin = users.apiUsersMeGet(false)
-                .ecdhPublicKey(adminKeys.encodedEcdhPublicKey())
-                .ecdsaPublicKey(adminKeys.encodedEcdsaPublicKey())
-                .privateKey(adminKeys.encryptWithSetupCode(adminAccountKey))
-                .setupCode(new SetupCodeJWE(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
-        users.apiUsersMePut(admin);
-        checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 1);
-
-        log.info(String.format("S04 %s alice adds trust to admin", hubTestSetupConfig));
-        new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled), admin);
-
-        log.info(String.format("S04 %s alice grants access to admin", hubTestSetupConfig));
-        new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultIdSharedWithAdmin, FirstLoginDeviceSetupCallback.disabled);
-        checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 1, 0, 1, 0, 0);
+        finally {
+            hubSession.close();
+        }
     }
 
     private void checkNumberOfVaults(final HubSession hubSession, final HubTestConfig hubTestSetup, final UUID vaultIdSharedWithAdmin, final int adminOwner, final int adminMember, final int aliceOwner, final int aliceMember, final int nbUsersRequiringAccessGrant) throws ApiException, IOException {
