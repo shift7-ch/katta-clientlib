@@ -86,10 +86,8 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
                     .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId()));
             final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
             final Protocol profileProtocol = toProfileParentProtocol(storageProfile, configDto);
-            // provider = hub UUID
-            final Local l = TemporaryFileServiceFactory.get().create(profileProtocol.getProvider());
-            new PlistWriter<>().write(profileProtocol, l);
-            return l.getInputStream();
+            final String content = profileProtocol.serialize(new PlistSerializer()).toXMLPropertyList();
+            return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
