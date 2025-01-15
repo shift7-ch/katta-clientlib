@@ -196,7 +196,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T getFeature(final Class<T> type) {
+    public <T> T _getFeature(final Class<T> type) {
         // ListService, Read (used by RemoteProfileFinder) and ComparisonService (see ProfilesSynchronizeWorker.filter(), https://github.com/iterate-ch/cyberduck/pull/15602/files)
         if(type == ListService.class) {
             return (T) (ListService) (directory, listener) -> {
@@ -238,6 +238,6 @@ public class HubSession extends HttpSession<HubApiClient> {
                 }
             };
         }
-        return super.getFeature(type);
+        return super._getFeature(type);
     }
 }
