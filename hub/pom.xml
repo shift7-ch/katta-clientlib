@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2024 iterate GmbH. All rights reserved.
+  ~ Copyright (c) 2025 iterate GmbH. All rights reserved.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -17,6 +17,7 @@
     <properties>
         <jwt.version>4.2.1</jwt.version>
         <nimbus-jose.version>9.40</nimbus-jose.version>
+        <swagger-annotations.version>1.6.15</swagger-annotations.version>
     </properties>
 
     <profiles>
@@ -67,43 +68,30 @@
     </profiles>
 
     <dependencies>
-        <!-- cyberduck/mountainduck dependencies -->
         <dependency>
             <groupId>ch.cyberduck</groupId>
-            <artifactId>oauth</artifactId>
-            <version>${cyberduck.version}</version>
+            <artifactId>binding</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
-            <artifactId>core</artifactId>
-            <version>${cyberduck.version}</version>
+            <artifactId>nio</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.cyberduck</groupId>
+            <artifactId>oauth</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>jersey</artifactId>
-            <version>${cyberduck.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>s3</artifactId>
-            <version>${cyberduck.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>cryptomator</artifactId>
-            <version>${cyberduck.version}</version>
         </dependency>
-        <dependency>
-            <groupId>ch.cyberduck</groupId>
-            <artifactId>libcore</artifactId>
-            <version>${cyberduck.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.iterate.mountainduck</groupId>
-            <artifactId>fs</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- external dependencies -->
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
@@ -126,24 +114,26 @@
             <artifactId>hkdf</artifactId>
             <version>2.0.0</version>
         </dependency>
-        <!-- test dependencies -->
         <dependency>
-            <groupId>ch.iterate.mountainduck</groupId>
-            <artifactId>test</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger-annotations.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-            <version>${cyberduck.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.cyberduck</groupId>
+            <artifactId>test</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
