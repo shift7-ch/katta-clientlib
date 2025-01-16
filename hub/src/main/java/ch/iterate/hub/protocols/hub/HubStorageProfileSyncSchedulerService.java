@@ -11,14 +11,13 @@ import ch.cyberduck.core.Path;
 import ch.cyberduck.core.ProgressListener;
 import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.exception.BackgroundException;
-import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.profiles.ProfileDescription;
 import ch.cyberduck.core.profiles.ProfileMatcher;
 import ch.cyberduck.core.profiles.ProfilesFinder;
 import ch.cyberduck.core.profiles.ProfilesSynchronizer;
 import ch.cyberduck.core.profiles.ProtocolFactoryProfilesSynchronizer;
 import ch.cyberduck.core.profiles.RemoteProfilesFinder;
-import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
+import ch.cyberduck.core.shared.OneTimeSchedulerFeature;
 import ch.cyberduck.core.synchronization.ComparePathFilter;
 import ch.cyberduck.core.synchronization.Comparison;
 import ch.cyberduck.core.transfer.download.CompareFilter;
@@ -28,23 +27,21 @@ import ch.cyberduck.core.transfer.symlink.DisabledDownloadSymlinkResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
-public class HubStorageProfileSyncSchedulerService extends ThreadPoolSchedulerFeature<Set<ProfileDescription>> {
+public class HubStorageProfileSyncSchedulerService extends OneTimeSchedulerFeature<Set<ProfileDescription>> {
     private static final Logger log = LogManager.getLogger(HubStorageProfileSyncSchedulerService.class);
 
     private final ProtocolFactory registry = ProtocolFactory.get();
     private final HubSession session;
 
     public HubStorageProfileSyncSchedulerService(final HubSession session) {
-        super(Duration.ofSeconds(PreferencesFactory.get().getLong("hub.protocol.scheduler.period")).toMillis());
         this.session = session;
     }
 
     @Override
-    protected Set<ProfileDescription> operate(final PasswordCallback callback) throws BackgroundException {
+    public Set<ProfileDescription> operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session);
         final ProfilesSynchronizer sync = new ProtocolFactoryProfilesSynchronizer(registry,
                 new RemoteProfilesFinder(registry, session, new CompareFilter(new DisabledDownloadSymlinkResolver(), session,

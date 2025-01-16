@@ -18,6 +18,7 @@ import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.shared.DelegatingSchedulerFeature;
@@ -34,6 +35,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 
 import ch.iterate.hub.client.ApiException;
@@ -56,9 +58,12 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 public class HubSession extends HttpSession<HubApiClient> {
     private static final Logger log = LogManager.getLogger(HubSession.class);
 
-    private final HubStorageProfileSyncSchedulerService profiles = new HubStorageProfileSyncSchedulerService(this);
-    private final HubStorageVaultSyncSchedulerService vaults = new HubStorageVaultSyncSchedulerService(this);
-    private final HubGrantAccessSchedulerService access = new HubGrantAccessSchedulerService(this);
+    private final Scheduler<?> profiles = new HubStorageProfileSyncSchedulerService(this);
+    private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this);
+    private final Scheduler<?> access = new HubGrantAccessSchedulerService(this);
+
+    private final Scheduler<?> scheduler = new HubSchedulerService(Duration.ofSeconds(PreferencesFactory.get().getLong("hub.protocol.scheduler.period")).toMillis(),
+            profiles, vaults, access);
 
     private OAuth2RequestInterceptor authorizationService;
 
@@ -107,10 +112,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             new UserKeysServiceImpl(this).getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get());
             // Fetch storage configuration once
             try {
-                access.execute(prompt).get();
-                // Fetch storage configuration once
-                profiles.execute(prompt).get();
-                vaults.execute(prompt).get();
+                scheduler.execute(prompt).get();
             }
             catch(InterruptedException e) {
                 throw new ConnectionCanceledException(e);
@@ -178,11 +180,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     protected void logout() {
-        new DelegatingSchedulerFeature(
-                profiles,
-                vaults,
-                access
-        ).shutdown(false);
+        scheduler.shutdown(false);
         client.getHttpClient().close();
     }
 
