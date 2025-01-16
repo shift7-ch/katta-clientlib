@@ -26,13 +26,11 @@ import java.util.stream.Collectors;
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
-import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.StorageProfileS3STSDto;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -49,8 +47,7 @@ public class VaultProfileBookmarkService {
         this.hubSession = hubSession;
     }
 
-    public static Protocol toProfileParentProtocol(final StorageProfileDto profileDto, final ConfigDto configDto) throws StorageProfileDtoWrapperException {
-        final StorageProfileDtoWrapper wrappedProfileDto = StorageProfileDtoWrapper.coerce(profileDto);
+    public static Protocol toProfileParentProtocol(final StorageProfileDtoWrapper wrappedProfileDto, final ConfigDto configDto) {
         final HashMap<String, String> properties = new HashMap<>();
 
         final boolean isSTS = wrappedProfileDto.getType().equals(StorageProfileS3STSDto.class);
