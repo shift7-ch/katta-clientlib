@@ -11,13 +11,11 @@ import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
-import ch.cyberduck.core.preferences.PreferencesFactory;
-import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
+import ch.cyberduck.core.shared.OneTimeSchedulerFeature;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.Duration;
 import java.util.List;
 
 import ch.iterate.hub.client.ApiException;
@@ -29,7 +27,7 @@ import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
-public class HubStorageVaultSyncSchedulerService extends ThreadPoolSchedulerFeature<List<VaultDto>> {
+public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature<List<VaultDto>> {
     private static final Logger log = LogManager.getLogger(HubStorageVaultSyncSchedulerService.class);
 
     private final HubSession session;
@@ -40,13 +38,12 @@ public class HubStorageVaultSyncSchedulerService extends ThreadPoolSchedulerFeat
     }
 
     public HubStorageVaultSyncSchedulerService(final HubSession session, final AbstractHostCollection bookmarks) {
-        super(Duration.ofSeconds(PreferencesFactory.get().getLong("hub.protocol.scheduler.period")).toMillis());
         this.session = session;
         this.bookmarks = bookmarks;
     }
 
     @Override
-    protected List<VaultDto> operate(final PasswordCallback callback) throws BackgroundException {
+    public List<VaultDto> operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session);
         final FirstLoginDeviceSetupCallback prompt = FirstLoginDeviceSetupCallbackFactory.get();
         log.info("Bookmark sync for {}", session.getHost());
