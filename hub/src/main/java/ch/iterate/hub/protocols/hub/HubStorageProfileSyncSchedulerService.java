@@ -52,11 +52,21 @@ public class HubStorageProfileSyncSchedulerService extends OneTimeSchedulerFeatu
                                 return Comparison.remote;
                             }
                         }, new DownloadFilterOptions(session.getHost())), new NullFilter<>()));
-        return sync.sync(new ProfileMatcher() {
+        final Set<ProfileDescription> profiles = sync.sync(new ProfileMatcher() {
             @Override
             public Optional<ProfileDescription> compare(final Set<ProfileDescription> repository, final ProfileDescription installed) {
                 return Optional.empty();
             }
         }, ProfilesFinder.Visitor.Prefetch);
+        for(final ProfileDescription p : profiles) {
+            if(p.isInstalled()) {
+                continue;
+            }
+            if(log.isInfoEnabled()) {
+                log.info("Register {}", p);
+            }
+            p.getFile().ifPresent(registry::register);
+        }
+        return profiles;
     }
 }
