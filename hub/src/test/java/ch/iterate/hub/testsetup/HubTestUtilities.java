@@ -61,9 +61,6 @@ import com.google.api.client.json.gson.GsonFactory;
 public class HubTestUtilities {
     private static final Logger log = LogManager.getLogger(HubTestUtilities.class.getName());
 
-    public static final int SYNC_WAIT_SECS = 15;
-    public static final int SYNC_INTERVAL_SECS = 10;
-
     public static Preferences preferences() {
         final Preferences preferences;
         PreferencesFactory.set(preferences = new MemoryPreferences() {
@@ -79,7 +76,7 @@ public class HubTestUtilities {
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStorePatched.class.getName());
         preferences.setProperty("factory.firstlogindevicesetupcallback.class", MockableFirstLoginDeviceSetupCallback.class.getName());
 
-        preferences.setProperty("hub.protocol.scheduler.period", SYNC_INTERVAL_SECS);
+        preferences.setProperty("hub.protocol.scheduler.period", 30);
         preferences.setProperty("connection.unsecure.warning.http", false);
         try {
             preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
