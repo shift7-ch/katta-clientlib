@@ -59,7 +59,7 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
             final List<StorageProfileS3Dto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileS3Get();
             return new AttributedList<>(
                     storageProfiles.stream().map(model ->
-                                    new Path(String.format("%s.cyberduckprofile", model.getId()), EnumSet.of(AbstractPath.Type.file))
+                                    new Path(model.getName(), EnumSet.of(AbstractPath.Type.file))
                                             .withAttributes(this.toAttributes(model))
                             )
                             .collect(Collectors.toList()));
