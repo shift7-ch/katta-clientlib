@@ -8,6 +8,7 @@ import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.BookmarkCollection;
 import ch.cyberduck.core.DisabledListProgressListener;
+import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostUrlProvider;
@@ -24,7 +25,7 @@ import ch.cyberduck.core.vault.registry.VaultRegistryListService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
@@ -48,6 +49,7 @@ import ch.iterate.hub.client.model.StorageProfileS3STSDto;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.protocols.hub.HubStorageProfileSyncSchedulerService;
 import ch.iterate.hub.protocols.hub.VaultProfileBookmarkService;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestController;
@@ -70,7 +72,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static ch.iterate.hub.testsetup.HubTestUtilities.*;
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
@@ -152,7 +153,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
 
             // wait for sync
-            Thread.sleep(SYNC_WAIT_SECS * 1000);
+            new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
 
             log.info(String.format("%s Protocols found:", ProtocolFactory.get().find().size()));
             for(Protocol protocol : ProtocolFactory.get().find()) {
@@ -197,11 +198,11 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final UUID uuid = UUID.randomUUID();
 
             // wait for first time sync for admin before we count protocols
-            Thread.sleep(SYNC_WAIT_SECS * 1000);
+            new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
             final int numProtocols = ProtocolFactory.get().find().size();
 
             log.info(String.format("Add storage profile for UUID %s", uuid));
-            assertNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
+            Assertions.assertNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
 
             final StorageProfileDto storageProfile = storageProfiles.get(0);
             // client-generated code is not subclassed...
@@ -216,12 +217,12 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 adminStorageProfileApi.apiStorageprofileS3Put(profile);
             }
             else {
-                Assert.fail();
+                fail();
             }
             assertEquals(storageProfiles.size() + 1, adminStorageProfileApi.apiStorageprofileGet(null).size());
 
-            // wait for next sync
-            Thread.sleep(SYNC_WAIT_SECS * 1000);
+            new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
+
             assertEquals(numProtocols + 1, ProtocolFactory.get().find().size());
             assertNotNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
         }
@@ -253,9 +254,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info(String.format("Coercing storage profiles %s", storageProfiles));
             final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> {
-                        return p.getId().toString().equals(storageProfileId.toLowerCase());
-                    }).findFirst().get();
+                    .filter(p -> p.getId().toString().equals(storageProfileId.toLowerCase())).findFirst().get();
 
             if(bucketName != null) {
                 log.info(String.format("Empty bucket %s", bucketName));
