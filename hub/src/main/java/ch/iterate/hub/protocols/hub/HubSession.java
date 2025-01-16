@@ -6,12 +6,13 @@ package ch.iterate.hub.protocols.hub;
 
 import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.LoginCanceledException;
-import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Read;
+import ch.cyberduck.core.features.Scheduler;
 import ch.cyberduck.core.http.HttpConnectionPoolBuilder;
 import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
@@ -19,6 +20,7 @@ import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
+import ch.cyberduck.core.shared.DelegatingSchedulerFeature;
 import ch.cyberduck.core.ssl.DefaultTrustManagerHostnameCallback;
 import ch.cyberduck.core.ssl.KeychainX509KeyManager;
 import ch.cyberduck.core.ssl.KeychainX509TrustManager;
@@ -32,6 +34,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.HubApiClient;
@@ -50,9 +53,12 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
  * triggering OAuth flow upon expiry.
  * It provides a hub API client for accessing the hub REST API (managing authentication).
  */
-// TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 also for refreshing (do storage sessions refresh and write to Keychain!?) - what about asymmetry?
 public class HubSession extends HttpSession<HubApiClient> {
     private static final Logger log = LogManager.getLogger(HubSession.class);
+
+    private final HubStorageProfileSyncSchedulerService profiles = new HubStorageProfileSyncSchedulerService(this);
+    private final HubStorageVaultSyncSchedulerService vaults = new HubStorageVaultSyncSchedulerService(this);
+    private final HubGrantAccessSchedulerService access = new HubGrantAccessSchedulerService(this);
 
     private OAuth2RequestInterceptor authorizationService;
 
@@ -97,12 +103,24 @@ public class HubSession extends HttpSession<HubApiClient> {
             throw new LoginCanceledException(e);
         }
         try {
-            final String uuidFromHub = new ConfigResourceApi(client).apiConfigGet().getUuid();
-            final String uuidFromBookmark = this.getHost().getUuid();
-            if(!uuidFromHub.equals(uuidFromBookmark)) {
-                throw new LoginFailureException(String.format("UUID mismatch: UUID from hub under %s is %s, the bookmark however has hubUUID %s", new HostUrlProvider().get(this.getHost()), uuidFromHub, uuidFromBookmark));
-            }
+            // Ask for account key (setup code) and device name
             new UserKeysServiceImpl(this).getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get());
+            // Fetch storage configuration once
+            try {
+                access.execute(prompt).get();
+                // Fetch storage configuration once
+                profiles.execute(prompt).get();
+                vaults.execute(prompt).get();
+            }
+            catch(InterruptedException e) {
+                throw new ConnectionCanceledException(e);
+            }
+            catch(ExecutionException e) {
+                if(e.getCause() instanceof BackgroundException) {
+                    throw (BackgroundException) e.getCause();
+                }
+                throw new BackgroundException(e.getCause());
+            }
         }
         catch(AccessException | SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
@@ -160,6 +178,11 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     protected void logout() {
+        new DelegatingSchedulerFeature(
+                profiles,
+                vaults,
+                access
+        ).shutdown(false);
         client.getHttpClient().close();
     }
 
@@ -182,6 +205,13 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == AttributesFinder.class) {
             return (T) new HubStorageProfileListService(this).new StorageProfileAttributesFinder();
+        }
+        if(type == Scheduler.class) {
+            return (T) new DelegatingSchedulerFeature(
+                    profiles,
+                    vaults,
+                    access
+            );
         }
         return super._getFeature(type);
     }
