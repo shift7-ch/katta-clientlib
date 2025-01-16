@@ -47,7 +47,6 @@ import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.client.model.StorageProfileS3STSDto;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.hub.VaultProfileBookmarkService;
 import ch.iterate.hub.testsetup.AbstractHubTest;
@@ -255,13 +254,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
                     .filter(p -> {
-                        try {
-                            return p.getId().toString().equals(storageProfileId.toLowerCase());
-                        }
-                        catch(StorageProfileDtoWrapperException e) {
-                            log.error(e);
-                            return false;
-                        }
+                        return p.getId().toString().equals(storageProfileId.toLowerCase());
                     }).findFirst().get();
 
             if(bucketName != null) {

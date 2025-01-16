@@ -12,14 +12,13 @@ import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
-import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.NotfoundException;
-import ch.cyberduck.core.features.AttributesAdapter;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Read;
+import ch.cyberduck.core.io.MD5ChecksumCompute;
 import ch.cyberduck.core.serializer.impl.dd.PlistSerializer;
 import ch.cyberduck.core.transfer.TransferStatus;
 
@@ -29,20 +28,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.api.StorageProfileResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
-import ch.iterate.hub.client.model.StorageProfileS3Dto;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
+import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 
 import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
 
-public class HubStorageProfileListService implements ListService, Read, AttributesAdapter<StorageProfileS3Dto> {
+public class HubStorageProfileListService implements ListService, Read {
 
     private final HubSession session;
 
@@ -56,22 +53,19 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
     @Override
     public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
         try {
-            final List<StorageProfileS3Dto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileS3Get();
-            return new AttributedList<>(
-                    storageProfiles.stream().map(model ->
-                                    new Path(model.getName(), EnumSet.of(AbstractPath.Type.file))
-                                            .withAttributes(this.toAttributes(model))
-                            )
-                            .collect(Collectors.toList()));
+            final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
+            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileGet(false);
+            final AttributedList<Path> list = new AttributedList<>();
+            for(StorageProfileDto storageProfile : storageProfiles) {
+                final StorageProfileDtoWrapper wrapper = StorageProfileDtoWrapper.coerce(storageProfile);
+                list.add(new Path(String.format("%s (%s)", wrapper.getName(), wrapper.getId()), EnumSet.of(AbstractPath.Type.file))
+                        .withAttributes(new StorageProfileAttributesFinder().toAttributes(configDto, wrapper)));
+            }
+            return list;
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
         }
-    }
-
-    @Override
-    public PathAttributes toAttributes(final StorageProfileS3Dto model) {
-        return new PathAttributes().withFileId(model.getId().toString());
     }
 
     @Override
@@ -82,18 +76,13 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
     @Override
     public InputStream read(final Path file, final TransferStatus status, final ConnectionCallback callback) throws BackgroundException {
         try {
+            final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
             final StorageProfileDto storageProfile = new StorageProfileResourceApi(session.getClient())
                     .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId()));
-            final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
-            final Protocol profileProtocol = toProfileParentProtocol(storageProfile, configDto);
-            final String content = profileProtocol.serialize(new PlistSerializer()).toXMLPropertyList();
-            return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+            return new ByteArrayInputStream(serialize(configDto, StorageProfileDtoWrapper.coerce(storageProfile)).getBytes(StandardCharsets.UTF_8));
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
-        }
-        catch(StorageProfileDtoWrapperException e) {
-            throw new InteroperabilityException(e.getMessage(), e);
         }
     }
 
@@ -110,21 +99,36 @@ public class HubStorageProfileListService implements ListService, Read, Attribut
         }
     }
 
-    public class StorageProfileAttributesFinder implements AttributesFinder, AttributesAdapter<StorageProfileDto> {
+    public class StorageProfileAttributesFinder implements AttributesFinder {
         @Override
         public PathAttributes find(final Path file, final ListProgressListener listener) throws BackgroundException {
             try {
-                return this.toAttributes(new StorageProfileResourceApi(session.getClient())
-                        .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId())));
+                final StorageProfileDto storageProfile = new StorageProfileResourceApi(session.getClient())
+                        .apiStorageprofileProfileIdGet(UUID.fromString(file.attributes().getFileId()));
+                return this.toAttributes(StorageProfileDtoWrapper.coerce(storageProfile));
             }
             catch(ApiException e) {
                 throw new HubExceptionMappingService().map(e);
             }
         }
 
-        @Override
-        public PathAttributes toAttributes(final StorageProfileDto model) {
-            return new PathAttributes().withFileId(model.getStorageProfileS3Dto().getId().toString());
+        public PathAttributes toAttributes(final StorageProfileDtoWrapper wrapper) throws BackgroundException {
+            try {
+                final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
+                return this.toAttributes(configDto, wrapper);
+            }
+            catch(ApiException e) {
+                throw new HubExceptionMappingService().map(e);
+            }
         }
+
+        public PathAttributes toAttributes(final ConfigDto configDto, final StorageProfileDtoWrapper wrapper) throws BackgroundException {
+            return new PathAttributes().withFileId(wrapper.getId().toString())
+                    .withChecksum(new MD5ChecksumCompute().compute(new ByteArrayInputStream(serialize(configDto, wrapper).getBytes(StandardCharsets.UTF_8)), new TransferStatus()));
+        }
+    }
+
+    private static String serialize(final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) throws InteroperabilityException {
+        return toProfileParentProtocol(storageProfile, configDto).serialize(new PlistSerializer()).toXMLPropertyList();
     }
 }

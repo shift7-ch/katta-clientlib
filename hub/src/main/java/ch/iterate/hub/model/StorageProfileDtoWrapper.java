@@ -30,67 +30,67 @@ public class StorageProfileDtoWrapper {
         return proxy.getActualInstance().getClass();
     }
 
-    public ch.iterate.hub.client.model.Protocol getProtocol() throws StorageProfileDtoWrapperException {
+    public ch.iterate.hub.client.model.Protocol getProtocol()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getProtocol();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getProtocol();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public UUID getId() throws StorageProfileDtoWrapperException {
+    public UUID getId()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getId();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getId();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getName() throws StorageProfileDtoWrapperException {
+    public String getName()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getName();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getName();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getHostname() throws StorageProfileDtoWrapperException {
+    public String getHostname()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getHostname();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getHostname();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getScheme() throws StorageProfileDtoWrapperException {
+    public String getScheme()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getScheme();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getScheme();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public Integer getPort() throws StorageProfileDtoWrapperException {
+    public Integer getPort()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getPort();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getPort();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getStsEndpoint() throws StorageProfileDtoWrapperException {
+    public String getStsEndpoint()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -98,10 +98,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsEndpoint();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public Boolean getBucketAcceleration() throws StorageProfileDtoWrapperException {
+    public Boolean getBucketAcceleration()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -109,10 +109,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getBucketAcceleration();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getBucketPrefix() throws StorageProfileDtoWrapperException {
+    public String getBucketPrefix()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -120,10 +120,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getBucketPrefix();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getRegion() throws StorageProfileDtoWrapperException {
+    public String getRegion()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -131,10 +131,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getRegion();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public List<String> getRegions() throws StorageProfileDtoWrapperException {
+    public List<String> getRegions()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -142,10 +142,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getRegions();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getStsRoleArn() throws StorageProfileDtoWrapperException {
+    public String getStsRoleArn()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -153,10 +153,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleArn();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getStsRoleArn2() throws StorageProfileDtoWrapperException {
+    public String getStsRoleArn2()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -164,10 +164,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleArn2();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public String getStsRoleArnClient() throws StorageProfileDtoWrapperException {
+    public String getStsRoleArnClient()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -175,10 +175,10 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleArnClient();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public Integer getStsDurationSeconds() throws StorageProfileDtoWrapperException {
+    public Integer getStsDurationSeconds()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -186,26 +186,26 @@ public class StorageProfileDtoWrapper {
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsDurationSeconds();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public Boolean getWithPathStyleAccessEnabled() throws StorageProfileDtoWrapperException {
+    public Boolean getWithPathStyleAccessEnabled()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 
-    public S3STORAGECLASSES getStorageClass() throws StorageProfileDtoWrapperException {
+    public S3STORAGECLASSES getStorageClass()  {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getStorageClass();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStorageClass();
         }
-        throw new StorageProfileDtoWrapperException(String.format("Expected %s be either StorageProfileS3Dto or StorageProfileS3STSDto. Found %s", proxy, proxy.getClass()));
+        return null;
     }
 }

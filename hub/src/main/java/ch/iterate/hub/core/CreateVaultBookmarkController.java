@@ -35,7 +35,6 @@ import java.util.UUID;
 import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 
 
 /**
@@ -204,13 +203,8 @@ public class CreateVaultBookmarkController extends SheetController {
         this.backendCombobox.setTarget(this.id());
         this.backendCombobox.setAction(Foundation.selector("backendComboboxClicked:"));
         for(final StorageProfileDtoWrapper backend : storageProfiles) {
-            try {
-                this.backendCombobox.addItemWithTitle(backend.getName());
-                this.backendCombobox.lastItem().setRepresentedObject(backend.getId().toString());
-            }
-            catch(StorageProfileDtoWrapperException e) {
-                log.error(e);
-            }
+            this.backendCombobox.addItemWithTitle(backend.getName());
+            this.backendCombobox.lastItem().setRepresentedObject(backend.getId().toString());
         }
         if(StringUtils.isNotBlank(this.model.backend())) {
             this.backendCombobox.selectItemAtIndex(this.backendCombobox.indexOfItemWithRepresentedObject(this.model.backend()));
@@ -232,30 +226,17 @@ public class CreateVaultBookmarkController extends SheetController {
                 return;
             }
             final String selectedStorageId = this.backendCombobox.selectedItem().representedObject();
-            final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> {
-                try {
-                    return c.getId().toString().equals(selectedStorageId);
-                }
-                catch(StorageProfileDtoWrapperException e) {
-                    log.warn(e);
-                    return false;
-                }
-            }).findFirst().get();
+            final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> c.getId().toString().equals(selectedStorageId)).findFirst().get();
 
-            try {
-                final List<String> regions = config.getRegions();
-                if(null != regions) {
-                    for(final String region : regions) {
-                        this.regionCombobox.addItemWithTitle(LocaleFactory.localizedString(region, "S3"));
-                        this.regionCombobox.lastItem().setRepresentedObject(region);
-                        if(config.getRegion().equals(region)) {
-                            regionCombobox.selectItem(this.regionCombobox.lastItem());
-                        }
+            final List<String> regions = config.getRegions();
+            if(null != regions) {
+                for(final String region : regions) {
+                    this.regionCombobox.addItemWithTitle(LocaleFactory.localizedString(region, "S3"));
+                    this.regionCombobox.lastItem().setRepresentedObject(region);
+                    if(config.getRegion().equals(region)) {
+                        regionCombobox.selectItem(this.regionCombobox.lastItem());
                     }
                 }
-            }
-            catch(StorageProfileDtoWrapperException e) {
-                log.error(e);
             }
             final boolean isPermanent = config.getType().equals(StorageProfileS3Dto.class);
             final boolean hiddenIfSTS = !isPermanent;
@@ -389,15 +370,7 @@ public class CreateVaultBookmarkController extends SheetController {
             return false;
         }
         final String selectedStorageId = this.backendCombobox.selectedItem().representedObject();
-        final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> {
-            try {
-                return c.getId().toString().equals(selectedStorageId);
-            }
-            catch(StorageProfileDtoWrapperException e) {
-                log.warn(e);
-                return false;
-            }
-        }).findFirst().get();
+        final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> c.getId().toString().equals(selectedStorageId)).findFirst().get();
         final boolean isPermanent = config.getType().equals(StorageProfileS3Dto.class);
         if(isPermanent) {
             if(StringUtils.isBlank(this.accessKeyIdField.stringValue())) {

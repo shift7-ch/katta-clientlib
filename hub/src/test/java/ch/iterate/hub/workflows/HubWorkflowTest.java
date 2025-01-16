@@ -35,7 +35,6 @@ import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.SetupCodeJWE;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestController;
@@ -135,15 +134,7 @@ class HubWorkflowTest {
             log.info(storageProfiles);
             final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> {
-                        try {
-                            return p.getId().toString().equals(hubTestConfig.vaultSpec.storageProfileId.toLowerCase());
-                        }
-                        catch(StorageProfileDtoWrapperException e) {
-                            log.error(e);
-                            return false;
-                        }
-                    }).findFirst().get();
+                    .filter(p -> p.getId().toString().equals(hubTestConfig.vaultSpec.storageProfileId.toLowerCase())).findFirst().get();
 
             final UUID vaultIdSharedWithAdmin = UUID.randomUUID();
             final boolean automaticAccessGrant = true;
