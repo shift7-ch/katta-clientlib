@@ -49,7 +49,7 @@ public class WoT {
      */
     public static void verifyRecursive(final List<String> signatureChain, final ECPublicKey signerPublicKey, final SignedKeys allegedSignedKey) throws SecurityFailure {
         // get first element of signature chain
-        final String signature = signatureChain.getFirst();
+        final String signature = signatureChain.get(0);
         final SignedKeys signedKeys;
         try {
             signedKeys = SignedKeys.fromPayload(JWT.parse(signature, signerPublicKey));
