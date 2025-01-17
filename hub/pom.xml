@@ -28,7 +28,7 @@
                         <!-- https://openapi-generator.tech/docs/plugins/ -->
                         <groupId>org.openapitools</groupId>
                         <artifactId>openapi-generator-maven-plugin</artifactId>
-                        <version>6.0.0</version>
+                        <version>7.10.0</version>
                         <executions>
                             <execution>
                                 <goals>
