@@ -21,7 +21,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <cyberduck.version>9.1.2</cyberduck.version>
+        <cyberduck.version>9.1.3-SNAPSHOT</cyberduck.version>
         <testcontainers.version>1.20.4</testcontainers.version>
     </properties>
 
@@ -35,6 +35,17 @@
             </releases>
             <snapshots>
                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>maven.cyberduck.io-snapshot</id>
+            <url>https://s3-eu-west-1.amazonaws.com/repo.maven.cyberduck.io/snapshots/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
