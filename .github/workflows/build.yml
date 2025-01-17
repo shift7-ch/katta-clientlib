@@ -21,3 +21,5 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: mvn --no-transfer-progress --batch-mode verify
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}

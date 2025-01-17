@@ -4,9 +4,7 @@
 
 package ch.iterate.hub.testsetup;
 
-import ch.cyberduck.core.AbstractProtocol;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.Scheme;
+import ch.cyberduck.test.VaultTest;
 
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,34 +18,10 @@ import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
 import ch.iterate.hub.testsetup.model.HubTestSetupUserConfig;
 import ch.iterate.hub.testsetup.model.VaultSpec;
 
-public class HubTestSetupConfigs {
+public class HubTestSetupConfigs extends VaultTest {
+
     static {
-        HubTestUtilities.credentials();
-    }
-
-
-    private static Protocol protocol(final String provider) {
-        return new AbstractProtocol() {
-            @Override
-            public String getProvider() {
-                return provider;
-            }
-
-            @Override
-            public String getIdentifier() {
-                return null;
-            }
-
-            @Override
-            public String getDescription() {
-                return null;
-            }
-
-            @Override
-            public Scheme getScheme() {
-                return null;
-            }
-        };
+        credentials();
     }
 
     private static final VaultSpec minioSTSVaultConfig = new VaultSpec("MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C", null, null, null);
@@ -55,8 +29,8 @@ public class HubTestSetupConfigs {
     private static final VaultSpec awsSTSVaultConfig = new VaultSpec("AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6", null, null, null);
 
     private static final VaultSpec awsStaticVaultConfig = new VaultSpec("AWS static", "72736C19-283C-49D3-80A5-AB74B5202543", "cipherststest",
-            HubTestUtilities.credentials(protocol("cipherduck.AWS_CIPHERSTSTEST")).getUsername(),
-            HubTestUtilities.credentials(protocol("cipherduck.AWS_CIPHERSTSTEST")).getPassword()
+            PROPERTIES.get(String.format("%s.user", "cipherduck.AWS_CIPHERSTSTEST")),
+            PROPERTIES.get(String.format("%s.password", "cipherduck.AWS_CIPHERSTSTEST"))
     );
 
 
@@ -85,12 +59,12 @@ public class HubTestSetupConfigs {
             // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
             .withHubURL("http://localhost:8280")
             .withUSER(new HubTestSetupUserConfig(
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_USER001")).getUsername(),
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_USER001")).getPassword(),
+                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
+                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
                     "blabla"))
             .withADMIN(new HubTestSetupUserConfig(
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_ADMIN")).getUsername(),
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_ADMIN")).getPassword(),
+                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
+                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
                     "blabla"))
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 improvement: no need to start keycloak in this setting
             .withDockerConfig(new HubTestSetupConfig.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280));
@@ -126,12 +100,12 @@ public class HubTestSetupConfigs {
     public static HubTestSetupConfig ATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestSetupConfig()
             .withHubURL("http://localhost:8080")
             .withUSER(new HubTestSetupUserConfig(
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_USER001")).getUsername(),
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_USER001")).getPassword(),
+                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
+                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
                     "blabla"))
             .withADMIN(new HubTestSetupUserConfig(
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_ADMIN")).getUsername(),
-                    HubTestUtilities.credentials(protocol("cipherduck.TESTING_CRYPTOMATOR_ADMIN")).getPassword(),
+                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
+                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
                     "blabla"));
     private static final Function<VaultSpec, Arguments> argumentAttendedLocalKeycloadkDev = vs -> Arguments.of(Named.of(String.format("%s %s (%s) %s", ATTENDED_LOCAL_KEYCLOAK_TESTING.hubURL(), vs.storageProfileName, vs.storageProfileId, vs.bucketName), new HubTestConfig(ATTENDED_LOCAL_KEYCLOAK_TESTING, vs)));
     public static Arguments minioSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioSTSVaultConfig);

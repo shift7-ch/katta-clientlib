@@ -6,7 +6,6 @@ package ch.iterate.hub.testsetup.docker_setup;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.DockerClientFactory;
@@ -29,7 +28,7 @@ import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.AuthConfig;
 
-public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, AfterAllCallback {
+public abstract class HubTestSetupDockerExtension implements BeforeAllCallback {
     private static final Logger log = LogManager.getLogger(HubTestSetupDockerExtension.class.getName());
 
     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 use release version! can we extract to pom.xml?

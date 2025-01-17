@@ -6,6 +6,7 @@ package ch.iterate.hub.core;
 
 import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.BookmarkCollection;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.Host;
@@ -49,12 +50,12 @@ import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.hub.VaultProfileBookmarkService;
 import ch.iterate.hub.testsetup.AbstractHubTest;
+import ch.iterate.hub.testsetup.HubTestController;
+import ch.iterate.hub.testsetup.MethodIgnorableSource;
 import ch.iterate.hub.testsetup.model.HubTestConfig;
 import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
 import ch.iterate.hub.testsetup.model.VaultSpec;
 import ch.iterate.hub.workflows.CreateVaultService;
-import ch.iterate.mountainduck.test.MethodIgnorableSource;
-import ch.iterate.mountainduck.test.TestController;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
@@ -67,7 +68,6 @@ import com.amazonaws.services.s3.model.HeadBucketResult;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static ch.iterate.hub.core.HubHostCollection.defaultCollection;
 import static ch.iterate.hub.testsetup.HubTestUtilities.*;
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.*;
@@ -92,7 +92,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertNotNull(ProtocolFactory.get().forName("s3-hub", "Shift 7 GmbH"));
             assertNotNull(ProtocolFactory.get().forName("s3-hub-sts", "Shift 7 GmbH"));
 
-            new CreateHubBookmarkAction(hubTestSetupConfig.hubURL(), defaultCollection(), new TestController()).run();
+            new CreateHubBookmarkAction(hubTestSetupConfig.hubURL(), BookmarkCollection.defaultCollection(), new HubTestController()).run();
 
             final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
@@ -183,7 +183,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
         setupForUser(hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
 
-        new CreateHubBookmarkAction(hubTestSetupConfig.hubURL(), defaultCollection(), new TestController()).run();
+        new CreateHubBookmarkAction(hubTestSetupConfig.hubURL(), BookmarkCollection.defaultCollection(), new HubTestController()).run();
 
         final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
         final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
@@ -268,7 +268,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         }
         log.info(String.format("Creating vault in %s", hubSession));
         final UUID vaultUuid = UUID.randomUUID();
-        new CreateVaultService(hubSession, new TestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
+        new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
         log.info(String.format("Getting vault bookmark for vault %s", vaultUuid));
         final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid);
         log.info(String.format("Logging into vault %s with shared oauth credentials from password store", vaultBookmark));
