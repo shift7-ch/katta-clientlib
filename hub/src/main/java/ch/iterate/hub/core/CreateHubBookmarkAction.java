@@ -4,6 +4,7 @@
 
 package ch.iterate.hub.core;
 
+import ch.cyberduck.core.AbstractHostCollection;
 import ch.cyberduck.core.Controller;
 import ch.cyberduck.core.CredentialsConfiguratorFactory;
 import ch.cyberduck.core.DefaultIOExceptionMappingService;
@@ -16,9 +17,6 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.local.DefaultTemporaryFileService;
 import ch.cyberduck.core.threading.AbstractBackgroundAction;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 
 import ch.iterate.hub.client.ApiException;
@@ -30,19 +28,17 @@ import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import static ch.iterate.hub.protocols.hub.HubSession.getHubApiClientBootstrapping;
 
 public class CreateHubBookmarkAction extends AbstractBackgroundAction<Host> {
-    private static final Logger log = LogManager.getLogger(CreateHubBookmarkAction.class);
-    private final String hubURL;
-    private final HubHostCollection collection;
 
+    private final String hubURL;
+    private final AbstractHostCollection collection;
     private final Controller controller;
 
-    public CreateHubBookmarkAction(final String hubURL, final HubHostCollection collection, final Controller controller) {
+    public CreateHubBookmarkAction(final String hubURL, final AbstractHostCollection collection, final Controller controller) {
         // some reverse proxies do not handle double slashes well
         this.hubURL = hubURL.replaceAll("/$", "");
         this.collection = collection;
         this.controller = controller;
     }
-
 
     @Override
     public Host run() throws BackgroundException {

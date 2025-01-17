@@ -141,11 +141,10 @@ public class HubTestUtilities {
         };
         MockableFirstLoginDeviceSetupCallback.setProxy(proxy);
 
-        final Workaround controller = new Workaround();
-
-        AbstractHostCollectionProviderFactory.get().loadDefaultCollection(controller);
+        final BookmarkCollection bookmarks = BookmarkCollection.defaultCollection();
+        bookmarks.load();
         final HubTestController controller = new HubTestController();
-        final Host hub = new CreateHubBookmarkAction(hubURL, (HubHostCollection) AbstractHostCollectionProviderFactory.get().defaultCollection(), controller).run();
+        final Host hub = new CreateHubBookmarkAction(hubURL, bookmarks, controller).run();
 
         try {
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 bad code smell - we need to wait until added -> start background

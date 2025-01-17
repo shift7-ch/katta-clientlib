@@ -29,7 +29,6 @@ import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.amazonaws.SdkBaseException;
 
-import static ch.iterate.hub.core.HubHostCollection.defaultCollection;
 import static ch.iterate.hub.protocols.hub.HubSession.createFromHubUrl;
 
 /**
@@ -60,7 +59,6 @@ public class CreateVaultBookmarkAction {
                 try {
                     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko
                     new CreateVaultService(hubSession, controller).createVault(m);
-                    defaultCollection().sync(hub.getUuid());
                 }
                 // N.B. CORS is not a problem when using Java SDK!
                 catch(ApiException | SdkBaseException e) {

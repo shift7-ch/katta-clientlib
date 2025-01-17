@@ -7,7 +7,6 @@ package ch.iterate.hub.testsetup.docker_setup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import ch.iterate.hub.core.HubHostCollection;
 import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.AuthConfig;
@@ -81,17 +79,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback {
                 .withExposedService("hub-1", hubPort, Wait.forListeningPort())
                 .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)))
                 .waitingFor("hub_setup_storage_profile-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)));
-        this.compose.start();
+        compose.start();
         log.info(String.format("Done setup docker %s", dockerConfig));
-    }
-
-    @Override
-    public void afterAll(ExtensionContext context) throws Exception {
-        // gracefully cancel and clear hub host collection before stopping docker in order to avoid cluttering the log with failed sync
-        HubHostCollection.defaultCollection().clear();
-        HubHostCollection.defaultCollection().cancel();
-        if(null != this.compose) {
-            this.compose.stop();
-        }
     }
 }
