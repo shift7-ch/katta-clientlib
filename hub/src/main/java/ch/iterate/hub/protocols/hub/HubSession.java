@@ -53,7 +53,6 @@ import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.workflows.FirstLoginDeviceSetupService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
@@ -119,7 +118,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             }
             new FirstLoginDeviceSetupService(this).getUserKeysWithDeviceKeys();
         }
-        catch(AccessException | SecurityFailure | FirstLoginDeviceSetupException e) {
+        catch(AccessException | SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
         catch(ApiException e) {

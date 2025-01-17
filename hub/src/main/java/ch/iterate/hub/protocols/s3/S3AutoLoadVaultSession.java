@@ -33,7 +33,6 @@ import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.CachingUserKeysService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.google.common.primitives.Bytes;
 import com.nimbusds.jose.util.Base64URL;
@@ -111,8 +110,7 @@ public class S3AutoLoadVaultSession extends S3Session {
                 }
             }));
         }
-        catch(ApiException | FirstLoginDeviceSetupException | SecurityFailure |
-              AccessException e) {
+        catch(ApiException | SecurityFailure | AccessException e) {
             // make sure we never display the encrypted files (vault.cryptomator, / d/....)
             throw new LoginFailureException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }

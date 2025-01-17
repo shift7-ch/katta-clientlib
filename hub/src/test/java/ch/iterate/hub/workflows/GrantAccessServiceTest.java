@@ -20,7 +20,6 @@ import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,7 +36,7 @@ class GrantAccessServiceTest {
             "true,2,2,1",   // maxWotDepth == bobTrustLevel -> 1 upload
             "true,1,2,0",   // maxWotDepth < bobTrustLevel -> no upload
     })
-    public void grantAccessToUsersRequiringAccessGrant(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    public void grantAccessToUsersRequiringAccessGrant(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws ApiException, AccessException, SecurityFailure {
         final VaultResourceApi vaults = Mockito.mock(VaultResourceApi.class);
         final UsersResourceApi users = Mockito.mock(UsersResourceApi.class);
         final UserKeysService usk = Mockito.mock(CachingUserKeysService.class);

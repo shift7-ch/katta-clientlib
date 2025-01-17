@@ -48,7 +48,6 @@ import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
@@ -73,7 +72,7 @@ public class CreateVaultService {
         this.controller = controller;
     }
 
-    public void createVault(final CreateVaultModel m) throws ApiException, AccessException, SecurityFailure, FirstLoginDeviceSetupException, BackgroundException {
+    public void createVault(final CreateVaultModel m) throws ApiException, AccessException, SecurityFailure, BackgroundException {
         try {
             final HubApiClient apiClient = hubSession.getClient();
             final UsersResourceApi usersResourceApi = new UsersResourceApi(apiClient);

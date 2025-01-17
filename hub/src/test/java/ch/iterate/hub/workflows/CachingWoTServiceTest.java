@@ -23,7 +23,6 @@ import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.wot.SignedKeys;
 import ch.iterate.hub.crypto.wot.WoT;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 
@@ -37,7 +36,7 @@ import static org.mockito.Mockito.times;
 class CachingWoTServiceTest {
 
     @Test
-    void getTrustLevelsPerUserId() throws ParseException, JOSEException, FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    void getTrustLevelsPerUserId() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
         int len = 5;
 
@@ -96,7 +95,7 @@ class CachingWoTServiceTest {
 
 
     @Test
-    void verify() throws ParseException, JOSEException, FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    void verify() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> signatureChain = new LinkedList<>();
         int len = 5;
 
@@ -136,7 +135,7 @@ class CachingWoTServiceTest {
     }
 
     @Test
-    void sign() throws ApiException, ParseException, JOSEException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    void sign() throws ApiException, ParseException, JOSEException, AccessException, SecurityFailure {
         final UserKeys aliceKeys = UserKeys.create();
         final P384KeyPair bobEcdhKeys = P384KeyPair.generate();
         final P384KeyPair bobEcdsaKeys = P384KeyPair.generate();

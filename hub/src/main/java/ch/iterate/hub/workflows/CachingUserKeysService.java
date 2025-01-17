@@ -8,7 +8,6 @@ import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 /**
@@ -24,7 +23,7 @@ public class CachingUserKeysService extends UserKeysServiceImpl {
     /**
      * Get user key from hub and decrypt with device-keys
      */
-    public UserKeys getUserKeys() throws FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeys() throws ApiException, AccessException, SecurityFailure {
         // Get user key from hub and decrypt with device-keys
         if(this.userKeys == null) {
             this.userKeys = super.getUserKeys();

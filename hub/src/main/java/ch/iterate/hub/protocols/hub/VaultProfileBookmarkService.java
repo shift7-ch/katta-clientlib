@@ -34,7 +34,6 @@ import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.workflows.CachingUserKeysService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.*;
@@ -161,7 +160,7 @@ public class VaultProfileBookmarkService {
         };
     }
 
-    public Host getVaultBookmark(final UUID vaultUUID) throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    public Host getVaultBookmark(final UUID vaultUUID) throws ApiException, AccessException, SecurityFailure {
         if(log.isInfoEnabled()) {
             log.info(String.format("Creating bookmark for vault %s for hub %s", vaultUUID, hubSession.getHost()));
         }

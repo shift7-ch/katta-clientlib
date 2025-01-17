@@ -28,7 +28,6 @@ import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
@@ -54,7 +53,7 @@ public class GrantAccessService {
         this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()), new CachingUserKeysService(hubSession), new CachingWoTService(new UsersResourceApi(hubSession.getClient()), new CachingUserKeysService(hubSession)));
     }
 
-    public void grantAccessToUsersRequiringAccessGrant() throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    public void grantAccessToUsersRequiringAccessGrant() throws ApiException, AccessException, SecurityFailure {
         final List<VaultDto> accessibleVaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
 
         final UserDto me = usersResourceApi.apiUsersMeGet(true);
@@ -68,7 +67,7 @@ public class GrantAccessService {
         }
     }
 
-    public void grantAccessToUsersRequiringAccessGrant(final UUID vaultId) throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    public void grantAccessToUsersRequiringAccessGrant(final UUID vaultId) throws ApiException, AccessException, SecurityFailure {
         final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
         log.info("grantAccessToUsersRequiringAccessGrant users requiring access grant for vault {}: {}}", vaultId, usersRequiringAccessGrant);
 

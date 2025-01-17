@@ -12,7 +12,6 @@ import ch.iterate.hub.client.model.TrustedUserDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 /**
@@ -30,14 +29,14 @@ public class CachingWoTService extends WoTServiceImpl {
     }
 
     @Override
-    public Map<TrustedUserDto, Integer> getTrustLevels() throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    public Map<TrustedUserDto, Integer> getTrustLevels() throws ApiException, AccessException, SecurityFailure {
         if(trustLevels == null) {
             trustLevels = super.getTrustLevels();
         }
         return trustLevels;
     }
 
-    protected UserKeys getMyUserKeys() throws ApiException, AccessException, SecurityFailure, FirstLoginDeviceSetupException {
+    protected UserKeys getMyUserKeys() throws ApiException, AccessException, SecurityFailure {
         if(myUserKeys == null) {
             myUserKeys = super.getMyUserKeys();
         }

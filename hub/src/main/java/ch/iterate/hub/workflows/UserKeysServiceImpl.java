@@ -16,7 +16,6 @@ import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
@@ -33,14 +32,14 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getUserKeys() throws FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeys() throws ApiException, AccessException, SecurityFailure {
         // Get user key from hub and decrypt with device-keys
         return new FirstLoginDeviceSetupService(hubSession).getUserKeysWithDeviceKeys();
     }
 
 
     @Override
-    public UvfMetadataPayload getVaultMetadataJWE(final UUID vaultId) throws ApiException, FirstLoginDeviceSetupException, SecurityFailure, AccessException {
+    public UvfMetadataPayload getVaultMetadataJWE(final UUID vaultId) throws ApiException, SecurityFailure, AccessException {
         // contains vault member key
         final UvfAccessTokenPayload accessToken;
         accessToken = getVaultAccessTokenJWE(vaultId);
@@ -60,7 +59,7 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId) throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId) throws ApiException, AccessException, SecurityFailure {
         // Get the user-specific vault key with private user key
         return getVaultAccessTokenJWE(vaultId, getUserKeys());
     }

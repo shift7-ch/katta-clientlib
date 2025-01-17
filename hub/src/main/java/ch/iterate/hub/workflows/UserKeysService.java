@@ -11,14 +11,13 @@ import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 public interface UserKeysService {
     /**
      * Get user key from hub and decrypt with device-keys
      */
-    UserKeys getUserKeys() throws FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure;
+    UserKeys getUserKeys() throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get vault metadata JWE for vault:
@@ -28,7 +27,7 @@ public interface UserKeysService {
      *
      * @param vaultId Vault ID
      */
-    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId) throws ApiException, FirstLoginDeviceSetupException, SecurityFailure, AccessException;
+    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId) throws ApiException, SecurityFailure, AccessException;
 
     /**
      * Get vault access token containing vault member key and recovery key (if owner)
@@ -37,7 +36,7 @@ public interface UserKeysService {
      *
      * @param vaultId Vault ID
      */
-    UvfAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId) throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure;
+    UvfAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get the user-specific vault key with private user key.

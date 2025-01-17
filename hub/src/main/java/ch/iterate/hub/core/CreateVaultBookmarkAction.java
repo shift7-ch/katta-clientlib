@@ -25,7 +25,6 @@ import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.workflows.CreateVaultService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.amazonaws.SdkBaseException;
 
@@ -65,7 +64,7 @@ public class CreateVaultBookmarkAction {
                     // retry
                     cb.create(new CreateVaultBookmarkAction(hub, controller, m.withReason(e.getMessage()), cb));
                 }
-                catch(AccessException | SecurityFailure | BackgroundException | FirstLoginDeviceSetupException e) {
+                catch(AccessException | SecurityFailure | BackgroundException e) {
                     // give up
                     log.error(e);
                 }

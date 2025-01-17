@@ -27,7 +27,6 @@ import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.workflows.CachingUserKeysService;
 import ch.iterate.hub.workflows.UserKeysService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.google.common.collect.ImmutableMap;
 import com.nimbusds.jose.JOSEException;
@@ -121,7 +120,7 @@ class WoTTest {
     }
 
     @Test
-    void verifyRecursiveAndComputeTrustLevelNotAllegedSignedKeys() throws ParseException, JOSEException, ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    void verifyRecursiveAndComputeTrustLevelNotAllegedSignedKeys() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final UserKeys aliceKeys = UserKeys.create();
 
         final P384KeyPair bobEcdsaKeys = P384KeyPair.generate();
