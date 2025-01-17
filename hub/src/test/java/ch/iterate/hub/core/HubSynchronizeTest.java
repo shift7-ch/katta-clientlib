@@ -4,6 +4,9 @@
 
 package ch.iterate.hub.core;
 
+import ch.cyberduck.test.IntegrationTest;
+
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
