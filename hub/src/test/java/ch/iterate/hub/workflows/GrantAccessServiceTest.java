@@ -1,0 +1,65 @@
+/*
+ * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ */
+
+package ch.iterate.hub.workflows;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
+
+import java.util.Collections;
+import java.util.UUID;
+
+import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.client.api.UsersResourceApi;
+import ch.iterate.hub.client.api.VaultResourceApi;
+import ch.iterate.hub.client.model.MemberDto;
+import ch.iterate.hub.crypto.UserKeys;
+import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
+import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
+import ch.iterate.hub.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
+import ch.iterate.hub.workflows.exceptions.AccessException;
+import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
+import ch.iterate.hub.workflows.exceptions.SecurityFailure;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+
+class GrantAccessServiceTest {
+
+    @ParameterizedTest
+    @CsvSource({
+            "false,-1,2,0", // automatic access grant disabled -> no upload
+            "true,-1,2,0",  // invalid maxWotDepth value -> no upload
+            "true,3,2,1",   // maxWotDepth > bobTrustLevel -> 1 upload
+            "true,2,2,1",   // maxWotDepth == bobTrustLevel -> 1 upload
+            "true,1,2,0",   // maxWotDepth < bobTrustLevel -> no upload
+    })
+    public void grantAccessToUsersRequiringAccessGrant(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+        final VaultResourceApi vaults = Mockito.mock(VaultResourceApi.class);
+        final UsersResourceApi users = Mockito.mock(UsersResourceApi.class);
+        final UserKeysService usk = Mockito.mock(CachingUserKeysService.class);
+        final WoTService wot = Mockito.mock(CachingWoTService.class);
+        final GrantAccessService grantAccessService = new GrantAccessService(vaults, users, usk, wot);
+        final UUID vaultId = UUID.randomUUID();
+
+        final UserKeys aliceKeys = UserKeys.create();
+        final UserKeys bobKeys = UserKeys.create();
+        final MemberDto bob = new MemberDto()
+                .id(UUID.randomUUID().toString())
+                .ecdhPublicKey(bobKeys.encodedEcdhPublicKey())
+                .ecdsaPublicKey(bobKeys.encodedEcdsaPublicKey());
+
+        Mockito.when(usk.getVaultMetadataJWE(vaultId)).thenReturn(new UvfMetadataPayload());
+        Mockito.when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
+        Mockito.when(usk.getUserKeys()).thenReturn(aliceKeys);
+        Mockito.when(usk.getVaultMetadataJWE(vaultId)).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
+        Mockito.when(usk.getVaultAccessTokenJWE(vaultId, aliceKeys)).thenReturn(new UvfAccessTokenPayload());
+        Mockito.when(wot.getTrustLevelsPerUserId()).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
+
+        grantAccessService.grantAccessToUsersRequiringAccessGrant(vaultId);
+        Mockito.verify(vaults, times(expectedNumberOfUploads)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
+    }
+}

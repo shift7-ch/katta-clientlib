@@ -1,0 +1,51 @@
+/*
+ * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ */
+
+package ch.iterate.hub.core;
+
+import ch.cyberduck.core.Factory;
+
+import org.apache.commons.lang3.reflect.ConstructorUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+public class FirstLoginDeviceSetupCallbackFactory extends Factory<FirstLoginDeviceSetupCallback> {
+    private static final Logger log = LogManager.getLogger(FirstLoginDeviceSetupCallbackFactory.class);
+
+    private FirstLoginDeviceSetupCallbackFactory() {
+        super("factory.firstlogindevicesetupcallback.class");
+    }
+
+    public FirstLoginDeviceSetupCallback create() {
+        try {
+            final Constructor<? extends FirstLoginDeviceSetupCallback> constructor
+                    = ConstructorUtils.getMatchingAccessibleConstructor(clazz);
+            if(null == constructor) {
+                log.warn(String.format("No default controller in %s", constructor.getClass()));
+                // Call default constructor for disabled implementations
+                return clazz.getDeclaredConstructor().newInstance();
+            }
+            return constructor.newInstance();
+        }
+        catch(InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+            log.error(String.format("Failure loading callback class %s. %s", clazz, e.getMessage()));
+            return new DisabledFirstLoginDeviceSetupCallback();
+        }
+    }
+
+    private static FirstLoginDeviceSetupCallbackFactory singleton;
+
+    /**
+     * @return Firs tLogin Device Setup Callback instance for the current platform.
+     */
+    public static synchronized FirstLoginDeviceSetupCallback get() {
+        if(null == singleton) {
+            singleton = new FirstLoginDeviceSetupCallbackFactory();
+        }
+        return singleton.create();
+    }
+}

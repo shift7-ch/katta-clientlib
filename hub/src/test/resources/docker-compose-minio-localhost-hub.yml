@@ -1,0 +1,210 @@
+version: '3'
+
+services:
+  keycloak:
+    hostname: keycloak
+    image: "ghcr.io/shift7-ch/keycloak:${CIPHERDUCK_KEYCLOAK_VERSION}"
+    ports:
+      - "${KEYCLOAK_HTTP_PORT}:${KEYCLOAK_HTTP_PORT}"
+      - "${KEYCLOAK_HTTPS_PORT}:8443"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      PROXY_ADDRESS_FORWARDING: "true"
+      KEYCLOAK_LOGLEVEL: DEBUG
+      DB_VENDOR: h2
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/dev/certs/keycloak-server.crt.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/dev/certs/keycloak-server.key.pem
+    volumes:
+      - ./keycloak/dev-realm.json:/opt/keycloak/data/import/keycloak-realm.json
+      - ./certs:/opt/keycloak/dev/certs
+    # hub to Keycloak communication inside Docker network (http://keycloak:8180) goes to the container internal port! Therefore, we need to start keycloak with the same port `--http-port 8180`
+    command: start-dev --import-realm --db=dev-mem --health-enabled=true --http-port ${KEYCLOAK_HTTP_PORT} --features=token-exchange,admin-fine-grained-authz
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "curl -v --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" ]
+      interval: 5s
+      timeout: 10s
+      retries: 15
+
+  keycloak-enable-direct-access-grant:
+    image: "ghcr.io/shift7-ch/keycloak:${CIPHERDUCK_KEYCLOAK_VERSION}"
+    entrypoint: [ "/bin/bash","-c" ]
+    command:
+      - |
+        set -x
+        set -e
+        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+  postgres:
+    image:
+      docker.io/postgres:14
+    environment:
+      # extracted from running container started with mvn quarkus:dev
+      - POSTGRES_USER=quarkus
+      - POSTGRES_PASSWORD=quarkus
+      - POSTGRES_DB=quarkus
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/postgresql/14/bin
+      - GOSU_VERSION=1.16
+      - LANG=en_US.utf8
+      - PG_MAJOR=14
+      - PG_VERSION=14.7-1.pgdg110+1
+      - PGDATA=/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U quarkus -d quarkus'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  minio:
+    hostname: minio
+    image: "minio/minio:RELEASE.2024-11-07T00-52-20Z"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    restart: on-failure
+    ports:
+      - "${MINIO_PORT}:${MINIO_PORT}"
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${MINIO_PORT}/minio/health/ready" ]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+    command: server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
+
+  minio_setup:
+    image: minio/mc:RELEASE.2024-11-05T11-29-45Z
+    depends_on:
+      minio:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - ./setup:/setup
+    entrypoint: [ "/bin/sh","-c" ]
+    command:
+      - |
+        set -x
+        set -e
+        ls /setup
+        /usr/bin/mc config host add myminio http://minio:${MINIO_PORT} minioadmin minioadmin
+        
+        /usr/bin/mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
+        /usr/bin/mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
+        
+        /usr/bin/mc idp openid add myminio cryptomator \
+          config_url="http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" \
+          client_id="cryptomator" \
+          client_secret="ignore-me" \
+          role_policy="cipherduckcreatebucket"
+        /usr/bin/mc idp openid add myminio cryptomatorhub \
+          config_url="http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" \
+          client_id="cryptomatorhub" \
+          client_secret="ignore-me" \
+          role_policy="cipherduckcreatebucket"
+        /usr/bin/mc idp openid add myminio cryptomatorvaults \
+          config_url="http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" \
+          client_id="cryptomatorvaults" \
+          client_secret="ignore-me" \
+          role_policy="cipherduckaccessbucket"
+        
+        # see https://github.com/bitnami/charts/pull/28118
+        /usr/bin/mc admin service restart myminio --wait --json
+        # sleep necessary despite --wait...
+        sleep 5
+        
+        /usr/bin/mc idp openid enable myminio cryptomator
+        /usr/bin/mc idp openid enable myminio cryptomatorhub
+        /usr/bin/mc idp openid enable myminio cryptomatorvaults
+        
+        /usr/bin/mc admin service restart myminio --wait --json
+        sleep 5
+        
+        /usr/bin/mc idp openid ls myminio
+        /usr/bin/mc idp openid info myminio
+        
+        # if container is restarted, the bucket already exists...
+        /usr/bin/mc mb myminio/handmade || true
+        /usr/bin/mc rm --recursive --force myminio/handmade
+        
+        echo "createbuckets successful"
+
+  hub:
+    image: "ghcr.io/shift7-ch/katta-server:${CIPHERDUCK_HUB_VERSION}"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${HUB_PORT}/api/config" ]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+    environment:
+      QUARKUS_PROFILE: dev
+      QUARKUS_HTTP_PORT: ${HUB_PORT}
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/quarkus
+      QUARKUS_DATASOURCE_USERNAME: quarkus
+      QUARKUS_DATASOURCE_PASSWORD: quarkus
+      QUARKUS_LOG_LEVEL: DEBUG
+      HUB_KEYCLOAK_PUBLIC_URL: http://keycloak:${KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_LOCAL_URL: http://keycloak:${KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: cryptomator
+      AWS_REGION: us-east-1
+    ports:
+      - "${HUB_PORT}:${HUB_PORT}"
+
+  hub_setup_storage_profile:
+    image: busybox
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      keycloak-enable-direct-access-grant:
+        condition: service_completed_successfully
+      hub:
+        condition: service_healthy
+    volumes:
+      - ./setup:/setup
+    entrypoint: [ "/bin/sh","-c" ]
+    command:
+      - |
+        set -e
+        set -x
+        ls /setup
+        # https://curl.se/download.html
+        wget https://github.com/moparisthebest/static-curl/releases/download/v7.80.0/curl-amd64 -O curl
+        chmod +x ./curl
+        ./curl --version
+        wget https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -O jq
+        chmod +x ./jq 
+        ./jq --version
+        ./curl -v -X POST http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/protocol/openid-connect/token \
+              -H "Content-Type: application/x-www-form-urlencoded" \
+              -d "client_id=cryptomator" \
+              -d "grant_type=password" \
+              -d "username=admin" \
+              -d "password=admin" | tee access_token.txt
+        export ACCESS_TOKEN=`cat access_token.txt | ./jq ".access_token" | tr -d '"'`
+        
+        echo $$ACCESS_TOKEN
+        cat /setup/minio_sts/minio_sts_profile.json | sed -e 's/9000/${MINIO_PORT}/g' > /tmp/minio_sts_profile.json
+        cat /setup/minio_static/minio_static_profile.json | sed -e 's/9000/${MINIO_PORT}/g' > /tmp/minio_static_profile.json
+        
+        ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/minio_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/minio_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3sts -d @setup/aws_sts/aws_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3 -d @setup/aws_static/aws_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        ./curl -v --fail http://hub:${HUB_PORT}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
+        echo "createbuckets successful"
