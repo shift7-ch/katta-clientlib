@@ -7,32 +7,24 @@ package ch.iterate.hub.core;
 import ch.cyberduck.binding.Action;
 import ch.cyberduck.binding.Outlet;
 import ch.cyberduck.binding.SheetController;
-import ch.cyberduck.binding.application.NSButton;
-import ch.cyberduck.binding.application.NSCell;
-import ch.cyberduck.binding.application.NSControl;
-import ch.cyberduck.binding.application.NSImage;
-import ch.cyberduck.binding.application.NSImageView;
-import ch.cyberduck.binding.application.NSTextField;
+import ch.cyberduck.binding.application.*;
 import ch.cyberduck.binding.foundation.NSNotification;
 import ch.cyberduck.binding.foundation.NSNotificationCenter;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.StringAppender;
-import ch.cyberduck.core.exception.LocalAccessDeniedException;
 import ch.cyberduck.core.resources.IconCacheFactory;
-
+import ch.cyberduck.ui.pasteboard.PasteboardService;
+import ch.cyberduck.ui.pasteboard.PasteboardServiceFactory;
+import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rococoa.Foundation;
 import org.rococoa.ID;
 
-import ch.iterate.hub.model.AccountKeyAndDeviceName;
-import ch.iterate.mountainduck.service.PasteboardService;
-import ch.iterate.mountainduck.service.PasteboardServiceFactory;
-
-
 public class FirstLoginController extends SheetController {
     private static final Logger log = LogManager.getLogger(FirstLoginController.class.getName());
+
     protected final NSNotificationCenter notificationCenter
             = NSNotificationCenter.defaultCenter();
     private final String title;
@@ -173,12 +165,7 @@ public class FirstLoginController extends SheetController {
 
     @Action
     public void copyToClipboard(final ID sender) {
-        try {
-            PasteboardServiceFactory.get().add(PasteboardService.Type.string, accountKeyAndDeviceName.accountKey());
-        }
-        catch(LocalAccessDeniedException e) {
-            log.error("Could not copy Account Key to pasteboard.", e);
-        }
+        PasteboardServiceFactory.get().add(PasteboardService.Type.string, accountKeyAndDeviceName.accountKey());
     }
 
     public void setFinishSetupButton(final NSButton button) {
