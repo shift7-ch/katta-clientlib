@@ -311,8 +311,8 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 log.info(path);
             }
             assertEquals(2, vaultContents.size());
-            assertTrue(vaultContents.contains(expectedPath));
-            assertTrue(vaultContents.contains(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder))));
+            assertTrue(vaultContents.find(new SimplePathPredicate(expectedPath)) != null);
+            assertTrue(vaultContents.find(new SimplePathPredicate(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))) != null);
         }
         finally {
             hubSession.close();
