@@ -172,6 +172,9 @@ public class VaultProfileBookmarkService {
         final String hubUUID = vaultResourceApi.apiConfigGet().getUuid();
 
         final Protocol parent = ProtocolFactory.get().forName(vaultMetadata.getProvider());
+        if(null == parent) {
+            throw new AccessException(String.format("No storage profile for %s", vaultMetadata.getProvider()));
+        }
         final Host bookmark = new Host(parent);
         bookmark.setUuid(vaultUUID.toString());
         // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 get nickname, default path etc. from metadata instead of user key
