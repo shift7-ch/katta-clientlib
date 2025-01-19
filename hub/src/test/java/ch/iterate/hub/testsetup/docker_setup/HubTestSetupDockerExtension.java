@@ -6,7 +6,9 @@ package ch.iterate.hub.testsetup.docker_setup;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
@@ -26,7 +28,7 @@ import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.AuthConfig;
 
-public abstract class HubTestSetupDockerExtension implements BeforeAllCallback {
+public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, AfterAllCallback {
     private static final Logger log = LogManager.getLogger(HubTestSetupDockerExtension.class.getName());
 
     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 use release version! can we extract to pom.xml?
@@ -81,5 +83,11 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback {
                 .waitingFor("hub_setup_storage_profile-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)));
         compose.start();
         log.info(String.format("Done setup docker %s", dockerConfig));
+    }
+
+    @Override
+    public void afterAll(final ExtensionContext context) throws Exception {
+        log.info(String.format("Stop docker %s", compose));
+        compose.stop();
     }
 }
