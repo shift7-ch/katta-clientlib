@@ -4,20 +4,7 @@
 
 package ch.iterate.hub.core;
 
-import ch.cyberduck.core.AbstractPath;
-import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.BookmarkCollection;
-import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.DisabledLoginCallback;
-import ch.cyberduck.core.DisabledPasswordCallback;
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.HostUrlProvider;
-import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
-import ch.cyberduck.core.Scheme;
-import ch.cyberduck.core.Session;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
 import ch.cyberduck.core.vault.LoadingVaultLookupListener;
@@ -298,14 +285,14 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
                 if(path.isFile()) {
                     date.setTime(path.attributes().getModificationDate() + LAG);
-                    assert date.after(before);
+                    assertTrue(date.after(before));
                     date.setTime(path.attributes().getModificationDate() - LAG);
-                    assert date.before(after);
+                    assertTrue(date.before(after));
                 }
             }
             final Path expectedPath = new Path(String.format("/%s/%s", vaultBookmark.getDefaultPath(), PreferencesFactory.get().getProperty("cryptomator.vault.config.filename")), EnumSet.of(AbstractPath.Type.file));
             log.info("expectedPath {}", expectedPath);
-            assert bucketListRaw.contains(expectedPath);
+            assertTrue(bucketListRaw.find(new SimplePathPredicate(expectedPath)) != null);
 
             final ListService proxy = session.getFeature(ListService.class);
             final DefaultVaultRegistry registry = new DefaultVaultRegistry(new DisabledPasswordCallback());
