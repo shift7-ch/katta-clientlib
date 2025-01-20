@@ -22,6 +22,7 @@ import ch.iterate.hub.workflows.CachingUserKeysService;
 import ch.iterate.hub.workflows.CachingWoTService;
 import ch.iterate.hub.workflows.GrantAccessServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.WoTServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
@@ -40,7 +41,8 @@ public class HubGrantAccessSchedulerService extends OneTimeSchedulerFeature<Host
         log.info("Scheduler for {}", session.getHost());
         try {
             final GrantAccessServiceImpl service = new GrantAccessServiceImpl(new VaultResourceApi(session.getClient()), new UsersResourceApi(session.getClient()),
-                    new CachingUserKeysService(new UserKeysServiceImpl(new VaultResourceApi(session.getClient()), new UsersResourceApi(session.getClient()), new DeviceResourceApi(session.getClient()))),
+                    new CachingUserKeysService(new UserKeysServiceImpl(new UsersResourceApi(session.getClient()), new DeviceResourceApi(session.getClient()))),
+                    new VaultServiceImpl(new VaultResourceApi(session.getClient())),
                     new CachingWoTService(new WoTServiceImpl(new UsersResourceApi(session.getClient()))));
             service.grantAccessToUsersRequiringAccessGrant(session.getHost(), FirstLoginDeviceSetupCallbackFactory.get());
         }
