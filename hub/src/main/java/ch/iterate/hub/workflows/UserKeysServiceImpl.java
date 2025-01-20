@@ -18,20 +18,15 @@ import org.joda.time.DateTime;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
-import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.DeviceResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
-import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.DeviceDto;
 import ch.iterate.hub.client.model.Type1;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.client.model.VaultDto;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
-import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
-import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.model.SetupCodeJWE;
 import ch.iterate.hub.protocols.hub.HubSession;
@@ -39,25 +34,21 @@ import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static ch.iterate.hub.crypto.uvf.UvfMetadataPayload.UniversalVaultFormatJWKS.memberKeyFromRawKey;
 import static ch.iterate.hub.workflows.FirstLoginDeviceSetupService.*;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
 
-    private final VaultResourceApi vaultResource;
     private final UsersResourceApi usersResourceApi;
     private final DeviceResourceApi deviceResourceApi;
 
     public UserKeysServiceImpl(final HubSession hubSession) {
-        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()));
+        this(new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()));
     }
 
-    public UserKeysServiceImpl(final VaultResourceApi vaultResource, final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
-        this.vaultResource = vaultResource;
+    public UserKeysServiceImpl(final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
         this.usersResourceApi = usersResourceApi;
         this.deviceResourceApi = deviceResourceApi;
     }
@@ -146,10 +137,7 @@ public class UserKeysServiceImpl implements UserKeysService {
 //                        "blabla");
 
                 log.info("(3.3) upload user keys");
-                usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
-                        .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
-                        .privateKey(userKeys.encryptWithSetupCode(setupCode))
-                        .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                this.uploadUserKeys(me, userKeys, setupCode);
 
                 log.info("(3.4) Retrieve/generate device keys. Retrieve if present in keychain from another hub.");
                 final ECKeyPair deviceKeyPair;
@@ -159,7 +147,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 }
                 else {
                     log.info("(3.4b) Re-using existing device with new user keys.");
-                    deviceKeyPair = getDeviceKeysFromPasswordStore(me.getId(), hub.getUuid());
+                    deviceKeyPair = deviceKeyPairFromKeychain;
                 }
                 log.info("(3.4) Upload device-specific user keys and store device keys in keychain.");
                 this.uploadDeviceKeys(deviceName, userKeys, deviceKeyPair);
@@ -178,6 +166,13 @@ public class UserKeysServiceImpl implements UserKeysService {
         }
     }
 
+    private void uploadUserKeys(final UserDto me, final UserKeys userKeys, final String setupCode) throws ApiException, JOSEException, JsonProcessingException {
+        usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
+                .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
+                .privateKey(userKeys.encryptWithSetupCode(setupCode))
+                .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+    }
+
     private void uploadDeviceKeys(final String deviceName, final UserKeys userKeys, final ECKeyPair deviceKeys) throws JOSEException, ApiException, JsonProcessingException {
         final String encodedPublicKeyDeviceKey = Base64.getEncoder().encodeToString(deviceKeys.getPublic().getEncoded());
         final String deviceSpecificUserKeyJWE = userKeys.encryptForDevice(deviceKeys.getPublic());
@@ -188,47 +183,5 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .userPrivateKey(deviceSpecificUserKeyJWE)
                 .type(Type1.DESKTOP)
                 .creationTime(new DateTime()));
-    }
-
-    @Override
-    public UvfMetadataPayload getVaultMetadataJWE(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, SecurityFailure, AccessException {
-        // contains vault member key
-        final UvfAccessTokenPayload accessToken = this.getVaultAccessTokenJWE(hub, vaultId, prompt);
-        final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
-
-        // extract and decode vault key
-        final OctetSequenceKey rawMemberKey = memberKeyFromRawKey(Base64.getDecoder().decode(accessToken.key()));
-
-        // decode vault metadata (incl. key material)
-        try {
-            return UvfMetadataPayload.decryptWithJWK(vault.getUvfMetadataFile(), rawMemberKey);
-        }
-        catch(ParseException | JsonProcessingException | JOSEException e) {
-            throw new SecurityFailure(e);
-        }
-    }
-
-    @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
-        // Get the user-specific vault key with private user key
-        return this.getVaultAccessTokenJWE(vaultId, this.getUserKeys(hub, prompt));
-    }
-
-    /**
-     * Get the user-specific vault key with private user key.
-     *
-     * @param vaultId        vault ID
-     * @param privateUserKey private user key
-     * @return uvf metadata
-     */
-    private UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys privateUserKey) throws ApiException, SecurityFailure {
-        final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
-        final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vault.getId(), false);
-        try {
-            return privateUserKey.decryptAccessToken(userSpecificVaultJWE);
-        }
-        catch(ParseException | JOSEException | JsonProcessingException e) {
-            throw new SecurityFailure(e);
-        }
     }
 }

@@ -14,7 +14,6 @@ import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.LoginFailureException;
-import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.shared.DefaultPathHomeFeature;
@@ -33,6 +32,7 @@ import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.google.common.primitives.Bytes;
@@ -86,9 +86,11 @@ public class S3AutoLoadVaultSession extends S3Session {
                 }
             });
 
-            final UvfMetadataPayload vaultMetadata = new UserKeysServiceImpl(hubSession).getVaultMetadataJWE(hubSession.getHost(),
-                    UUID.fromString(host.getUuid()), FirstLoginDeviceSetupCallbackFactory.get());
-            final Path home = (new DelegatingHomeFeature(new Home[]{new DefaultPathHomeFeature(host)})).find();
+            final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(hubSession);
+            final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
+            final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(
+                    UUID.fromString(host.getUuid()), userKeysService.getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get()));
+            final Path home = new DelegatingHomeFeature(new DefaultPathHomeFeature(host)).find();
 
             // as in VaultFinderListProgressListener:
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 harmonize interface? Should we pass in full uvf metadata?

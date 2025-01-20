@@ -6,13 +6,9 @@ package ch.iterate.hub.workflows;
 
 import ch.cyberduck.core.Host;
 
-import java.util.UUID;
-
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
-import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
-import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
@@ -37,15 +33,5 @@ public class CachingUserKeysService implements UserKeysService {
             this.userKeys = proxy.getUserKeys(hub, prompt);
         }
         return this.userKeys;
-    }
-
-    @Override
-    public UvfMetadataPayload getVaultMetadataJWE(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, SecurityFailure, AccessException {
-        return proxy.getVaultMetadataJWE(hub, vaultId, prompt);
-    }
-
-    @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
-        return proxy.getVaultAccessTokenJWE(hub, vaultId, prompt);
     }
 }

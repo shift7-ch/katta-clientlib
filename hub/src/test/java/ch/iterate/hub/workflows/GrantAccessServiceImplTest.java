@@ -43,6 +43,7 @@ class GrantAccessServiceImplTest {
         final VaultResourceApi vaults = Mockito.mock(VaultResourceApi.class);
         final UsersResourceApi users = Mockito.mock(UsersResourceApi.class);
         final UserKeysService userKeysServiceMock = Mockito.mock(UserKeysService.class);
+        final VaultService vaultServiceMock = Mockito.mock(VaultService.class);
         final WoTService wotServiceMock = Mockito.mock(WoTService.class);
         final UUID vaultId = UUID.randomUUID();
         final Host hub = Mockito.mock(Host.class);
@@ -56,11 +57,11 @@ class GrantAccessServiceImplTest {
 
         Mockito.when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
         Mockito.when(userKeysServiceMock.getUserKeys(hub, FirstLoginDeviceSetupCallback.disabled)).thenReturn(aliceKeys);
-        Mockito.when(userKeysServiceMock.getVaultMetadataJWE(hub, vaultId, FirstLoginDeviceSetupCallback.disabled)).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
-        Mockito.when(userKeysServiceMock.getVaultAccessTokenJWE(hub, vaultId, FirstLoginDeviceSetupCallback.disabled)).thenReturn(new UvfAccessTokenPayload());
+        Mockito.when(vaultServiceMock.getVaultMetadataJWE(vaultId, aliceKeys)).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
+        Mockito.when(vaultServiceMock.getVaultAccessTokenJWE(vaultId, aliceKeys)).thenReturn(new UvfAccessTokenPayload());
         Mockito.when(wotServiceMock.getTrustLevelsPerUserId(userKeysServiceMock.getUserKeys(hub, FirstLoginDeviceSetupCallback.disabled))).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 
-        final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, users, userKeysServiceMock, wotServiceMock);
+        final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, users, userKeysServiceMock, vaultServiceMock, wotServiceMock);
         grantAccessService.grantAccessToUsersRequiringAccessGrant(hub, vaultId, FirstLoginDeviceSetupCallback.disabled);
         Mockito.verify(vaults, times(expectedNumberOfUploads)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
     }

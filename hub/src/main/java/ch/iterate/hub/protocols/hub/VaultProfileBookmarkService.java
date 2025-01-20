@@ -34,6 +34,7 @@ import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
@@ -166,7 +167,10 @@ public class VaultProfileBookmarkService {
             log.info(String.format("Creating bookmark for vault %s for hub %s", vaultUUID, hubSession.getHost()));
         }
 
-        final UvfMetadataPayload jwe = new UserKeysServiceImpl(hubSession).getVaultMetadataJWE(hubSession.getHost(), vaultUUID, prompt);
+        final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(hubSession);
+        final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
+        final UvfMetadataPayload jwe = vaultService.getVaultMetadataJWE(vaultUUID,
+                userKeysService.getUserKeys(hubSession.getHost(), prompt));
         final VaultMetadataJWEBackendDto vaultMetadata = jwe.storage();
         final ConfigResourceApi vaultResourceApi = new ConfigResourceApi(hubSession.getClient());
         final String hubUUID = vaultResourceApi.apiConfigGet().getUuid();
