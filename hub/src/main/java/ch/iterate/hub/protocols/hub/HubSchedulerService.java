@@ -13,16 +13,16 @@ import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
 import java.util.concurrent.ExecutionException;
 
 public class HubSchedulerService extends ThreadPoolSchedulerFeature<Void> {
-    private final Scheduler[] features;
+    private final Scheduler<?>[] features;
 
-    public HubSchedulerService(final long period, final Scheduler... features) {
+    public HubSchedulerService(final long period, final Scheduler<?>... features) {
         super(period);
         this.features = features;
     }
 
     @Override
     protected Void operate(final PasswordCallback callback) throws BackgroundException {
-        for(Scheduler feature : features) {
+        for(Scheduler<?> feature : features) {
             try {
                 feature.execute(callback).get();
             }
@@ -41,7 +41,7 @@ public class HubSchedulerService extends ThreadPoolSchedulerFeature<Void> {
 
     @Override
     public void shutdown(final boolean gracefully) {
-        for(Scheduler feature : features) {
+        for(Scheduler<?> feature : features) {
             feature.shutdown(gracefully);
         }
     }
