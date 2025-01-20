@@ -17,8 +17,6 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,10 +29,6 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     protected void setupDocker(final HubTestSetupConfig.DockerConfig configuration) throws URISyntaxException {
         log.info(String.format("Setup docker %s", configuration));
-        final List<String> images = Arrays.asList(
-                String.format("ghcr.io/shift7-ch/katta-server:%s", "latest"),
-                String.format("ghcr.io/shift7-ch/keycloak:%s", "latest")
-        );
         this.compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
                 .withLocalCompose(true)
