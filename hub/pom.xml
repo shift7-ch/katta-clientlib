@@ -73,10 +73,6 @@
     <dependencies>
         <dependency>
             <groupId>ch.cyberduck</groupId>
-            <artifactId>binding</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.cyberduck</groupId>
             <artifactId>nio</artifactId>
         </dependency>
         <dependency>
