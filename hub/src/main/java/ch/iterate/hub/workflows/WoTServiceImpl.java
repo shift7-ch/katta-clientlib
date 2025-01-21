@@ -17,23 +17,30 @@ import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.wot.SignedKeys;
 import ch.iterate.hub.crypto.wot.WoT;
+import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 
 public class WoTServiceImpl implements WoTService {
-    protected final UsersResourceApi usersApi;
-    protected final UserKeysService userKeysService;
 
-    public WoTServiceImpl(final UsersResourceApi users, final UserKeysService userKeysService) {
+    protected final UsersResourceApi usersApi;
+
+    public WoTServiceImpl(final HubSession hubSession) {
+        this(new UsersResourceApi(hubSession.getClient()));
+    }
+
+    public WoTServiceImpl(final UsersResourceApi users) {
         this.usersApi = users;
-        this.userKeysService = userKeysService;
     }
 
     @Override
-    public Map<TrustedUserDto, Integer> getTrustLevels() throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
-        ECPublicKey signerPublicKey = getMyUserKeys().ecdsaKeyPair().getPublic();
+    public Map<String, Integer> getTrustLevelsPerUserId(final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
+        return this.getTrustLevels(userKeys).entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().getTrustedUserId(), Map.Entry::getValue));
+    }
+
+    protected Map<TrustedUserDto, Integer> getTrustLevels(final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
+        final ECPublicKey signerPublicKey = userKeys.ecdsaKeyPair().getPublic();
 
         // 1. From the perspective of the currently logged-in user, GET a list of trusted users from /api/users/trusted
         final List<TrustedUserDto> trusts = usersApi.apiUsersTrustedGet();
@@ -43,30 +50,15 @@ public class WoTServiceImpl implements WoTService {
         return WoT.verifyTrusts(trusts, users, signerPublicKey);
     }
 
-    protected UserKeys getMyUserKeys() throws ApiException, AccessException, SecurityFailure, FirstLoginDeviceSetupException {
-        return userKeysService.getUserKeys();
+    @Override
+    public void verify(final UserKeys userKeys, final List<String> signatureChain, final SignedKeys allegedSignedKey) throws ApiException, AccessException, SecurityFailure {
+        WoT.verifyRecursive(signatureChain, userKeys.ecdsaKeyPair().getPublic(), allegedSignedKey);
     }
-
-    protected UserDto getMe() throws ApiException {
-        return usersApi.apiUsersMeGet(true);
-    }
-
 
     @Override
-    public Map<String, Integer> getTrustLevelsPerUserId() throws ApiException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
-        return getTrustLevels().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().getTrustedUserId(), Map.Entry::getValue));
-    }
-
-
-    @Override
-    public void verify(final List<String> signatureChain, final SignedKeys allegedSignedKey) throws FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
-        WoT.verifyRecursive(signatureChain, getMyUserKeys().ecdsaKeyPair().getPublic(), allegedSignedKey);
-    }
-
-
-    @Override
-    public TrustedUserDto sign(final UserDto user) throws ApiException, ParseException, JOSEException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
-        final String signature = WoT.sign(getMyUserKeys().ecdsaKeyPair().getPrivate(), getMe().getId(), user);
+    public TrustedUserDto sign(final UserKeys userKeys, final UserDto user) throws ApiException, ParseException, JOSEException, AccessException, SecurityFailure {
+        final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(),
+                usersApi.apiUsersMeGet(true).getId(), user);
         usersApi.apiUsersTrustedUserIdPut(user.getId(), signature);
         return usersApi.apiUsersTrustedUserIdGet(user.getId());
     }

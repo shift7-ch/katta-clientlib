@@ -4,11 +4,8 @@
 
 package ch.iterate.hub.core;
 
-import ch.cyberduck.test.IntegrationTest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,13 +25,16 @@ import ch.iterate.hub.client.model.MemberDto;
 import ch.iterate.hub.client.model.Role;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
+import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
 import ch.iterate.hub.testsetup.model.HubTestConfig;
-import ch.iterate.hub.workflows.CachingUserKeysService;
+import ch.iterate.hub.workflows.UserKeysService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
 
 import static ch.iterate.hub.crypto.KeyHelper.decodePublicKey;
 import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioSTSUnattendedLocalOnly;
@@ -70,8 +70,11 @@ public class KeyRotationTest extends AbstractHubTest {
 
         for(VaultDto vaultDto : vaults) {
             final HashMap<String, String> tokens = new HashMap<>();
-            final UvfMetadataPayload metadataJWE = new CachingUserKeysService(hubSession).getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()));
-            final UvfAccessTokenPayload masterkeyJWE = new CachingUserKeysService(hubSession).getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()));
+            final UserKeysService service = new UserKeysServiceImpl(hubSession);
+            final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled);
+            final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
+            final UvfMetadataPayload metadataJWE = vaultService.getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
+            final UvfAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
 
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
             metadataJWE.storage().nickname(String.format("ZZZZ %s", vaultDto.getName()));

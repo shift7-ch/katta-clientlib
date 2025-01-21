@@ -27,7 +27,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import ch.iterate.hub.client.ApiException;
-import ch.iterate.hub.client.HubApiClient;
 import ch.iterate.hub.client.api.StorageProfileResourceApi;
 import ch.iterate.hub.client.api.StorageResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
@@ -38,6 +37,7 @@ import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.client.model.StorageProfileS3STSDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
@@ -48,7 +48,6 @@ import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
@@ -65,6 +64,7 @@ import com.nimbusds.jose.JOSEException;
  */
 public class CreateVaultService {
     private static final Logger log = LogManager.getLogger(CreateVaultService.class);
+
     private final HubSession hubSession;
     private final Controller controller;
 
@@ -73,13 +73,12 @@ public class CreateVaultService {
         this.controller = controller;
     }
 
-    public void createVault(final CreateVaultModel m) throws ApiException, AccessException, SecurityFailure, FirstLoginDeviceSetupException, BackgroundException {
+    public void createVault(final CreateVaultModel m) throws ApiException, AccessException, SecurityFailure, BackgroundException {
         try {
-            final HubApiClient apiClient = hubSession.getClient();
-            final UsersResourceApi usersResourceApi = new UsersResourceApi(apiClient);
-            final VaultResourceApi vaultResourceApi = new VaultResourceApi(apiClient);
-            final StorageResourceApi storageResourceApi = new StorageResourceApi(apiClient);
-            final StorageProfileResourceApi storageProfilesResourceApi = new StorageProfileResourceApi(apiClient);
+            final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
+            final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
+            final StorageResourceApi storageResourceApi = new StorageResourceApi(hubSession.getClient());
+            final StorageProfileResourceApi storageProfilesResourceApi = new StorageProfileResourceApi(hubSession.getClient());
             // Get only non-archived profiles to create new vault
             final List<StorageProfileDto> storageProfiles = storageProfilesResourceApi.apiStorageprofileGet(false);
             final StorageProfileDto storageProfile = storageProfiles.stream().filter(c -> {
@@ -94,7 +93,8 @@ public class CreateVaultService {
             final StorageProfileDtoWrapper backend = StorageProfileDtoWrapper.coerce(storageProfile);
 
             // prepare vault creation
-            final UserKeys userKeys = new FirstLoginDeviceSetupService(hubSession).getUserKeysWithDeviceKeys();
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(
+                    hubSession.getHost(), FirstLoginDeviceSetupCallbackFactory.get());
 
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks;
             jwks = UvfMetadataPayload.createKeys();

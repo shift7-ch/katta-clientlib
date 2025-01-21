@@ -7,6 +7,7 @@ package ch.iterate.hub.protocols.hub;
 import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.http.HttpConnectionPoolBuilder;
@@ -30,6 +31,8 @@ import ch.cyberduck.core.threading.CancelCallback;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
 import java.util.EnumSet;
@@ -46,13 +49,14 @@ import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.StorageProfileS3Dto;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
-import ch.iterate.hub.workflows.FirstLoginDeviceSetupService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 
 import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
 
@@ -63,17 +67,12 @@ import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfile
  */
 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 also for refreshing (do storage sessions refresh and write to Keychain!?) - what about asymmetry?
 public class HubSession extends HttpSession<HubApiClient> {
+    private static final Logger log = LogManager.getLogger(HubSession.class);
 
     private OAuth2RequestInterceptor authorizationService;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
-    }
-
-    public HubSession(final HubSession session) {
-        super(session.host, session.trust, session.key);
-        this.client = session.client;
-        this.authorizationService = session.authorizationService;
     }
 
     public OAuthTokens refresh() throws BackgroundException {
@@ -83,39 +82,44 @@ public class HubSession extends HttpSession<HubApiClient> {
     @Override
     protected HubApiClient connect(final ProxyFinder proxy, final HostKeyCallback key, final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final HttpClientBuilder configuration = builder.build(proxy, this, prompt);
-
-        // Setup authorization endpoint from configuration
-        authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
-                host.getProtocol().getOAuthTokenUrl(),
-                host.getProtocol().getOAuthAuthorizationUrl(),
-                host.getProtocol().getOAuthClientId(),
-                host.getProtocol().getOAuthClientSecret(),
-                host.getProtocol().getOAuthScopes(),
-                true,
-                prompt)
-                .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
-                .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
-        configuration.setServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService));
-        configuration.addInterceptorLast(authorizationService);
+        if(host.getProtocol().isOAuthConfigurable()) {
+            // Setup authorization endpoint from configuration
+            authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
+                    host.getProtocol().getOAuthTokenUrl(),
+                    host.getProtocol().getOAuthAuthorizationUrl(),
+                    host.getProtocol().getOAuthClientId(),
+                    host.getProtocol().getOAuthClientSecret(),
+                    host.getProtocol().getOAuthScopes(),
+                    true,
+                    prompt)
+                    .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
+                    .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
+            configuration.setServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService));
+            configuration.addInterceptorLast(authorizationService);
+        }
         return new HubApiClient(host, configuration.build());
     }
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        // initialize tokens in authorizationService (standard pattern, see DropboxSession.login())
-        // do refresh and run OAuth flow if necessary (depending on OAuth tokens present/expired/refresh failure), store to PasswordStore if the tokens are refreshed/(re-)authorized tokens
-        authorizationService.validate();
-        // set username for OAuth sharing with username (findOAuthTokens)
-        host.getCredentials().setUsername(JWT.decode(host.getCredentials().getOauth().getIdToken()).getSubject());
+        final Credentials credentials = authorizationService.validate();
+        try {
+            // Set username from OAuth ID Token for saving in keychain
+            credentials.setUsername(JWT.decode(credentials.getOauth().getIdToken()).getSubject());
+        }
+        catch(JWTDecodeException e) {
+            log.warn("Failure {} decoding JWT {}", e, credentials.getOauth().getIdToken());
+            throw new LoginCanceledException(e);
+        }
         try {
             final String uuidFromHub = this.getConfigApi().apiConfigGet().getUuid();
             final String uuidFromBookmark = this.getHost().getUuid();
             if(!uuidFromHub.equals(uuidFromBookmark)) {
-                throw new LoginFailureException(String.format("UUID mismatch: UUID from hub under %s is %s, the bookmark hower has hubUUID %s", new HostUrlProvider().get(this.getHost()), uuidFromHub, uuidFromBookmark));
+                throw new LoginFailureException(String.format("UUID mismatch: UUID from hub under %s is %s, the bookmark however has hubUUID %s", new HostUrlProvider().get(this.getHost()), uuidFromHub, uuidFromBookmark));
             }
-            new FirstLoginDeviceSetupService(this).getUserKeysWithDeviceKeys();
+            new UserKeysServiceImpl(this).getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get());
         }
-        catch(AccessException | SecurityFailure | FirstLoginDeviceSetupException e) {
+        catch(AccessException | SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
         catch(ApiException e) {
@@ -196,7 +200,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T getFeature(final Class<T> type) {
+    public <T> T _getFeature(final Class<T> type) {
         // ListService, Read (used by RemoteProfileFinder) and ComparisonService (see ProfilesSynchronizeWorker.filter(), https://github.com/iterate-ch/cyberduck/pull/15602/files)
         if(type == ListService.class) {
             return (T) (ListService) (directory, listener) -> {
@@ -238,6 +242,6 @@ public class HubSession extends HttpSession<HubApiClient> {
                 }
             };
         }
-        return super.getFeature(type);
+        return super._getFeature(type);
     }
 }

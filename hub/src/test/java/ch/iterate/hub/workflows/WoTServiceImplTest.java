@@ -4,6 +4,8 @@
 
 package ch.iterate.hub.workflows;
 
+import ch.cyberduck.core.Host;
+
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -23,7 +25,6 @@ import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.wot.SignedKeys;
 import ch.iterate.hub.crypto.wot.WoT;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 
@@ -34,10 +35,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 
-class CachingWoTServiceTest {
+class WoTServiceImplTest {
 
     @Test
-    void getTrustLevelsPerUserId() throws ParseException, JOSEException, FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    void getTrustLevelsPerUserId() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
         int len = 5;
 
@@ -83,20 +84,19 @@ class CachingWoTServiceTest {
         oscarTrust.setTrustedUserId(bob.getId());
         oscarTrust.setSignatureChain(bobSignatureChain);
 
-        final UserKeysService userKeysServiceMock = Mockito.mock(CachingUserKeysService.class);
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final CachingWoTService wot = new CachingWoTService(usersMock, userKeysServiceMock);
+        final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
+        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
         Mockito.when(usersMock.apiUsersGet()).thenReturn(Arrays.asList(alice, bob, oscar));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
-        Mockito.when(userKeysServiceMock.getUserKeys()).thenReturn(aliceKeys);
 
-        assertEquals(Collections.singletonMap(bob.getId(), 5), wot.getTrustLevelsPerUserId());
+        assertEquals(Collections.singletonMap(bob.getId(), 5), wot.getTrustLevelsPerUserId(aliceKeys));
     }
 
 
     @Test
-    void verify() throws ParseException, JOSEException, FirstLoginDeviceSetupException, ApiException, AccessException, SecurityFailure {
+    void verify() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> signatureChain = new LinkedList<>();
         int len = 5;
 
@@ -125,18 +125,17 @@ class CachingWoTServiceTest {
         final UserDto alice = previousUser;
         final UserKeys aliceKeys = previousKeys;
 
-        final UserKeysService userKeysServiceMock = Mockito.mock(CachingUserKeysService.class);
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
+        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
-        Mockito.when(userKeysServiceMock.getUserKeys()).thenReturn(aliceKeys);
 
-        final CachingWoTService wot = new CachingWoTService(usersMock, userKeysServiceMock);
-        wot.verify(signatureChain, SignedKeys.fromUser(bob));
-        assertThrows(SecurityFailure.class, () -> wot.verify(signatureChain, SignedKeys.fromUser(alice)));
+        final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
+        wot.verify(aliceKeys, signatureChain, SignedKeys.fromUser(bob));
+        assertThrows(SecurityFailure.class, () -> wot.verify(aliceKeys, signatureChain, SignedKeys.fromUser(alice)));
     }
 
     @Test
-    void sign() throws ApiException, ParseException, JOSEException, FirstLoginDeviceSetupException, AccessException, SecurityFailure {
+    void sign() throws ApiException, ParseException, JOSEException, AccessException, SecurityFailure {
         final UserKeys aliceKeys = UserKeys.create();
         final P384KeyPair bobEcdhKeys = P384KeyPair.generate();
         final P384KeyPair bobEcdsaKeys = P384KeyPair.generate();
@@ -148,15 +147,14 @@ class CachingWoTServiceTest {
 
         final String expectedSignature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
-        final UserKeysService userKeysServiceMock = Mockito.mock(CachingUserKeysService.class);
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
+        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
-        Mockito.when(userKeysServiceMock.getUserKeys()).thenReturn(aliceKeys);
-        final CachingWoTService wot = new CachingWoTService(usersMock, userKeysServiceMock);
+        final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         final TrustedUserDto expectedTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(Collections.singletonList(expectedSignature));
         Mockito.when(usersMock.apiUsersTrustedUserIdGet(bob.getId())).thenReturn(expectedTrust);
 
-        final TrustedUserDto trust = wot.sign(bob);
+        final TrustedUserDto trust = wot.sign(aliceKeys, bob);
         Mockito.verify(usersMock, times(1)).apiUsersTrustedUserIdPut(eq(bob.getId()), anyString());
         assertEquals(expectedTrust, trust);
     }

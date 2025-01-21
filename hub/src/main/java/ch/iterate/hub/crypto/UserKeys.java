@@ -20,7 +20,6 @@ import com.nimbusds.jose.JOSEException;
 import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
 import static ch.iterate.hub.crypto.UserKeyPayload.createFromPayload;
 
-
 /**
  * Represents Cryptomator Hub <a href="https://docs.cryptomator.org/en/latest/security/hub/#user-key-pair>User Keys</a>.
  * Counterpart of <a href="https://github.com/cryptomator/hub/blob/develop/frontend/src/common/crypto.ts"><code>UserKeys</code></a>.
@@ -41,6 +40,15 @@ public class UserKeys {
 
     public ECKeyPair ecdsaKeyPair() {
         return ecdsaKeyPair;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("UserKeys{");
+        sb.append("ecdhKeyPair=").append(ecdhKeyPair);
+        sb.append(", ecdsaKeyPair=").append(ecdsaKeyPair);
+        sb.append('}');
+        return sb.toString();
     }
 
     public static UserKeys create() {

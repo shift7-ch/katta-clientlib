@@ -129,11 +129,6 @@ public class HubTestUtilities {
             }
 
             @Override
-            public String generateAccountKey() {
-                return setupCode;
-            }
-
-            @Override
             public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) {
                 return new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(String.format("firstLoginMockSetup %s", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                         .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));

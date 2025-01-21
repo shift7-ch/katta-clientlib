@@ -20,7 +20,7 @@ import static ch.iterate.hub.workflows.model.VaultConfig.rootDirHash;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
-public class VaultConfigTest {
+class VaultConfigTest {
     @Test
     public void testCreateVaultConfig() throws JOSEException, IOException {
         final String sharedKey = new String(Base64.decode("oWXcXUeAzfkU1yWNaDEWGZqIsrnUIK4Go7KCtZkGrQXpmILkza+2aB4uhyTCvHGqpS+leX+74opNB2VC39VA4Q=="));

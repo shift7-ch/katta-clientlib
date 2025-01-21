@@ -14,7 +14,6 @@ import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.LoginFailureException;
-import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.shared.DefaultPathHomeFeature;
@@ -29,11 +28,12 @@ import java.util.Base64;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
-import ch.iterate.hub.workflows.CachingUserKeysService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
-import ch.iterate.hub.workflows.exceptions.FirstLoginDeviceSetupException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.google.common.primitives.Bytes;
 import com.nimbusds.jose.util.Base64URL;
@@ -86,20 +86,23 @@ public class S3AutoLoadVaultSession extends S3Session {
                 }
             });
 
-            final UvfMetadataPayload meta = new CachingUserKeysService(hubSession).getVaultMetadataJWE(UUID.fromString(this.getHost().getUuid()));
-            final Path home = (new DelegatingHomeFeature(new Home[]{new DefaultPathHomeFeature(this.host)})).find();
+            final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(hubSession);
+            final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
+            final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(
+                    UUID.fromString(host.getUuid()), userKeysService.getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get()));
+            final Path home = new DelegatingHomeFeature(new DefaultPathHomeFeature(host)).find();
 
             // as in VaultFinderListProgressListener:
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 harmonize interface? Should we pass in full uvf metadata?
             final Vault vault = VaultFactory.get(home);
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! MUST NEVER BE RELEASED LIKE THIS
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 use rawFileKey,rawNameKey as vault key for now (going into cryptolib's Masterkey)
-            byte[] rawFileKey = Base64URL.from((meta.seeds().get(meta.latestSeed()))).decode();
-            byte[] rawNameKey = Base64URL.from((meta.seeds().get(meta.latestSeed()))).decode();
+            byte[] rawFileKey = Base64URL.from((vaultMetadata.seeds().get(vaultMetadata.latestSeed()))).decode();
+            byte[] rawNameKey = Base64URL.from((vaultMetadata.seeds().get(vaultMetadata.latestSeed()))).decode();
             final byte[] vaultKey = Bytes.concat(rawFileKey, rawNameKey);
 
             // as in LoadingVaultLookupListener:
-            this.registry.add(vault.load(this, new PasswordCallback() {
+            registry.add(vault.load(this, new PasswordCallback() {
                 @Override
                 public void close(final String input) {
                     // nothing to do
@@ -111,8 +114,7 @@ public class S3AutoLoadVaultSession extends S3Session {
                 }
             }));
         }
-        catch(ApiException | FirstLoginDeviceSetupException | SecurityFailure |
-              AccessException e) {
+        catch(ApiException | SecurityFailure | AccessException e) {
             // make sure we never display the encrypted files (vault.cryptomator, / d/....)
             throw new LoginFailureException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }

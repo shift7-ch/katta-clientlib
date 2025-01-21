@@ -33,7 +33,7 @@ public class FirstLoginDeviceSetupCallbackFactory extends Factory<FirstLoginDevi
         }
         catch(InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
             log.error(String.format("Failure loading callback class %s. %s", clazz, e.getMessage()));
-            return new DisabledFirstLoginDeviceSetupCallback();
+            return FirstLoginDeviceSetupCallback.disabled;
         }
     }
 

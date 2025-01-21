@@ -6,15 +6,38 @@ package ch.iterate.hub.core;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 
 public interface FirstLoginDeviceSetupCallback {
 
-    String displayAccountKeyAndAskDeviceName(Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ConnectionCanceledException;
+    /**
+     * Prompt user for device name
+     *
+     * @return Device name
+     * @throws ConnectionCanceledException Canceled prompt by user
+     */
+    String displayAccountKeyAndAskDeviceName(Host bookmark, AccountKeyAndDeviceName accountKeyAndDeviceName) throws ConnectionCanceledException;
 
-    String generateAccountKey();
+    /**
+     * Prompt user for existing account key
+     *
+     * @param initialDeviceName Default device name
+     * @return Account key and device name
+     * @throws ConnectionCanceledException Canceled prompt by user
+     */
+    AccountKeyAndDeviceName askForAccountKeyAndDeviceName(Host bookmark, String initialDeviceName) throws ConnectionCanceledException;
 
-    AccountKeyAndDeviceName askForAccountKeyAndDeviceName(Host bookmark, final String initialDeviceName) throws ConnectionCanceledException;
+    FirstLoginDeviceSetupCallback disabled = new FirstLoginDeviceSetupCallback() {
+        @Override
+        public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ConnectionCanceledException {
+            throw new LoginCanceledException();
+        }
 
+        @Override
+        public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws ConnectionCanceledException {
+            throw new LoginCanceledException();
+        }
+    };
 }
