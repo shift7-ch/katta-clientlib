@@ -31,7 +31,6 @@ import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.SetupCodeJWE;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
@@ -141,7 +140,7 @@ class HubWorkflowTest {
             // upload template (STS: create bucket first, static: existing bucket)
             // TODO test with multiple wot levels?
             new CreateVaultService(hubSession, new HubTestController()).createVault(
-                    new CreateVaultModel(vaultIdSharedWithAdmin, "no reason", String.format("my first vault %s S01", storageProfile.getName()), "", storageProfile.getId().toString(), hubTestConfig.vaultSpec.username, hubTestConfig.vaultSpec.password, "handmade", storageProfile.getRegion(), automaticAccessGrant, 3));
+                    new CreateVaultService.CreateVaultModel(vaultIdSharedWithAdmin, "no reason", String.format("my first vault %s S01", storageProfile.getName()), "", storageProfile.getId().toString(), hubTestConfig.vaultSpec.username, hubTestConfig.vaultSpec.password, "handmade", storageProfile.getRegion(), automaticAccessGrant, 3));
             checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 0, 0, 1, 0, 0);
 
             log.info(String.format("S02 %s alice shares vault with admin as owner", hubTestSetupConfig));

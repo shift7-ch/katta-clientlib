@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package ch.iterate.hub.core;
+package ch.shift7.katta.controller;
 
 import ch.cyberduck.binding.Action;
+import ch.cyberduck.binding.BundleController;
 import ch.cyberduck.binding.Outlet;
 import ch.cyberduck.binding.SheetController;
 import ch.cyberduck.binding.application.NSButton;
@@ -33,17 +34,15 @@ import java.util.List;
 import java.util.UUID;
 
 import ch.iterate.hub.client.model.StorageProfileS3Dto;
-import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
+import ch.iterate.hub.workflows.CreateVaultService;
 
 
 /**
  * Fetch user input for vault bookmark creation.
  */
 public class CreateVaultBookmarkController extends SheetController {
-
     private static final Logger log = LogManager.getLogger(CreateVaultBookmarkController.class.getName());
-
 
     private final String title_;
     private final String reason_;
@@ -57,8 +56,8 @@ public class CreateVaultBookmarkController extends SheetController {
     private final String secretKeyLabel_;
     private final String maxWotLevelLabel_;
 
-    private final CreateVaultModel model;
-    private final CreateVaultBookmarkAction.Callback callback;
+    private final CreateVaultService.CreateVaultModel model;
+    private final Callback callback;
 
     private final Controller controller;
 
@@ -113,7 +112,7 @@ public class CreateVaultBookmarkController extends SheetController {
     @Outlet
     private NSButton createVaultButton;
 
-    public CreateVaultBookmarkController(final List<StorageProfileDtoWrapper> storageProfiles, final Controller controller, final CreateVaultModel model, final CreateVaultBookmarkAction.Callback callback) {
+    public CreateVaultBookmarkController(final List<StorageProfileDtoWrapper> storageProfiles, final Controller controller, final CreateVaultService.CreateVaultModel model, final Callback callback) {
         this.model = model;
         this.callback = callback;
         this.title_ = LocaleFactory.localizedString("Create Vault", "Cipherduck");
@@ -168,7 +167,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.vaultNameLabel = f;
         this.vaultNameLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.vaultNameLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 
@@ -181,7 +180,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.vaultDescriptionLabel = f;
         vaultDescriptionLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.vaultDescriptionLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 
@@ -193,7 +192,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.backendLabel = f;
         backendLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.backendLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 
@@ -277,7 +276,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.regionLabel = f;
         this.regionLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.regionLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 
@@ -293,7 +292,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.bucketNameLabel = BucketNameLabel;
         BucketNameLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.bucketNameLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 
@@ -306,7 +305,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.accessKeyIdLabel = f;
         f.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.accessKeyIdLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
         this.accessKeyIdField.setStringValue(this.model.accessKeyId());
     }
@@ -319,7 +318,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.maxWotLevelLabel = f;
         f.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.maxWotLevelLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
 
     }
@@ -339,7 +338,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.secretKeyLabel = f;
         f.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.secretKeyLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
         this.secretKeyField.setStringValue(this.model.secretKey());
     }
@@ -399,7 +398,7 @@ public class CreateVaultBookmarkController extends SheetController {
         controller.background(new AbstractBackgroundAction<Void>() {
             @Override
             public Void run() {
-                final CreateVaultModel m = new CreateVaultModel(UUID.randomUUID(), null, vaultNameField.stringValue(),
+                final CreateVaultService.CreateVaultModel m = new CreateVaultService.CreateVaultModel(UUID.randomUUID(), null, vaultNameField.stringValue(),
                         vaultDescriptionField.stringValue(),
                         backendCombobox.selectedItem().representedObject(),
                         StringUtils.isNotBlank(accessKeyIdField.stringValue()) ? accessKeyIdField.stringValue() : null,
@@ -413,6 +412,10 @@ public class CreateVaultBookmarkController extends SheetController {
                 return null;
             }
         });
+    }
+
+    public interface Callback {
+        void callback(final CreateVaultService.CreateVaultModel selected);
     }
 }
 

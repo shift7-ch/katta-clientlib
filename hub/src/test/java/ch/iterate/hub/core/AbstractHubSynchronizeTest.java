@@ -33,7 +33,6 @@ import ch.iterate.hub.client.model.S3STORAGECLASSES;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.client.model.StorageProfileS3STSDto;
-import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.hub.HubStorageProfileSyncSchedulerService;
@@ -257,7 +256,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             log.info(String.format("Creating vault in %s", hubSession));
             final UUID vaultUuid = UUID.randomUUID();
-            new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
+            new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultService.CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
             log.info(String.format("Getting vault bookmark for vault %s", vaultUuid));
             final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid, FirstLoginDeviceSetupCallback.disabled);
             log.info(String.format("Logging into vault %s with shared oauth credentials from password store", vaultBookmark));

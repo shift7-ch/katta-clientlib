@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.StorageProfileResourceApi;
@@ -38,7 +39,6 @@ import ch.iterate.hub.client.model.StorageProfileS3STSDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
-import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
@@ -259,5 +259,90 @@ public class CreateVaultService {
                 result.getCredentials().getSecretAccessKey(),
                 result.getCredentials().getSessionToken(),
                 result.getCredentials().getExpiration().getTime());
+    }
+
+    public static class CreateVaultModel {
+
+        private final UUID uuid;
+        private String reason;
+        private final String vaultName;
+        private final String vaultDescription;
+        private final String backend;
+        private final String accessKeyId;
+        private final String secretKey;
+        private final String bucketName;
+        private final String region;
+        private final boolean automaticAccessGrant;
+        private final int maxWotLevel;
+
+
+        public CreateVaultModel(final UUID uuid, final String reason, final String vaultName, final String vaultDescription, final String backend,
+                                final String accessKeyId, final String secretKey,
+                                final String bucketName, final String region, final boolean automaticAccessGrant, final int maxWotLevel) {
+            this.uuid = uuid;
+            this.reason = reason;
+            this.vaultName = vaultName;
+            this.vaultDescription = vaultDescription;
+            this.backend = backend;
+            this.accessKeyId = accessKeyId;
+            this.secretKey = secretKey;
+            this.bucketName = bucketName;
+            this.region = region;
+            this.automaticAccessGrant = automaticAccessGrant;
+            this.maxWotLevel = maxWotLevel;
+        }
+
+        public UUID uuid() {
+            return uuid;
+        }
+
+        public String reason() {
+            return reason;
+        }
+
+        public CreateVaultModel withReason(final String reason) {
+            this.reason = reason;
+            return this;
+        }
+
+        public String vaultName() {
+            return vaultName;
+        }
+
+        public String vaultDescription() {
+            return vaultDescription;
+        }
+
+        public String backend() {
+            return backend;
+        }
+
+        public String storageProfileId() {
+            return backend;
+        }
+
+        public String accessKeyId() {
+            return accessKeyId;
+        }
+
+        public String secretKey() {
+            return secretKey;
+        }
+
+        public String bucketName() {
+            return bucketName;
+        }
+
+        public String region() {
+            return region;
+        }
+
+        public boolean automaticAccessGrant() {
+            return automaticAccessGrant;
+        }
+
+        public int maxWotLevel() {
+            return maxWotLevel;
+        }
     }
 }
