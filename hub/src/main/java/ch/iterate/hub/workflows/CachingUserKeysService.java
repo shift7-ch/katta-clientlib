@@ -29,9 +29,9 @@ public class CachingUserKeysService implements UserKeysService {
      */
     public UserKeys getUserKeys(final Host hub, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         // Get user key from hub and decrypt with device-keys
-        if(this.userKeys == null) {
-            this.userKeys = proxy.getUserKeys(hub, prompt);
+        if(userKeys == null) {
+            userKeys = proxy.getUserKeys(hub, prompt);
         }
-        return this.userKeys;
+        return userKeys;
     }
 }
