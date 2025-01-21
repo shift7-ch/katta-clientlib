@@ -4,8 +4,11 @@
 
 package ch.iterate.hub.core;
 
+import ch.cyberduck.test.IntegrationTest;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

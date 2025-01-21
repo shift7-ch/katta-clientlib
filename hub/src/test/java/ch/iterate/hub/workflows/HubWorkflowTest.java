@@ -37,11 +37,11 @@ import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
+import ch.iterate.hub.testsetup.HubTestController;
 import ch.iterate.hub.testsetup.HubTestUtilities;
 import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
 import ch.iterate.hub.testsetup.model.HubTestConfig;
 import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
-import ch.iterate.mountainduck.test.TestController;
 
 import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioSTSUnattendedLocalOnly;
 import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioStaticUnattendedLocalOnly;
@@ -148,7 +148,7 @@ public class HubWorkflowTest {
         final boolean automaticAccessGrant = true;
         // upload template (STS: create bucket first, static: existing bucket)
         // TODO test with multiple wot levels?
-        new CreateVaultService(hubSession, new TestController()).createVault(
+        new CreateVaultService(hubSession, new HubTestController()).createVault(
                 new CreateVaultModel(vaultIdSharedWithAdmin, "no reason", String.format("my first vault %s S01", storageProfile.getName()), "", storageProfile.getId().toString(), hubTestConfig.vaultSpec.username, hubTestConfig.vaultSpec.password, "handmade", storageProfile.getRegion(), automaticAccessGrant, 3));
         checkNumberOfVaults(hubSession, hubTestConfig, vaultIdSharedWithAdmin, 0, 0, 1, 0, 0);
 

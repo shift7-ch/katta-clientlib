@@ -1,9 +1,8 @@
-version: '3'
-
 services:
   keycloak:
     hostname: keycloak
-    image: "ghcr.io/shift7-ch/keycloak:${CIPHERDUCK_KEYCLOAK_VERSION}"
+    image: "ghcr.io/shift7-ch/keycloak:25.0.1"
+    pull_policy: missing
     ports:
       - "${KEYCLOAK_HTTP_PORT}:${KEYCLOAK_HTTP_PORT}"
       - "${KEYCLOAK_HTTPS_PORT}:8443"
@@ -29,7 +28,8 @@ services:
       retries: 15
 
   keycloak-enable-direct-access-grant:
-    image: "ghcr.io/shift7-ch/keycloak:${CIPHERDUCK_KEYCLOAK_VERSION}"
+    image: "ghcr.io/shift7-ch/keycloak:25.0.1"
+    pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]
     command:
       - |
@@ -140,7 +140,7 @@ services:
         echo "createbuckets successful"
 
   hub:
-    image: "ghcr.io/shift7-ch/katta-server:${CIPHERDUCK_HUB_VERSION}"
+    image: "ghcr.io/shift7-ch/katta-server:latest"
     depends_on:
       keycloak:
         condition: service_healthy

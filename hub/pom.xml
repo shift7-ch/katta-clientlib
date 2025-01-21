@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2024 iterate GmbH. All rights reserved.
+  ~ Copyright (c) 2025 iterate GmbH. All rights reserved.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -17,6 +17,7 @@
     <properties>
         <jwt.version>4.2.1</jwt.version>
         <nimbus-jose.version>9.40</nimbus-jose.version>
+        <swagger-annotations.version>1.6.15</swagger-annotations.version>
     </properties>
 
     <profiles>
@@ -67,43 +68,30 @@
     </profiles>
 
     <dependencies>
-        <!-- cyberduck/mountainduck dependencies -->
         <dependency>
             <groupId>ch.cyberduck</groupId>
-            <artifactId>oauth</artifactId>
-            <version>${cyberduck.version}</version>
+            <artifactId>binding</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
-            <artifactId>core</artifactId>
-            <version>${cyberduck.version}</version>
+            <artifactId>nio</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.cyberduck</groupId>
+            <artifactId>oauth</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>jersey</artifactId>
-            <version>${cyberduck.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>s3</artifactId>
-            <version>${cyberduck.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>cryptomator</artifactId>
-            <version>${cyberduck.version}</version>
         </dependency>
-        <dependency>
-            <groupId>ch.cyberduck</groupId>
-            <artifactId>libcore</artifactId>
-            <version>${cyberduck.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.iterate.mountainduck</groupId>
-            <artifactId>fs</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- external dependencies -->
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
@@ -126,75 +114,27 @@
             <artifactId>hkdf</artifactId>
             <version>2.0.0</version>
         </dependency>
-        <!-- test dependencies -->
         <dependency>
-            <groupId>ch.iterate.mountainduck</groupId>
-            <artifactId>test</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger-annotations.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
             <artifactId>core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-            <version>${cyberduck.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.cyberduck</groupId>
+            <artifactId>test</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <!--
-                        In the hub integrationtests, we have calls coming from the Java code running on the host (not within a Docker container).
-                        The token issuer needs to match the host name when doing STS calls from Java.
-
-                        Decision 2024-02-26 dko/yla/ChE: tweak /etch/hosts file on build nodes.
-
-                        Discarded alternatives:
-                        - When the file lookup is enabled via -Djdk.net.hosts.file, it replaces the default NameService implementation
-                          (see https://stackoverflow.com/questions/11647629/how-to-configure-hostname-resolution-to-use-a-custom-dns-server-in-java)
-                          Hence, we need to put all required IPs in the corresponding file, not only the additional ones as for `/etc/hosts` on *nix systems.
-                        - Forward proxy (could be an option if we only do calls from cyberduck session context).
-                        - Run the tests from within a Docker container having access to the docker network.
-
-                         -->
-                        <id>check-etc-hosts-tweaked-for-docker-hosts</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipITs}</skip>
-                            <target>
-                                <fail message="host keycloak not reachable - add to /etc/hosts">
-                                    <condition>
-                                        <not>
-                                            <isreachable host="keycloak"/>
-                                        </not>
-                                    </condition>
-                                </fail>
-                                <fail message="host minio not reachable - add to /etc/hosts">
-                                    <condition>
-                                        <not>
-                                            <isreachable host="minio"/>
-                                        </not>
-                                    </condition>
-                                </fail>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

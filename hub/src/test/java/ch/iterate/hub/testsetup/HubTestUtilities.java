@@ -7,9 +7,9 @@ package ch.iterate.hub.testsetup;
 import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.http.UserAgentHttpRequestInitializer;
-import ch.cyberduck.core.local.RevealService;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.pool.SessionPool;
+import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.ssl.DefaultTrustManagerHostnameCallback;
@@ -41,40 +41,43 @@ import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.core.CreateHubBookmarkAction;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.HubHostCollection;
-import ch.iterate.hub.core.HubHostCollectionProvider;
 import ch.iterate.hub.core.util.MockableFirstLoginDeviceSetupCallback;
 import ch.iterate.hub.core.util.UnsecureHostPasswordStorePatched;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
+import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubProtocol;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol;
 import ch.iterate.hub.protocols.s3.S3STSAutoLoadVaultProtocol;
 import ch.iterate.hub.testsetup.model.HubTestSetupConfig;
 import ch.iterate.hub.testsetup.model.HubTestSetupUserConfig;
-import ch.iterate.mountainduck.core.AbstractHostCollectionProviderFactory;
-import ch.iterate.mountainduck.fs.ConnectCallback;
-import ch.iterate.mountainduck.test.TestController;
-import ch.iterate.mountainduck.test.TestUtilities;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.PasswordTokenRequest;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
-public class HubTestUtilities extends TestUtilities {
+public class HubTestUtilities {
     private static final Logger log = LogManager.getLogger(HubTestUtilities.class.getName());
 
     public static final int SYNC_WAIT_SECS = 15;
     public static final int SYNC_INTERVAL_SECS = 10;
 
     public static Preferences preferences() {
-        Preferences preferences = TestUtilities.preferences(loadProperties("/default.cipherduck.properties"));
-        preferences.setProperty("factory.vault.class", "ch.iterate.hub.protocols.hub.HubCryptoVault");
+        final Preferences preferences;
+        PreferencesFactory.set(preferences = new MemoryPreferences() {
+            @Override
+            protected void configureLogging(final String level) {
+                this.setDefault("logging.config", "log4j-test.xml");
+                super.configureLogging(level);
+            }
+        });
+        preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
+        preferences.setProperty("factory.vault.class", HubCryptoVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStorePatched.class.getName());
         preferences.setProperty("factory.firstlogindevicesetupcallback.class", MockableFirstLoginDeviceSetupCallback.class.getName());
-        preferences.setProperty("factory.abstracthostcollectionprovider.class", HubHostCollectionProvider.class.getName());
+
         preferences.setProperty("connection.unsecure.warning.http", false);
         try {
             preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
@@ -84,18 +87,6 @@ public class HubTestUtilities extends TestUtilities {
         }
         preferences.setLogging("debug");
         return preferences;
-    }
-
-    private static class Workaround extends TestController implements ConnectCallback {
-        @Override
-        public void connect(final Host bookmark, final RevealService reveal) {
-            // no fs
-        }
-
-        @Override
-        public void disconnect(final Host bookmark) {
-            // no fs
-        }
     }
 
     public static HubSession setupForUser(final HubTestSetupConfig hubTestSetupConfig, HubTestSetupUserConfig hubTestSetupUserConfig) throws BackgroundException, IOException {
@@ -150,10 +141,10 @@ public class HubTestUtilities extends TestUtilities {
         };
         MockableFirstLoginDeviceSetupCallback.setProxy(proxy);
 
-        final Workaround controller = new Workaround();
-
-        AbstractHostCollectionProviderFactory.get().loadDefaultCollection(controller);
-        final Host hub = new CreateHubBookmarkAction(hubURL, (HubHostCollection) AbstractHostCollectionProviderFactory.get().defaultCollection(), controller).run();
+        final BookmarkCollection bookmarks = BookmarkCollection.defaultCollection();
+        bookmarks.load();
+        final HubTestController controller = new HubTestController();
+        final Host hub = new CreateHubBookmarkAction(hubURL, bookmarks, controller).run();
 
         try {
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 bad code smell - we need to wait until added -> start background

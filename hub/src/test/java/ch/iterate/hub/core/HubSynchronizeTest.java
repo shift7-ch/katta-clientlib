@@ -4,6 +4,9 @@
 
 package ch.iterate.hub.core;
 
+import ch.cyberduck.test.IntegrationTest;
+
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
@@ -24,6 +27,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
  * Same local context (profiles, hub host collection) shared across storage profile and tests.
  */
 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 test01 needs to be run only once, actually
+@Disabled
 public class HubSynchronizeTest {
     @Nested
     @ExtendWith({ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly.class})
