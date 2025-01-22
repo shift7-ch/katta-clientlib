@@ -53,7 +53,6 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                 try {
                     if(vault.getArchived()) {
                         final Host bookmarkToRemove = bookmarks.lookup(vault.getId().toString());
-                        //  triggers menu update
                         final boolean removed = bookmarks.remove(bookmarkToRemove);
                         if(removed) {
                             log.info("Removed bookmark for vault {} for hub {}", vault, session.getHost());
@@ -62,7 +61,6 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                     else {
                         log.info("Adding bookmark for vault {} for hub {}", vault, session.getHost());
                         final Host bookmark = new VaultProfileBookmarkService(session).getVaultBookmark(vault.getId(), prompt);
-                        //  triggers menu update
                         bookmarks.add(bookmark);
                         if(log.isInfoEnabled()) {
                             log.info("Added bookmark for vault {} for hub {}", vault, session.getHost());
