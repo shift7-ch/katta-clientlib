@@ -139,7 +139,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 }
             }
 
-            // wait for sync
+            // trigger blocking sync
             new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
 
             log.info(String.format("%s Protocols found:", ProtocolFactory.get().find().size()));
@@ -184,7 +184,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final UUID uuid = UUID.randomUUID();
 
-            // wait for first time sync for admin before we count protocols
+            // trigger blocking sync
             new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
             final int numProtocols = ProtocolFactory.get().find().size();
 
