@@ -23,6 +23,7 @@ import com.dd.plist.NSDictionary;
 import static ch.cyberduck.core.Profile.*;
 import static ch.cyberduck.core.ProtocolFactory.DEFAULT_PROTOCOL_PREDICATE;
 import static ch.iterate.hub.protocols.hub.HubSession.getPortFromHubURI;
+import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
 
 public class HubProfileBookmarkService {
 
@@ -122,6 +123,7 @@ public class HubProfileBookmarkService {
         host.setProperty("fs.sync.mode", "none");
         // we have a bookmark and profile for the same hub UUID
         host.setUuid(hubUUID);
+        host.setProperty(HUB_UUID, hubUUID);
         host.setNickname(String.format("Cipherduck (%s)", hubURL));
         return host;
     }
