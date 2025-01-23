@@ -50,7 +50,7 @@ public class StorageProfileClientModelDeserializationTest {
         assertEquals("arn:aws:iam::930717317329:role/cipherduck-createbucket", awsSTSProfile.getStsRoleArnClient());
         assertEquals("arn:aws:iam::930717317329:role/cipherduck_chain_01", awsSTSProfile.getStsRoleArn());
         assertEquals("arn:aws:iam::930717317329:role/cipherduck_chain_02", awsSTSProfile.getStsRoleArn2());
-        assertEquals(Protocol.S3STS, awsSTSProfile.getProtocol());
+        assertEquals(Protocol.S3_STS, awsSTSProfile.getProtocol());
         assertNull(awsSTSProfile.getScheme());
         assertNull(awsSTSProfile.getHostname());
         assertNull(awsSTSProfile.getPort());
@@ -88,7 +88,7 @@ public class StorageProfileClientModelDeserializationTest {
         assertEquals("arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE", minioSTSProfile.getStsRoleArnClient());
         assertEquals("arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94", minioSTSProfile.getStsRoleArn());
         assertNull(minioSTSProfile.getStsRoleArn2());
-        assertEquals(Protocol.S3STS, minioSTSProfile.getProtocol());
+        assertEquals(Protocol.S3_STS, minioSTSProfile.getProtocol());
         assertEquals("http", minioSTSProfile.getScheme());
         assertEquals("minio", minioSTSProfile.getHostname());
         assertEquals(9000, minioSTSProfile.getPort());
