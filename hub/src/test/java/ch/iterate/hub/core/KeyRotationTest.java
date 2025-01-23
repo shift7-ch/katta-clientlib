@@ -30,18 +30,16 @@ import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
-import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
-import ch.iterate.hub.testsetup.model.HubTestConfig;
+import ch.iterate.hub.testsetup.HubTestConfig;
+import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
 import ch.iterate.hub.workflows.UserKeysService;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 
 import static ch.iterate.hub.crypto.KeyHelper.decodePublicKey;
-import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioSTSUnattendedLocalOnly;
-import static ch.iterate.hub.testsetup.HubTestUtilities.setupForUser;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith({UnattendedLocalOnly.class})
+@ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
 public class KeyRotationTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(KeyRotationTest.class.getName());
 
@@ -52,7 +50,7 @@ public class KeyRotationTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     public void keyrotationTest(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupForUser(hubTestConfig.hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
+        final HubSession hubSession = setupConnection(hubTestConfig.setup);
         try {
             final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
