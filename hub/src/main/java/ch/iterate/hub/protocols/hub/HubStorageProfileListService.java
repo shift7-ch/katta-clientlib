@@ -12,6 +12,9 @@ import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
+import ch.cyberduck.core.Profile;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Scheme;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.NotfoundException;
@@ -36,8 +39,8 @@ import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
-
-import static ch.iterate.hub.protocols.hub.VaultProfileBookmarkService.toProfileParentProtocol;
+import ch.iterate.hub.protocols.hub.serializer.HubConfigDtoDeserializer;
+import ch.iterate.hub.protocols.hub.serializer.StorageProfileDtoWrapperDeserializer;
 
 public class HubStorageProfileListService implements ListService, Read {
 
@@ -129,6 +132,13 @@ public class HubStorageProfileListService implements ListService, Read {
     }
 
     private static String serialize(final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) throws InteroperabilityException {
-        return toProfileParentProtocol(storageProfile, configDto).serialize(new PlistSerializer()).toXMLPropertyList();
+        switch(storageProfile.getProtocol()) {
+            case S3:
+            case S3_STS:
+                return new Profile(ProtocolFactory.get().forScheme(Scheme.s3), new StorageProfileDtoWrapperDeserializer(
+                        new HubConfigDtoDeserializer(configDto), storageProfile)).serialize(new PlistSerializer()).toXMLPropertyList();
+            default:
+                throw new InteroperabilityException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
+        }
     }
 }
