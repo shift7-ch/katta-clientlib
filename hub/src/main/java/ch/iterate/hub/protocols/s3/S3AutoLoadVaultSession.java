@@ -39,8 +39,7 @@ import com.google.common.primitives.Bytes;
 import com.nimbusds.jose.util.Base64URL;
 
 import static ch.iterate.hub.protocols.hub.HubSession.createFromHubUrl;
-import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_URL;
-import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_USERNAME;
+import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.*;
 
 public class S3AutoLoadVaultSession extends S3Session {
 

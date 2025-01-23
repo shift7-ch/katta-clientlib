@@ -36,6 +36,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
+import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
 import static ch.iterate.hub.workflows.FirstLoginDeviceSetupService.*;
 
 public class UserKeysServiceImpl implements UserKeysService {
@@ -54,14 +55,14 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getUserKeys(final Host hub, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeys(final Host host, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         // Get user key from hub and decrypt with device-keys
         try {
             final UserDto me = usersResourceApi.apiUsersMeGet(true);
             log.info("Retrieved user {}", me);
             final boolean userKeysInHub = validateUserKeys(me);
             log.debug(" -> userKeysInHub={}", userKeysInHub);
-            final ECKeyPair deviceKeyPairFromKeychain = getDeviceKeysFromPasswordStore(me.getId(), hub.getUuid());
+            final ECKeyPair deviceKeyPairFromKeychain = getDeviceKeysFromPasswordStore(me.getId(), host.getProperty(HUB_UUID));
             final boolean deviceKeysInKeychain = validateDeviceKeys(deviceKeyPairFromKeychain);
             log.debug(" -> deviceKeysInKeychain={}", deviceKeysInKeychain);
             if(userKeysInHub && deviceKeysInKeychain) {
@@ -81,7 +82,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                         case 404:
                             log.info("(1b) Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
 
-                            final AccountKeyAndDeviceName accountKeyAndDeviceName = prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
+                            final AccountKeyAndDeviceName accountKeyAndDeviceName = prompt.askForAccountKeyAndDeviceName(host, COMPUTER_NAME);
                             final String setupCode = accountKeyAndDeviceName.accountKey();
 
                             // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
@@ -97,7 +98,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 log.info("(2) Setting up new device w/ Account Key for existing user keys.");
 
                 log.info("(2.1) setup existing device w/ Account Key (e.g. same device for multiple hubs)");
-                final AccountKeyAndDeviceName accountKeyAndDeviceName = prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
+                final AccountKeyAndDeviceName accountKeyAndDeviceName = prompt.askForAccountKeyAndDeviceName(host, COMPUTER_NAME);
                 final String setupCode = accountKeyAndDeviceName.accountKey();
 
                 final UserKeys userKeys = UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), setupCode);
@@ -109,7 +110,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(), userKeys, deviceKeyPair);
 
                 log.info("(2.4) store new device keys in keychain");
-                storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), hub.getUuid());
+                storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
 
                 return userKeys;
             }
@@ -120,7 +121,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 final String setupCode = new UUIDRandomStringService().random();
                 log.info("With setupCode={}", setupCode);
 
-                final String deviceName = prompt.displayAccountKeyAndAskDeviceName(hub,
+                final String deviceName = prompt.displayAccountKeyAndAskDeviceName(host,
                         new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(COMPUTER_NAME));
 
                 log.info("(3.2) generate user key pair");
@@ -153,7 +154,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 this.uploadDeviceKeys(deviceName, userKeys, deviceKeyPair);
                 if(!deviceKeysInKeychain) {
                     log.info("(3.5) Store new device keys in keychain");
-                    storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), hub.getUuid());
+                    storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
                 }
                 return userKeys;
             }
