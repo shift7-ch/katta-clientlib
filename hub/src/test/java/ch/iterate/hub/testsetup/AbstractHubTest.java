@@ -22,7 +22,6 @@ import java.lang.annotation.Target;
 }
 
 @HubIntegrationTest
-@DisabledInJenkinsIfNotMacOS
 public abstract class AbstractHubTest {
 
 }
