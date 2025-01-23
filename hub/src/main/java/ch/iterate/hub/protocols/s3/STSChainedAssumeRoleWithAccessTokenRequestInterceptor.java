@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package ch.iterate.hub.oauth;
+package ch.iterate.hub.protocols.s3;
 
 import ch.cyberduck.core.AsciiRandomStringService;
 import ch.cyberduck.core.Credentials;
@@ -51,8 +51,6 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 
-import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.*;
-
 /**
  * AssumeRoleWithWebIdentity optionally chained by AssumeRole.
  * <p>
@@ -90,7 +88,7 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
 
         HostPreferences preferences = new HostPreferences(bookmark);
 
-        if(!preferences.getBoolean(OAUTH_TOKENEXCHANGE)) {
+        if(!preferences.getBoolean(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE)) {
             if(log.isDebugEnabled()) {
                 log.debug(String.format("Skipping token exchange for %s", bookmark));
             }
@@ -112,15 +110,15 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
                 OAUTH_GRANT_TYPE_TOKEN_EXCHANGE
         );
         tokenExchangeRequest.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, clientid);
-        if(!StringUtils.isEmpty(bookmark.getProperty(OAUTH_TOKENEXCHANGE_AUDIENCE))) {
-            tokenExchangeRequest.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE, bookmark.getProperty(OAUTH_TOKENEXCHANGE_AUDIENCE));
+        if(!StringUtils.isEmpty(bookmark.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE))) {
+            tokenExchangeRequest.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE, bookmark.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE));
         }
         // N.B. token exchange with Id token does not work!
         tokenExchangeRequest.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN, previous.getAccessToken());
 
         final ArrayList<String> scopes = new ArrayList<>(bookmark.getProtocol().getOAuthScopes());
-        if(!StringUtils.isEmpty(bookmark.getProperty(OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
-            scopes.addAll(Arrays.asList(bookmark.getProperty(OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
+        if(!StringUtils.isEmpty(bookmark.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
+            scopes.addAll(Arrays.asList(bookmark.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
         }
         tokenExchangeRequest.setScopes(scopes);
 
@@ -161,7 +159,7 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
 
         final TemporaryAccessTokens tokens = super.authorize(oauth);
 
-        if(StringUtils.isBlank(bookmark.getProperty(S3_ASSUMEROLE_ROLEARN_2))) {
+        if(StringUtils.isBlank(bookmark.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
             // no role-chaining (MinIO)
             return tokens;
         }
@@ -187,17 +185,17 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
         });
         log.debug(String.format("Assume role with temporary credentials %s", tokens));
         final HostPreferences preferences = new HostPreferences(bookmark);
-        if(preferences.getInteger(S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
-            request.setDurationSeconds(preferences.getInteger(S3_ASSUMEROLE_DURATIONSECONDS));
+        if(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
+            request.setDurationSeconds(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS));
         }
-        if(StringUtils.isNotBlank(preferences.getProperty(S3_ASSUMEROLE_POLICY))) {
-            request.setPolicy(preferences.getProperty(S3_ASSUMEROLE_POLICY));
+        if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY))) {
+            request.setPolicy(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY));
         }
-        if(StringUtils.isNotBlank(preferences.getProperty(S3_ASSUMEROLE_ROLEARN_2))) {
-            request.setRoleArn(preferences.getProperty(S3_ASSUMEROLE_ROLEARN_2));
+        if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
+            request.setRoleArn(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2));
         }
         else {
-            if(StringUtils.EMPTY.equals(preferences.getProperty(S3_ASSUMEROLE_ROLEARN_2))) {
+            if(StringUtils.EMPTY.equals(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
                 // When defined in connection profile but with empty value
                 if(log.isDebugEnabled()) {
                     log.debug("Prompt for Role ARN");
@@ -207,7 +205,7 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
                         LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
                         new LoginOptions().icon(bookmark.getProtocol().disk()));
                 if(input.isSaved()) {
-                    bookmark.setProperty(S3_ASSUMEROLE_ROLEARN_2, input.getPassword());
+                    bookmark.setProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2, input.getPassword());
                 }
                 request.setRoleArn(input.getPassword());
             }
@@ -220,8 +218,8 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
             log.warn(String.format("Failure %s decoding JWT %s", e, oauth.getIdToken()));
             throw new LoginFailureException("Invalid JWT or JSON format in authentication token", e);
         }
-        if(StringUtils.isNotBlank(preferences.getProperty(S3_ASSUMEROLE_ROLESESSIONNAME))) {
-            request.setRoleSessionName(preferences.getProperty(S3_ASSUMEROLE_ROLESESSIONNAME));
+        if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLESESSIONNAME))) {
+            request.setRoleSessionName(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLESESSIONNAME));
         }
         else {
             if(StringUtils.isNotBlank(sub)) {
@@ -233,7 +231,7 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
             }
         }
         if(StringUtils.isNotBlank(preferences.getProperty("s3.assumerole.tag"))) {
-            request.setTags(Collections.singletonList(new Tag().withKey(preferences.getProperty("s3.assumerole.tag")).withValue(preferences.getProperty(OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
+            request.setTags(Collections.singletonList(new Tag().withKey(preferences.getProperty("s3.assumerole.tag")).withValue(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
         }
 
         try {
@@ -259,5 +257,4 @@ public class STSChainedAssumeRoleWithAccessTokenRequestInterceptor extends STSAs
     protected String getWebIdentityToken(final OAuthTokens oauth) {
         return oauth.getAccessToken();
     }
-
 }
