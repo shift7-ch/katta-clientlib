@@ -81,7 +81,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
         }
     }
 
-    protected void grantAccessToUsersRequiringAccessGrant(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public void grantAccessToUsersRequiringAccessGrant(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
         log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
         final UserKeys userKeys = userKeysService.getUserKeys(hub, prompt);

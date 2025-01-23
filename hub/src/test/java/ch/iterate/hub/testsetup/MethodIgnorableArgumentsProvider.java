@@ -25,7 +25,7 @@ public class MethodIgnorableArgumentsProvider implements ArgumentsProvider, Anno
     }
 
     @Override
-    public Stream<Arguments> provideArguments(ExtensionContext context) throws Exception {
+    public Stream<Arguments> provideArguments(ExtensionContext context) {
         Class<?> testClass = context.getRequiredTestClass();
         Object testInstance = context.getTestInstance().orElse(null);
         return Arrays.stream(methodNames)
