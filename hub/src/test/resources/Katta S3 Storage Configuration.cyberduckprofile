@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2025 shift7 GmbH. All rights reserved.
+  -->
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Protocol</key>
+        <string>katta-s3</string>
+        <key>Vendor</key>
+        <string>Shift 7 GmbH</string>
+        <key>Bundled</key>
+        <true/>
+        <key>Description</key>
+        <string>S3 Storage Configuration using OAuth Credentials from Katta Server</string>
+        <key>Scheme</key>
+        <string>http</string>
+        <key>Schemes</key>
+        <array>
+            <string>katta</string>
+        </array>
+        <key>Default Port</key>
+        <string>80</string>
+        <key>Scopes</key>
+        <array>
+            <string>openid</string>
+        </array>
+        <key>OAuth Redirect Url</key>
+        <string>${oauth.handler.scheme}:oauth</string>
+        <key>OAuth Configurable</key>
+        <true/>
+        <key>OAuth Client Secret</key>
+        <string/>
+        <key>Username Configurable</key>
+        <false/>
+        <key>Password Configurable</key>
+        <false/>
+    </dict>
+</plist>
