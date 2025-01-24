@@ -193,7 +193,7 @@ public class CreateVaultService {
                         controller, bootstrappingBookmark,
                         new KeychainX509TrustManager(CertificateTrustCallbackFactory.get(controller), new DefaultTrustManagerHostnameCallback(bootstrappingBookmark), CertificateStoreFactory.get()),
                         new KeychainX509KeyManager(CertificateIdentityCallbackFactory.get(controller), bootstrappingBookmark, CertificateStoreFactory.get()),
-                        VaultRegistryFactory.get(PasswordStoreFactory.get(), PasswordCallbackFactory.get(controller))
+                        VaultRegistryFactory.get(PasswordCallbackFactory.get(controller))
                 );
                 // upload vault template
                 new HubCryptoVault(new Path(m.bucketName(), EnumSet.of(AbstractPath.Type.directory, AbstractPath.Type.vault)))
