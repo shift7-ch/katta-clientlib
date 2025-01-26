@@ -119,7 +119,6 @@ public class UserKeysServiceImpl implements UserKeysService {
 
                 log.info("(3.1) generate and display new Account Key");
                 final String setupCode = prompt.generateAccountKey();
-                log.info("With setupCode={}", setupCode);
 
                 final String deviceName = prompt.displayAccountKeyAndAskDeviceName(host,
                         new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(COMPUTER_NAME));
