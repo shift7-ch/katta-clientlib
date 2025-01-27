@@ -4,6 +4,7 @@
 
 package ch.iterate.hub.protocols.s3;
 
+import ch.cyberduck.core.CredentialsConfigurator;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.s3.S3Protocol;
 
@@ -53,5 +54,14 @@ public class S3AutoLoadVaultProtocol extends S3Protocol {
     @Override
     public String getAuthorization() {
         return authorization;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getFeature(final Class<T> type) {
+        if(type == CredentialsConfigurator.class) {
+            return (T) CredentialsConfigurator.DISABLED;
+        }
+        return super.getFeature(type);
     }
 }
