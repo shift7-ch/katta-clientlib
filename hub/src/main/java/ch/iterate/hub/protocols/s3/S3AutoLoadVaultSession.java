@@ -4,25 +4,46 @@
 
 package ch.iterate.hub.protocols.s3;
 
-import ch.cyberduck.core.AbstractController;
+import ch.cyberduck.core.AbstractHostCollection;
+import ch.cyberduck.core.BookmarkCollection;
 import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostKeyCallback;
+import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.LoginOptions;
-import ch.cyberduck.core.PasswordCallback;
+import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.aws.CustomClientConfiguration;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.ConnectionCanceledException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.features.Vault;
+import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
+import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.preferences.HostPreferences;
+import ch.cyberduck.core.proxy.ProxyFactory;
+import ch.cyberduck.core.proxy.ProxyFinder;
+import ch.cyberduck.core.s3.RequestEntityRestStorageService;
+import ch.cyberduck.core.s3.S3AuthenticationResponseInterceptor;
+import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.shared.DefaultPathHomeFeature;
 import ch.cyberduck.core.shared.DelegatingHomeFeature;
+import ch.cyberduck.core.ssl.ThreadLocalHostnameDelegatingTrustManager;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
+import ch.cyberduck.core.sts.STSAssumeRoleCredentialsRequestInterceptor;
 import ch.cyberduck.core.threading.CancelCallback;
-import ch.cyberduck.core.threading.MainAction;
+import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultFactory;
+
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Base64;
 import java.util.UUID;
@@ -35,87 +56,91 @@ import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.AnonymousAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.google.common.primitives.Bytes;
 import com.nimbusds.jose.util.Base64URL;
 
-import static ch.iterate.hub.protocols.hub.HubSession.createFromHubUrl;
-import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.*;
+import static ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE;
 
 public class S3AutoLoadVaultSession extends S3Session {
+    private static final Logger log = LogManager.getLogger(S3AutoLoadVaultSession.class);
 
-    public S3AutoLoadVaultSession(final Host host) {
-        super(host);
-    }
+    private final AbstractHostCollection bookmarks = BookmarkCollection.defaultCollection();
+    private final HostPasswordStore keychain = PasswordStoreFactory.get();
+
+    private HubSession backend;
 
     public S3AutoLoadVaultSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
     }
 
-    public S3AutoLoadVaultSession(final Host host, final String authorization) {
-        super(host);
-    }
-
-    public S3AutoLoadVaultSession(final Host host, final X509TrustManager trust, final X509KeyManager key, final String authorization) {
-        super(host, trust, key);
+    @Override
+    public RequestEntityRestStorageService open(final ProxyFinder proxy, final HostKeyCallback hostcallback, final LoginCallback login, final CancelCallback cancel) throws BackgroundException {
+        final Host hub = bookmarks.lookup(host.getProperty(HubSession.HUB_UUID));
+        if(null == hub) {
+            throw new ConnectionCanceledException(String.format("Missing configuration %s", host.getProperty(HubSession.HUB_UUID)));
+        }
+        backend = new HubSession(hub, trust, key);
+        backend.open(proxy, hostcallback, login, cancel);
+        return super.open(proxy, hostcallback, login, cancel);
     }
 
     @Override
-    public void login(LoginCallback prompt, CancelCallback cancel) throws BackgroundException {
-        // if an authorizationCode OAuth flow is triggered, this fails with NullPointerException as redirectUri is null
+    public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         try {
-            super.login(prompt, cancel);
-        }
-        catch(NullPointerException e) {
-            throw new LoginFailureException(LocaleFactory.localizedString("Login failed - OAuth session not open", "Credentials"), e);
-        }
-        try {
-            // 2023-12-22 discussion/decision dko+ChE:
-            // AuthorizationCode OAuth tokens are stored without username as username distinction only implemented in STSAssumeRoleCredentialsRequestInterceptor, but not in OAuth2RequestInterceptor.
-            // Unclear why it was introduced in STSAssumeRoleCredentialsRequestInterceptor but not in OAuth2RequestInterceptor (both get an ID token, so it would be possible to use the same "meccano").
-            // Decision: We do not support PasswwordGrant not supported (implement workaround for integration testing).
-            // Decision: Keep vault sessions self-contained through OAuth token-sharing in Keychain and storing Hub URL in bookmark.
-            //           I.e. no injection of a shared HubSession by drilling up SessionFactory in core.
-
-            final String hubURL = getHost().getProperty(HUB_URL);
-            final String hubUsername = getHost().getProperty(HUB_USERNAME);
-            final HubSession hubSession = createFromHubUrl(hubURL, hubUsername, new AbstractController() {
-                @Override
-                public void invoke(final MainAction runnable, final boolean wait) {
-                    // controller used for trust and key manager for hub access. At this point, we assume this is all right.
-                }
-            });
-
-            final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(hubSession);
-            final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
-            final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(
-                    UUID.fromString(host.getUuid()), userKeysService.getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get()));
+            final Credentials credentials = backend.getHost().getCredentials().withOauth(keychain.findOAuthTokens(backend.getHost()));
+            log.debug("Login to {} with credentials {}", backend.getHost(), credentials);
+            backend.login(prompt, cancel);
             final Path home = new DelegatingHomeFeature(new DefaultPathHomeFeature(host)).find();
-
-            // as in VaultFinderListProgressListener:
-            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 harmonize interface? Should we pass in full uvf metadata?
+            log.debug("Attempting to locate vault in {}", home);
             final Vault vault = VaultFactory.get(home);
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! MUST NEVER BE RELEASED LIKE THIS
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 use rawFileKey,rawNameKey as vault key for now (going into cryptolib's Masterkey)
-            byte[] rawFileKey = Base64URL.from((vaultMetadata.seeds().get(vaultMetadata.latestSeed()))).decode();
-            byte[] rawNameKey = Base64URL.from((vaultMetadata.seeds().get(vaultMetadata.latestSeed()))).decode();
+            final UvfMetadataPayload vaultMetadata = new VaultServiceImpl(backend).getVaultMetadataJWE(
+                    UUID.fromString(host.getUuid()), new UserKeysServiceImpl(backend).getUserKeys(backend.getHost(), FirstLoginDeviceSetupCallbackFactory.get()));
+            byte[] rawFileKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
+            byte[] rawNameKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
             final byte[] vaultKey = Bytes.concat(rawFileKey, rawNameKey);
-
-            // as in LoadingVaultLookupListener:
-            registry.add(vault.load(this, new PasswordCallback() {
-                @Override
-                public void close(final String input) {
-                    // nothing to do
-                }
-
+            registry.add(vault.load(this, new DisabledPasswordCallback() {
                 @Override
                 public Credentials prompt(final Host bookmark, final String title, final String reason, final LoginOptions options) {
-                    return new Credentials().withPassword(Base64.getEncoder().encodeToString(vaultKey));
+                    return new VaultCredentials(Base64.getEncoder().encodeToString(vaultKey));
                 }
             }));
+            backend.close();
         }
         catch(ApiException | SecurityFailure | AccessException e) {
-            // make sure we never display the encrypted files (vault.cryptomator, / d/....)
             throw new LoginFailureException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
+        super.login(prompt, cancel);
+    }
+
+    @Override
+    protected S3CredentialsStrategy configureCredentialsStrategy(final ProxyFinder proxy, final HttpClientBuilder configuration,
+                                                                 final LoginCallback prompt) throws LoginCanceledException {
+        if(host.getProtocol().isOAuthConfigurable()) {
+            if(new HostPreferences(host).getBoolean(OAUTH_TOKENEXCHANGE)) {
+                final OAuth2RequestInterceptor oauth = new OAuth2RequestInterceptor(builder.build(ProxyFactory.get(), this, prompt).build(), host, prompt)
+                        .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
+                if(host.getProtocol().getAuthorization() != null) {
+                    oauth.withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()));
+                }
+                configuration.addInterceptorLast(oauth);
+                final STSAssumeRoleCredentialsRequestInterceptor interceptor
+                        = new STSChainedAssumeRoleWithAccessTokenRequestInterceptor(oauth, this, AWSSecurityTokenServiceClientBuilder.standard()
+                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(host.getProtocol().getSTSEndpoint(), null))
+                        .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
+                        .withClientConfiguration(new CustomClientConfiguration(host,
+                                new ThreadLocalHostnameDelegatingTrustManager(trust, host.getProtocol().getSTSEndpoint()), key)).build(), prompt);
+                configuration.addInterceptorLast(interceptor);
+                configuration.setServiceUnavailableRetryStrategy(new S3AuthenticationResponseInterceptor(this, interceptor));
+                return interceptor;
+            }
+            log.warn("Token exchange disabled for {}", host);
+        }
+        return super.configureCredentialsStrategy(proxy, configuration, prompt);
     }
 }

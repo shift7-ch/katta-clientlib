@@ -35,7 +35,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
+import static ch.iterate.hub.protocols.hub.HubSession.HUB_UUID;
 import static ch.iterate.hub.workflows.DeviceKeysService.COMPUTER_NAME;
 import static ch.iterate.hub.workflows.DeviceKeysService.validateDeviceKeys;
 
