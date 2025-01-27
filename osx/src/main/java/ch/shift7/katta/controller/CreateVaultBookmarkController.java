@@ -33,7 +33,6 @@ import org.rococoa.cocoa.foundation.NSSize;
 import java.util.List;
 import java.util.UUID;
 
-import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.workflows.CreateVaultService;
 
@@ -116,12 +115,7 @@ public class CreateVaultBookmarkController extends SheetController {
         this.model = model;
         this.callback = callback;
         this.title_ = LocaleFactory.localizedString("Create Vault", "Cipherduck");
-        if(null != model.reason()) {
-            this.reason_ = model.reason();
-        }
-        else {
-            this.reason_ = LocaleFactory.localizedString("Enter a name and description for your new vault. You can change these later.", "Cipherduck");
-        }
+        this.reason_ = LocaleFactory.localizedString("Enter a name and description for your new vault. You can change these later.", "Cipherduck");
         this.vaultNameLabel_ = LocaleFactory.localizedString("Vault Name", "Cipherduck");
         this.vaultDescriptionLabel_ = LocaleFactory.localizedString("Description (optional)", "Cipherduck");
         this.backendLabel_ = LocaleFactory.localizedString("Vault storage location", "Cipherduck");
@@ -205,8 +199,8 @@ public class CreateVaultBookmarkController extends SheetController {
             this.backendCombobox.addItemWithTitle(backend.getName());
             this.backendCombobox.lastItem().setRepresentedObject(backend.getId().toString());
         }
-        if(StringUtils.isNotBlank(this.model.backend())) {
-            this.backendCombobox.selectItemAtIndex(this.backendCombobox.indexOfItemWithRepresentedObject(this.model.backend()));
+        if(StringUtils.isNotBlank(this.model.storageProfileId())) {
+            this.backendCombobox.selectItemAtIndex(this.backendCombobox.indexOfItemWithRepresentedObject(this.model.storageProfileId()));
         }
     }
 
@@ -237,7 +231,7 @@ public class CreateVaultBookmarkController extends SheetController {
                     }
                 }
             }
-            final boolean isPermanent = config.getType().equals(StorageProfileS3Dto.class);
+            final boolean isPermanent = config.getStsEndpoint() == null;
             final boolean hiddenIfSTS = !isPermanent;
             final boolean hiddenIfPermanent = isPermanent;
             bucketNameLabel.setHidden(hiddenIfSTS);
@@ -370,7 +364,7 @@ public class CreateVaultBookmarkController extends SheetController {
         }
         final String selectedStorageId = this.backendCombobox.selectedItem().representedObject();
         final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> c.getId().toString().equals(selectedStorageId)).findFirst().get();
-        final boolean isPermanent = config.getType().equals(StorageProfileS3Dto.class);
+        final boolean isPermanent = config.getStsEndpoint() == null;
         if(isPermanent) {
             if(StringUtils.isBlank(this.accessKeyIdField.stringValue())) {
                 return false;
@@ -398,7 +392,7 @@ public class CreateVaultBookmarkController extends SheetController {
         controller.background(new AbstractBackgroundAction<Void>() {
             @Override
             public Void run() {
-                final CreateVaultService.CreateVaultModel m = new CreateVaultService.CreateVaultModel(UUID.randomUUID(), null, vaultNameField.stringValue(),
+                final CreateVaultService.CreateVaultModel m = new CreateVaultService.CreateVaultModel(UUID.randomUUID(), vaultNameField.stringValue(),
                         vaultDescriptionField.stringValue(),
                         backendCombobox.selectedItem().representedObject(),
                         StringUtils.isNotBlank(accessKeyIdField.stringValue()) ? accessKeyIdField.stringValue() : null,
