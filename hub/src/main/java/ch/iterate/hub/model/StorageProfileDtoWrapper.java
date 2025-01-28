@@ -30,7 +30,7 @@ public class StorageProfileDtoWrapper {
         return proxy.getActualInstance().getClass();
     }
 
-    public ch.iterate.hub.client.model.Protocol getProtocol()  {
+    public ch.iterate.hub.client.model.Protocol getProtocol() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getProtocol();
         }
@@ -40,7 +40,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public UUID getId()  {
+    public UUID getId() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getId();
         }
@@ -50,7 +50,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getName()  {
+    public String getName() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getName();
         }
@@ -60,7 +60,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getHostname()  {
+    public String getHostname() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getHostname();
         }
@@ -70,7 +70,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getScheme()  {
+    public String getScheme() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getScheme();
         }
@@ -80,7 +80,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public Integer getPort()  {
+    public Integer getPort() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getPort();
         }
@@ -90,7 +90,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getStsEndpoint()  {
+    public String getStsEndpoint() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -101,7 +101,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public Boolean getBucketAcceleration()  {
+    public Boolean getBucketAcceleration() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -112,7 +112,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getBucketPrefix()  {
+    public String getBucketPrefix() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -123,7 +123,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getRegion()  {
+    public String getRegion() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -134,7 +134,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public List<String> getRegions()  {
+    public List<String> getRegions() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -145,7 +145,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getStsRoleArn()  {
+    public String getStsRoleArn() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -156,7 +156,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getStsRoleArn2()  {
+    public String getStsRoleArn2() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -167,7 +167,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getStsRoleArnClient()  {
+    public String getStsRoleArnClient() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -178,7 +178,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public Integer getStsDurationSeconds()  {
+    public Integer getStsDurationSeconds() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
@@ -189,7 +189,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public Boolean getWithPathStyleAccessEnabled()  {
+    public Boolean getWithPathStyleAccessEnabled() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
         }
@@ -199,7 +199,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public S3STORAGECLASSES getStorageClass()  {
+    public S3STORAGECLASSES getStorageClass() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             return ((StorageProfileS3Dto) proxy.getActualInstance()).getStorageClass();
         }
