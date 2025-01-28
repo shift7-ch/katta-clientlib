@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+  ~ Copyright (c) 2013-2025 shift7 GmbH. All rights reserved.
+  -->
+<Configuration>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d [%t] %-5p %c - %m%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Logger name="io.opencensus.trace" additivity="false" level="error"/>
+        <Logger name="io.grpc" additivity="false" level="error"/>
+        <Logger name="testrunner" level="info"/>
+        <Logger name="ch.cyberduck" level="warn"/>
+        <Logger name="ch.cyberduck.transcript" level="info"/>
+        <Root>
+            <AppenderRef ref="console"/>
+        </Root>
+    </Loggers>
+</Configuration>
