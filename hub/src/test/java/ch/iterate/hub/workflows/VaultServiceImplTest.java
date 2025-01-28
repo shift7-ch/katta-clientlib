@@ -72,4 +72,47 @@ class VaultServiceImplTest {
 
         assertThrows(SecurityFailure.class, () -> service.getVaultAccessTokenJWE(vaultId, userKeys));
     }
+
+    @Test
+    public void testGetVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException, AccessException, SecurityFailure {
+        final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+
+        final UserKeys userKeys = UserKeys.create();
+        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+
+        final UUID vaultId = UUID.randomUUID();
+
+        final UvfMetadataPayload metadataJWE = UvfMetadataPayload.create();
+        final String uvfMetadataFile = metadataJWE.encrypt(
+                "blabla",
+                vaultId,
+                jwks.toJWKSet()
+        );
+        when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId).uvfMetadataFile(uvfMetadataFile));
+        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
+        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
+
+        final UvfMetadataPayload payload = service.getVaultMetadataJWE(vaultId, userKeys);
+        assertEquals(metadataJWE, payload);
+    }
+
+    @Test
+    public void testGetWrongVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException {
+        final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+
+        final UserKeys userKeys = UserKeys.create();
+        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+
+        final UUID vaultId = UUID.randomUUID();
+
+        when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId).uvfMetadataFile("lkajsdflkjas"));
+        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
+        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
+
+        assertThrows(SecurityFailure.class, () -> service.getVaultMetadataJWE(vaultId, userKeys));
+    }
 }
