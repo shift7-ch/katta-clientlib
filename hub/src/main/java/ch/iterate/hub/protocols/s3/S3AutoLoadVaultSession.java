@@ -16,32 +16,20 @@ import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.aws.CustomClientConfiguration;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
-import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.features.Vault;
-import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
-import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.preferences.HostPreferences;
-import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.s3.RequestEntityRestStorageService;
-import ch.cyberduck.core.s3.S3AuthenticationResponseInterceptor;
-import ch.cyberduck.core.s3.S3CredentialsStrategy;
-import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.shared.DefaultPathHomeFeature;
 import ch.cyberduck.core.shared.DelegatingHomeFeature;
-import ch.cyberduck.core.ssl.ThreadLocalHostnameDelegatingTrustManager;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
-import ch.cyberduck.core.sts.STSAssumeRoleCredentialsRequestInterceptor;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultFactory;
 
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,16 +44,10 @@ import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.AnonymousAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.google.common.primitives.Bytes;
 import com.nimbusds.jose.util.Base64URL;
 
-import static ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE;
-
-public class S3AutoLoadVaultSession extends S3Session {
+public class S3AutoLoadVaultSession extends S3AssumeRoleSession {
     private static final Logger log = LogManager.getLogger(S3AutoLoadVaultSession.class);
 
     private final AbstractHostCollection bookmarks = BookmarkCollection.defaultCollection();
@@ -116,31 +98,5 @@ public class S3AutoLoadVaultSession extends S3Session {
             throw new LoginFailureException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
         super.login(prompt, cancel);
-    }
-
-    @Override
-    protected S3CredentialsStrategy configureCredentialsStrategy(final ProxyFinder proxy, final HttpClientBuilder configuration,
-                                                                 final LoginCallback prompt) throws LoginCanceledException {
-        if(host.getProtocol().isOAuthConfigurable()) {
-            if(new HostPreferences(host).getBoolean(OAUTH_TOKENEXCHANGE)) {
-                final OAuth2RequestInterceptor oauth = new OAuth2RequestInterceptor(builder.build(ProxyFactory.get(), this, prompt).build(), host, prompt)
-                        .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
-                if(host.getProtocol().getAuthorization() != null) {
-                    oauth.withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()));
-                }
-                configuration.addInterceptorLast(oauth);
-                final STSAssumeRoleCredentialsRequestInterceptor interceptor
-                        = new STSChainedAssumeRoleWithAccessTokenRequestInterceptor(oauth, this, AWSSecurityTokenServiceClientBuilder.standard()
-                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(host.getProtocol().getSTSEndpoint(), null))
-                        .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
-                        .withClientConfiguration(new CustomClientConfiguration(host,
-                                new ThreadLocalHostnameDelegatingTrustManager(trust, host.getProtocol().getSTSEndpoint()), key)).build(), prompt);
-                configuration.addInterceptorLast(interceptor);
-                configuration.setServiceUnavailableRetryStrategy(new S3AuthenticationResponseInterceptor(this, interceptor));
-                return interceptor;
-            }
-            log.warn("Token exchange disabled for {}", host);
-        }
-        return super.configureCredentialsStrategy(proxy, configuration, prompt);
     }
 }
