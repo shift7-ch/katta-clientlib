@@ -5,10 +5,25 @@
 package ch.iterate.hub.core;
 
 import ch.cyberduck.core.*;
+import ch.cyberduck.core.features.Touch;
+import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.preferences.PreferencesFactory;
+import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
 import ch.cyberduck.core.vault.LoadingVaultLookupListener;
 import ch.cyberduck.core.vault.registry.VaultRegistryListService;
+
+import ch.cyberduck.core.vault.registry.VaultRegistryTouchFeature;
+import ch.cyberduck.core.vault.registry.VaultRegistryWriteFeature;
+
+import ch.iterate.hub.client.api.VaultResourceApi;
+import ch.iterate.hub.crypto.UserKeys;
+import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
+import ch.iterate.hub.workflows.UserKeysService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
+import com.google.common.primitives.Bytes;
+import com.nimbusds.jose.util.Base64URL;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -296,23 +312,63 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ListService proxy = session.getFeature(ListService.class);
             final DefaultVaultRegistry registry = new DefaultVaultRegistry(new DisabledPasswordCallback());
-            final ListService ff = new VaultRegistryListService(session, proxy, registry,
-                    new LoadingVaultLookupListener(registry, new DisabledPasswordCallback()));
 
-            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 should this only list the vault and not more?
+            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 uncomment once filename/directory name encryptionn cryptolib uvf is fixed:
+            /*final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled);
+            final UvfMetadataPayload vaultMetadata = new VaultServiceImpl(hubSession).getVaultMetadataJWE(vaultUuid, userKeys);
+            byte[] rawFileKey = Base64URL.from((vaultMetadata.seeds().get(vaultMetadata.latestSeed()))).decode();
+            byte[] rawNameKey = Base64URL.from((vaultMetadata.seeds().get(vaultMetadata.latestSeed()))).decode();
+            final byte[] vaultKey = Bytes.concat(rawFileKey, rawNameKey);
+            final PasswordCallback prompt = new PasswordCallback() {
+                @Override
+                public void close(final String input) {
+                    // nothing to do
+                }
+
+                @Override
+                public Credentials prompt(final Host bookmark, final String title, final String reason, final LoginOptions options) {
+                    return new Credentials().withPassword(Base64.getEncoder().encodeToString(vaultKey));
+                }
+            };*/
+            final LoginCallback prompt = new DisabledLoginCallback();
+            final ListService listService = new VaultRegistryListService(session, proxy, registry,
+                    new LoadingVaultLookupListener(registry, prompt));
+
+            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 fix with plain text
 //        final AttributedList<Path> bucketList = ff.list(new Path("/", EnumSet.of(Path.Type.directory, Path.Type.volume)), new DisabledListProgressListener());
 //        for(final Path path : bucketList) {
 //            log.info(path);
 //        }
 //        assertEquals(1, bucketList.size());
 //        assertTrue(bucketList.contains(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.volume))));
-            final AttributedList<Path> vaultContents = ff.list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory)), new DisabledListProgressListener());
-            for(final Path path : vaultContents) {
-                log.info(path);
+            {
+                final AttributedList<Path> vaultContents = listService.list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory)), new DisabledListProgressListener());
+                for(final Path path : vaultContents) {
+                    log.info(path);
+                }
+                assertEquals(2, vaultContents.size());
+                assertTrue(vaultContents.find(new SimplePathPredicate(expectedPath)) != null);
+                // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 fix paths once filename/directory name encryptionn cryptolib uvf is fixed:
+                assertTrue(vaultContents.find(new SimplePathPredicate(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))) != null);
             }
-            assertEquals(2, vaultContents.size());
-            assertTrue(vaultContents.find(new SimplePathPredicate(expectedPath)) != null);
-            assertTrue(vaultContents.find(new SimplePathPredicate(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))) != null);
+
+            {
+
+                final VaultRegistryTouchFeature<Object> touchFeature = new VaultRegistryTouchFeature<>(session, session.getFeature(Touch.class), registry);
+                touchFeature.touch(new Path(String.format("/%s/abcd.txt", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.file)), new TransferStatus());
+            }
+
+            {
+                final AttributedList<Path> vaultContents = listService.list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory)), new DisabledListProgressListener());
+                for(final Path path : vaultContents) {
+                    log.info(path);
+                }
+                assertEquals(3, vaultContents.size());
+                assertTrue(vaultContents.find(new SimplePathPredicate(expectedPath)) != null);
+                // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 fix paths once filename/directory name encryptionn cryptolib uvf is fixed:
+                assertTrue(vaultContents.find(new SimplePathPredicate(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))) != null);
+                assertTrue(vaultContents.find(new SimplePathPredicate(new Path(String.format("/%s/abcd.txt", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.file)))) != null);
+            }
         }
         finally {
             hubSession.close();
