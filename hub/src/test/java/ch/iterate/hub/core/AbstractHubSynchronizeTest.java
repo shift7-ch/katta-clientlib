@@ -4,19 +4,7 @@
 
 package ch.iterate.hub.core;
 
-import ch.cyberduck.core.AbstractPath;
-import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.BookmarkCollection;
-import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.DisabledPasswordCallback;
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.HostUrlProvider;
-import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
-import ch.cyberduck.core.Scheme;
-import ch.cyberduck.core.Session;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
 import ch.cyberduck.core.vault.LoadingVaultLookupListener;
@@ -24,7 +12,7 @@ import ch.cyberduck.core.vault.registry.VaultRegistryListService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
@@ -47,8 +35,8 @@ import ch.iterate.hub.client.model.StorageProfileS3Dto;
 import ch.iterate.hub.client.model.StorageProfileS3STSDto;
 import ch.iterate.hub.core.callback.CreateVaultModel;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.protocols.hub.HubStorageProfileSyncSchedulerService;
 import ch.iterate.hub.protocols.hub.VaultProfileBookmarkService;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestController;
@@ -71,7 +59,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static ch.iterate.hub.testsetup.HubTestUtilities.*;
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
@@ -87,9 +74,10 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @MethodIgnorableSource(value = "arguments")
     public void test01Bootstrapping(final HubTestConfig hubTestConfig) throws Exception {
         log.info(String.format("M01 %s", hubTestConfig));
-        final HubSession hubSession = setupForUser(hubTestConfig.hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
+
+        final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
+        final HubSession hubSession = setupForUser(hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
         try {
-            final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
 
             assertNotNull(ProtocolFactory.get().forName("s3-hub", "Shift 7 GmbH"));
             assertNotNull(ProtocolFactory.get().forName("s3-hub-sts", "Shift 7 GmbH"));
@@ -151,8 +139,8 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 }
             }
 
-            // wait for sync
-            Thread.sleep(SYNC_WAIT_SECS * 1000);
+            // trigger blocking sync
+            new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
 
             log.info(String.format("%s Protocols found:", ProtocolFactory.get().find().size()));
             for(Protocol protocol : ProtocolFactory.get().find()) {
@@ -172,6 +160,9 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.error(String.format("%s %s", e.getCode(), e.getMessage()), e);
             throw e;
         }
+        finally {
+            hubSession.close();
+        }
     }
 
     /**
@@ -183,44 +174,48 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         log.info(String.format("M02 %s", hubTestConfig));
 
         final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
-        setupForUser(hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
+        final HubSession hubSession = setupForUser(hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
+        try {
+            new CreateHubBookmarkAction(hubTestSetupConfig.hubURL(), BookmarkCollection.defaultCollection(), new HubTestController()).run();
 
-        new CreateHubBookmarkAction(hubTestSetupConfig.hubURL(), BookmarkCollection.defaultCollection(), new HubTestController()).run();
+            final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
+            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+            final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
 
-        final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
-        final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
-        final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
+            final UUID uuid = UUID.randomUUID();
 
-        final UUID uuid = UUID.randomUUID();
+            // trigger blocking sync
+            new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
+            final int numProtocols = ProtocolFactory.get().find().size();
 
-        // wait for first time sync for admin before we count protocols
-        Thread.sleep(SYNC_WAIT_SECS * 1000);
-        final int numProtocols = ProtocolFactory.get().find().size();
+            log.info(String.format("Add storage profile for UUID %s", uuid));
+            Assertions.assertNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
 
-        log.info(String.format("Add storage profile for UUID %s", uuid));
-        assertNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
+            final StorageProfileDto storageProfile = storageProfiles.get(0);
+            // client-generated code is not subclassed...
+            if(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto) {
+                final StorageProfileS3STSDto profile = (StorageProfileS3STSDto) storageProfile.getActualInstance();
+                profile.setId(uuid);
+                adminStorageProfileApi.apiStorageprofileS3stsPut(profile);
+            }
+            else if(storageProfile.getActualInstance() instanceof StorageProfileS3Dto) {
+                final StorageProfileS3Dto profile = (StorageProfileS3Dto) storageProfile.getActualInstance();
+                profile.setId(uuid);
+                adminStorageProfileApi.apiStorageprofileS3Put(profile);
+            }
+            else {
+                fail();
+            }
+            assertEquals(storageProfiles.size() + 1, adminStorageProfileApi.apiStorageprofileGet(null).size());
 
-        final StorageProfileDto storageProfile = storageProfiles.get(0);
-        // client-generated code is not subclassed...
-        if(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto) {
-            final StorageProfileS3STSDto profile = (StorageProfileS3STSDto) storageProfile.getActualInstance();
-            profile.setId(uuid);
-            adminStorageProfileApi.apiStorageprofileS3stsPut(profile);
+            new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
+
+            assertEquals(numProtocols + 1, ProtocolFactory.get().find().size());
+            assertNotNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
         }
-        else if(storageProfile.getActualInstance() instanceof StorageProfileS3Dto) {
-            final StorageProfileS3Dto profile = (StorageProfileS3Dto) storageProfile.getActualInstance();
-            profile.setId(uuid);
-            adminStorageProfileApi.apiStorageprofileS3Put(profile);
+        finally {
+            hubSession.close();
         }
-        else {
-            Assert.fail();
-        }
-        assertEquals(storageProfiles.size() + 1, adminStorageProfileApi.apiStorageprofileGet(null).size());
-
-        // wait for next sync
-        Thread.sleep(SYNC_WAIT_SECS * 1000);
-        assertEquals(numProtocols + 1, ProtocolFactory.get().find().size());
-        assertNotNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
     }
 
     /**
@@ -233,101 +228,96 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
         final HubTestSetupConfig hubTestSetupConfig = hubTestConfig.hubTestSetupConfig;
         final HubSession hubSession = setupForUser(hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
-        final VaultSpec vaultSpec = hubTestConfig.vaultSpec;
+        try {
+            final VaultSpec vaultSpec = hubTestConfig.vaultSpec;
 
+            final String storageProfileId = vaultSpec.storageProfileId;
+            final String bucketName = vaultSpec.bucketName;
+            final String username = vaultSpec.username;
+            final String password = vaultSpec.password;
 
-        final String storageProfileId = vaultSpec.storageProfileId;
-        final String bucketName = vaultSpec.bucketName;
-        final String username = vaultSpec.username;
-        final String password = vaultSpec.password;
+            final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
+            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
+            log.info(String.format("Coercing storage profiles %s", storageProfiles));
+            final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
+                    .map(StorageProfileDtoWrapper::coerce)
+                    .filter(p -> p.getId().toString().equals(storageProfileId.toLowerCase())).findFirst().get();
 
-        final ApiClient adminApiClient = getAdminApiClient(hubTestSetupConfig);
-        final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
-        log.info(String.format("Coercing storage profiles %s", storageProfiles));
-        final StorageProfileDtoWrapper storageProfile = storageProfiles.stream()
-                .map(StorageProfileDtoWrapper::coerce)
-                .filter(p -> {
-                    try {
-                        return p.getId().toString().equals(storageProfileId.toLowerCase());
-                    }
-                    catch(StorageProfileDtoWrapperException e) {
-                        log.error(e);
-                        return false;
-                    }
-                }).findFirst().get();
+            if(bucketName != null) {
+                log.info(String.format("Empty bucket %s", bucketName));
 
-        if(bucketName != null) {
-            log.info(String.format("Empty bucket %s", bucketName));
-
-            final AmazonS3 s3Client = createS3ClientForEmptyingBucket(
-                    bucketName,
-                    storageProfile.getHostname() == null ? null : new HostUrlProvider().get(storageProfile.getScheme() == null ? Scheme.https : Scheme.valueOf(storageProfile.getScheme()), storageProfile.getPort() == null ? 443 : storageProfile.getPort().intValue(), null, storageProfile.getHostname(), bucketName), username, password, null, storageProfile.getRegion(), true);
-            final List<DeleteObjectsRequest.KeyVersion> keys = s3Client.listObjectsV2(bucketName).getObjectSummaries().stream().map(s -> new DeleteObjectsRequest.KeyVersion(s.getKey())).collect(Collectors.toList());
-            if(!keys.isEmpty()) {
-                DeleteObjectsRequest dor = new DeleteObjectsRequest(bucketName).withKeys(keys);
-                s3Client.deleteObjects(dor);
+                final AmazonS3 s3Client = createS3ClientForEmptyingBucket(
+                        bucketName,
+                        storageProfile.getHostname() == null ? null : new HostUrlProvider().get(storageProfile.getScheme() == null ? Scheme.https : Scheme.valueOf(storageProfile.getScheme()), storageProfile.getPort() == null ? 443 : storageProfile.getPort().intValue(), null, storageProfile.getHostname(), bucketName), username, password, null, storageProfile.getRegion(), true);
+                final List<DeleteObjectsRequest.KeyVersion> keys = s3Client.listObjectsV2(bucketName).getObjectSummaries().stream().map(s -> new DeleteObjectsRequest.KeyVersion(s.getKey())).collect(Collectors.toList());
+                if(!keys.isEmpty()) {
+                    DeleteObjectsRequest dor = new DeleteObjectsRequest(bucketName).withKeys(keys);
+                    s3Client.deleteObjects(dor);
+                }
             }
-        }
-        log.info(String.format("Creating vault in %s", hubSession));
-        final UUID vaultUuid = UUID.randomUUID();
-        new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
-        log.info(String.format("Getting vault bookmark for vault %s", vaultUuid));
-        final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid, FirstLoginDeviceSetupCallback.disabled);
-        log.info(String.format("Logging into vault %s with shared oauth credentials from password store", vaultBookmark));
-        final Session<?> session = vaultLoginWithSharedOAuthCredentialsFromPasswordStore(vaultBookmark);
+            log.info(String.format("Creating vault in %s", hubSession));
+            final UUID vaultUuid = UUID.randomUUID();
+            new CreateVaultService(hubSession, new HubTestController()).createVault(new CreateVaultModel(vaultUuid, "no reason", String.format("my first vault %s", storageProfile.getName()), "", storageProfileId.toLowerCase(), username, password, bucketName, storageProfile.getRegion(), true, 3));
+            log.info(String.format("Getting vault bookmark for vault %s", vaultUuid));
+            final Host vaultBookmark = new VaultProfileBookmarkService(hubSession).getVaultBookmark(vaultUuid, FirstLoginDeviceSetupCallback.disabled);
+            log.info(String.format("Logging into vault %s with shared oauth credentials from password store", vaultBookmark));
+            final Session<?> session = vaultLoginWithSharedOAuthCredentialsFromPasswordStore(vaultBookmark);
 
-        log.info(String.format("Listing bucket %s in %s", vaultBookmark.getDefaultPath(), vaultBookmark));
-        final Date before = new Date();
-        AttributedList<Path> bucketListRaw = session.getFeature(ListService.class).list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, Path.Type.volume)), new DisabledListProgressListener());
-        final Date after = new Date();
+            log.info(String.format("Listing bucket %s in %s", vaultBookmark.getDefaultPath(), vaultBookmark));
+            final Date before = new Date();
+            AttributedList<Path> bucketListRaw = session.getFeature(ListService.class).list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, Path.Type.volume)), new DisabledListProgressListener());
+            final Date after = new Date();
 
-        log.info(before);
-        log.info(after);
-        log.info("paths:");
+            log.info(before);
+            log.info(after);
+            log.info("paths:");
 
-        for(final Path path : bucketListRaw) {
-            Date date = new Date();
-            date.setTime(path.attributes().getModificationDate());
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE dd-MMM-yy HH:mm:ssZ");
-            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
-            log.info(String.format("%s %s [%s,%s]", path,
-                    simpleDateFormat.format(date),
-                    simpleDateFormat.format(before),
-                    simpleDateFormat.format(after))
-            );
+            for(final Path path : bucketListRaw) {
+                Date date = new Date();
+                date.setTime(path.attributes().getModificationDate());
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE dd-MMM-yy HH:mm:ssZ");
+                simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+                log.info(String.format("%s %s [%s,%s]", path,
+                        simpleDateFormat.format(date),
+                        simpleDateFormat.format(before),
+                        simpleDateFormat.format(after))
+                );
 
-            if(path.isFile()) {
-                date.setTime(path.attributes().getModificationDate() + LAG);
-                assert date.after(before);
-                date.setTime(path.attributes().getModificationDate() - LAG);
-                assert date.before(after);
+                if(path.isFile()) {
+                    date.setTime(path.attributes().getModificationDate() + LAG);
+                    assertTrue(date.after(before));
+                    date.setTime(path.attributes().getModificationDate() - LAG);
+                    assertTrue(date.before(after));
+                }
             }
-        }
-        final Path expectedPath = new Path(String.format("/%s/%s", vaultBookmark.getDefaultPath(), PreferencesFactory.get().getProperty("cryptomator.vault.config.filename")), EnumSet.of(AbstractPath.Type.file));
-        log.info("expectedPath {}", expectedPath);
-        assert bucketListRaw.contains(expectedPath);
+            final Path expectedPath = new Path(String.format("/%s/%s", vaultBookmark.getDefaultPath(), PreferencesFactory.get().getProperty("cryptomator.vault.config.filename")), EnumSet.of(AbstractPath.Type.file));
+            log.info("expectedPath {}", expectedPath);
+            assertTrue(bucketListRaw.find(new SimplePathPredicate(expectedPath)) != null);
 
-        final ListService proxy = session.getFeature(ListService.class);
-        final DefaultVaultRegistry registry = new DefaultVaultRegistry(new DisabledPasswordCallback());
-        final ListService ff = new VaultRegistryListService(session, proxy, registry,
-                new LoadingVaultLookupListener(registry, new DisabledPasswordCallback()));
+            final ListService proxy = session.getFeature(ListService.class);
+            final DefaultVaultRegistry registry = new DefaultVaultRegistry(new DisabledPasswordCallback());
+            final ListService ff = new VaultRegistryListService(session, proxy, registry,
+                    new LoadingVaultLookupListener(registry, new DisabledPasswordCallback()));
 
-        // TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 should this only list the vault and not more?
+            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 should this only list the vault and not more?
 //        final AttributedList<Path> bucketList = ff.list(new Path("/", EnumSet.of(Path.Type.directory, Path.Type.volume)), new DisabledListProgressListener());
 //        for(final Path path : bucketList) {
 //            log.info(path);
 //        }
 //        assertEquals(1, bucketList.size());
 //        assertTrue(bucketList.contains(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.volume))));
-        final AttributedList<Path> vaultContents = ff.list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory)), new DisabledListProgressListener());
-        for(final Path path : vaultContents) {
-            log.info(path);
+            final AttributedList<Path> vaultContents = ff.list(new Path(String.format("/%s", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory)), new DisabledListProgressListener());
+            for(final Path path : vaultContents) {
+                log.info(path);
+            }
+            assertEquals(2, vaultContents.size());
+            assertTrue(vaultContents.find(new SimplePathPredicate(expectedPath)) != null);
+            assertTrue(vaultContents.find(new SimplePathPredicate(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))) != null);
         }
-        assertEquals(2, vaultContents.size());
-        assertTrue(vaultContents.contains(expectedPath));
-        assertTrue(vaultContents.contains(new Path(String.format("/%s/d", vaultBookmark.getDefaultPath()), EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder))));
+        finally {
+            hubSession.close();
+        }
     }
-
 
     private static AmazonS3 createS3ClientForEmptyingBucket(final String bucketName, final String s3Endpoint, final String awsAccessKey, final String awsSecretKey, final String sessionToken, String region, final boolean pathStyleAccessEnabled) {
         AmazonS3ClientBuilder s3Builder = AmazonS3ClientBuilder

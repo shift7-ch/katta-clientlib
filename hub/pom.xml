@@ -29,7 +29,7 @@
                         <!-- https://openapi-generator.tech/docs/plugins/ -->
                         <groupId>org.openapitools</groupId>
                         <artifactId>openapi-generator-maven-plugin</artifactId>
-                        <version>6.0.0</version>
+                        <version>7.11.0</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -56,7 +56,10 @@
                                     </configOptions>
                                     <generateApiTests>false</generateApiTests>
                                     <generateModelTests>false</generateModelTests>
-                                    <generateSupportingFiles>false</generateSupportingFiles>
+                                    <generateSupportingFiles>true</generateSupportingFiles>
+                                    <supportingFilesToGenerate>
+                                        ApiCallback.java,ApiClient.java,ApiException.java,ApiResponse.java,Configuration.java,Pair.java,ProgressRequestBody.java,ProgressResponseBody.java,StringUtil.java,ApiKeyAuth.java,Authentication.java,HttpBasicAuth.java,JSON.java,OAuth.java,EncodingUtils.java
+                                    </supportingFilesToGenerate>
                                     <generateApiDocumentation>false</generateApiDocumentation>
                                 </configuration>
                             </execution>

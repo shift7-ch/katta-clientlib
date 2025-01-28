@@ -44,7 +44,6 @@ import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.model.StorageProfileDtoWrapperException;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -81,15 +80,7 @@ public class CreateVaultService {
             final StorageProfileResourceApi storageProfilesResourceApi = new StorageProfileResourceApi(hubSession.getClient());
             // Get only non-archived profiles to create new vault
             final List<StorageProfileDto> storageProfiles = storageProfilesResourceApi.apiStorageprofileGet(false);
-            final StorageProfileDto storageProfile = storageProfiles.stream().filter(c -> {
-                try {
-                    return StorageProfileDtoWrapper.coerce(c).getId().toString().equals(m.storageProfileId());
-                }
-                catch(StorageProfileDtoWrapperException e) {
-                    log.warn(e);
-                    return false;
-                }
-            }).findFirst().orElse(null);
+            final StorageProfileDto storageProfile = storageProfiles.stream().filter(c -> StorageProfileDtoWrapper.coerce(c).getId().toString().equals(m.storageProfileId())).findFirst().orElse(null);
             final StorageProfileDtoWrapper backend = StorageProfileDtoWrapper.coerce(storageProfile);
 
             // prepare vault creation
@@ -99,23 +90,18 @@ public class CreateVaultService {
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks;
             jwks = UvfMetadataPayload.createKeys();
             final UvfMetadataPayload metadataJWE;
-            try {
-                metadataJWE = UvfMetadataPayload
-                        .create()
-                        .withStorage(new VaultMetadataJWEBackendDto()
-                                .provider(backend.getId().toString())
-                                .defaultPath(backend.getType().equals(StorageProfileS3STSDto.class) ? backend.getBucketPrefix() + m.uuid() : m.bucketName())
-                                .nickname(m.vaultName())
-                                .username(m.accessKeyId())
-                                .password(m.secretKey()))
-                        .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
-                                .enabled(m.automaticAccessGrant())
-                                .maxWotDepth(m.maxWotLevel())
-                        );
-            }
-            catch(StorageProfileDtoWrapperException e) {
-                throw new SecurityFailure(e);
-            }
+            metadataJWE = UvfMetadataPayload
+                    .create()
+                    .withStorage(new VaultMetadataJWEBackendDto()
+                            .provider(backend.getId().toString())
+                            .defaultPath(backend.getType().equals(StorageProfileS3STSDto.class) ? backend.getBucketPrefix() + m.uuid() : m.bucketName())
+                            .nickname(m.vaultName())
+                            .username(m.accessKeyId())
+                            .password(m.secretKey()))
+                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                            .enabled(m.automaticAccessGrant())
+                            .maxWotDepth(m.maxWotLevel())
+                    );
             if(log.isDebugEnabled()) {
                 log.debug(String.format("Created metadata JWE %s", metadataJWE));
             }
@@ -135,19 +121,14 @@ public class CreateVaultService {
                     .uvfMetadataFile(uvfMetadataFile)
                     .uvfKeySet(jwks.serializePublicRecoverykey());
             final CreateS3STSBucketDto storageDto;
-            try {
-                storageDto = new CreateS3STSBucketDto()
-                        .vaultId(vaultDto.getId().toString())
-                        .storageConfigId(backend.getId())
-                        // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here as well? Only in VaultDto?
-                        .vaultUvf(uvfMetadataFile)
-                        // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here?
-                        .rootDirHash(metadataJWE.computeRootDirIdHash(metadataJWE.computeRootDirId()))
-                        .region(m.region());
-            }
-            catch(StorageProfileDtoWrapperException e) {
-                throw new SecurityFailure(e);
-            }
+            storageDto = new CreateS3STSBucketDto()
+                    .vaultId(vaultDto.getId().toString())
+                    .storageConfigId(backend.getId())
+                    // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here as well? Only in VaultDto?
+                    .vaultUvf(uvfMetadataFile)
+                    // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here?
+                    .rootDirHash(metadataJWE.computeRootDirIdHash(metadataJWE.computeRootDirId()))
+                    .region(m.region());
             if(log.isDebugEnabled()) {
                 log.debug(String.format("Created storage dto %s", storageDto));
             }
@@ -161,13 +142,7 @@ public class CreateVaultService {
                 final Host bootstrappingBookmark = new Host(new S3Protocol() {
                     @Override
                     public Scheme getScheme() {
-                        try {
-                            return backend.getScheme() != null ? Scheme.valueOf(backend.getScheme()) : Scheme.https;
-                        }
-                        catch(StorageProfileDtoWrapperException e) {
-                            log.error(e);
-                            return Scheme.https;
-                        }
+                        return backend.getScheme() != null ? Scheme.valueOf(backend.getScheme()) : Scheme.https;
                     }
 
                     @Override
@@ -236,9 +211,6 @@ public class CreateVaultService {
         }
         catch(JOSEException e) {
             throw new SecurityFailure(e);
-        }
-        catch(StorageProfileDtoWrapperException e) {
-            throw new RuntimeException(e);
         }
         catch(JsonProcessingException e) {
             throw new SecurityFailure(e);
