@@ -8,17 +8,6 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.cryptomator.cryptolib.common.ECKeyPair;
-import org.cryptomator.cryptolib.common.P384KeyPair;
-import org.joda.time.DateTime;
-
-import java.security.spec.InvalidKeySpecException;
-import java.text.ParseException;
-import java.util.Base64;
-
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.DeviceResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
@@ -34,6 +23,15 @@ import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.cryptomator.cryptolib.common.ECKeyPair;
+import org.cryptomator.cryptolib.common.P384KeyPair;
+import org.joda.time.DateTime;
+
+import java.security.spec.InvalidKeySpecException;
+import java.text.ParseException;
+import java.util.Base64;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
 import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
@@ -65,7 +63,7 @@ public class UserKeysServiceImpl implements UserKeysService {
             final ECKeyPair deviceKeyPairFromKeychain = getDeviceKeysFromPasswordStore(me.getId(), host.getProperty(HUB_UUID));
             final boolean deviceKeysInKeychain = validateDeviceKeys(deviceKeyPairFromKeychain);
             log.debug(" -> deviceKeysInKeychain={}", deviceKeysInKeychain);
-            if(userKeysInHub && deviceKeysInKeychain) {
+            if (userKeysInHub && deviceKeysInKeychain) {
                 log.info("(1) Get user keys from hub and decrypt with device key from keychain.");
 
                 final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeyPairFromKeychain);
@@ -76,9 +74,8 @@ public class UserKeysServiceImpl implements UserKeysService {
                     final UserKeys userKeys = UserKeys.decryptOnDevice(deviceSpecificUserKeys, deviceKeyPairFromKeychain.getPrivate(), me.getEcdhPublicKey(), me.getEcdsaPublicKey());
                     log.info("(1.2) Decrypting device-specific user keys for deviceId={}", deviceId);
                     return userKeys;
-                }
-                catch(ApiException e) {
-                    switch(e.getCode()) {
+                } catch (ApiException e) {
+                    switch (e.getCode()) {
                         case 404:
                             log.info("(1b) Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
 
@@ -93,8 +90,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                             throw e;
                     }
                 }
-            }
-            else if(userKeysInHub) {
+            } else if (userKeysInHub) {
                 log.info("(2) Setting up new device w/ Account Key for existing user keys.");
 
                 log.info("(2.1) setup existing device w/ Account Key (e.g. same device for multiple hubs)");
@@ -113,8 +109,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
 
                 return userKeys;
-            }
-            else {
+            } else {
                 log.info("(3) Setting up new user keys and setupCode.");
 
                 log.info("(3.1) generate and display new Account Key");
@@ -142,27 +137,24 @@ public class UserKeysServiceImpl implements UserKeysService {
 
                 log.info("(3.4) Retrieve/generate device keys. Retrieve if present in keychain from another hub.");
                 final ECKeyPair deviceKeyPair;
-                if(!deviceKeysInKeychain) {
+                if (!deviceKeysInKeychain) {
                     log.info("(3.4a) Setting up new device for new user keys.");
                     deviceKeyPair = P384KeyPair.generate();
-                }
-                else {
+                } else {
                     log.info("(3.4b) Re-using existing device with new user keys.");
                     deviceKeyPair = deviceKeyPairFromKeychain;
                 }
                 log.info("(3.4) Upload device-specific user keys and store device keys in keychain.");
                 this.uploadDeviceKeys(deviceName, userKeys, deviceKeyPair);
-                if(!deviceKeysInKeychain) {
+                if (!deviceKeysInKeychain) {
                     log.info("(3.5) Store new device keys in keychain");
                     storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
                 }
                 return userKeys;
             }
-        }
-        catch(LocalAccessDeniedException | ConnectionCanceledException e) {
+        } catch (LocalAccessDeniedException | ConnectionCanceledException e) {
             throw new AccessException(e);
-        }
-        catch(InvalidKeySpecException | JsonProcessingException | ParseException | JOSEException e) {
+        } catch (InvalidKeySpecException | JsonProcessingException | ParseException | JOSEException e) {
             throw new SecurityFailure(e);
         }
     }
