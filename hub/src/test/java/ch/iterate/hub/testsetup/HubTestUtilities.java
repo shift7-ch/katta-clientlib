@@ -130,6 +130,11 @@ public class HubTestUtilities {
                 return new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(String.format("firstLoginMockSetup %s", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                         .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
+
+            @Override
+            public String generateAccountKey() {
+                return setupCode;
+            }
         };
         MockableFirstLoginDeviceSetupCallback.setProxy(proxy);
 

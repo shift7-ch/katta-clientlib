@@ -1,13 +1,7 @@
 package ch.iterate.hub.core;
 
-import ch.iterate.hub.client.api.UsersResourceApi;
-import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.crypto.UserKeys;
-import ch.iterate.hub.protocols.hub.HubSession;
-import ch.iterate.hub.testsetup.AbstractHubTest;
-import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
-import ch.iterate.hub.testsetup.model.HubTestConfig;
-import com.nimbusds.jose.JOSEException;
+import ch.cyberduck.core.AlphanumericRandomStringService;
+
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,8 +11,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.security.InvalidKeyException;
 import java.util.stream.Stream;
 
+import ch.iterate.hub.client.api.UsersResourceApi;
+import ch.iterate.hub.client.model.UserDto;
+import ch.iterate.hub.crypto.UserKeys;
+import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.testsetup.AbstractHubTest;
+import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
+import ch.iterate.hub.testsetup.model.HubTestConfig;
+import com.nimbusds.jose.JOSEException;
+
 import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioSTSUnattendedLocalOnly;
 import static ch.iterate.hub.testsetup.HubTestUtilities.setupForUser;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,7 +41,11 @@ public class UserKeysRecoveryTest extends AbstractHubTest {
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true);
 
-        final JOSEException exc = assertThrows(JOSEException.class, () -> UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), hubTestConfig.hubTestSetupConfig.USER_001().setupCode));
-        assertTrue(exc.getCause() instanceof InvalidKeyException);
+        final JOSEException exception = assertThrows(JOSEException.class, () -> UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
+                new AlphanumericRandomStringService().random()));
+        assertTrue(exception.getCause() instanceof InvalidKeyException);
+
+        assertNotNull(UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
+                hubTestConfig.hubTestSetupConfig.USER_001().setupCode));
     }
 }

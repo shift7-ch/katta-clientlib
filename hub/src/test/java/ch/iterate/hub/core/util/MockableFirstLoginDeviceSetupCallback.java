@@ -26,4 +26,9 @@ public class MockableFirstLoginDeviceSetupCallback implements FirstLoginDeviceSe
     public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws ConnectionCanceledException {
         return proxy.askForAccountKeyAndDeviceName(bookmark, initialDeviceName);
     }
+
+    @Override
+    public String generateAccountKey() {
+        return proxy.generateAccountKey();
+    }
 }
