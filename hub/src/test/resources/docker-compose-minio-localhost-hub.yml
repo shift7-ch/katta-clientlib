@@ -1,7 +1,7 @@
 services:
   keycloak:
     hostname: keycloak
-    image: "ghcr.io/shift7-ch/keycloak:25.0.1"
+    image: "${KATTA_KEYCLOAK_IMAGE}"
     pull_policy: missing
     ports:
       - "${KEYCLOAK_HTTP_PORT}:${KEYCLOAK_HTTP_PORT}"
@@ -28,7 +28,7 @@ services:
       retries: 15
 
   keycloak-enable-direct-access-grant:
-    image: "ghcr.io/shift7-ch/keycloak:25.0.1"
+    image: "${KATTA_KEYCLOAK_IMAGE}"
     pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]
     command:
@@ -98,10 +98,10 @@ services:
         set -e
         ls /setup
         /usr/bin/mc config host add myminio http://minio:${MINIO_PORT} minioadmin minioadmin
-        
+
         /usr/bin/mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
         /usr/bin/mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
-        
+
         /usr/bin/mc idp openid add myminio cryptomator \
           config_url="http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" \
           client_id="cryptomator" \
@@ -117,30 +117,30 @@ services:
           client_id="cryptomatorvaults" \
           client_secret="ignore-me" \
           role_policy="cipherduckaccessbucket"
-        
+
         # see https://github.com/bitnami/charts/pull/28118
         /usr/bin/mc admin service restart myminio --wait --json
         # sleep necessary despite --wait...
         sleep 5
-        
+
         /usr/bin/mc idp openid enable myminio cryptomator
         /usr/bin/mc idp openid enable myminio cryptomatorhub
         /usr/bin/mc idp openid enable myminio cryptomatorvaults
-        
+
         /usr/bin/mc admin service restart myminio --wait --json
         sleep 5
-        
+
         /usr/bin/mc idp openid ls myminio
         /usr/bin/mc idp openid info myminio
-        
+
         # if container is restarted, the bucket already exists...
         /usr/bin/mc mb myminio/handmade || true
         /usr/bin/mc rm --recursive --force myminio/handmade
-        
+
         echo "createbuckets successful"
 
   hub:
-    image: "ghcr.io/shift7-ch/katta-server:latest"
+    image: "${KATTA_SERVER_IMAGE}"
     depends_on:
       keycloak:
         condition: service_healthy
@@ -188,7 +188,7 @@ services:
         chmod +x ./curl
         ./curl --version
         wget https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -O jq
-        chmod +x ./jq 
+        chmod +x ./jq
         ./jq --version
         ./curl -v -X POST http://keycloak:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/protocol/openid-connect/token \
               -H "Content-Type: application/x-www-form-urlencoded" \
@@ -197,11 +197,11 @@ services:
               -d "username=admin" \
               -d "password=admin" | tee access_token.txt
         export ACCESS_TOKEN=`cat access_token.txt | ./jq ".access_token" | tr -d '"'`
-        
+
         echo $$ACCESS_TOKEN
         cat /setup/minio_sts/minio_sts_profile.json | sed -e 's/9000/${MINIO_PORT}/g' > /tmp/minio_sts_profile.json
         cat /setup/minio_static/minio_static_profile.json | sed -e 's/9000/${MINIO_PORT}/g' > /tmp/minio_static_profile.json
-        
+
         ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/minio_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
         ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/minio_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
         ./curl -v --fail -X PUT http://hub:${HUB_PORT}/api/storageprofile/s3sts -d @setup/aws_sts/aws_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
