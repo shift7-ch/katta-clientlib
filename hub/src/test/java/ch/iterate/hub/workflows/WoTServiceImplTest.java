@@ -4,8 +4,6 @@
 
 package ch.iterate.hub.workflows;
 
-import ch.cyberduck.core.Host;
-
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -86,7 +84,6 @@ class WoTServiceImplTest {
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
-        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
         Mockito.when(usersMock.apiUsersGet()).thenReturn(Arrays.asList(alice, bob, oscar));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
@@ -126,7 +123,6 @@ class WoTServiceImplTest {
         final UserKeys aliceKeys = previousKeys;
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
 
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
@@ -148,7 +144,6 @@ class WoTServiceImplTest {
         final String expectedSignature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         final TrustedUserDto expectedTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(Collections.singletonList(expectedSignature));
