@@ -21,7 +21,6 @@ import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.DisabledProxyFinder;
-import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
@@ -55,6 +54,7 @@ import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.hub.HubStorageProfileListService;
 import ch.iterate.hub.protocols.hub.HubStorageProfileSyncSchedulerService;
 import ch.iterate.hub.protocols.hub.HubStorageVaultSyncSchedulerService;
+import ch.iterate.hub.protocols.s3.S3AssumeRoleSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestConfig;
 import ch.iterate.hub.testsetup.MethodIgnorableSource;
@@ -240,7 +240,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final Host vaultBookmark = new HubStorageVaultSyncSchedulerService(hubSession).toBookmark(vaultId, FirstLoginDeviceSetupCallback.disabled);
             log.info(String.format("Using vault bookmark %s", vaultBookmark));
 
-            final Session<?> session = new S3Session(vaultBookmark, new DisabledX509TrustManager(), new DefaultX509KeyManager());
+            final Session<?> session = new S3AssumeRoleSession(vaultBookmark, new DisabledX509TrustManager(), new DefaultX509KeyManager());
             session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
             session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
