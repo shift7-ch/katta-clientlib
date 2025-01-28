@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import java.util.Objects;
 
 import ch.iterate.hub.crypto.JWE;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
@@ -41,6 +42,26 @@ public class UvfAccessTokenPayload extends JWEPayload {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         return mapper.readValue(jwe, UvfAccessTokenPayload.class);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(this == o) {
+            return true;
+        }
+        if(o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        UvfAccessTokenPayload that = (UvfAccessTokenPayload) o;
+        return key.equals(that.key) && Objects.equals(recoveryKey, that.recoveryKey);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = key.hashCode();
+        result = 31 * result + Objects.hashCode(recoveryKey);
+        return result;
     }
 
     @Override
