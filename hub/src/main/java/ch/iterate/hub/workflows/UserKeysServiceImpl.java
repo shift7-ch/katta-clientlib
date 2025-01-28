@@ -37,7 +37,8 @@ import com.nimbusds.jose.JOSEException;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
 import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
-import static ch.iterate.hub.workflows.DeviceKeysService.*;
+import static ch.iterate.hub.workflows.DeviceKeysService.COMPUTER_NAME;
+import static ch.iterate.hub.workflows.DeviceKeysService.validateDeviceKeys;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
@@ -62,7 +63,7 @@ public class UserKeysServiceImpl implements UserKeysService {
             log.info("Retrieved user {}", me);
             final boolean userKeysInHub = validateUserKeys(me);
             log.debug(" -> userKeysInHub={}", userKeysInHub);
-            final ECKeyPair deviceKeyPairFromKeychain = getDeviceKeysFromPasswordStore(me.getId(), host.getProperty(HUB_UUID));
+            final ECKeyPair deviceKeyPairFromKeychain = new DeviceKeysService().getDeviceKeysFromPasswordStore(me.getId(), host.getProperty(HUB_UUID));
             final boolean deviceKeysInKeychain = validateDeviceKeys(deviceKeyPairFromKeychain);
             log.debug(" -> deviceKeysInKeychain={}", deviceKeysInKeychain);
             if(userKeysInHub && deviceKeysInKeychain) {
@@ -110,7 +111,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(), userKeys, deviceKeyPair);
 
                 log.info("(2.4) store new device keys in keychain");
-                storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
+                new DeviceKeysService().storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
 
                 return userKeys;
             }
@@ -154,7 +155,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 this.uploadDeviceKeys(deviceName, userKeys, deviceKeyPair);
                 if(!deviceKeysInKeychain) {
                     log.info("(3.5) Store new device keys in keychain");
-                    storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
+                    new DeviceKeysService().storeDeviceKeysInPasswordStore(deviceKeyPair, me.getId(), host.getProperty(HUB_UUID));
                 }
                 return userKeys;
             }

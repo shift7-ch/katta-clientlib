@@ -8,7 +8,6 @@ import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
 import ch.cyberduck.core.nio.LocalProtocol;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cryptomator.cryptolib.common.ECKeyPair;
@@ -25,25 +24,32 @@ public class DeviceKeysService {
     public static final String KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Private Device Key";
 
     public static final String COMPUTER_NAME = new LocalProtocol().getName();
+    private final PasswordStore store;
+
+    public DeviceKeysService(final PasswordStore store) {
+        this.store = store;
+    }
+
+    public DeviceKeysService() {
+        this(PasswordStoreFactory.get());
+    }
 
     private static String toAccountName(final String userId, final String hubUUID) {
         return String.format("%s@%s", userId, hubUUID);
     }
 
-    public static ECKeyPair getDeviceKeysFromPasswordStore(final String userId, final String hubUUID) throws LocalAccessDeniedException, InvalidKeySpecException {
-        final PasswordStore store = PasswordStoreFactory.get();
+    public ECKeyPair getDeviceKeysFromPasswordStore(final String userId, final String hubUUID) throws LocalAccessDeniedException, InvalidKeySpecException {
         final String accountName = toAccountName(userId, hubUUID);
         final String encodedPublicDeviceKey = store.getPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName);
         final String encodedPrivateDeviceKey = store.getPassword(KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME, accountName);
-        if(null == encodedPublicDeviceKey || null == encodedPrivateDeviceKey) {
+        if (null == encodedPublicDeviceKey || null == encodedPrivateDeviceKey) {
             return null;
         }
         log.debug("Retrieved device key pair for {} from keychain", accountName);
         return decodeKeyPair(encodedPublicDeviceKey, encodedPrivateDeviceKey);
     }
 
-    public static void storeDeviceKeysInPasswordStore(final ECKeyPair deviceKeys, final String userId, final String hubUUID) throws LocalAccessDeniedException {
-        final PasswordStore store = PasswordStoreFactory.get();
+    public void storeDeviceKeysInPasswordStore(final ECKeyPair deviceKeys, final String userId, final String hubUUID) throws LocalAccessDeniedException {
         final String accountName = toAccountName(userId, hubUUID);
         store.addPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName,
                 Base64.getEncoder().encodeToString(deviceKeys.getPublic().getEncoded())
