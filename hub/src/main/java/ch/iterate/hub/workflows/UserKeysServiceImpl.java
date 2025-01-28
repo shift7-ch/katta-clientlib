@@ -37,7 +37,7 @@ import com.nimbusds.jose.JOSEException;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
 import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
-import static ch.iterate.hub.workflows.FirstLoginDeviceSetupService.*;
+import static ch.iterate.hub.workflows.DeviceKeysService.*;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
@@ -184,5 +184,9 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .userPrivateKey(deviceSpecificUserKeyJWE)
                 .type(Type1.DESKTOP)
                 .creationTime(new DateTime()));
+    }
+
+    private boolean validateUserKeys(final UserDto me) {
+        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 }

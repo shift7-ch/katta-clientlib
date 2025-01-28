@@ -16,12 +16,10 @@ import org.cryptomator.cryptolib.common.ECKeyPair;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
-import ch.iterate.hub.client.model.UserDto;
-
 import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
 
-public class FirstLoginDeviceSetupService {
-    private static final Logger log = LogManager.getLogger(FirstLoginDeviceSetupService.class.getName());
+public class DeviceKeysService {
+    private static final Logger log = LogManager.getLogger(DeviceKeysService.class.getName());
 
     public static final String KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Public Device Key";
     public static final String KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME = "Cipherduck Private Device Key";
@@ -58,9 +56,5 @@ public class FirstLoginDeviceSetupService {
 
     public static boolean validateDeviceKeys(final ECKeyPair deviceKeyPairFromKeychain) {
         return deviceKeyPairFromKeychain != null;
-    }
-
-    public static boolean validateUserKeys(final UserDto me) {
-        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 }
