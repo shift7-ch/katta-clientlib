@@ -4,8 +4,6 @@
 
 package ch.iterate.hub.workflows;
 
-import ch.cyberduck.core.Host;
-
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -38,7 +36,7 @@ import static org.mockito.Mockito.times;
 class WoTServiceImplTest {
 
     @Test
-    void getTrustLevelsPerUserId() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
+    void testGetTrustLevelsPerUserId() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
         int len = 5;
 
@@ -86,7 +84,6 @@ class WoTServiceImplTest {
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
-        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
         Mockito.when(usersMock.apiUsersGet()).thenReturn(Arrays.asList(alice, bob, oscar));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
@@ -94,9 +91,8 @@ class WoTServiceImplTest {
         assertEquals(Collections.singletonMap(bob.getId(), 5), wot.getTrustLevelsPerUserId(aliceKeys));
     }
 
-
     @Test
-    void verify() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
+    void testVerify() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> signatureChain = new LinkedList<>();
         int len = 5;
 
@@ -106,9 +102,9 @@ class WoTServiceImplTest {
                 .name("bob")
                 .ecdhPublicKey(encodePublicKey(bobKeys.ecdhKeyPair().getPublic()))
                 .ecdsaPublicKey(encodePublicKey(bobKeys.ecdsaKeyPair().getPublic()));
+
         UserKeys previousKeys = bobKeys;
         UserDto previousUser = bob;
-
         for(int i = 0; i < len; i++) {
             final UserKeys userKeys = UserKeys.create();
             final UserDto user = new UserDto()
@@ -126,7 +122,6 @@ class WoTServiceImplTest {
         final UserKeys aliceKeys = previousKeys;
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
 
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
@@ -135,7 +130,7 @@ class WoTServiceImplTest {
     }
 
     @Test
-    void sign() throws ApiException, ParseException, JOSEException, AccessException, SecurityFailure {
+    void testSign() throws ApiException, ParseException, JOSEException, AccessException, SecurityFailure {
         final UserKeys aliceKeys = UserKeys.create();
         final P384KeyPair bobEcdhKeys = P384KeyPair.generate();
         final P384KeyPair bobEcdsaKeys = P384KeyPair.generate();
@@ -148,7 +143,6 @@ class WoTServiceImplTest {
         final String expectedSignature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final Host hub = Mockito.mock(Host.class);
         Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         final TrustedUserDto expectedTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(Collections.singletonList(expectedSignature));
