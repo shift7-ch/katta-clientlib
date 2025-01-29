@@ -66,7 +66,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             // TODO test with multiple wot levels?
 
             new CreateVaultService(hubSession).createVault(storageProfileWrapper,
-                    vaultId, new CreateVaultService.CreateVaultModel(vaultId,
+                    new CreateVaultService.CreateVaultModel(vaultId,
                             "vault", null,
                             config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName,
                             config.vault.region, automaticAccessGrant, 3));

@@ -67,7 +67,7 @@ public class CreateVaultService {
         this.hubSession = hubSession;
     }
 
-    public void createVault(final StorageProfileDtoWrapper storageProfileWrapper, final UUID vaultUuid, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
+    public void createVault(final StorageProfileDtoWrapper storageProfileWrapper, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
         try {
             // prepare vault creation
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(
@@ -77,7 +77,7 @@ public class CreateVaultService {
             final UvfMetadataPayload metadataJWE = UvfMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileWrapper.getId().toString())
-                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultUuid : vaultModel.bucketName())
+                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
@@ -90,11 +90,11 @@ public class CreateVaultService {
             }
             final String uvfMetadataFile = metadataJWE.encrypt(
                     String.format("%s/api", new HostUrlProvider(false, true).get(hubSession.getHost())),
-                    vaultUuid,
+                    vaultModel.vaultId(),
                     jwks.toJWKSet()
             );
             final VaultDto vaultDto = new VaultDto()
-                    .id(vaultUuid)
+                    .id(vaultModel.vaultId())
                     .name(metadataJWE.storage().getNickname())
                     .description(vaultModel.vaultDescription())
                     .archived(false)
