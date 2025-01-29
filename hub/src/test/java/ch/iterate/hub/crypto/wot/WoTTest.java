@@ -166,7 +166,7 @@ class WoTTest {
     @Test
     public void verifyTrusts() throws ParseException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
-        int len = 5;
+        final int len = 5;
 
         final UserKeys bobKeys = UserKeys.create();
         final UserDto bob = new UserDto()

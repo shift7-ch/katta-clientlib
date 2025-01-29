@@ -75,7 +75,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             log.info(String.format("S02 %s alice shares vault with admin as owner", setup));
             final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet();
             String adminId = null;
-            for(UserDto user : userDtos) {
+            for(final UserDto user : userDtos) {
                 if("admin".equals(user.getName())) {
                     adminId = user.getId();
                     break;

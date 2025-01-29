@@ -66,7 +66,7 @@ public class KeyRotationTest extends AbstractHubTest {
                     .filter(u -> u.getEcdhPublicKey() != null)
                     .collect(Collectors.toMap(UserDto::getId, UserDto::getEcdhPublicKey));
 
-            for(VaultDto vaultDto : vaults) {
+            for(final VaultDto vaultDto : vaults) {
                 final HashMap<String, String> tokens = new HashMap<>();
                 final UserKeysService service = new UserKeysServiceImpl(hubSession);
                 final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled);
@@ -77,7 +77,7 @@ public class KeyRotationTest extends AbstractHubTest {
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
                 metadataJWE.storage().nickname(String.format("ZZZZ %s", vaultDto.getName()));
                 final List<MemberDto> members = vaultResourceApi.apiVaultsVaultIdMembersGet(vaultDto.getId());
-                for(MemberDto member : members) {
+                for(final MemberDto member : members) {
                     if(userPublicKeys.containsKey(member.getId())) {
                         tokens.put(member.getId(), masterkeyJWE.encryptForUser(decodePublicKey(userPublicKeys.get(member.getId()))));
                     }

@@ -79,7 +79,7 @@ public class ObjectMapperTest {
     public void testMinioSTS() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
-        StorageProfileS3STSDto minioSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class);
+        final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class);
         assertEquals("cipherduck", minioSTSProfile.getBucketPrefix());
         assertEquals("eu-central-1", minioSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), minioSTSProfile.getRegions());

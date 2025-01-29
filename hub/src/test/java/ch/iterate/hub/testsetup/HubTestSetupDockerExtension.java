@@ -60,14 +60,14 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     public static class UnattendedLocalOnly extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(ExtensionContext context) throws URISyntaxException {
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
             this.setupDocker(UNATTENDED_LOCAL_ONLY.dockerConfig);
         }
     }
 
     public static class UnattendedLocalKeycloakDev extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(ExtensionContext context) throws URISyntaxException {
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
             this.setupDocker(UNATTENDED_LOCAL_KEYCLOAK_TESTING.dockerConfig);
         }
     }

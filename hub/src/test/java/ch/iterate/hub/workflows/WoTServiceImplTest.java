@@ -38,7 +38,7 @@ class WoTServiceImplTest {
     @Test
     void testGetTrustLevelsPerUserId() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
-        int len = 5;
+        final int len = 5;
 
         final UserKeys bobKeys = UserKeys.create();
         final UserDto bob = new UserDto()
@@ -94,7 +94,7 @@ class WoTServiceImplTest {
     @Test
     void testVerify() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> signatureChain = new LinkedList<>();
-        int len = 5;
+        final int len = 5;
 
         final UserKeys bobKeys = UserKeys.create();
         final UserDto bob = new UserDto()
