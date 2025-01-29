@@ -17,6 +17,7 @@ import ch.cyberduck.core.LoginConnectionService;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.SessionFactory;
+import ch.cyberduck.core.UnsecureHostPasswordStore;
 import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -40,7 +41,6 @@ import java.util.function.Function;
 
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.core.util.MockableFirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.util.UnsecureHostPasswordStorePatched;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubProtocol;
@@ -148,7 +148,7 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
         preferences.setProperty("factory.vault.class", HubCryptoVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
-        preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStorePatched.class.getName());
+        preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.firstlogindevicesetupcallback.class", MockableFirstLoginDeviceSetupCallback.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
