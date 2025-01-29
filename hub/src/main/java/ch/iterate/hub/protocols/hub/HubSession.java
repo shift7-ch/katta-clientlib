@@ -51,20 +51,35 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 
 /**
- * Providing Katta Server API client for accessing the Hub REST API
+ * Providing Katta Server client for accessing its REST API
  */
 public class HubSession extends HttpSession<HubApiClient> {
     private static final Logger log = LogManager.getLogger(HubSession.class);
 
+    /**
+     * Key in bookmark to reference UUID of configuration from API
+     */
     public static final String HUB_UUID = "hub.uuid";
 
+    /**
+     * Read storage configurations from API
+     */
     private final Scheduler<?> profiles = new HubStorageProfileSyncSchedulerService(this);
+    /**
+     * Read available vaults from API
+     */
     private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this);
+    /**
+     * Periodically grant vault access to users
+     */
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this);
 
     private final Scheduler<?> scheduler = new HubSchedulerService(Duration.ofSeconds(
             new HostPreferences(host).getLong("hub.protocol.scheduler.period")).toMillis(), profiles, vaults, access);
 
+    /**
+     * Interceptor for OpenID connect flow
+     */
     private OAuth2RequestInterceptor authorizationService;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
