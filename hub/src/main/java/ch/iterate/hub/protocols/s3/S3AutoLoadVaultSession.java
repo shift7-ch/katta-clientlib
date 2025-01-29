@@ -70,12 +70,17 @@ public class S3AutoLoadVaultSession extends S3AssumeRoleSession {
         return super.open(proxy, hostcallback, login, cancel);
     }
 
+    /**
+     * Unlock vault using universal vault format metadata payload after verifying credentials
+     */
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         try {
             final Credentials credentials = backend.getHost().getCredentials().withOauth(keychain.findOAuthTokens(backend.getHost()));
-            log.debug("Login to {} with credentials {}", backend.getHost(), credentials);
+            log.debug("Verify credentials {} with {}", credentials, backend);
             backend.login(prompt, cancel);
+            log.debug("Verify credentials {} with {}", host.getCredentials(), host);
+            super.login(prompt, cancel);
             final Path home = new DelegatingHomeFeature(new DefaultPathHomeFeature(host)).find();
             log.debug("Attempting to locate vault in {}", home);
             final Vault vault = VaultFactory.get(home);
@@ -97,6 +102,5 @@ public class S3AutoLoadVaultSession extends S3AssumeRoleSession {
         catch(ApiException | SecurityFailure | AccessException e) {
             throw new LoginFailureException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
-        super.login(prompt, cancel);
     }
 }
