@@ -19,13 +19,12 @@ import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.features.Home;
+import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.DisabledProxyFinder;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
-import ch.cyberduck.core.vault.LoadingVaultLookupListener;
-import ch.cyberduck.core.vault.registry.VaultRegistryListService;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -34,11 +33,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiClient;
@@ -54,7 +50,7 @@ import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.hub.HubStorageProfileListService;
 import ch.iterate.hub.protocols.hub.HubStorageProfileSyncSchedulerService;
 import ch.iterate.hub.protocols.hub.HubStorageVaultSyncSchedulerService;
-import ch.iterate.hub.protocols.s3.S3AssumeRoleSession;
+import ch.iterate.hub.protocols.s3.S3AutoLoadVaultSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestConfig;
 import ch.iterate.hub.testsetup.MethodIgnorableSource;
@@ -67,9 +63,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
-
-    // allow for 15s time difference
-    private static final int LAG = 15000;
 
     /**
      * Verify storage profiles are synced from hub bookmark.
@@ -240,58 +233,31 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final Host vaultBookmark = new HubStorageVaultSyncSchedulerService(hubSession).toBookmark(vaultId, FirstLoginDeviceSetupCallback.disabled);
             log.info(String.format("Using vault bookmark %s", vaultBookmark));
 
-            final Session<?> session = new S3AssumeRoleSession(vaultBookmark, new DisabledX509TrustManager(), new DefaultX509KeyManager());
+            final DefaultVaultRegistry vaultRegistry = new DefaultVaultRegistry(new DisabledPasswordCallback());
+            final Session<?> session = new S3AutoLoadVaultSession(vaultBookmark, new DisabledX509TrustManager(), new DefaultX509KeyManager())
+                    .withRegistry(vaultRegistry);
             session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
             session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
-            log.info(String.format("Listing bucket %s in %s", vaultBookmark.getDefaultPath(), vaultBookmark));
-            final Date before = new Date();
+            assertFalse(vaultRegistry.isEmpty());
+            assertEquals(1, vaultRegistry.size());
             final Path bucket = new Path(vaultBookmark.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume));
-            final AttributedList<Path> bucketListRaw = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
-            final Date after = new Date();
+            assertNotSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
 
-            log.info(before);
-            log.info(after);
-            log.info("paths:");
+//            {
+//                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+//                assertTrue(list.isEmpty());
+//            }
 
-            for(final Path path : bucketListRaw) {
-                final Date date = new Date();
-                date.setTime(path.attributes().getModificationDate());
-                final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE dd-MMM-yy HH:mm:ssZ");
-                simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
-                log.info(String.format("%s %s [%s,%s]", path,
-                        simpleDateFormat.format(date),
-                        simpleDateFormat.format(before),
-                        simpleDateFormat.format(after))
-                );
-
-                if(path.isFile()) {
-                    date.setTime(path.attributes().getModificationDate() + LAG);
-                    assertTrue(date.after(before));
-                    date.setTime(path.attributes().getModificationDate() - LAG);
-                    assertTrue(date.before(after));
-                }
+            vaultRegistry.close(bucket);
+            assertTrue(vaultRegistry.isEmpty());
+            {
+                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+                assertFalse(list.isEmpty());
+                assertEquals(2, list.size());
+                assertNotNull(list.find(new SimplePathPredicate(new Path(bucket, "d", EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))));
+                assertNotNull(list.find(new SimplePathPredicate(new Path(bucket, PreferencesFactory.get().getProperty("cryptomator.vault.config.filename"), EnumSet.of(Path.Type.file)))));
             }
-            final Path expectedPath = new Path(bucket, PreferencesFactory.get().getProperty("cryptomator.vault.config.filename"), EnumSet.of(AbstractPath.Type.file));
-            log.info("expectedPath {}", expectedPath);
-            assertNotNull(bucketListRaw.find(new SimplePathPredicate(expectedPath)));
-
-            final ListService proxy = session.getFeature(ListService.class);
-            final DefaultVaultRegistry registry = new DefaultVaultRegistry(new DisabledPasswordCallback());
-            final ListService listService = new VaultRegistryListService(session, proxy, registry,
-                    new LoadingVaultLookupListener(registry, new DisabledPasswordCallback()));
-
-            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/4 should this only list the vault and not more?
-//            final AttributedList<Path> bucketList = ff.list(Home.ROOT, new DisabledListProgressListener());
-//            assertEquals(1, bucketList.size());
-//            assertTrue(bucketList.contains(bucket));
-            final AttributedList<Path> vaultContents = listService.list(bucket, new DisabledListProgressListener());
-            for(final Path path : vaultContents) {
-                log.info(path);
-            }
-            assertEquals(2, vaultContents.size());
-            assertNotNull(vaultContents.find(new SimplePathPredicate(expectedPath)));
-            assertNotNull(vaultContents.find(new SimplePathPredicate(new Path(bucket, "d", EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))));
         }
         finally {
             hubSession.close();
