@@ -77,7 +77,7 @@ class UvfMetadataPayloadTest {
     public void encryptDecrypt() throws JOSEException, JsonProcessingException, ParseException {
         final byte[] rawMasterKey = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawMasterKey);
-        HashMap<String, String> keys = new HashMap<String, String>() {{
+        final HashMap<String, String> keys = new HashMap<String, String>() {{
             put("key01", Base64URL.encode(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
             put("key02", Base64URL.encode(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
         }};

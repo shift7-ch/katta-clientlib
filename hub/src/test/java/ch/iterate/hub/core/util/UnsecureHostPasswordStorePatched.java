@@ -10,7 +10,6 @@ import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.Scheme;
 import ch.cyberduck.core.UnsecureHostPasswordStore;
-import ch.cyberduck.core.exception.LocalAccessDeniedException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -69,7 +68,7 @@ public class UnsecureHostPasswordStorePatched extends UnsecureHostPasswordStore 
 
     // copy-paste from DefaultHostPasswordStore to call patched getOAuthPrefix (as it is static)
     @Override
-    public void save(final Host bookmark) throws LocalAccessDeniedException {
+    public void save(final Host bookmark) {
         if(StringUtils.isEmpty(bookmark.getHostname())) {
             log.warn("No hostname given");
             return;
@@ -103,7 +102,7 @@ public class UnsecureHostPasswordStorePatched extends UnsecureHostPasswordStore 
         }
         if(credentials.isOAuthAuthentication()) {
             final String[] descriptors = getOAuthPrefix(bookmark);
-            for(String prefix : descriptors) {
+            for(final String prefix : descriptors) {
                 if(StringUtils.isNotBlank(credentials.getOauth().getAccessToken())) {
                     log.info(String.format("addPassword(%s,%s,%s)", getOAuthScheme(bookmark),
                             getOAuthPort(bookmark), getOAuthHostname(bookmark),
@@ -141,7 +140,7 @@ public class UnsecureHostPasswordStorePatched extends UnsecureHostPasswordStore 
             log.info(String.format("XXX Fetching OAuth tokens from keychain for %s", bookmark));
         }
         final String[] descriptors = getOAuthPrefix(bookmark);
-        for(String prefix : descriptors) {
+        for(final String prefix : descriptors) {
             if(log.isDebugEnabled()) {
                 log.debug(String.format("Search with prefix %s", prefix));
             }
@@ -191,7 +190,7 @@ public class UnsecureHostPasswordStorePatched extends UnsecureHostPasswordStore 
     }
 
     @Override
-    public void addPassword(String serviceName, String accountName, String password) {
+    public void addPassword(final String serviceName, final String accountName, final String password) {
         log.info(String.format("XXX %s, %s, %s", serviceName, accountName, password));
         super.addPassword(serviceName, accountName, password);
     }

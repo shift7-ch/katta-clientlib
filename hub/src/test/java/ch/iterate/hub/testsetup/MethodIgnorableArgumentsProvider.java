@@ -20,14 +20,14 @@ public class MethodIgnorableArgumentsProvider implements ArgumentsProvider, Anno
     private String[] methodNames;
 
     @Override
-    public void accept(MethodIgnorableSource annotation) {
+    public void accept(final MethodIgnorableSource annotation) {
         methodNames = annotation.value();
     }
 
     @Override
-    public Stream<Arguments> provideArguments(ExtensionContext context) {
-        Class<?> testClass = context.getRequiredTestClass();
-        Object testInstance = context.getTestInstance().orElse(null);
+    public Stream<Arguments> provideArguments(final ExtensionContext context) {
+        final Class<?> testClass = context.getRequiredTestClass();
+        final Object testInstance = context.getTestInstance().orElse(null);
         return Arrays.stream(methodNames)
                 .map(methodName -> ReflectionUtils.findMethod(testClass, methodName)
                         .orElseThrow(() -> new JUnitException("Could not find method: " + methodName)))
@@ -36,7 +36,7 @@ public class MethodIgnorableArgumentsProvider implements ArgumentsProvider, Anno
                 .map(MethodIgnorableArgumentsProvider::toArguments);
     }
 
-    private static Arguments toArguments(Object item) {
+    private static Arguments toArguments(final Object item) {
         if(item instanceof Arguments) {
             return (Arguments) item;
         }

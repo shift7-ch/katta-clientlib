@@ -29,7 +29,7 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
-        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final String accessToken = jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
@@ -46,7 +46,7 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
-        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
@@ -63,7 +63,7 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
-        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
@@ -79,7 +79,7 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
-        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
@@ -104,7 +104,7 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
-        UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();

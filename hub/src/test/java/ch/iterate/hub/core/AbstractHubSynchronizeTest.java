@@ -140,7 +140,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
 
             log.info(String.format("%s Protocols found:", ProtocolFactory.get().find().size()));
-            for(Protocol protocol : ProtocolFactory.get().find()) {
+            for(final Protocol protocol : ProtocolFactory.get().find()) {
                 log.info(String.format("-  %s", protocol));
             }
 
@@ -247,7 +247,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info(String.format("Listing bucket %s in %s", vaultBookmark.getDefaultPath(), vaultBookmark));
             final Date before = new Date();
             final Path bucket = new Path(vaultBookmark.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume));
-            AttributedList<Path> bucketListRaw = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+            final AttributedList<Path> bucketListRaw = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
             final Date after = new Date();
 
             log.info(before);
@@ -255,9 +255,9 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info("paths:");
 
             for(final Path path : bucketListRaw) {
-                Date date = new Date();
+                final Date date = new Date();
                 date.setTime(path.attributes().getModificationDate());
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE dd-MMM-yy HH:mm:ssZ");
+                final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE dd-MMM-yy HH:mm:ssZ");
                 simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
                 log.info(String.format("%s %s [%s,%s]", path,
                         simpleDateFormat.format(date),
