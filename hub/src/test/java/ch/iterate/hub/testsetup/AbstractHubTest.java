@@ -112,6 +112,7 @@ public abstract class AbstractHubTest extends VaultTest {
                     staticSetupCode()))
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 improvement: no need to start keycloak in this setting
             .withDockerConfig(new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280));
+
     /**
      * Attended Keycloak Testing: local hub, local MinIO, remote AWS, remote Keycloak.
      */
