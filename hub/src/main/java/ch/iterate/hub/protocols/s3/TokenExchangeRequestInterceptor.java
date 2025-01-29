@@ -15,13 +15,7 @@ import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.oauth.OAuthExceptionMappingService;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesReader;
-import com.google.api.client.auth.oauth2.TokenRequest;
-import com.google.api.client.auth.oauth2.TokenResponse;
-import com.google.api.client.auth.oauth2.TokenResponseException;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.apache.v2.ApacheHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +24,14 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import com.google.api.client.auth.oauth2.TokenRequest;
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.auth.oauth2.TokenResponseException;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     private static final Logger log = LogManager.getLogger(TokenExchangeRequestInterceptor.class);
@@ -75,16 +77,16 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         );
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, bookmark.getProtocol().getOAuthClientId());
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        if (!StringUtils.isEmpty(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE))) {
+        if(!StringUtils.isEmpty(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE))) {
             request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE, preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE));
         }
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN, previous.getAccessToken());
         final ArrayList<String> scopes = new ArrayList<>(bookmark.getProtocol().getOAuthScopes());
-        if (!StringUtils.isEmpty(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
+        if(!StringUtils.isEmpty(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
             scopes.addAll(Arrays.asList(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
         }
         request.setScopes(scopes);
-        if (log.isDebugEnabled()) {
+        if(log.isDebugEnabled()) {
             log.debug(String.format("Token exchange request %s for %s", request, bookmark));
         }
         try {
@@ -93,16 +95,19 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
             final OAuthTokens tokens = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                     tokenExchangeResponse.getRefreshToken(),
                     System.currentTimeMillis() + tokenExchangeResponse.getExpiresInSeconds() * 1000);
-            if (log.isDebugEnabled()) {
+            if(log.isDebugEnabled()) {
                 log.debug(String.format("Received exchanged token %s for %s", tokens, bookmark));
             }
             return tokens;
-        } catch (TokenResponseException e) {
+        }
+        catch(TokenResponseException e) {
             throw new OAuthExceptionMappingService().map(e);
-        } catch (HttpResponseException e) {
+        }
+        catch(HttpResponseException e) {
             throw new DefaultHttpResponseExceptionMappingService().map(new org.apache.http.client
                     .HttpResponseException(e.getStatusCode(), e.getStatusMessage()));
-        } catch (IOException e) {
+        }
+        catch(IOException e) {
             throw new DefaultIOExceptionMappingService().map(e);
         }
     }
