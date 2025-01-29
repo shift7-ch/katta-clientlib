@@ -82,15 +82,15 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
                         // nothing to do
                     }
                 });
-        if (log.isDebugEnabled()) {
+        if(log.isDebugEnabled()) {
             log.debug(String.format("Chained assume role for %s", bookmark));
         }
         log.debug(String.format("Assume role with temporary credentials %s", tokens));
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        if (preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
+        if(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
             request.setDurationSeconds(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS));
         }
-        if (StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY))) {
+        if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY))) {
             request.setPolicy(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY));
         }
         request.setRoleArn(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2));
@@ -115,24 +115,25 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
                 request.setRoleSessionName(new AsciiRandomStringService().random());
             }
         }
-        if (StringUtils.isNotBlank(preferences.getProperty("s3.assumerole.tag"))) {
+        if(StringUtils.isNotBlank(preferences.getProperty("s3.assumerole.tag"))) {
             request.setTags(Collections.singletonList(new Tag()
                     .withKey(preferences.getProperty("s3.assumerole.tag"))
                     .withValue(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
         }
         try {
-            if (log.isDebugEnabled()) {
+            if(log.isDebugEnabled()) {
                 log.debug(String.format("Use request %s", request));
             }
             final AssumeRoleResult result = service.assumeRole(request);
-            if (log.isDebugEnabled()) {
+            if(log.isDebugEnabled()) {
                 log.debug(String.format("Received assume role result %s for host %s", result, bookmark));
             }
             return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
                     result.getCredentials().getSecretAccessKey(),
                     result.getCredentials().getSessionToken(),
                     result.getCredentials().getExpiration().getTime());
-        } catch (AWSSecurityTokenServiceException e) {
+        }
+        catch(AWSSecurityTokenServiceException e) {
             throw new STSExceptionMappingService().map(e);
         }
     }
