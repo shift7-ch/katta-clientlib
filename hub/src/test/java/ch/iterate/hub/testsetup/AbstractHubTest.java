@@ -85,7 +85,7 @@ public abstract class AbstractHubTest extends VaultTest {
     /**
      * Unattended local only: hub, Keycloak, MinIO started via docker-compose.
      */
-    public static HubTestConfig.Setup UNATTENDED_LOCAL_ONLY = new HubTestConfig.Setup()
+    public static final HubTestConfig.Setup UNATTENDED_LOCAL_ONLY = new HubTestConfig.Setup()
             .withHubURL("http://localhost:8280")
             .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
             .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
@@ -93,13 +93,13 @@ public abstract class AbstractHubTest extends VaultTest {
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedLocalOnly = vs -> Arguments.of(Named.of(
             String.format("%s %s (Bucket %s)", vs.storageProfileName, UNATTENDED_LOCAL_ONLY.hubURL, vs.bucketName),
             new HubTestConfig(UNATTENDED_LOCAL_ONLY, vs)));
-    public static Arguments minioStaticUnattendedLocalOnly = argumentUnattendedLocalOnly.apply(minioStaticVaultConfig);
-    public static Arguments minioSTSUnattendedLocalOnly = argumentUnattendedLocalOnly.apply(minioSTSVaultConfig);
+    public static final Arguments minioStaticUnattendedLocalOnly = argumentUnattendedLocalOnly.apply(minioStaticVaultConfig);
+    public static final Arguments minioSTSUnattendedLocalOnly = argumentUnattendedLocalOnly.apply(minioSTSVaultConfig);
+
     /**
      * Unattended Keycloak Testing: local hub (docker-compose) against AWS/MinIO/Keycloak remote
      */
-
-    public static HubTestConfig.Setup UNATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestConfig.Setup()
+    public static final HubTestConfig.Setup UNATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestConfig.Setup()
             // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
             .withHubURL("http://localhost:8280")
             .withUserConfig(new HubTestConfig.Setup.UserConfig(
@@ -115,7 +115,7 @@ public abstract class AbstractHubTest extends VaultTest {
     /**
      * Attended Keycloak Testing: local hub, local MinIO, remote AWS, remote Keycloak.
      */
-    public static HubTestConfig.Setup ATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestConfig.Setup()
+    public static final HubTestConfig.Setup ATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestConfig.Setup()
             .withHubURL("http://localhost:8080")
             .withUserConfig(new HubTestConfig.Setup.UserConfig(
                     PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
@@ -128,10 +128,10 @@ public abstract class AbstractHubTest extends VaultTest {
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentAttendedLocalKeycloadkDev = vs -> Arguments.of(Named.of(
             String.format("%s %s (Bucket %s)", vs.storageProfileName, ATTENDED_LOCAL_KEYCLOAK_TESTING.hubURL, vs.bucketName),
             new HubTestConfig(ATTENDED_LOCAL_KEYCLOAK_TESTING, vs)));
-    public static Arguments awsStaticAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(awsStaticVaultConfig);
-    public static Arguments awsSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(awsSTSVaultConfig);
-    public static Arguments minioStaticAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioStaticVaultConfig);
-    public static Arguments minioSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioSTSVaultConfig);
+    public static final Arguments awsStaticAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(awsStaticVaultConfig);
+    public static final Arguments awsSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(awsSTSVaultConfig);
+    public static final Arguments minioStaticAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioStaticVaultConfig);
+    public static final Arguments minioSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioSTSVaultConfig);
 
     @BeforeAll
     public static void preferences() throws IOException {
