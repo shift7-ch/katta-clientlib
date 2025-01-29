@@ -233,7 +233,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             log.info(String.format("Creating vault in %s", hubSession));
             final UUID vaultId = UUID.randomUUID();
-            new CreateVaultService(hubSession).createVault(storageProfileWrapper, vaultId, new CreateVaultService.CreateVaultModel(
+            new CreateVaultService(hubSession).createVault(storageProfileWrapper, new CreateVaultService.CreateVaultModel(
                     vaultId, "vault", null,
                     config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName, config.vault.region, true, 3));
             log.info(String.format("Getting vault bookmark for vault %s", vaultId));
