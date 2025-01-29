@@ -16,10 +16,6 @@
         <string>S3 Storage Configuration using OAuth Credentials from Katta Server</string>
         <key>Scheme</key>
         <string>http</string>
-        <key>Schemes</key>
-        <array>
-            <string>katta</string>
-        </array>
         <key>Default Port</key>
         <string>80</string>
         <key>Scopes</key>
