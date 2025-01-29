@@ -33,6 +33,9 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
+/**
+ * Exchange OIDC token to scoped token using OAuth 2.0 Token Exchange
+ */
 public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     private static final Logger log = LogManager.getLogger(TokenExchangeRequestInterceptor.class);
 
@@ -66,6 +69,9 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      *
      * @param previous Input tokens retrieved to exchange at the token endpoint
      * @return New tokens
+     *
+     * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE_AUDIENCE
+     * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info(String.format("Exchange tokens %s for %s", previous, bookmark));
