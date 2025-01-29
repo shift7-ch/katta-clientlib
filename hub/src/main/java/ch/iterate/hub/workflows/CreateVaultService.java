@@ -86,7 +86,7 @@ public class CreateVaultService {
                             .maxWotDepth(vaultModel.maxWotLevel())
                     );
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Created metadata JWE %s", metadataJWE));
+                log.debug("Created metadata JWE {}", metadataJWE);
             }
             final String uvfMetadataFile = metadataJWE.encrypt(
                     String.format("%s/api", new HostUrlProvider(false, true).get(hubSession.getHost())),
@@ -110,7 +110,7 @@ public class CreateVaultService {
                     .rootDirHash(metadataJWE.computeRootDirIdHash(metadataJWE.computeRootDirId()))
                     .region(metadataJWE.storage().getRegion());
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Created storage dto %s", storageDto));
+                log.debug("Created storage dto {}", storageDto);
             }
             final Host bookmark = HubStorageVaultSyncSchedulerService.toBookmark(hubSession.getHost(), vaultDto.getId(), metadataJWE.storage());
             if(storageProfileWrapper.getStsEndpoint() == null) {
@@ -135,7 +135,7 @@ public class CreateVaultService {
                         storageProfileWrapper.getBucketAcceleration()
                 );
                 if(log.isDebugEnabled()) {
-                    log.debug(String.format("Create STS bucket %s for vault %s", storageDto, vaultDto));
+                    log.debug("Create STS bucket {} for vault {}", storageDto, vaultDto);
                 }
                 new StorageResourceApi(hubSession.getClient()).apiStorageVaultIdPut(vaultDto.getId(),
                         storageDto.awsAccessKey(stsTokens.getAccessKeyId())
@@ -144,13 +144,13 @@ public class CreateVaultService {
             }
             // create vault in hub
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Create vault %s", vaultDto));
+                log.debug("Create vault {}", vaultDto);
             }
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdPut(vaultDto.getId(), vaultDto);
 
             // upload JWE
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Upload JWE %s for vault %s", uvfMetadataFile, vaultDto));
+                log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
             }
             final UserDto userDto = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(false);
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
@@ -165,7 +165,7 @@ public class CreateVaultService {
 
     private static TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePoliy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) throws IOException {
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Get STS tokens from %s to pass to backend %s with role %s and session name %s", token, stsEndpoint, roleArn, roleSessionName));
+            log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);
         }
 
         final AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
@@ -192,11 +192,11 @@ public class CreateVaultService {
 
 
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Use request %s", request));
+            log.debug("Use request {}", request);
         }
         final AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(request);
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Received assume role identity result %s", result));
+            log.debug("Received assume role identity result {}", result);
         }
         return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
                 result.getCredentials().getSecretAccessKey(),

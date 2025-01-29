@@ -101,7 +101,7 @@ public class JWE {
      */
     public static String pbes2Encrypt(final JWEPayload payload, final String kid, final String password, final String apu, final String apv) throws JsonProcessingException, JOSEException {
         final JWEEncrypter jweEncrypter = new PasswordBasedEncrypter(password, PBES2_SALT_LENGTH, PBES2_ITERATION_COUNT);
-        JWEHeader header = new JWEHeader.Builder(PBES2_DESIGNATION_ALG, PBES2_DESIGNATION_ENC)
+        final JWEHeader header = new JWEHeader.Builder(PBES2_DESIGNATION_ALG, PBES2_DESIGNATION_ENC)
                 .keyID(kid)
                 .agreementPartyUInfo(Base64URL.encode(apu))
                 .agreementPartyVInfo(Base64URL.encode(apv))

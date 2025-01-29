@@ -51,7 +51,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             checkNumberOfVaults(hubSession, config, null, 0, 0, 0, 0, -1);
 
             final HubTestConfig.Setup setup = config.setup;
-            log.info(String.format("S01 %s alice creates vault", setup));
+            log.info("S01 {} alice creates vault", setup);
             final ApiClient adminApiClient = getAdminApiClient(setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
@@ -72,7 +72,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                             config.vault.region, automaticAccessGrant, 3));
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 
-            log.info(String.format("S02 %s alice shares vault with admin as owner", setup));
+            log.info("S02 {} alice shares vault with admin as owner", setup);
             final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet();
             String adminId = null;
             for(final UserDto user : userDtos) {
@@ -84,7 +84,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultId, Role.OWNER);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
 
-            log.info(String.format("S03 %s admin uploads user keys", setup));
+            log.info("S03 {} admin uploads user keys", setup);
             final UserKeys adminKeys = UserKeys.create();
             final String adminAccountKey = config.setup.adminConfig.setupCode;
             final UsersResourceApi users = new UsersResourceApi(adminApiClient);
@@ -98,10 +98,10 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             users.apiUsersMePut(admin);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 1);
 
-            log.info(String.format("S04 %s alice adds trust to admin", setup));
+            log.info("S04 {} alice adds trust to admin", setup);
             new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled), admin);
 
-            log.info(String.format("S04 %s alice grants access to admin", setup));
+            log.info("S04 {} alice grants access to admin", setup);
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultId, FirstLoginDeviceSetupCallback.disabled);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
         }

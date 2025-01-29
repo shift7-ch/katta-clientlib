@@ -22,7 +22,7 @@ public class StorageProfileDtoWrapper {
         this.proxy = proxy;
     }
 
-    public static StorageProfileDtoWrapper coerce(StorageProfileDto o) {
+    public static StorageProfileDtoWrapper coerce(final StorageProfileDto o) {
         return new StorageProfileDtoWrapper(o);
     }
 

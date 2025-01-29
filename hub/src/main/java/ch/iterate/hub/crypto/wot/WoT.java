@@ -176,7 +176,7 @@ public class WoT {
             }
             catch(SecurityFailure e) {
                 if(log.isWarnEnabled()) {
-                    log.warn(String.format("Verification for %s failed - not granting access.", trust), e);
+                    log.warn("Verification for {} failed - not granting access.", trust, e);
                 }
             }
         }

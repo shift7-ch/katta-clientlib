@@ -65,7 +65,7 @@ public class HubCryptoVault extends CryptoVault {
     public synchronized Path create(final Session<?> session, final String region, final VaultCredentials credentials, final int version, final String metadata, final String rootDirHash) throws BackgroundException {
         final Path home = new Path(session.getHost().getDefaultPath(), EnumSet.of(AbstractPath.Type.directory));
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Uploading vault template %s in %s ", home, session.getHost()));
+            log.debug("Uploading vault template {} in {} ", home, session.getHost());
         }
 
         // N.B. there seems to be no API to check write permissions without actually writing.
@@ -85,7 +85,7 @@ public class HubCryptoVault extends CryptoVault {
         final Path firstLevel = secondLevel.getParent();
         final Path dataDir = firstLevel.getParent();
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Create vault root directory at %s", secondLevel));
+            log.debug("Create vault root directory at {}", secondLevel);
         }
         final TransferStatus status = (new TransferStatus()).withRegion(region);
 

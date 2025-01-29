@@ -48,7 +48,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     private final Host bookmark;
     private final HttpClient client;
 
-    public TokenExchangeRequestInterceptor(final HttpClient client, final Host bookmark, LoginCallback prompt) throws LoginCanceledException {
+    public TokenExchangeRequestInterceptor(final HttpClient client, final Host bookmark, final LoginCallback prompt) throws LoginCanceledException {
         super(client, bookmark, prompt);
         this.bookmark = bookmark;
         this.client = client;
@@ -60,7 +60,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     }
 
     @Override
-    public OAuthTokens refresh(OAuthTokens previous) throws BackgroundException {
+    public OAuthTokens refresh(final OAuthTokens previous) throws BackgroundException {
         return this.exchange(super.refresh(previous));
     }
 
@@ -74,7 +74,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
-        log.info(String.format("Exchange tokens %s for %s", previous, bookmark));
+        log.info("Exchange tokens {} for {}", previous, bookmark);
         final TokenRequest request = new TokenRequest(
                 new ApacheHttpTransport(client),
                 new GsonFactory(),
@@ -93,7 +93,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         }
         request.setScopes(scopes);
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Token exchange request %s for %s", request, bookmark));
+            log.debug("Token exchange request {} for {}", request, bookmark);
         }
         try {
             final TokenResponse tokenExchangeResponse = request.execute();
@@ -102,7 +102,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
                     tokenExchangeResponse.getRefreshToken(),
                     System.currentTimeMillis() + tokenExchangeResponse.getExpiresInSeconds() * 1000);
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Received exchanged token %s for %s", tokens, bookmark));
+                log.debug("Received exchanged token {} for {}", tokens, bookmark);
             }
             return tokens;
         }
