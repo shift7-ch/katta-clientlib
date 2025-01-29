@@ -22,7 +22,7 @@ public class HubSchedulerService extends ThreadPoolSchedulerFeature<Void> {
 
     @Override
     protected Void operate(final PasswordCallback callback) throws BackgroundException {
-        for(Scheduler<?> feature : features) {
+        for(final Scheduler<?> feature : features) {
             try {
                 feature.execute(callback).get();
             }
@@ -41,7 +41,7 @@ public class HubSchedulerService extends ThreadPoolSchedulerFeature<Void> {
 
     @Override
     public void shutdown(final boolean gracefully) {
-        for(Scheduler<?> feature : features) {
+        for(final Scheduler<?> feature : features) {
             feature.shutdown(gracefully);
         }
     }

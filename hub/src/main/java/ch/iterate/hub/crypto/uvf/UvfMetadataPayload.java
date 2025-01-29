@@ -87,8 +87,8 @@ public class UvfMetadataPayload extends JWEPayload {
     VaultMetadataJWEBackendDto storage;
 
 
-    public static UvfMetadataPayload fromJWE(String jwe) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
+    public static UvfMetadataPayload fromJWE(final String jwe) throws JsonProcessingException {
+        final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         return mapper.readValue(jwe, UvfMetadataPayload.class);
     }
@@ -122,7 +122,7 @@ public class UvfMetadataPayload extends JWEPayload {
         final HMac hMac = new HMac(digest);
         hMac.init(new KeyParameter(hmacKey));
         hMac.update(rootDirId, 0, rootDirId.length);
-        byte[] hmacOut = new byte[hMac.getMacSize()];
+        final byte[] hmacOut = new byte[hMac.getMacSize()];
         hMac.doFinal(hmacOut, 0);
         return Base32.toBase32String(Arrays.copyOfRange(hmacOut, 0, 20));
     }
@@ -288,7 +288,7 @@ public class UvfMetadataPayload extends JWEPayload {
      * @param jwk The jwk
      */
     public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException {
-        JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
+        final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
         jweObject.decrypt(new MultiDecrypter(jwk));
         final Payload payload = jweObject.getPayload();
         return UvfMetadataPayload.fromJWE(payload.toString());

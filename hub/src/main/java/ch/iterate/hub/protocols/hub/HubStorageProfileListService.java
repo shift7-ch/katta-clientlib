@@ -59,7 +59,7 @@ public class HubStorageProfileListService implements ListService, Read {
             final ConfigDto configDto = new ConfigResourceApi(session.getClient()).apiConfigGet();
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(session.getClient()).apiStorageprofileGet(false);
             final AttributedList<Path> list = new AttributedList<>();
-            for(StorageProfileDto storageProfile : storageProfiles) {
+            for(final StorageProfileDto storageProfile : storageProfiles) {
                 final StorageProfileDtoWrapper wrapper = StorageProfileDtoWrapper.coerce(storageProfile);
                 list.add(new Path(String.format("%s (%s)", wrapper.getName(), wrapper.getId()), EnumSet.of(AbstractPath.Type.file))
                         .withAttributes(new StorageProfileAttributesFinder().toAttributes(configDto, wrapper)));

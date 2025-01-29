@@ -63,7 +63,7 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
         log.info("Bookmark sync for {}", session.getHost());
         try {
             final List<VaultDto> vaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null);
-            for(VaultDto vaultDto : vaults) {
+            for(final VaultDto vaultDto : vaults) {
                 try {
                     final UUID vaultId = vaultDto.getId();
                     if(Boolean.TRUE.equals(vaultDto.getArchived())) {
