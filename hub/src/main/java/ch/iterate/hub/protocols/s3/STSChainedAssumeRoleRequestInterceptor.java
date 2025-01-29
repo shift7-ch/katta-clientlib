@@ -86,9 +86,9 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
                     }
                 });
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Chained assume role for %s", bookmark));
+            log.debug("Chained assume role for {}", bookmark);
         }
-        log.debug(String.format("Assume role with temporary credentials %s", tokens));
+        log.debug("Assume role with temporary credentials {}", tokens);
         final PreferencesReader preferences = new HostPreferences(bookmark);
         if(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
             request.setDurationSeconds(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS));
@@ -103,7 +103,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
             sub = JWT.decode(identityToken).getSubject();
         }
         catch(JWTDecodeException e) {
-            log.warn(String.format("Failure %s decoding JWT %s", e, identityToken));
+            log.warn("Failure {} decoding JWT {}", e, identityToken);
             throw new LoginFailureException("Invalid JWT or JSON format in authentication token", e);
         }
         if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLESESSIONNAME))) {
@@ -114,7 +114,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
                 request.setRoleSessionName(sub);
             }
             else {
-                log.warn(String.format("Missing subject in decoding JWT %s", identityToken));
+                log.warn("Missing subject in decoding JWT {}", identityToken);
                 request.setRoleSessionName(new AsciiRandomStringService().random());
             }
         }
@@ -125,11 +125,11 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
         }
         try {
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Use request %s", request));
+                log.debug("Use request {}", request);
             }
             final AssumeRoleResult result = service.assumeRole(request);
             if(log.isDebugEnabled()) {
-                log.debug(String.format("Received assume role result %s for host %s", result, bookmark));
+                log.debug("Received assume role result {} for host {}", result, bookmark);
             }
             return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
                     result.getCredentials().getSecretAccessKey(),

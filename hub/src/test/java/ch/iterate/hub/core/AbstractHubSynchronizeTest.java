@@ -70,7 +70,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     public void test01Bootstrapping(final HubTestConfig hubTestConfig) throws Exception {
-        log.info(String.format("M01 %s", hubTestConfig));
+        log.info("M01 {}", hubTestConfig);
 
         final HubSession hubSession = setupConnection(hubTestConfig.setup);
         try {
@@ -132,9 +132,9 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             // trigger blocking sync
             new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
 
-            log.info(String.format("%s Protocols found:", ProtocolFactory.get().find().size()));
+            log.info("{} Protocols found:", ProtocolFactory.get().find().size());
             for(final Protocol protocol : ProtocolFactory.get().find()) {
-                log.info(String.format("-  %s", protocol));
+                log.info("-  {}", protocol);
             }
 
             // aws static
@@ -147,7 +147,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertNotNull(ProtocolFactory.get().forName("732D43FA-3716-46C4-B931-66EA5405EF1C".toLowerCase()));
         }
         catch(ApiException e) {
-            log.error(String.format("%s %s", e.getCode(), e.getMessage()), e);
+            log.error("{} {}", e.getCode(), e.getMessage(), e);
             throw e;
         }
         finally {
@@ -161,7 +161,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     public void test02AddStorageProfile(final HubTestConfig hubTestConfig) throws Exception {
-        log.info(String.format("M02 %s", hubTestConfig));
+        log.info("M02 {}", hubTestConfig);
 
         final HubSession hubSession = setupConnection(hubTestConfig.setup);
         try {
@@ -175,7 +175,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             new HubStorageProfileSyncSchedulerService(hubSession).operate(new DisabledLoginCallback());
             final int numProtocols = ProtocolFactory.get().find().size();
 
-            log.info(String.format("Add storage profile for UUID %s", uuid));
+            log.info("Add storage profile for UUID {}", uuid);
             Assertions.assertNull(ProtocolFactory.get().forName(uuid.toString().toLowerCase()));
 
             final StorageProfileDto storageProfile = storageProfiles.get(0);
@@ -211,27 +211,27 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     public void test03AddVault(final HubTestConfig config) throws Exception {
-        log.info(String.format("M03 %s", config));
+        log.info("M03 {}", config);
 
         final HubSession hubSession = setupConnection(config.setup);
         try {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
-            log.info(String.format("Coercing storage profiles %s", storageProfiles));
+            log.info("Coercing storage profiles {}", storageProfiles);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
             assertNotNull(new HubStorageProfileListService(hubSession).list(Home.ROOT, new DisabledListProgressListener()).find(p -> StringUtils.equals(p.attributes().getFileId(),
                     config.vault.storageProfileId.toLowerCase())));
 
-            log.info(String.format("Creating vault in %s", hubSession));
+            log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.randomUUID();
             new CreateVaultService(hubSession).createVault(storageProfileWrapper, new CreateVaultService.CreateVaultModel(
                     vaultId, "vault", null,
                     config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName, config.vault.region, true, 3));
-            log.info(String.format("Getting vault bookmark for vault %s", vaultId));
+            log.info("Getting vault bookmark for vault {}", vaultId);
             final Host vaultBookmark = new HubStorageVaultSyncSchedulerService(hubSession).toBookmark(vaultId, FirstLoginDeviceSetupCallback.disabled);
-            log.info(String.format("Using vault bookmark %s", vaultBookmark));
+            log.info("Using vault bookmark {}", vaultBookmark);
 
             final DefaultVaultRegistry vaultRegistry = new DefaultVaultRegistry(new DisabledPasswordCallback());
             final Session<?> session = new S3AutoLoadVaultSession(vaultBookmark, new DisabledX509TrustManager(), new DefaultX509KeyManager())

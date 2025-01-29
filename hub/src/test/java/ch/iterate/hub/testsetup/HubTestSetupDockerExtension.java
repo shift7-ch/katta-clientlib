@@ -29,7 +29,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     private ComposeContainer compose;
 
     protected void setupDocker(final HubTestConfig.Setup.DockerConfig configuration) throws URISyntaxException {
-        log.info(String.format("Setup docker %s", configuration));
+        log.info("Setup docker {}", configuration);
         this.compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
                 .withLocalCompose(true)
@@ -42,19 +42,19 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                                 new AbstractMap.SimpleImmutableEntry<>("MINIO_CONSOLE_PORT", Integer.toString(configuration.minioConsolePort)),
                                 new AbstractMap.SimpleImmutableEntry<>("HUB_PORT", Integer.toString(configuration.hubPort))
                         ).collect(Collectors.toMap(AbstractMap.SimpleImmutableEntry::getKey, AbstractMap.SimpleImmutableEntry::getValue)))
-                .withLogConsumer("minio-1", outputFrame -> log.debug("[minio_1] " + outputFrame.getUtf8String()))
+                .withLogConsumer("minio-1", outputFrame -> log.debug("[minio_1] {}", outputFrame.getUtf8String()))
                 .withExposedService("minio-1", configuration.minioServicePort, Wait.forListeningPort())
                 .withExposedService("keycloak-1", configuration.keycloakServicePort, Wait.forListeningPort())
                 .withExposedService("hub-1", configuration.hubPort, Wait.forListeningPort())
                 .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)))
                 .waitingFor("hub_setup_storage_profile-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)));
         compose.start();
-        log.info(String.format("Done setup docker %s", configuration));
+        log.info("Done setup docker {}", configuration);
     }
 
     @Override
     public void afterAll(final ExtensionContext context) throws Exception {
-        log.info(String.format("Stop docker %s", compose));
+        log.info("Stop docker {}", compose);
         compose.stop();
     }
 
