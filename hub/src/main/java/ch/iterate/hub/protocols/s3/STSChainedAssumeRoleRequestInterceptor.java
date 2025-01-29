@@ -59,7 +59,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
     }
 
     /**
-     * Assume role with previously yobtained temporary access token
+     * Assume role with previously obtained temporary access token
      *
      * @param tokens Session credentials
      * @return Temporary scoped access tokens
