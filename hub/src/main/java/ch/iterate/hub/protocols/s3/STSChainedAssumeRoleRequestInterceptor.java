@@ -35,6 +35,9 @@ import com.amazonaws.services.securitytoken.model.Tag;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 
+/**
+ * Assume role with temporary credentials obtained using OIDC token from security token service (STS)
+ */
 public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredentialsRequestInterceptor {
     private static final Logger log = LogManager.getLogger(STSChainedAssumeRoleRequestInterceptor.class);
 
