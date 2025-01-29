@@ -41,6 +41,14 @@ public class S3AssumeRoleSession extends S3Session {
         super(host, trust, key);
     }
 
+    /**
+     * Configured by default with credentials strategy using assume role with web identity followed by
+     * exchaing the retrieved OIDC token with scoped OAuth tokens to obtain temporary credentials from security
+     * token server (STS)
+     *
+     * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE
+     * @see S3AutoLoadVaultProtocol#S3_ASSUMEROLE_ROLEARN_2
+     */
     @Override
     protected S3CredentialsStrategy configureCredentialsStrategy(final ProxyFinder proxy, final HttpClientBuilder configuration,
                                                                  final LoginCallback prompt) throws LoginCanceledException {
