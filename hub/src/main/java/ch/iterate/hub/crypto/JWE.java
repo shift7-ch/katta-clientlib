@@ -66,7 +66,7 @@ public class JWE {
      */
     public static String ecdhEsEncrypt(final JWEPayload payload, final String kid, final ECPublicKey recipientPublicKey, final String apu, final String apv) throws JOSEException, JsonProcessingException {
         final JWEEncrypter jweEncrypter = new ECDHEncrypter(recipientPublicKey);
-        JWEHeader header = new JWEHeader.Builder(ECDHES_DESIGNATION_ALG, ECDHES_DESIGNATION_ENC)
+        final JWEHeader header = new JWEHeader.Builder(ECDHES_DESIGNATION_ALG, ECDHES_DESIGNATION_ENC)
                 .keyID(kid)
                 .agreementPartyUInfo(Base64URL.encode(apu))
                 .agreementPartyVInfo(Base64URL.encode(apv))

@@ -32,7 +32,7 @@ public class HubExceptionMappingService extends AbstractExceptionMappingService<
 
     @Override
     public BackgroundException map(final ApiException failure) {
-        for(Throwable cause : ExceptionUtils.getThrowableList(failure)) {
+        for(final Throwable cause : ExceptionUtils.getThrowableList(failure)) {
             if(cause instanceof SocketException) {
                 // Map Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Broken pipe
                 return new DefaultSocketExceptionMappingService().map((SocketException) cause);
