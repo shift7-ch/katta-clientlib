@@ -131,8 +131,6 @@ public class GrantAccessServiceImpl implements GrantAccessService {
         }
         // 3. Bulk-upload the collection of these JWEs to the server. (POST /vaults/${vaultId}/access-tokens, {"user1": "jwe1", "user2": "jwe2", ...)
         vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, accessTokens);
-        if(log.isInfoEnabled()) {
-            log.info("Uploaded JWE for users {} and vault {}", accessTokens.keySet(), vaultId);
-        }
+        log.info("Uploaded JWE for users {} and vault {}", accessTokens.keySet(), vaultId);
     }
 }

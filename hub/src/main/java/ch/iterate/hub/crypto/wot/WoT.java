@@ -134,9 +134,7 @@ public class WoT {
             return signatureChain.size();
         }
         catch(SecurityFailure | NoSuchAlgorithmException | InvalidKeySpecException | NotECKeyException e) {
-            if(log.isWarnEnabled()) {
-                log.warn("WoT signature verification failed.", e);
-            }
+            log.warn("Web of Trust signature chain verification failed for user {}", trustedUser, e);
             return -1; // unverified
         }
     }
@@ -157,17 +155,13 @@ public class WoT {
         for(final TrustedUserDto trust : trusts) {
             final String trustedUserId = trust.getTrustedUserId();
             if(trustedUserId == null) {
-                if(log.isWarnEnabled()) {
-                    log.warn("Verification for {} failed. No ID found for trustee.", trust);
-                }
+                log.warn("Verification for {} failed. No ID found for trustee.", trust);
                 continue;
             }
             final UserDto user = users.stream().filter(u -> trustedUserId.equals(u.getId())).findFirst().orElse(null);
             final List<String> signatureChain = trust.getSignatureChain();
             if(user == null || signatureChain == null) {
-                if(log.isWarnEnabled()) {
-                    log.warn("Verification for {} failed. No user or no signature chain found.", trust);
-                }
+                log.warn("Verification for {} failed. No user or no signature chain found.", trust);
                 continue;
             }
             try {
@@ -175,9 +169,7 @@ public class WoT {
                 verified.put(trust, signatureChain.size());
             }
             catch(SecurityFailure e) {
-                if(log.isWarnEnabled()) {
-                    log.warn("Verification for {} failed - not granting access.", trust, e);
-                }
+                log.warn("Verification for {} failed - not granting access.", trust, e);
             }
         }
         return verified;
