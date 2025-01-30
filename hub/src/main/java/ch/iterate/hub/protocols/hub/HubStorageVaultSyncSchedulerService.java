@@ -87,9 +87,7 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                             bookmark.getCredentials().reset();
                         }
                         bookmarks.add(bookmark);
-                        if(log.isInfoEnabled()) {
-                            log.info("Added bookmark {} for vault {} for hub {}", bookmarks, vaultDto, session.getHost());
-                        }
+                        log.info("Added bookmark {} for vault {} for hub {}", bookmarks, vaultDto, session.getHost());
                     }
                 }
                 catch(AccessDeniedException e) {

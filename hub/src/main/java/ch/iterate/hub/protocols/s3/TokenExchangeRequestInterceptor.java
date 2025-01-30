@@ -92,18 +92,14 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
             scopes.addAll(Arrays.asList(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
         }
         request.setScopes(scopes);
-        if(log.isDebugEnabled()) {
-            log.debug("Token exchange request {} for {}", request, bookmark);
-        }
+        log.debug("Token exchange request {} for {}", request, bookmark);
         try {
             final TokenResponse tokenExchangeResponse = request.execute();
             // N.B. token exchange with Id token does not work!
             final OAuthTokens tokens = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                     tokenExchangeResponse.getRefreshToken(),
                     System.currentTimeMillis() + tokenExchangeResponse.getExpiresInSeconds() * 1000);
-            if(log.isDebugEnabled()) {
-                log.debug("Received exchanged token {} for {}", tokens, bookmark);
-            }
+            log.debug("Received exchanged token {} for {}", tokens, bookmark);
             return tokens;
         }
         catch(TokenResponseException e) {

@@ -85,9 +85,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
                         // nothing to do
                     }
                 });
-        if(log.isDebugEnabled()) {
-            log.debug("Chained assume role for {}", bookmark);
-        }
+        log.debug("Chained assume role for {}", bookmark);
         log.debug("Assume role with temporary credentials {}", tokens);
         final PreferencesReader preferences = new HostPreferences(bookmark);
         if(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
@@ -124,13 +122,9 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
                     .withValue(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
         }
         try {
-            if(log.isDebugEnabled()) {
-                log.debug("Use request {}", request);
-            }
+            log.debug("Use request {}", request);
             final AssumeRoleResult result = service.assumeRole(request);
-            if(log.isDebugEnabled()) {
-                log.debug("Received assume role result {} for host {}", result, bookmark);
-            }
+            log.debug("Received assume role result {} for host {}", result, bookmark);
             return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
                     result.getCredentials().getSecretAccessKey(),
                     result.getCredentials().getSessionToken(),

@@ -85,9 +85,7 @@ public class CreateVaultService {
                             .enabled(vaultModel.automaticAccessGrant())
                             .maxWotDepth(vaultModel.maxWotLevel())
                     );
-            if(log.isDebugEnabled()) {
-                log.debug("Created metadata JWE {}", metadataJWE);
-            }
+            log.debug("Created metadata JWE {}", metadataJWE);
             final String uvfMetadataFile = metadataJWE.encrypt(
                     String.format("%s/api", new HostUrlProvider(false, true).get(hubSession.getHost())),
                     vaultModel.vaultId(),
@@ -109,9 +107,7 @@ public class CreateVaultService {
                     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here?
                     .rootDirHash(metadataJWE.computeRootDirIdHash(metadataJWE.computeRootDirId()))
                     .region(metadataJWE.storage().getRegion());
-            if(log.isDebugEnabled()) {
-                log.debug("Created storage dto {}", storageDto);
-            }
+            log.debug("Created storage dto {}", storageDto);
             final Host bookmark = HubStorageVaultSyncSchedulerService.toBookmark(hubSession.getHost(), vaultDto.getId(), metadataJWE.storage());
             if(storageProfileWrapper.getStsEndpoint() == null) {
                 // permanent: template upload into existing bucket
@@ -134,24 +130,18 @@ public class CreateVaultService {
                         String.format("%s%s", storageProfileWrapper.getBucketPrefix(), vaultDto.getId()),
                         storageProfileWrapper.getBucketAcceleration()
                 );
-                if(log.isDebugEnabled()) {
-                    log.debug("Create STS bucket {} for vault {}", storageDto, vaultDto);
-                }
+                log.debug("Create STS bucket {} for vault {}", storageDto, vaultDto);
                 new StorageResourceApi(hubSession.getClient()).apiStorageVaultIdPut(vaultDto.getId(),
                         storageDto.awsAccessKey(stsTokens.getAccessKeyId())
                                 .awsSecretKey(stsTokens.getSecretAccessKey())
                                 .sessionToken(stsTokens.getSessionToken()));
             }
             // create vault in hub
-            if(log.isDebugEnabled()) {
-                log.debug("Create vault {}", vaultDto);
-            }
+            log.debug("Create vault {}", vaultDto);
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdPut(vaultDto.getId(), vaultDto);
 
             // upload JWE
-            if(log.isDebugEnabled()) {
-                log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
-            }
+            log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
             final UserDto userDto = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(false);
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
@@ -164,9 +154,7 @@ public class CreateVaultService {
     }
 
     private static TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePoliy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) throws IOException {
-        if(log.isDebugEnabled()) {
-            log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);
-        }
+        log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);
 
         final AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
 
@@ -191,13 +179,9 @@ public class CreateVaultService {
                 .build();
 
 
-        if(log.isDebugEnabled()) {
-            log.debug("Use request {}", request);
-        }
+        log.debug("Use request {}", request);
         final AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(request);
-        if(log.isDebugEnabled()) {
-            log.debug("Received assume role identity result {}", result);
-        }
+        log.debug("Received assume role identity result {}", result);
         return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
                 result.getCredentials().getSecretAccessKey(),
                 result.getCredentials().getSessionToken(),
