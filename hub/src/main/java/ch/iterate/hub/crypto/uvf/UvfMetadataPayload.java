@@ -8,11 +8,9 @@ package ch.iterate.hub.crypto.uvf;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.macs.HMac;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.util.encoders.Base32;
+import org.cryptomator.cryptolib.api.Cryptor;
+import org.cryptomator.cryptolib.api.CryptorProvider;
+import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
@@ -27,7 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import at.favre.lib.hkdf.HKDF;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.model.JWEPayload;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -93,8 +90,14 @@ public class UvfMetadataPayload extends JWEPayload {
         return mapper.readValue(jwe, UvfMetadataPayload.class);
     }
 
+    public String toJSON() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JsonNullableModule());
+        return mapper.writeValueAsString(this);
+    }
+
     public static UvfMetadataPayload create() {
-        final String kid = new AlphanumericRandomStringService(4).random();
+        final String kid = Base64URL.encode(new AlphanumericRandomStringService(4).random()).toString();
         final byte[] rawSeed = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawSeed);
         final byte[] kdfSalt = new byte[32];
@@ -103,28 +106,21 @@ public class UvfMetadataPayload extends JWEPayload {
                 .withFileFormat("AES-256-GCM-32k")
                 .withNameFormat("AES-SIV-512-B64URL")
                 .withSeeds(new HashMap<String, String>() {{
-                    put(kid, Base64URL.encode(rawSeed).toString());
+                    put(kid, Base64.getEncoder().encodeToString(rawSeed));
                 }})
                 .withLatestSeed(kid)
                 .withinitialSeed(kid)
                 .withKdf("HKDF-SHA512")
-                .withKdfSalt(Base64URL.encode(kdfSalt).toString());
+                .withKdfSalt(Base64.getEncoder().encodeToString(kdfSalt));
     }
 
-    public byte[] computeRootDirId() {
-        return HKDF.fromHmacSha512().extractAndExpand(Base64URL.from(kdfSalt()).decode(), Base64URL.from(seeds().get(initialSeed())).decode(), "rootDirId".getBytes(), 256 / 8);
-    }
-
-    public String computeRootDirIdHash(final byte[] rootDirId) {
-        final byte[] hmacKey = HKDF.fromHmacSha512()
-                .extractAndExpand(Base64URL.from(kdfSalt()).decode(), Base64URL.from(seeds().get(initialSeed())).decode(), "hmac".getBytes(), 512 / 8);
-        final Digest digest = new SHA256Digest();
-        final HMac hMac = new HMac(digest);
-        hMac.init(new KeyParameter(hmacKey));
-        hMac.update(rootDirId, 0, rootDirId.length);
-        final byte[] hmacOut = new byte[hMac.getMacSize()];
-        hMac.doFinal(hmacOut, 0);
-        return Base32.toBase32String(Arrays.copyOfRange(hmacOut, 0, 20));
+    public String computeRootDirIdHash() throws JsonProcessingException {
+        final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
+        final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
+        final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
+        final byte[] rootDirId = masterKey.rootDirId();
+        final String hashedRootDirId = cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(rootDirId);
+        return hashedRootDirId;
     }
 
 

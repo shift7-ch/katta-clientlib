@@ -4,20 +4,7 @@
 
 package ch.iterate.hub.core;
 
-import ch.cyberduck.core.AbstractPath;
-import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.DisabledCancelCallback;
-import ch.cyberduck.core.DisabledHostKeyCallback;
-import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.DisabledLoginCallback;
-import ch.cyberduck.core.DisabledPasswordCallback;
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
-import ch.cyberduck.core.Session;
-import ch.cyberduck.core.SimplePathPredicate;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -25,6 +12,16 @@ import ch.cyberduck.core.proxy.DisabledProxyFinder;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
+
+import ch.iterate.hub.client.api.DeviceResourceApi;
+import ch.iterate.hub.client.api.UsersResourceApi;
+import ch.iterate.hub.client.api.VaultResourceApi;
+
+import ch.iterate.hub.crypto.UserKeys;
+import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
+import ch.iterate.hub.workflows.UserKeysService;
+import ch.iterate.hub.workflows.UserKeysServiceImpl;
+import ch.iterate.hub.workflows.VaultServiceImpl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -245,17 +242,21 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
             session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
+            // listing decrypted file names
             assertFalse(vaultRegistry.isEmpty());
             assertEquals(1, vaultRegistry.size());
-            final Path bucket = new Path(vaultBookmark.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume));
+
+            // TODO WiP trying to guide AbstractVault.encrypt() -> CryptoDirectoryV7Provider.toEncrypted(final Session<?> session, final String directoryId, final Path directory) -> do we need to write own CryptoDirectory?
+            final Path bucket = new Path(vaultBookmark.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault));
             assertNotSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
+            {
+                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+                assertTrue(list.isEmpty());
+            }
 
-//            {
-//                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
-//                assertTrue(list.isEmpty());
-//            }
-
+            // raw listing encrypted file names
             vaultRegistry.close(bucket);
+            assertSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
             assertTrue(vaultRegistry.isEmpty());
             {
                 final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());

@@ -4,21 +4,26 @@
 
 package ch.iterate.hub.crypto.uvf;
 
+import ch.cyberduck.core.AbstractPath;
+import ch.cyberduck.core.AlphanumericRandomStringService;
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
+import ch.cyberduck.core.exception.BackgroundException;
 
-import org.cryptomator.cryptolib.common.ECKeyPair;
-import org.cryptomator.cryptolib.common.P384KeyPair;
+import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.UUID;
 
-import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
@@ -28,7 +33,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.util.Base64URL;
 
-import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
 import static ch.iterate.hub.crypto.KeyHelper.decodePrivateKey;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -151,30 +155,26 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    public void computeRootDirId() throws JOSEException, ParseException, JsonProcessingException, InvalidKeySpecException {
-        final ECKeyPair ecKeyPair = decodeKeyPair(Base64.getEncoder().encodeToString(alice.toECPublicKey().getEncoded()), (Base64.getEncoder().encodeToString(alice.toECPrivateKey().getEncoded())));
-        final UserKeys userKeys = new UserKeys(ecKeyPair, P384KeyPair.generate());
-
-        final String uvf = "{\"protected\":\"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9\",\"recipients\":[{\"header\":{\"kid\":\"org.cryptomator.hub.memberkey\",\"alg\":\"A256KW\"},\"encrypted_key\":\"7FtABJ5BpSM9Ft8wUPfLQc-12WF57kX0tWtRWiVwA_N_gJBa9iwhzw\"},{\"header\":{\"kid\":\"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko\",\"alg\":\"ECDH-ES+A256KW\",\"epk\":{\"key_ops\":[],\"ext\":true,\"kty\":\"EC\",\"x\":\"oNu46YFrgrGSvl98HyDD3_iPkfZBnpYgEHmPL3qbO4AdwBsycpIqcHwKhT8Lt7B8\",\"y\":\"P80VgJFml85v_F2-aPYdgDQX_DPGZr1s_p8gWF4Idkp13QfKdhi32C7Zoy5kzPWO\",\"crv\":\"P-384\"},\"apu\":\"\",\"apv\":\"\"},\"encrypted_key\":\"QaJn0TP7mGAc5ukOpZ0gNAuBtCW7hPCkj8Jp4bhMftQfJefHNyqE7Q\"}],\"iv\":\"Wgif0WP21-MAwvWs\",\"ciphertext\":\"-n5CePmmN99I4KqlnR64Fuu5b2Md9s4CGxLMm7KQqu65H0ug7Fs5HHnrx_gkpFiv1Mn-jwrkoEtiixyQcYX6UcoyT2dY1MkLQB7QU9mdMpZU3n19Q2sAx1-gfTCd7IzVXef7SEfuscdQL1QTKJW454Dy8L3WwPiDpUgt9ED7mMFdJ6lJ3_EFYstN0VFAVf_jwtIILmQrjkM_LI0FFKfqkOCH2nuE9xG8ihPH9X9OStllPp00G9_onYu9mrg-smiNNK2Ib19CZJ2E6mAp7F_LGiz6p203fsprj4XY9J6t8zl5Vpc61NmFvzvY4j3_5FpD_BmpVr8tyyVT9zqWn4vsBAHORQ1V_b9v68O7CekCebpQvpmzEPZwZN1Ma_T6oI7Ydn1rtBnDruVrpWm01RL8XpHnFbko\",\"tag\":\"vPLd65IEcexmhGbYPM0cYI53H4Pp1OfTaAq_QGrneLM\"}";
-        final String accessToken = "eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiUXZRWUpUd3dSVEg2MWRFS3ZoNDI4ZG9nN3pRTFFxY3I0NUhwZTRqZFQ5Qno2bjcyVzQ4dTJ3WXk0UXlyZ0kxciIsInkiOiJZS1RtQ04zZXNKNDJVbUpzLU44NTFKamsyUFVPUU0zZXpCTkJvZGk4RnRNUDlUeUhoXzc0aHpxTC1EYTZkMXlwIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.rdysEEQN0FidglDtK5yyaEpQtv4CsYLOQd__y7REkb_3BLP9nD4Blw.dFb9JOdveiw3LmIs.rSMkz8VoB_LspnvxvmRzCWNVLShTWfbzHfqe5lwrWwumYCdeRPM.xsS2tDUr2khJrLxHex8gZhBgO_CMA_PxFlR-ku3JiT8";
-
-        final UvfAccessTokenPayload accessTokenDecrypted = userKeys.decryptAccessToken(accessToken);
-        final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(uvf, accessTokenDecrypted.memberKeyRecipient());
-        assertEquals("24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=", Base64.getEncoder().encodeToString(meta.computeRootDirId()));
+    public void testWorkaround() {
+        // example of byte array -> UTF-8 -> byte array not working
+        final byte[] rootDirId = Base64.getDecoder().decode("L3CoPPdXaaDgrM5YhBujn2t2LFTE5XjYUzC1htzk6tY=");
+        assertFalse(Arrays.equals(rootDirId, new String(rootDirId, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)));
+        // restricting to alphanumeric does work
+        final byte[] rootDirId2 = new AlphanumericRandomStringService(4).random().getBytes(StandardCharsets.UTF_8);
+        assertTrue(Arrays.equals(rootDirId2, new String(rootDirId2, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test
-    public void computeRootDirIdHash() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
-        final ECKeyPair ecKeyPair = decodeKeyPair(Base64.getEncoder().encodeToString(alice.toECPublicKey().getEncoded()), (Base64.getEncoder().encodeToString(alice.toECPrivateKey().getEncoded())));
-        final UserKeys userKeys = new UserKeys(ecKeyPair, P384KeyPair.generate());
+    public void testUVFMasterkeyFromUvfMetadataPayload() throws JsonProcessingException {
+        final UvfMetadataPayload uvmetadataPayload = UvfMetadataPayload.create();
+        UVFMasterkey.fromDecryptedPayload(uvmetadataPayload.toJSON());
+    }
 
-        final byte[] rootDirId = Base64.getDecoder().decode("24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=");
-        final String uvf = "{\"protected\":\"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9\",\"recipients\":[{\"header\":{\"kid\":\"org.cryptomator.hub.memberkey\",\"alg\":\"A256KW\"},\"encrypted_key\":\"7FtABJ5BpSM9Ft8wUPfLQc-12WF57kX0tWtRWiVwA_N_gJBa9iwhzw\"},{\"header\":{\"kid\":\"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko\",\"alg\":\"ECDH-ES+A256KW\",\"epk\":{\"key_ops\":[],\"ext\":true,\"kty\":\"EC\",\"x\":\"oNu46YFrgrGSvl98HyDD3_iPkfZBnpYgEHmPL3qbO4AdwBsycpIqcHwKhT8Lt7B8\",\"y\":\"P80VgJFml85v_F2-aPYdgDQX_DPGZr1s_p8gWF4Idkp13QfKdhi32C7Zoy5kzPWO\",\"crv\":\"P-384\"},\"apu\":\"\",\"apv\":\"\"},\"encrypted_key\":\"QaJn0TP7mGAc5ukOpZ0gNAuBtCW7hPCkj8Jp4bhMftQfJefHNyqE7Q\"}],\"iv\":\"Wgif0WP21-MAwvWs\",\"ciphertext\":\"-n5CePmmN99I4KqlnR64Fuu5b2Md9s4CGxLMm7KQqu65H0ug7Fs5HHnrx_gkpFiv1Mn-jwrkoEtiixyQcYX6UcoyT2dY1MkLQB7QU9mdMpZU3n19Q2sAx1-gfTCd7IzVXef7SEfuscdQL1QTKJW454Dy8L3WwPiDpUgt9ED7mMFdJ6lJ3_EFYstN0VFAVf_jwtIILmQrjkM_LI0FFKfqkOCH2nuE9xG8ihPH9X9OStllPp00G9_onYu9mrg-smiNNK2Ib19CZJ2E6mAp7F_LGiz6p203fsprj4XY9J6t8zl5Vpc61NmFvzvY4j3_5FpD_BmpVr8tyyVT9zqWn4vsBAHORQ1V_b9v68O7CekCebpQvpmzEPZwZN1Ma_T6oI7Ydn1rtBnDruVrpWm01RL8XpHnFbko\",\"tag\":\"vPLd65IEcexmhGbYPM0cYI53H4Pp1OfTaAq_QGrneLM\"}";
-        final String accessToken = "eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiUXZRWUpUd3dSVEg2MWRFS3ZoNDI4ZG9nN3pRTFFxY3I0NUhwZTRqZFQ5Qno2bjcyVzQ4dTJ3WXk0UXlyZ0kxciIsInkiOiJZS1RtQ04zZXNKNDJVbUpzLU44NTFKamsyUFVPUU0zZXpCTkJvZGk4RnRNUDlUeUhoXzc0aHpxTC1EYTZkMXlwIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.rdysEEQN0FidglDtK5yyaEpQtv4CsYLOQd__y7REkb_3BLP9nD4Blw.dFb9JOdveiw3LmIs.rSMkz8VoB_LspnvxvmRzCWNVLShTWfbzHfqe5lwrWwumYCdeRPM.xsS2tDUr2khJrLxHex8gZhBgO_CMA_PxFlR-ku3JiT8";
-
-        final UvfAccessTokenPayload accessTokenDecrypted = userKeys.decryptAccessToken(accessToken);
-        final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(uvf, accessTokenDecrypted.memberKeyRecipient());
-        final String hash = meta.computeRootDirIdHash(rootDirId);
-        assertEquals("6DYU3E5BTPAZ4DWEQPQK3AIHX2DXSPHG", hash);
+    @Test
+    public void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
+        final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
+        final String decryptedPayload = uvfMetadataPayload.toJSON();
+        final UVFVault uvfVault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)), decryptedPayload, null, null);
+        uvfVault.load(null, null);
     }
 }
