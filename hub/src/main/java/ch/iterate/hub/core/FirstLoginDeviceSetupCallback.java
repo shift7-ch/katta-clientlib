@@ -5,6 +5,7 @@
 package ch.iterate.hub.core;
 
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.LoginCanceledException;
 
@@ -28,6 +29,15 @@ public interface FirstLoginDeviceSetupCallback {
      * @throws ConnectionCanceledException Canceled prompt by user
      */
     AccountKeyAndDeviceName askForAccountKeyAndDeviceName(Host bookmark, String initialDeviceName) throws ConnectionCanceledException;
+
+    /**
+     * Generate initial account key
+     *
+     * @return Random UUID
+     */
+    default String generateAccountKey() {
+        return new UUIDRandomStringService().random();
+    }
 
     FirstLoginDeviceSetupCallback disabled = new FirstLoginDeviceSetupCallback() {
         @Override

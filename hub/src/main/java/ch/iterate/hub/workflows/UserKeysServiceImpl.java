@@ -5,7 +5,6 @@
 package ch.iterate.hub.workflows;
 
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
 
@@ -119,7 +118,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 log.info("(3) Setting up new user keys and setupCode.");
 
                 log.info("(3.1) generate and display new Account Key");
-                final String setupCode = new UUIDRandomStringService().random();
+                final String setupCode = prompt.generateAccountKey();
                 log.info("With setupCode={}", setupCode);
 
                 final String deviceName = prompt.displayAccountKeyAndAskDeviceName(host,
