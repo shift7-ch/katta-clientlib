@@ -16,18 +16,14 @@ import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
-import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly;
-import ch.iterate.hub.testsetup.model.HubTestConfig;
+import ch.iterate.hub.testsetup.HubTestConfig;
+import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
 import com.nimbusds.jose.JOSEException;
 
-import static ch.iterate.hub.testsetup.HubTestSetupConfigs.minioSTSUnattendedLocalOnly;
-import static ch.iterate.hub.testsetup.HubTestUtilities.setupForUser;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith({UnattendedLocalOnly.class})
+@ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
 public class UserKeysRecoveryTest extends AbstractHubTest {
 
     private Stream<Arguments> arguments() {
@@ -37,15 +33,14 @@ public class UserKeysRecoveryTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     public void firstLoginAndUserKeyRecovery(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupForUser(hubTestConfig.hubTestSetupConfig, hubTestConfig.hubTestSetupConfig.USER_001());
+        final HubSession hubSession = setupConnection(hubTestConfig.setup);
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true);
 
         final JOSEException exception = assertThrows(JOSEException.class, () -> UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
                 new AlphanumericRandomStringService().random()));
-        assertTrue(exception.getCause() instanceof InvalidKeyException);
-
+        assertInstanceOf(InvalidKeyException.class, exception.getCause());
         assertNotNull(UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
-                hubTestConfig.hubTestSetupConfig.USER_001().setupCode));
+                hubTestConfig.setup.userConfig.setupCode));
     }
 }

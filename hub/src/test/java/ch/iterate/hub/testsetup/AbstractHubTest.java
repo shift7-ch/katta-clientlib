@@ -188,6 +188,11 @@ public abstract class AbstractHubTest extends VaultTest {
                 return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(String.format("firstLoginMockSetup %s", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                         .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
+
+            @Override
+            public String generateAccountKey() {
+                return staticSetupCode();
+            }
         };
         MockableFirstLoginDeviceSetupCallback.setProxy(proxy);
 
