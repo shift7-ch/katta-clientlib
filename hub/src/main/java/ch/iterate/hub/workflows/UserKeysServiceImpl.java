@@ -35,7 +35,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
 import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static ch.iterate.hub.protocols.s3.CipherduckHostCustomProperties.HUB_UUID;
+import static ch.iterate.hub.protocols.hub.HubSession.HUB_UUID;
 import static ch.iterate.hub.workflows.DeviceKeysService.COMPUTER_NAME;
 import static ch.iterate.hub.workflows.DeviceKeysService.validateDeviceKeys;
 
@@ -119,7 +119,6 @@ public class UserKeysServiceImpl implements UserKeysService {
 
                 log.info("(3.1) generate and display new Account Key");
                 final String setupCode = prompt.generateAccountKey();
-                log.info("With setupCode={}", setupCode);
 
                 final String deviceName = prompt.displayAccountKeyAndAskDeviceName(host,
                         new AccountKeyAndDeviceName().withAccountKey(setupCode).withDeviceName(COMPUTER_NAME));

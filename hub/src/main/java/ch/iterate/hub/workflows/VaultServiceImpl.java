@@ -40,7 +40,6 @@ public class VaultServiceImpl implements VaultService {
         // contains vault member key
         final UvfAccessTokenPayload accessToken = this.getVaultAccessTokenJWE(vaultId, userKeys);
         final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
-
         // extract and decode vault key
         final OctetSequenceKey rawMemberKey = memberKeyFromRawKey(Base64.getDecoder().decode(accessToken.key()));
         // decode vault metadata (incl. key material)
@@ -55,8 +54,7 @@ public class VaultServiceImpl implements VaultService {
     @Override
     public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys privateUserKey) throws ApiException, SecurityFailure {
         // Get the user-specific vault key with private user key
-        final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
-        final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vault.getId(), false);
+        final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vaultId, false);
         try {
             return privateUserKey.decryptAccessToken(userSpecificVaultJWE);
         }

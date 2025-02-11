@@ -22,19 +22,33 @@ import ch.cyberduck.core.vault.VaultCredentials;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cryptomator.cryptolib.api.CryptorProvider;
 import org.cryptomator.cryptolib.api.Masterkey;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.EnumSet;
 
-import static ch.iterate.hub.workflows.model.VaultConfig.VAULT_CONFIG;
-
 /**
  * Cryptomator vault implementation for Cipherduck (without masterkey file).
  */
 public class HubCryptoVault extends CryptoVault {
     private static final Logger log = LogManager.getLogger(HubCryptoVault.class);
+
+    // See https://github.com/cryptomator/hub/blob/develop/frontend/src/common/vaultconfig.ts
+    //const jwtPayload: VaultConfigPayload = {
+    //    jti: vaultId,
+    //    format: 8,
+    //    cipherCombo: 'SIV_GCM',
+    //    shorteningThreshold: 220
+    //};
+    //const header = JSON.stringify({
+    //    kid: kid,
+    //    typ: 'jwt',
+    //    alg: 'HS256',
+    //    hub: hubConfig
+    //});
+    private static final VaultConfig VAULT_CONFIG = new VaultConfig(8, 220, CryptorProvider.Scheme.SIV_GCM, "HS256", null);
 
     public HubCryptoVault(final Path home) {
         super(home);
@@ -50,9 +64,7 @@ public class HubCryptoVault extends CryptoVault {
     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko check method signature?
     public synchronized Path create(final Session<?> session, final String region, final VaultCredentials credentials, final int version, final String metadata, final String rootDirHash) throws BackgroundException {
         final Path home = new Path(session.getHost().getDefaultPath(), EnumSet.of(AbstractPath.Type.directory));
-        if(log.isDebugEnabled()) {
-            log.debug(String.format("Uploading vault template %s in %s ", home, session.getHost()));
-        }
+        log.debug("Uploading vault template {} in {} ", home, session.getHost());
 
         // N.B. there seems to be no API to check write permissions without actually writing.
         if(!session.getFeature(ListService.class).list(home, new DisabledListProgressListener()).isEmpty()) {
@@ -70,9 +82,7 @@ public class HubCryptoVault extends CryptoVault {
         final Path secondLevel = new Path(String.format("/%s/d/%s/%s/", session.getHost().getDefaultPath(), rootDirHash.substring(0, 2), rootDirHash.substring(2)), EnumSet.of(AbstractPath.Type.directory));
         final Path firstLevel = secondLevel.getParent();
         final Path dataDir = firstLevel.getParent();
-        if(log.isDebugEnabled()) {
-            log.debug(String.format("Create vault root directory at %s", secondLevel));
-        }
+        log.debug("Create vault root directory at {}", secondLevel);
         final TransferStatus status = (new TransferStatus()).withRegion(region);
 
         directory.mkdir(dataDir, status);

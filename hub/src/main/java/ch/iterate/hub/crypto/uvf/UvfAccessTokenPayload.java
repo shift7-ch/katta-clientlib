@@ -38,8 +38,8 @@ public class UvfAccessTokenPayload extends JWEPayload {
     @JsonProperty("recoveryKey")
     String recoveryKey;
 
-    public static UvfAccessTokenPayload fromJWE(String jwe) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
+    public static UvfAccessTokenPayload fromJWE(final String jwe) throws JsonProcessingException {
+        final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         return mapper.readValue(jwe, UvfAccessTokenPayload.class);
     }
@@ -53,7 +53,7 @@ public class UvfAccessTokenPayload extends JWEPayload {
             return false;
         }
 
-        UvfAccessTokenPayload that = (UvfAccessTokenPayload) o;
+        final UvfAccessTokenPayload that = (UvfAccessTokenPayload) o;
         return key.equals(that.key) && Objects.equals(recoveryKey, that.recoveryKey);
     }
 

@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package ch.iterate.hub.core;
+package ch.shift7.katta.controller;
 
 import ch.cyberduck.binding.Action;
+import ch.cyberduck.binding.BundleController;
 import ch.cyberduck.binding.Outlet;
 import ch.cyberduck.binding.SheetController;
 import ch.cyberduck.binding.application.NSControl;
@@ -115,7 +116,7 @@ public class DeviceSetupWithAccountKeyController extends SheetController {
         this.deviceNameLabel = deviceNameLabel;
         deviceNameLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.deviceNameLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 
@@ -128,7 +129,7 @@ public class DeviceSetupWithAccountKeyController extends SheetController {
         this.setupCodeLabel = setSetupCodeLabel;
         setSetupCodeLabel.setAttributedStringValue(NSAttributedString.attributedStringWithAttributes(
                 String.format("%s:", this.setupCodeLabel_),
-                TRUNCATE_TAIL_ATTRIBUTES
+                BundleController.TRUNCATE_TAIL_ATTRIBUTES
         ));
     }
 

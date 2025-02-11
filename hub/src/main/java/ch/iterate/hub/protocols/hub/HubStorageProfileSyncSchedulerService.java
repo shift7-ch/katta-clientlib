@@ -62,9 +62,7 @@ public class HubStorageProfileSyncSchedulerService extends OneTimeSchedulerFeatu
             if(p.isInstalled()) {
                 continue;
             }
-            if(log.isInfoEnabled()) {
-                log.info("Register {}", p);
-            }
+            log.info("Register {}", p);
             p.getFile().ifPresent(registry::register);
         }
         return profiles;

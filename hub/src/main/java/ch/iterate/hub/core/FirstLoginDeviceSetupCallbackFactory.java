@@ -25,14 +25,14 @@ public class FirstLoginDeviceSetupCallbackFactory extends Factory<FirstLoginDevi
             final Constructor<? extends FirstLoginDeviceSetupCallback> constructor
                     = ConstructorUtils.getMatchingAccessibleConstructor(clazz);
             if(null == constructor) {
-                log.warn(String.format("No default controller in %s", constructor.getClass()));
+                log.warn("No default controller in {}", constructor.getClass());
                 // Call default constructor for disabled implementations
                 return clazz.getDeclaredConstructor().newInstance();
             }
             return constructor.newInstance();
         }
         catch(InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-            log.error(String.format("Failure loading callback class %s. %s", clazz, e.getMessage()));
+            log.error("Failure loading callback class {}. {}", clazz, e.getMessage());
             return FirstLoginDeviceSetupCallback.disabled;
         }
     }

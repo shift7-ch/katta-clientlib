@@ -4,10 +4,6 @@
 
 package ch.iterate.hub.core;
 
-import ch.cyberduck.test.IntegrationTest;
-
-import org.junit.experimental.categories.Category;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.TestInstance;
@@ -16,38 +12,31 @@ import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.stream.Stream;
 
-import ch.iterate.hub.testsetup.HubTestUtilities;
-import ch.iterate.hub.testsetup.docker_setup.UnattendedLocalKeycloakDev;
+import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
 
-import static ch.iterate.hub.testsetup.HubTestSetupConfigs.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 /**
  * Test synchronization of profiles, adding profiles and adding vaults.
  * Same local context (profiles, hub host collection) shared across storage profile and tests.
  */
-// TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 test01 needs to be run only once, actually
-public class HubSynchronizeTest {
+class HubSynchronizeTest {
+
     @Nested
-    @ExtendWith({ch.iterate.hub.testsetup.docker_setup.UnattendedLocalOnly.class})
+    @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
     @TestInstance(PER_CLASS)
-    public class UnattendedLocalOnly extends AbstractHubSynchronizeTest {
-        private Stream<Arguments> arguments() throws Exception {
+    public class UnattendedMinio extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
             return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
         }
     }
 
     @Nested
-    @ExtendWith({UnattendedLocalKeycloakDev.class})
+    @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalKeycloakDev.class})
     @TestInstance(PER_CLASS)
     @Disabled("TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 implemented unattended keycloak dev with aws in ci, dedicated keycloak?")
     public class UnattendedLocalKeycloakDevOnlyStatic extends AbstractHubSynchronizeTest {
-        @BeforeAll
-        public void setup() {
-            HubTestUtilities.preferences();
-        }
-
-        private Stream<Arguments> arguments() throws Exception {
+        private Stream<Arguments> arguments() {
             return Stream.of();
         }
     }
@@ -56,13 +45,8 @@ public class HubSynchronizeTest {
     @Nested
     @TestInstance(PER_CLASS)
     @Disabled("run standalone against already running hub")
-    public class AttendedLocalOnly extends AbstractHubSynchronizeTest {
-        @BeforeAll
-        public void setup() {
-            HubTestUtilities.preferences();
-        }
-
-        private Stream<Arguments> arguments() throws Exception {
+    public class AttendedMinio extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
             return Stream.of(minioStaticAttendedLocalOnly, minioSTSAttendedLocalOnly);
         }
     }
@@ -71,17 +55,12 @@ public class HubSynchronizeTest {
     @TestInstance(PER_CLASS)
     @Disabled("run standalone against already running hub")
     public class AttendedKeycloakTesting extends AbstractHubSynchronizeTest {
-        @BeforeAll
-        public void setup() {
-            HubTestUtilities.preferences();
-        }
-
-        private Stream<Arguments> arguments() throws Exception {
+        private Stream<Arguments> arguments() {
             return Stream.of(
-                    minioStaticAttendedLocalKeycloadkDev
-                    , minioSTSAttendedLocalKeycloadkDev
-                    , awsSTSAttendedLocalKeycloadkDev
-                    , awsStaticAttendedLocalKeycloadkDev
+                    minioStaticAttendedLocalKeycloadkDev,
+                    minioSTSAttendedLocalKeycloadkDev,
+                    awsSTSAttendedLocalKeycloadkDev,
+                    awsStaticAttendedLocalKeycloadkDev
             );
         }
     }
