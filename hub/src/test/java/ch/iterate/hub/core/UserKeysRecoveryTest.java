@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ */
+
 package ch.iterate.hub.core;
 
 import ch.cyberduck.core.AlphanumericRandomStringService;
