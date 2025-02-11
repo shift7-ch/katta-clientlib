@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ */
+
 package ch.iterate.hub.workflows;
 
 import org.junit.jupiter.api.Test;

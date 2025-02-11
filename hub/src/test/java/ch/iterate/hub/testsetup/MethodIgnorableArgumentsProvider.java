@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 iterate GmbH. All rights reserved.
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
 package ch.iterate.hub.testsetup;

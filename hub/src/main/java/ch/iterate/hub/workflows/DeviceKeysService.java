@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 iterate GmbH. All rights reserved.
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
 package ch.iterate.hub.workflows;
@@ -8,6 +8,7 @@ import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
 import ch.cyberduck.core.nio.LocalProtocol;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cryptomator.cryptolib.common.ECKeyPair;
