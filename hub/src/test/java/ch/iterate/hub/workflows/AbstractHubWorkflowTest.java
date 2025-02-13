@@ -65,7 +65,8 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             // upload template (STS: create bucket first, static: existing bucket)
             // TODO test with multiple wot levels?
 
-            new CreateVaultService(hubSession).createVault(storageProfileWrapper,
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled);
+            new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper,
                     new CreateVaultService.CreateVaultModel(vaultId,
                             "vault", null,
                             config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName,
