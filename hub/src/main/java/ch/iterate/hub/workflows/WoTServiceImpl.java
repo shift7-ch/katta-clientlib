@@ -57,8 +57,7 @@ public class WoTServiceImpl implements WoTService {
 
     @Override
     public TrustedUserDto sign(final UserKeys userKeys, final UserDto user) throws ApiException, ParseException, JOSEException, AccessException, SecurityFailure {
-        final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(),
-                usersApi.apiUsersMeGet(true).getId(), user);
+        final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(), user);
         usersApi.apiUsersTrustedUserIdPut(user.getId(), signature);
         return usersApi.apiUsersTrustedUserIdGet(user.getId());
     }
