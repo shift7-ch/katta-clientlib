@@ -18,8 +18,6 @@ import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
-import ch.iterate.hub.workflows.CachingUserKeysService;
-import ch.iterate.hub.workflows.CachingWoTService;
 import ch.iterate.hub.workflows.GrantAccessServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
@@ -41,9 +39,9 @@ public class HubGrantAccessSchedulerService extends OneTimeSchedulerFeature<Host
         log.info("Scheduler for {}", session.getHost());
         try {
             final GrantAccessServiceImpl service = new GrantAccessServiceImpl(new VaultResourceApi(session.getClient()), new UsersResourceApi(session.getClient()),
-                    new CachingUserKeysService(new UserKeysServiceImpl(new UsersResourceApi(session.getClient()), new DeviceResourceApi(session.getClient()))),
+                    new UserKeysServiceImpl(new UsersResourceApi(session.getClient()), new DeviceResourceApi(session.getClient())),
                     new VaultServiceImpl(new VaultResourceApi(session.getClient())),
-                    new CachingWoTService(new WoTServiceImpl(new UsersResourceApi(session.getClient()))));
+                    new WoTServiceImpl(new UsersResourceApi(session.getClient())));
             service.grantAccessToUsersRequiringAccessGrant(session.getHost(), FirstLoginDeviceSetupCallbackFactory.get());
         }
         catch(ApiException e) {
