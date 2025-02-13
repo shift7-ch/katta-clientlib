@@ -7,9 +7,11 @@ package ch.iterate.hub.protocols.hub;
 import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostKeyCallback;
+import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
@@ -61,6 +63,8 @@ public class HubSession extends HttpSession<HubApiClient> {
      */
     public static final String HUB_UUID = "hub.uuid";
 
+    private final HostPasswordStore keychain = PasswordStoreFactory.get();
+
     /**
      * Read storage configurations from API
      */
@@ -68,7 +72,7 @@ public class HubSession extends HttpSession<HubApiClient> {
     /**
      * Read available vaults from API
      */
-    private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this);
+    private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this, keychain);
     /**
      * Periodically grant vault access to users
      */

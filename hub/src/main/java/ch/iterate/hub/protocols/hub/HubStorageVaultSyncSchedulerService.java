@@ -47,14 +47,24 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
 
     private final HubSession session;
     private final AbstractHostCollection bookmarks;
+    private final HostPasswordStore keychain;
 
     public HubStorageVaultSyncSchedulerService(final HubSession session) {
         this(session, BookmarkCollection.defaultCollection());
     }
 
     public HubStorageVaultSyncSchedulerService(final HubSession session, final AbstractHostCollection bookmarks) {
+        this(session, bookmarks, PasswordStoreFactory.get());
+    }
+
+    public HubStorageVaultSyncSchedulerService(final HubSession session, final HostPasswordStore keychain) {
+        this(session, BookmarkCollection.defaultCollection(), keychain);
+    }
+
+    public HubStorageVaultSyncSchedulerService(final HubSession session, final AbstractHostCollection bookmarks, final HostPasswordStore keychain) {
         this.session = session;
         this.bookmarks = bookmarks;
+        this.keychain = keychain;
     }
 
     @Override
@@ -86,7 +96,6 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                         final Host bookmark = toBookmark(session.getHost(), vaultId, vaultMetadata);
                         if(bookmark.getCredentials().isPasswordAuthentication()) {
                             log.warn("Save static access tokens for {} in keychain", vaultDto);
-                            final HostPasswordStore keychain = PasswordStoreFactory.get();
                             keychain.save(bookmark);
                             bookmark.getCredentials().reset();
                         }
