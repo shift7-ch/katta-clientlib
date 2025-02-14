@@ -7,12 +7,15 @@ package ch.iterate.hub.crypto;
 import org.cryptomator.cryptolib.common.ECKeyPair;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 
+import javax.security.auth.Destroyable;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
+import java.util.Objects;
 
+import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
@@ -24,7 +27,7 @@ import static ch.iterate.hub.crypto.UserKeyPayload.createFromPayload;
  * Represents Cryptomator Hub <a href="https://docs.cryptomator.org/en/latest/security/hub/#user-key-pair>User Keys</a>.
  * Counterpart of <a href="https://github.com/cryptomator/hub/blob/develop/frontend/src/common/crypto.ts"><code>UserKeys</code></a>.
  */
-public class UserKeys {
+public class UserKeys implements Destroyable {
 
     private final ECKeyPair ecdhKeyPair;
     private final ECKeyPair ecdsaKeyPair;
@@ -43,6 +46,34 @@ public class UserKeys {
     }
 
     @Override
+    public void destroy() {
+        ecdhKeyPair.destroy();
+        ecdsaKeyPair.destroy();
+    }
+
+    @Override
+    public boolean isDestroyed() {
+        return ecdhKeyPair.isDestroyed() || ecdsaKeyPair.isDestroyed();
+    }
+
+    @Override
+    public final boolean equals(final Object o) {
+        if(!(o instanceof UserKeys)) {
+            return false;
+        }
+
+        UserKeys userKeys = (UserKeys) o;
+        return Objects.equals(ecdhKeyPair, userKeys.ecdhKeyPair) && Objects.equals(ecdsaKeyPair, userKeys.ecdsaKeyPair);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(ecdhKeyPair);
+        result = 31 * result + Objects.hashCode(ecdsaKeyPair);
+        return result;
+    }
+
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("UserKeys{");
         sb.append("ecdhKeyPair=").append(ecdhKeyPair);
@@ -53,6 +84,10 @@ public class UserKeys {
 
     public static UserKeys create() {
         return new UserKeys(P384KeyPair.generate(), P384KeyPair.generate());
+    }
+
+    public static boolean validate(final UserDto me) {
+        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 
     private UserKeyPayload prepareForEncryption() {
