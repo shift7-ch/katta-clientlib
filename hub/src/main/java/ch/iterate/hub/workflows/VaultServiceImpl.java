@@ -52,11 +52,11 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys privateUserKey) throws ApiException, SecurityFailure {
+    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure {
         // Get the user-specific vault key with private user key
         final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vaultId, false);
         try {
-            return privateUserKey.decryptAccessToken(userSpecificVaultJWE);
+            return userKeys.decryptAccessToken(userSpecificVaultJWE);
         }
         catch(ParseException | JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);
