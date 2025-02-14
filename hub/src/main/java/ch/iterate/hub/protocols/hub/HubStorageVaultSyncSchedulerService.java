@@ -28,11 +28,10 @@ import java.util.UUID;
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.VaultDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
+import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -70,10 +69,9 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
     @Override
     public List<VaultDto> operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session);
-        final FirstLoginDeviceSetupCallback prompt = FirstLoginDeviceSetupCallbackFactory.get();
-        log.info("Bookmark sync for {}", session.getHost());
         try {
-            final UserKeys userKeys = new UserKeysServiceImpl(session).getUserKeys(session.getHost(), prompt);
+            final UserKeys userKeys = new UserKeysServiceImpl(session).getUserKeys(session.getHost(), session.getMe(),
+                    new DeviceKeysServiceImpl(keychain).getDeviceKeys(session.getHost()));
             final List<VaultDto> vaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null);
             for(final VaultDto vaultDto : vaults) {
                 try {
@@ -107,6 +105,7 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                     log.info("Access not granted yet, ignoring vault {} ({}) for hub {}", vaultDto.getName(), vaultDto.getId(), session.getHost(), e);
                 }
             }
+            userKeys.destroy();
             return vaults;
         }
         catch(ApiException e) {

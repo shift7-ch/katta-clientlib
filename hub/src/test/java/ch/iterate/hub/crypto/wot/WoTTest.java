@@ -8,7 +8,6 @@ import ch.cyberduck.core.Host;
 
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -21,10 +20,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
-import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.TrustedUserDto;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.workflows.UserKeysService;
@@ -39,6 +36,10 @@ import com.nimbusds.jwt.SignedJWT;
 import static ch.iterate.hub.crypto.KeyHelper.decodePublicKey;
 import static ch.iterate.hub.crypto.KeyHelper.encodePublicKey;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class WoTTest {
 
@@ -145,11 +146,9 @@ class WoTTest {
                 .ecdhPublicKey(encodePublicKey(oscarEcdhKeys.getPublic()))
                 .ecdsaPublicKey(encodePublicKey(oscarEcdsaKeys.getPublic()));
 
-        final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final UserKeysService userKeysServiceMock = Mockito.mock(UserKeysService.class);
-        final Host hub = Mockito.mock(Host.class);
-        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
-        Mockito.when(userKeysServiceMock.getUserKeys(hub, FirstLoginDeviceSetupCallback.disabled)).thenReturn(aliceKeys);
+        final UserKeysService userKeysServiceMock = mock(UserKeysService.class);
+        final Host hub = mock(Host.class);
+        when(userKeysServiceMock.getUserKeys(eq(hub), eq(alice), any())).thenReturn(aliceKeys);
 
         final String signature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
@@ -164,7 +163,7 @@ class WoTTest {
     }
 
     @Test
-    public void verifyTrusts() throws ParseException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException, SecurityFailure {
+    void verifyTrusts() throws ParseException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
         final int len = 5;
 

@@ -55,6 +55,7 @@ import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestConfig;
 import ch.iterate.hub.testsetup.MethodIgnorableSource;
 import ch.iterate.hub.workflows.CreateVaultService;
+import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -228,7 +229,8 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.randomUUID();
-            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled);
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
             new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper, new CreateVaultService.CreateVaultModel(
                     vaultId, "vault", null,
                     config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName, config.vault.region, true, 3));

@@ -22,11 +22,11 @@ class CachingUserKeysServiceTest {
     void testGetUserKeys() throws AccessException, SecurityFailure, ApiException {
         final UserKeysService proxyMock = Mockito.mock(UserKeysService.class);
         final UserKeys userKeys = UserKeys.create();
-        Mockito.when(proxyMock.getUserKeys(any(), any())).thenReturn(userKeys);
+        Mockito.when(proxyMock.getUserKeys(any(), any(), any())).thenReturn(userKeys);
         final CachingUserKeysService service = new CachingUserKeysService(proxyMock);
-        assertEquals(userKeys, service.getUserKeys(null, null));
-        Mockito.verify(proxyMock, times(1)).getUserKeys(any(), any());
-        assertEquals(userKeys, service.getUserKeys(null, null));
-        Mockito.verify(proxyMock, times(1)).getUserKeys(any(), any());
+        assertEquals(userKeys, service.getUserKeys(null, null, null));
+        Mockito.verify(proxyMock, times(1)).getUserKeys(any(), any(), any());
+        assertEquals(userKeys, service.getUserKeys(null, null, null));
+        Mockito.verify(proxyMock, times(1)).getUserKeys(any(), any(), any());
     }
 }

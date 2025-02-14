@@ -5,10 +5,10 @@
 package ch.iterate.hub.core.util;
 
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.exception.ConnectionCanceledException;
 
 import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
+import ch.iterate.hub.workflows.exceptions.AccessException;
 
 public class MockableFirstLoginDeviceSetupCallback implements FirstLoginDeviceSetupCallback {
     public static void setProxy(final FirstLoginDeviceSetupCallback proxy) {
@@ -18,12 +18,12 @@ public class MockableFirstLoginDeviceSetupCallback implements FirstLoginDeviceSe
     private static FirstLoginDeviceSetupCallback proxy = null;
 
     @Override
-    public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ConnectionCanceledException {
+    public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
         return proxy.displayAccountKeyAndAskDeviceName(bookmark, accountKeyAndDeviceName);
     }
 
     @Override
-    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws ConnectionCanceledException {
+    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws AccessException {
         return proxy.askForAccountKeyAndDeviceName(bookmark, initialDeviceName);
     }
 
