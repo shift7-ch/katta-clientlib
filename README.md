@@ -119,3 +119,103 @@ sequenceDiagram
     deactivate session
     deactivate user
 ```
+
+## Flow to authenticate and access vaults
+
+```mermaid
+sequenceDiagram
+    actor User
+
+    participant session as Session
+    participant katta as Katta API Server
+
+    Note right of session: client_id=cryptomator
+
+    activate session
+    User->>session: Open Connection
+    activate katta
+    session->>katta: GET /api/config
+    Note over session,katta: Retrieve Public Discovery Configuration
+    katta->>session: application/json
+
+    participant keycloak as Keycloak Server
+    activate keycloak
+    session->>+keycloak: POST /realms/cryptomator/protocol/openid-connect/token
+    Note over session,keycloak: OpenID Connect Token Exchange
+    keycloak->>-session: OIDC Tokens
+
+    participant keychain as Password Store
+    activate keychain
+    session->>keychain: Save OIDC Tokens
+
+    session->>katta: GET /api/users/me?withDevices=true
+    Note over session,katta: Retrieve public keys and registered devices
+    katta->>session: application/json
+
+    session->>katta: PUT /api/users/me
+    Note over session,katta: Upload User Keys
+    katta->>session: 201 Created application/json
+
+    session->>katta: PUT /api/devices/8ED7FAA95D4F912FFC80585D776261C8D32205FB03B59BF0311193DD5E482D90
+    Note over session,katta: Register Device
+    katta->>session: 201 Created application/json
+
+    loop Storage Profile Sync
+        session-->katta: GET /api/storageprofile
+        Note over session,katta: Retrieve storage configurations
+        katta->>session: application/json
+    end
+    loop Storage Vault Sync
+        session-->katta: GET /api/vaults/accessible
+        katta->>session: application/json
+    end
+    deactivate katta
+
+    participant vault as S3AutoLoadVaultSession
+    activate vault
+    vault->>keychain: Lookup OIDC tokens
+    keychain-->>vault: Return OIDC tokens
+    deactivate keychain
+    activate keycloak
+
+    opt: Expired OIDC Tokens
+        vault-->katta: Refresh OIDC Tokens
+        keycloak->>-vault: OIDC Tokens
+    end
+
+    opt: Exchange OIDC token to scoped token using OAuth 2.0 Token Exchange
+        vault->>keycloak: Exchange OIDC Access Token
+        keycloak->>vault: Return Scoped Access Token
+    end
+    deactivate keycloak
+
+    opt: AssumeRoleWithWebIdentity
+        participant sts as STS API Server
+        vault->>+sts: Retrieve Temporary Tokens
+        Note over vault,sts: Assume role with OIDC Id token
+        sts->>-vault: STS Tokens
+        opt: AssumeRole
+            vault->>+sts: Retrieve Temporary Tokens
+            Note over vault,sts: Assume role with previously obtained temporary access token
+            sts->>-vault: STS Tokens
+        end
+    end
+
+    participant s3 as S3 API Server
+
+    vault->>+s3: GET /bucket
+    Note over vault,s3: Access vault with AWS4-HMAC-SHA256 authorization
+    s3->>-vault: ListBucketResult
+
+    vault->>+katta: GET /api/vaults/c62d1ffe-7bab-4ec9-a36a-327f9b7b8f9e/access-token
+    Note over vault,katta: Retrieve vault access token
+    katta->>-vault: JWE
+    vault->>+katta: GET /api/vaults/c62d1ffe-7bab-4ec9-a36a-327f9b7b8f9e
+    Note over vault,katta: Retrieve vault UVF metadata
+    katta->>-vault: UVF Payload
+    vault->>vault: Unlock Vault
+
+    vault->>+User: Display Vault
+    deactivate vault
+    deactivate session
+```
