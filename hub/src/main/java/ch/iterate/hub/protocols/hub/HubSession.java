@@ -183,11 +183,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             return (T) new HubStorageProfileListService(this).new StorageProfileAttributesFinder();
         }
         if(type == Scheduler.class) {
-            return (T) new DelegatingSchedulerFeature(
-                    profiles,
-                    vaults,
-                    access
-            );
+            return (T) scheduler;
         }
         return super._getFeature(type);
     }
