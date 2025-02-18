@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol;
+import ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol;
 import com.dd.plist.NSDictionary;
 
 import static ch.cyberduck.core.Profile.*;
@@ -47,13 +47,13 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                     properties.add(String.format("3.storage.class=%s", dto.getStorageClass().name()));
                 }
                 if(dto.getStsEndpoint() != null) {
-                    properties.add(String.format("%s=%s", S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE, true));
-                    properties.add(String.format("%s=%s", S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN, dto.getStsRoleArn()));
+                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, true));
+                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN, dto.getStsRoleArn()));
                     if(dto.getStsRoleArn2() != null) {
-                        properties.add(String.format("%s=%s", S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2, dto.getStsRoleArn2()));
+                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2, dto.getStsRoleArn2()));
                     }
                     if(dto.getStsDurationSeconds() != null) {
-                        properties.add(String.format("%s=%s", S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
+                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
                     }
                 }
                 log.debug("Return properties {} from {}", properties, dto);
@@ -72,7 +72,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 switch(dto.getProtocol()) {
                     case S3:
                     case S3_STS:
-                        return new S3AutoLoadVaultProtocol().getIdentifier();
+                        return new S3AssumeRoleProtocol().getIdentifier();
                 }
                 break;
             case VENDOR_KEY:

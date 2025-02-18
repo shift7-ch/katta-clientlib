@@ -70,8 +70,8 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      * @param previous Input tokens retrieved to exchange at the token endpoint
      * @return New tokens
      *
-     * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE_AUDIENCE
-     * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES
+     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_AUDIENCE
+     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info("Exchange tokens {} for {}", previous, bookmark);
@@ -83,13 +83,13 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         );
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, bookmark.getProtocol().getOAuthClientId());
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        if(!StringUtils.isEmpty(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE))) {
-            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE, preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE));
+        if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE))) {
+            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE));
         }
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN, previous.getAccessToken());
         final ArrayList<String> scopes = new ArrayList<>(bookmark.getProtocol().getOAuthScopes());
-        if(!StringUtils.isEmpty(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
-            scopes.addAll(Arrays.asList(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
+        if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
+            scopes.addAll(Arrays.asList(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
         }
         request.setScopes(scopes);
         log.debug("Token exchange request {} for {}", request, bookmark);

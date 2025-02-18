@@ -88,13 +88,13 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
         log.debug("Chained assume role for {}", bookmark);
         log.debug("Assume role with temporary credentials {}", tokens);
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        if(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
-            request.setDurationSeconds(preferences.getInteger(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_DURATIONSECONDS));
+        if(preferences.getInteger(S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS) != -1) {
+            request.setDurationSeconds(preferences.getInteger(S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS));
         }
-        if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY))) {
-            request.setPolicy(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_POLICY));
+        if(StringUtils.isNotBlank(preferences.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_POLICY))) {
+            request.setPolicy(preferences.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_POLICY));
         }
-        request.setRoleArn(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2));
+        request.setRoleArn(preferences.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2));
         final String sub;
         final String identityToken = this.getWebIdentityToken(oauth);
         try {
@@ -104,8 +104,8 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
             log.warn("Failure {} decoding JWT {}", e, identityToken);
             throw new LoginFailureException("Invalid JWT or JSON format in authentication token", e);
         }
-        if(StringUtils.isNotBlank(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLESESSIONNAME))) {
-            request.setRoleSessionName(preferences.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLESESSIONNAME));
+        if(StringUtils.isNotBlank(preferences.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLESESSIONNAME))) {
+            request.setRoleSessionName(preferences.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLESESSIONNAME));
         }
         else {
             if(StringUtils.isNotBlank(sub)) {
@@ -119,7 +119,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
         if(StringUtils.isNotBlank(preferences.getProperty("s3.assumerole.tag"))) {
             request.setTags(Collections.singletonList(new Tag()
                     .withKey(preferences.getProperty("s3.assumerole.tag"))
-                    .withValue(preferences.getProperty(S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
+                    .withValue(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
         }
         try {
             log.debug("Use request {}", request);

@@ -47,7 +47,7 @@ import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubProtocol;
 import ch.iterate.hub.protocols.hub.HubSession;
-import ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol;
+import ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol;
 
 @HubIntegrationTest
 public abstract class AbstractHubTest extends VaultTest {
@@ -171,7 +171,7 @@ public abstract class AbstractHubTest extends VaultTest {
         factory.register(
                 new HubProtocol(),
                 new S3Protocol(),
-                new S3AutoLoadVaultProtocol("PasswordGrant")
+                new S3AssumeRoleProtocol("PasswordGrant")
         );
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));

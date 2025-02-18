@@ -32,7 +32,7 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 
-import static ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE;
+import static ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE;
 
 public class S3AssumeRoleSession extends S3Session {
     private static final Logger log = LogManager.getLogger(S3AssumeRoleSession.class);
@@ -46,8 +46,8 @@ public class S3AssumeRoleSession extends S3Session {
      * exchaing the retrieved OIDC token with scoped OAuth tokens to obtain temporary credentials from security
      * token server (STS)
      *
-     * @see S3AutoLoadVaultProtocol#OAUTH_TOKENEXCHANGE
-     * @see S3AutoLoadVaultProtocol#S3_ASSUMEROLE_ROLEARN_2
+     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE
+     * @see S3AssumeRoleProtocol#S3_ASSUMEROLE_ROLEARN_2
      */
     @Override
     protected S3CredentialsStrategy configureCredentialsStrategy(final ProxyFinder proxy, final HttpClientBuilder configuration,
@@ -74,7 +74,7 @@ public class S3AssumeRoleSession extends S3Session {
                             new ThreadLocalHostnameDelegatingTrustManager(trust, host.getProtocol().getSTSEndpoint()), key))
                     .build();
             final STSAssumeRoleCredentialsRequestInterceptor sts;
-            if(StringUtils.isNotBlank(host.getProperty(S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
+            if(StringUtils.isNotBlank(host.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
                 sts = new STSChainedAssumeRoleRequestInterceptor(oauth, this, tokenService, prompt) {
                     @Override
                     protected String getWebIdentityToken(final OAuthTokens oauth) {

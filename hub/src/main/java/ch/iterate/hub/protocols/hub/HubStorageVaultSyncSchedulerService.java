@@ -38,8 +38,8 @@ import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
 import static ch.iterate.hub.protocols.hub.HubSession.HUB_UUID;
-import static ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES;
-import static ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol.S3_ASSUMEROLE_ROLEARN;
+import static ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES;
+import static ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN;
 
 public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature<List<VaultDto>> {
     private static final Logger log = LogManager.getLogger(HubStorageVaultSyncSchedulerService.class);
