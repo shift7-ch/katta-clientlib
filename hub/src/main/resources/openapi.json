@@ -2808,6 +2808,7 @@
       },
       "VaultDto": {
         "required": [
+          "id",
           "name"
         ],
         "type": "object",
