@@ -43,7 +43,7 @@ public class ProxyDeserializer<T> implements Deserializer<T> {
     }
 
     @Override
-    public boolean booleanForKey(final String key) {
+    public Boolean booleanForKey(final String key) {
         return proxy.booleanForKey(key);
     }
 
@@ -79,7 +79,7 @@ public class ProxyDeserializer<T> implements Deserializer<T> {
             }
 
             @Override
-            public boolean booleanForKey(final String key) {
+            public Boolean booleanForKey(final String key) {
                 log.warn("Unknown key {}", key);
                 return false;
             }

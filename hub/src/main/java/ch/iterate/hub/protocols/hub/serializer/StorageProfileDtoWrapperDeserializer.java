@@ -92,7 +92,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
     }
 
     @Override
-    public boolean booleanForKey(final String key) {
+    public Boolean booleanForKey(final String key) {
         switch(key) {
             case OAUTH_CONFIGURABLE_KEY:
                 switch(dto.getProtocol()) {
