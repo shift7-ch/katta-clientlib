@@ -4,7 +4,6 @@
 
 package ch.iterate.hub.protocols.hub;
 
-
 import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.ListService;
@@ -16,7 +15,6 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.transfer.TransferStatus;
-import ch.cyberduck.core.vault.VaultCredentials;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,22 +22,23 @@ import org.cryptomator.cryptolib.api.UVFMasterkey;
 
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
+import java.util.UUID;
 
 /**
  * Cryptomator vault implementation for Cipherduck (without masterkey file).
  */
 public class HubCryptoVault extends UVFVault {
     private static final Logger log = LogManager.getLogger(HubCryptoVault.class);
+
     private final String decryptedPayload;
+    private final Session<?> storage;
+    private final UUID vaultId;
 
-
-    public HubCryptoVault(final Path home) {
-        this(home, null, null, null); // TODO cleanup
-    }
-
-    public HubCryptoVault(final Path home, final String decryptedPayload, final String config, final byte[] pepper) {
-        super(home, decryptedPayload, config, pepper);
+    public HubCryptoVault(final Session<?> storage, final Path home, final UUID vaultId, final String decryptedPayload) {
+        super(home, decryptedPayload, null, null);
         this.decryptedPayload = decryptedPayload;
+        this.storage = storage;
+        this.vaultId = vaultId;
     }
 
     public Path encrypt(Session<?> session, Path file, byte[] directoryId, boolean metadata) throws BackgroundException {
@@ -47,6 +46,28 @@ public class HubCryptoVault extends UVFVault {
         return super.encrypt(session, file, directoryId, metadata);
     }
 
+    @Override
+    public <T> T getFeature(final Session<?> ignore, final Class<T> type, final T delegate) {
+        log.debug("Delegate to {} for feature {}", storage, type);
+        // Ignore feature implementation but delegate to storage backend
+        return super.getFeature(storage, type, storage._getFeature(type));
+    }
+
+    @Override
+    public synchronized void close() {
+        try {
+            log.debug("Close connection {}", storage);
+            storage.close();
+        }
+        catch(BackgroundException e) {
+            //
+        }
+        super.close();
+    }
+
+    public UUID getVaultId() {
+        return vaultId;
+    }
 
     @Override
     public Path getHome() {
@@ -58,12 +79,11 @@ public class HubCryptoVault extends UVFVault {
         return home;
     }
 
-
     /**
      * Upload vault template into existing bucket (permanent credentials)
      */
     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko check method signature?
-    public synchronized Path create(final Session<?> session, final String region, final VaultCredentials credentials, final int version, final String metadata, final String hashedRootDirId) throws BackgroundException {
+    public synchronized Path create(final Session<?> session, final String region, final String metadata, final String hashedRootDirId) throws BackgroundException {
         final Path home = new Path(session.getHost().getDefaultPath(), EnumSet.of(AbstractPath.Type.directory));
         log.debug("Uploading vault template {} in {} ", home, session.getHost());
 
@@ -92,8 +112,15 @@ public class HubCryptoVault extends UVFVault {
         return home;
     }
 
-    public Path getMasterkey() {
-        // No master key in vault
-        return null;
+    @Override
+    public HubCryptoVault load(final Session<?> ignore, final PasswordCallback prompt) throws BackgroundException {
+        log.debug("Connect to {}", storage);
+        storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
+        storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
+        // no-interactive prompt
+        final Credentials credentials = prompt.prompt(storage.getHost(), "", "", new LoginOptions());
+        super.load(storage, prompt);
+        credentials.reset();
+        return this;
     }
 }

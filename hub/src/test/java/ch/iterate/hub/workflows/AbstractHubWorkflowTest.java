@@ -4,10 +4,6 @@
 
 package ch.iterate.hub.workflows;
 
-import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.features.Home;
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,14 +26,12 @@ import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.SetupCodeJWE;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.protocols.hub.HubSession;
-import ch.iterate.hub.protocols.hub.HubStorageProfileListService;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestConfig;
 import ch.iterate.hub.testsetup.MethodIgnorableSource;
 
 import static ch.iterate.hub.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubWorkflowTest.class.getName());
@@ -56,8 +50,6 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
-            assertNotNull(new HubStorageProfileListService(hubSession).list(Home.ROOT, new DisabledListProgressListener()).find(p -> StringUtils.equals(p.attributes().getFileId(),
-                    config.vault.storageProfileId.toLowerCase())));
 
             final UUID vaultId = UUID.randomUUID();
             final boolean automaticAccessGrant = true;

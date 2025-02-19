@@ -4,27 +4,14 @@
 
 package ch.iterate.hub.testsetup;
 
-import ch.cyberduck.core.BookmarkCollection;
-import ch.cyberduck.core.Credentials;
-import ch.cyberduck.core.DisabledCancelCallback;
-import ch.cyberduck.core.DisabledHostKeyCallback;
-import ch.cyberduck.core.DisabledLoginCallback;
-import ch.cyberduck.core.DisabledProgressListener;
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.HostParser;
-import ch.cyberduck.core.Local;
-import ch.cyberduck.core.LoginConnectionService;
-import ch.cyberduck.core.PasswordStoreFactory;
-import ch.cyberduck.core.ProtocolFactory;
-import ch.cyberduck.core.SessionFactory;
-import ch.cyberduck.core.UnsecureHostPasswordStore;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.profiles.LocalProfilesFinder;
-import ch.cyberduck.core.s3.S3Protocol;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DefaultX509TrustManager;
+import ch.cyberduck.core.vault.VaultRegistryFactory;
 import ch.cyberduck.test.VaultTest;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -40,6 +27,7 @@ import java.time.format.FormatStyle;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.core.util.MockableDeviceSetupCallback;
@@ -47,6 +35,7 @@ import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubProtocol;
 import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.protocols.hub.HubVaultRegistry;
 import ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol;
 
 @HubIntegrationTest
@@ -152,9 +141,11 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.devicesetupcallback.class", MockableDeviceSetupCallback.class.getName());
+        preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
         preferences.setProperty("hub.protocol.scheduler.period", 30);
+        preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
 
         preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
@@ -170,14 +161,14 @@ public abstract class AbstractHubTest extends VaultTest {
         // Register parent protocol definitions
         factory.register(
                 new HubProtocol(),
-                new S3Protocol(),
                 new S3AssumeRoleProtocol("PasswordGrant")
         );
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
-        assertNotNull(ProtocolFactory.get().forName("hub"));
-        assertNotNull(ProtocolFactory.get().forName("s3"));
-        assertNotNull(ProtocolFactory.get().forName("katta-s3"));
+        assertNotNull(factory.forName("hub"));
+        assertNotNull(factory.forName("s3"));
+        assertTrue(factory.forName("s3").isEnabled());
+        assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
         final DeviceSetupCallback proxy = new DeviceSetupCallback() {
             @Override
@@ -199,7 +190,8 @@ public abstract class AbstractHubTest extends VaultTest {
         MockableDeviceSetupCallback.setProxy(proxy);
 
         final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
-        final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager());
+        final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
+                .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
         final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, new DisabledCancelCallback());

@@ -4,6 +4,8 @@
 
 package ch.iterate.hub.workflows;
 
+import ch.iterate.hub.client.api.StorageProfileResourceApi;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -30,7 +32,7 @@ class VaultServiceImplTest {
     @Test
     void testGetVaultOwnerAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
@@ -47,7 +49,7 @@ class VaultServiceImplTest {
     @Test
     void testGetVaultAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
@@ -64,7 +66,7 @@ class VaultServiceImplTest {
     @Test
     void testGetVaultWrongAccessTokenJWE() throws JOSEException, JsonProcessingException, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
@@ -80,7 +82,7 @@ class VaultServiceImplTest {
     @Test
     void testGetVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException, AccessException, SecurityFailure {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
@@ -105,7 +107,7 @@ class VaultServiceImplTest {
     @Test
     void testGetWrongVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock);
+        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();

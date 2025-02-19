@@ -4,13 +4,15 @@
 
 package ch.iterate.hub.workflows;
 
-import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.DisabledCancelCallback;
 import ch.cyberduck.core.DisabledHostKeyCallback;
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.HostUrlProvider;
+import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.proxy.DisabledProxyFinder;
@@ -28,6 +30,7 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.api.StorageResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
@@ -41,7 +44,6 @@ import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubSession;
-import ch.iterate.hub.protocols.hub.HubStorageVaultSyncSchedulerService;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -103,7 +105,8 @@ public class CreateVaultService {
                     .rootDirHash(hashedRootDirId)
                     .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
-            final Host bookmark = HubStorageVaultSyncSchedulerService.toBookmark(hubSession.getHost(), vaultDto.getId(), metadataPayload.storage());
+            final Host bookmark = new VaultServiceImpl(hubSession).getStorageBackend(ProtocolFactory.get(),
+                    new ConfigResourceApi(hubSession.getClient()).apiConfigGet(), vaultDto.getId(), metadataPayload.storage());
             if(storageProfileWrapper.getStsEndpoint() == null) {
                 // permanent: template upload into existing bucket from client (not backend)
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko
@@ -112,14 +115,16 @@ public class CreateVaultService {
                 session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
                 // upload vault template
-                new HubCryptoVault(new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(AbstractPath.Type.directory, AbstractPath.Type.vault)))
-                        .create(session, metadataPayload.storage().getRegion(), null, 42, storageDto.getVaultUvf(), hashedRootDirId);
+                new HubCryptoVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)), vaultDto.getId(),
+                        storageDto.getVaultUvf())
+                        .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
                 session.close();
             }
             else {
+                final HostPasswordStore keychain = PasswordStoreFactory.get();
                 // non-permanent: pass STS tokens (restricted by inline policy) to hub backend and have bucket created from there
                 final TemporaryAccessTokens stsTokens = getSTSTokensFromAccessTokenWithCreateBucketInlinePoliy(
-                        bookmark.getCredentials().getOauth().getAccessToken(),
+                        keychain.findOAuthTokens(hubSession.getHost()).getAccessToken(),
                         storageProfileWrapper.getStsRoleArnClient(),
                         vaultDto.getId().toString(),
                         storageProfileWrapper.getStsEndpoint(),
