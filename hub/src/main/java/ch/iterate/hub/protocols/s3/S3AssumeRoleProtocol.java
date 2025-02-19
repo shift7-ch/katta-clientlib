@@ -38,7 +38,7 @@ public class S3AssumeRoleProtocol extends S3Protocol {
 
     @Override
     public String getIdentifier() {
-        return "katta-s3";
+        return "s3-assumerole";
     }
 
     @Override
