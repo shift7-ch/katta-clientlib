@@ -53,6 +53,13 @@
     </repositories>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>org.springframework.build</groupId>
+                <artifactId>aws-maven</artifactId>
+                <version>5.0.0.RELEASE</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -297,4 +304,15 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>repo-maven-shift7-release</id>
+            <url>s3://repo-maven-shift7/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>repo-maven-shift7-snapshot</id>
+            <url>s3://repo-maven-shift7/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
