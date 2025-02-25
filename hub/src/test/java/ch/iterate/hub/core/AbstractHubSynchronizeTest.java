@@ -5,33 +5,38 @@
 package ch.iterate.hub.core;
 
 import ch.cyberduck.core.*;
+import ch.cyberduck.core.features.Bulk;
 import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Vault;
+import ch.cyberduck.core.features.Write;
+import ch.cyberduck.core.io.StatusOutputStream;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.DisabledProxyFinder;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DisabledX509TrustManager;
+import ch.cyberduck.core.transfer.Transfer;
+import ch.cyberduck.core.transfer.TransferItem;
+import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
 
-import ch.iterate.hub.client.api.DeviceResourceApi;
-import ch.iterate.hub.client.api.UsersResourceApi;
-import ch.iterate.hub.client.api.VaultResourceApi;
-
-import ch.iterate.hub.crypto.UserKeys;
-import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
-import ch.iterate.hub.workflows.UserKeysService;
-import ch.iterate.hub.workflows.UserKeysServiceImpl;
-import ch.iterate.hub.workflows.VaultServiceImpl;
-
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
+import java.io.ByteArrayInputStream;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+
+import static ch.iterate.hub.testsetup.HubTestUtilities.getAdminApiClient;
+import static org.junit.jupiter.api.Assertions.*;
 
 import ch.iterate.hub.client.ApiClient;
 import ch.iterate.hub.client.ApiException;
@@ -58,11 +63,19 @@ import ch.iterate.hub.workflows.VaultServiceImpl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static ch.iterate.hub.testsetup.HubTestUtilities.getAdminApiClient;
-import static org.junit.jupiter.api.Assertions.*;
-
 public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
+
+    /**
+     * Use to start unattended setup and then run
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    @Disabled
+    public void runForever() throws InterruptedException {
+        Thread.sleep(924982347);
+    }
 
     /**
      * Verify storage profiles are synced from hub bookmark.
@@ -246,12 +259,24 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertFalse(vaultRegistry.isEmpty());
             assertEquals(1, vaultRegistry.size());
 
-            // TODO WiP trying to guide AbstractVault.encrypt() -> CryptoDirectoryV7Provider.toEncrypted(final Session<?> session, final String directoryId, final Path directory) -> do we need to write own CryptoDirectory?
             final Path bucket = new Path(vaultBookmark.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault));
             assertNotSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
             {
                 final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
                 assertTrue(list.isEmpty());
+            }
+            {
+                final Path home = vaultRegistry.find(session, bucket).getHome();
+                Path file = new Path(home, "gugus.txt", EnumSet.of(AbstractPath.Type.file));
+                byte[] content = RandomUtils.nextBytes(234);
+                TransferStatus transferStatus = new TransferStatus().withLength(content.length);
+                transferStatus.setChecksum(session.getFeature(Write.class).checksum(file, transferStatus).compute(new ByteArrayInputStream(content), transferStatus));
+                session.getFeature(Bulk.class).pre(Transfer.Type.upload, Collections.singletonMap(new TransferItem(file), transferStatus), new DisabledConnectionCallback());
+                StatusOutputStream<?> out = session.getFeature(Write.class).write(file, transferStatus, new DisabledConnectionCallback());
+                IOUtils.copyLarge(new ByteArrayInputStream(content), out);
+                out.close();
+                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+                assertFalse(list.isEmpty());
             }
 
             // raw listing encrypted file names

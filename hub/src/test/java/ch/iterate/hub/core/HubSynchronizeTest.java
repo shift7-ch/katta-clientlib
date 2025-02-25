@@ -12,9 +12,9 @@ import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.stream.Stream;
 
-import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
-
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+
+import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
 
 /**
  * Test synchronization of profiles, adding profiles and adding vaults.
@@ -26,6 +26,15 @@ class HubSynchronizeTest {
     @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
     @TestInstance(PER_CLASS)
     public class UnattendedMinio extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
+            return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
+        }
+    }
+
+    @Nested
+    @TestInstance(PER_CLASS)
+    @Disabled("run standalone against already running hub started by runForever test.")
+    public class PUnattendedMinio extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
         }
