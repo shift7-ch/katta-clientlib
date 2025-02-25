@@ -5,8 +5,11 @@
 package ch.iterate.hub.core;
 
 import ch.cyberduck.core.*;
+import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Bulk;
+import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Home;
+import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.io.StatusOutputStream;
@@ -24,12 +27,15 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -67,7 +73,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
 
     /**
-     * Use to start unattended setup and then run
+     * Use to start unattended setup and then run tests with PUnattendedMinio.
      *
      * @throws InterruptedException
      */
@@ -261,29 +267,55 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final Path bucket = new Path(vaultBookmark.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault));
             assertNotSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
+
             {
+                // encrypted file listing
                 final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
                 assertTrue(list.isEmpty());
             }
             {
+                // encrypted file upload
                 final Path home = vaultRegistry.find(session, bucket).getHome();
-                Path file = new Path(home, "gugus.txt", EnumSet.of(AbstractPath.Type.file));
-                byte[] content = RandomUtils.nextBytes(234);
-                TransferStatus transferStatus = new TransferStatus().withLength(content.length);
-                transferStatus.setChecksum(session.getFeature(Write.class).checksum(file, transferStatus).compute(new ByteArrayInputStream(content), transferStatus));
-                session.getFeature(Bulk.class).pre(Transfer.Type.upload, Collections.singletonMap(new TransferItem(file), transferStatus), new DisabledConnectionCallback());
-                StatusOutputStream<?> out = session.getFeature(Write.class).write(file, transferStatus, new DisabledConnectionCallback());
-                IOUtils.copyLarge(new ByteArrayInputStream(content), out);
-                out.close();
+                final Path file = new Path(home, new AlphanumericRandomStringService(25).random(), EnumSet.of(AbstractPath.Type.file));
+                byte[] content = writeRandomFile(session, file, 234);
                 final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
-                assertFalse(list.isEmpty());
-            }
+                assertEquals(1, list.size());
+                assertEquals(file.getName(), list.get(0).getName());
 
-            // raw listing encrypted file names
-            vaultRegistry.close(bucket);
-            assertSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
-            assertTrue(vaultRegistry.isEmpty());
+                byte[] actual = new byte[300];
+                int l = session.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback()).read(actual);
+                assert l == 234;
+                assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
+            }
             {
+                // encrypted directory creation and listing
+                final Path home = vaultRegistry.find(session, bucket).getHome();
+                final Path folder = new Path(home, new AlphanumericRandomStringService(25).random(), EnumSet.of(AbstractPath.Type.directory));
+
+                session.getFeature(Directory.class).mkdir(folder, new TransferStatus());
+                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+                assertEquals(2, list.size());
+
+                {
+                    // encrypted file upload in subfolder
+                    final Path file = new Path(folder, new AlphanumericRandomStringService(25).random(), EnumSet.of(AbstractPath.Type.file));
+                    final byte[] content = writeRandomFile(session, file, 555);
+                    final AttributedList<Path> sublist = session.getFeature(ListService.class).list(folder, new DisabledListProgressListener());
+                    assertEquals(1, sublist.size());
+                    assertEquals(file.getName(), sublist.get(0).getName());
+
+                    byte[] actual = new byte[600];
+                    int l = session.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback()).read(actual);
+                    assert l == 555;
+                    assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
+                }
+            }
+            {
+                // raw listing encrypted file names
+                vaultRegistry.close(bucket);
+                assertSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
+                assertTrue(vaultRegistry.isEmpty());
+
                 final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
                 assertFalse(list.isEmpty());
                 assertEquals(2, list.size());
@@ -294,5 +326,16 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         finally {
             hubSession.close();
         }
+    }
+
+    private static byte @NotNull [] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {
+        final byte[] content = RandomUtils.nextBytes(size);
+        final TransferStatus transferStatus = new TransferStatus().withLength(content.length);
+        transferStatus.setChecksum(session.getFeature(Write.class).checksum(file, transferStatus).compute(new ByteArrayInputStream(content), transferStatus));
+        session.getFeature(Bulk.class).pre(Transfer.Type.upload, Collections.singletonMap(new TransferItem(file), transferStatus), new DisabledConnectionCallback());
+        final StatusOutputStream<?> out = session.getFeature(Write.class).write(file, transferStatus, new DisabledConnectionCallback());
+        IOUtils.copyLarge(new ByteArrayInputStream(content), out);
+        out.close();
+        return content;
     }
 }
