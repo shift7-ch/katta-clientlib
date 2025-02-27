@@ -7,8 +7,10 @@ package ch.iterate.hub.core;
 import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Bulk;
+import ch.cyberduck.core.features.Delete;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Home;
+import ch.cyberduck.core.features.Move;
 import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
@@ -35,6 +37,7 @@ import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -74,8 +77,6 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
     /**
      * Start with unattended setup (e.g. UnattendedMinio) and then run tests with corresponding attended setup (e.g. AttendedMinio) to save startup times at every test execution.
-     *
-     * @throws InterruptedException
      */
     @Test
     @Disabled
@@ -285,9 +286,11 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 assertEquals(file.getName(), list.get(0).getName());
 
                 byte[] actual = new byte[300];
-                int l = session.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback()).read(actual);
-                assert l == 234;
-                assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
+                try (final InputStream inputStream = session.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback())) {
+                    int l = inputStream.read(actual);
+                    assert l == 234;
+                    assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
+                }
             }
             {
                 // encrypted directory creation and listing
@@ -296,7 +299,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
                 session.getFeature(Directory.class).mkdir(folder, new TransferStatus());
                 final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
-                assertEquals(2, list.size());
+                assertEquals(2, list.size()); // a file and a folder
 
                 {
                     // encrypted file upload in subfolder
@@ -307,22 +310,77 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     assertEquals(file.getName(), sublist.get(0).getName());
 
                     byte[] actual = new byte[600];
-                    int l = session.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback()).read(actual);
-                    assert l == 555;
-                    assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
+                    try (final InputStream inputStream = session.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback())) {
+                        int l = inputStream.read(actual);
+                        assert l == 555;
+                        assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
+                    }
+
+                    // move operation to root folder and read again
+                    session.getFeature(Move.class).move(file, new Path(home, file.getName(), EnumSet.of(AbstractPath.Type.file)), new TransferStatus(), new Delete.DisabledCallback(), new DisabledConnectionCallback());
+
+                    final AttributedList<Path> list2 = session.getFeature(ListService.class).list(home, new DisabledListProgressListener());
+                    assertEquals(3, list2.size()); // 1 subfolder and 2 files
+
+                    assertEquals(1, list2.toStream().map(Path::isDirectory).filter(Boolean::booleanValue).count());
+                    assertEquals(2, list2.toStream().map(Path::isFile).filter(Boolean::booleanValue).count());
                 }
             }
             {
                 // raw listing encrypted file names
+                // aka. ciphertext directory structure
+                //  see https://github.com/encryption-alliance/unified-vault-format/blob/develop/file%20name%20encryption/AES-SIV-512-B64URL.md#ciphertext-directory-structure
                 vaultRegistry.close(bucket);
                 assertSame(Vault.DISABLED, vaultRegistry.find(session, bucket));
                 assertTrue(vaultRegistry.isEmpty());
 
-                final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
-                assertFalse(list.isEmpty());
-                assertEquals(2, list.size());
-                assertNotNull(list.find(new SimplePathPredicate(new Path(bucket, "d", EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))));
-                assertNotNull(list.find(new SimplePathPredicate(new Path(bucket, PreferencesFactory.get().getProperty("cryptomator.vault.config.filename"), EnumSet.of(Path.Type.file)))));
+                {
+                    final AttributedList<Path> list = session.getFeature(ListService.class).list(bucket, new DisabledListProgressListener());
+                    assertFalse(list.isEmpty());
+                    assertEquals(2, list.size());
+                    // /<bucket>/d/
+                    assertNotNull(list.find(new SimplePathPredicate(new Path(bucket, "d", EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)))));
+                    // /<bucket>/vault.uvf
+                    assertNotNull(list.find(new SimplePathPredicate(new Path(bucket, PreferencesFactory.get().getProperty("cryptomator.vault.config.filename"), EnumSet.of(Path.Type.file)))));
+                }
+                {
+                    // level 2: /<bucket>/d/
+                    final AttributedList<Path> level2List = session.getFeature(ListService.class).list(new Path(bucket, "d", EnumSet.of(Path.Type.directory, AbstractPath.Type.placeholder)), new DisabledListProgressListener());
+                    assertFalse(level2List.isEmpty());
+                    assertEquals(2, level2List.size());
+                    for(final Path level3 : level2List) {
+                        // level 3: /<bucket>/d/<2-letter-folder>/
+                        final AttributedList<Path> level3List = session.getFeature(ListService.class).list(level3, new DisabledListProgressListener());
+                        // by hashing, only 1 sub-folder expected
+                        assertEquals(1, level3List.size());
+                        for(final Path level4 : level3List) {
+                            // level 4: /<bucket>/d/<2-letter-folder>/<30-letter-folder/
+                            final AttributedList<Path> level4List = session.getFeature(ListService.class).list(level4, new DisabledListProgressListener());
+                            assertTrue(level4List.toStream().map(Path::getName).allMatch(n -> n.endsWith(".uvf")));
+                            // empty sub-folder
+                            log.info("level4List.size()={}", level4List.size());
+                            assert (level4List.size() >= 2);
+                            // root folder contains two files and a sub-folder
+                            assertTrue(level4List.size() <= 3);
+                            if(level4List.size() == 2) {
+                                // MiniO versioned API returns a first version with the file content and a second empty version upon deletion
+                                assertTrue(level4List.toStream().allMatch(p -> p.attributes().isDuplicate()));
+                            }
+                            else if(level4List.size() == 3) {
+                                // the root directory -> contains two files...
+                                assertEquals(2, level4List.toStream().map(p -> p.isFile() && p.getName().endsWith(".uvf")).filter(Boolean::booleanValue).count());
+                                assertEquals(1, level4List.toStream().map(p -> p.isDirectory() && p.getName().endsWith(".uvf")).filter(Boolean::booleanValue).count());
+                                // ... and a subfolder with a dir.uvf in it
+                                final Path level5 = level4List.toStream().filter(Path::isDirectory).findFirst().get();
+                                final AttributedList<Path> level5list = session.getFeature(ListService.class).list(level5, new DisabledListProgressListener());
+                                assertEquals(1, level5list.size());
+                                final Path level6 = level5list.get(0);
+                                assertEquals("dir.uvf", level6.getName());
+                                assertTrue(level6.isFile());
+                            }
+                        }
+                    }
+                }
             }
         }
         finally {
