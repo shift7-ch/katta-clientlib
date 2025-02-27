@@ -73,13 +73,15 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
 
     /**
-     * Use to start unattended setup and then run tests with PUnattendedMinio.
+     * Start with unattended setup (e.g. UnattendedMinio) and then run tests with corresponding attended setup (e.g. AttendedMinio) to save startup times at every test execution.
      *
      * @throws InterruptedException
      */
     @Test
     @Disabled
-    public void runForever() throws InterruptedException {
+    public void startUnattendedSetupToUseAttended() throws InterruptedException {
+        log.info("Unattended setup ready to be used in attended test runs.");
+        // run forever
         Thread.sleep(924982347);
     }
 

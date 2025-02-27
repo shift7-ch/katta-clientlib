@@ -33,8 +33,8 @@ class HubSynchronizeTest {
 
     @Nested
     @TestInstance(PER_CLASS)
-    @Disabled("run standalone against already running hub started by runForever test.")
-    public class PUnattendedMinio extends AbstractHubSynchronizeTest {
+    @Disabled("run standalone against already running hub started by runForever test for unattended configuration.")
+    public class AttendedMinio extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
         }
@@ -47,16 +47,6 @@ class HubSynchronizeTest {
     public class UnattendedLocalKeycloakDevOnlyStatic extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of();
-        }
-    }
-
-
-    @Nested
-    @TestInstance(PER_CLASS)
-    @Disabled("run standalone against already running hub")
-    public class AttendedMinio extends AbstractHubSynchronizeTest {
-        private Stream<Arguments> arguments() {
-            return Stream.of(minioStaticAttendedLocalOnly, minioSTSAttendedLocalOnly);
         }
     }
 

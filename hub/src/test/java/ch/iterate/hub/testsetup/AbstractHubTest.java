@@ -53,6 +53,7 @@ import ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol;
 public abstract class AbstractHubTest extends VaultTest {
 
     static {
+        // VaultTest is Junit 4 with @BeforeClass annotation, call statically in Jupiter setup.
         credentials();
     }
 
