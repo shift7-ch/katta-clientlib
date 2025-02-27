@@ -125,6 +125,7 @@ class UvfMetadataPayloadTest {
             final ECKey fake = new ECKey.Builder(recoveryKey).keyID("kiddo").build();
             assertThrows(JOSEException.class, () -> UvfMetadataPayload.decryptWithJWK(encrypted, fake));
         }
+        assertTrue(orig.toString().startsWith("UvfMetadataPayload{fileFormat='AES-256-GCM-32k', nameFormat='AES-256-SIV', seeds={key02=********, key01=********}, initialSeed='key1', latestSeed='key0', kdf='1STEP-HMAC-SHA512', kdfSalt='********', automaticAccessGrant=class AutomaticAccessGrant {"));
     }
 
     @Test

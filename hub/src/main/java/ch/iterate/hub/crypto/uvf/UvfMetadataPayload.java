@@ -8,6 +8,7 @@ package ch.iterate.hub.crypto.uvf;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 
+import org.apache.commons.lang3.StringUtils;
 import org.cryptomator.cryptolib.api.Cryptor;
 import org.cryptomator.cryptolib.api.CryptorProvider;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.model.JWEPayload;
@@ -324,11 +326,11 @@ public class UvfMetadataPayload extends JWEPayload {
         return "UvfMetadataPayload{" +
                 "fileFormat='" + fileFormat + '\'' +
                 ", nameFormat='" + nameFormat + '\'' +
-                ", seeds=" + seeds +
+                ", seeds={" + seeds.entrySet().stream().map(e -> e.getKey() + "=" + StringUtils.repeat("*", Integer.min(8, StringUtils.length(e.getValue())))).collect(Collectors.joining(", ")) + "}" +
                 ", initialSeed='" + initialSeed + '\'' +
                 ", latestSeed='" + latestSeed + '\'' +
                 ", kdf='" + kdf + '\'' +
-                ", kdfSalt='" + kdfSalt + '\'' +
+                ", kdfSalt='" + StringUtils.repeat("*", Integer.min(8, StringUtils.length(kdf))) + '\'' +
                 ", automaticAccessGrant=" + automaticAccessGrant +
                 ", storage=" + storage +
                 '}';
