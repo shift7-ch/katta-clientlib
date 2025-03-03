@@ -161,12 +161,12 @@ sequenceDiagram
     katta->>session: 201 Created application/json
 
     loop Storage Profile Sync
-        session-->katta: GET /api/storageprofile
+        session->>katta: GET /api/storageprofile
         Note over session,katta: Retrieve storage configurations
         katta->>session: application/json
     end
     loop Storage Vault Sync
-        session-->katta: GET /api/vaults/accessible
+        session->>katta: GET /api/vaults/accessible
         katta->>session: application/json
     end
     deactivate katta
@@ -174,13 +174,13 @@ sequenceDiagram
     participant vault as S3AutoLoadVaultSession
     activate vault
     vault->>keychain: Lookup OIDC tokens
-    keychain-->>vault: Return OIDC tokens
+    keychain->>vault: Return OIDC tokens
     deactivate keychain
     activate keycloak
 
     opt: Expired OIDC Tokens
-        vault-->katta: Refresh OIDC Tokens
-        keycloak->>-vault: OIDC Tokens
+        vault->>+katta: Refresh OIDC Tokens
+        katta->>-vault: OIDC Tokens
     end
 
     opt: Exchange OIDC token to scoped token using OAuth 2.0 Token Exchange
