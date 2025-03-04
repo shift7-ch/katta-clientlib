@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import com.google.common.io.BaseEncoding;
 
-public class KeyHelper {
+public final class KeyHelper {
 
     // adapted from org.cryptomator.ui.keyloading.hub.HubKeyLoadingModule
     public static String getDeviceIdFromDeviceKeyPair(final ECKeyPair deviceKeyPair) {

@@ -32,6 +32,7 @@ import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.testsetup.AbstractHubTest;
 import ch.iterate.hub.testsetup.HubTestConfig;
 import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
+import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysService;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
@@ -69,7 +70,7 @@ public class KeyRotationTest extends AbstractHubTest {
             for(final VaultDto vaultDto : vaults) {
                 final HashMap<String, String> tokens = new HashMap<>();
                 final UserKeysService service = new UserKeysServiceImpl(hubSession);
-                final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled);
+                final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
             final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
             final UvfMetadataPayload metadataJWE = vaultService.getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
                 final UvfAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);

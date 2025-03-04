@@ -37,9 +37,10 @@ import java.util.Base64;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
+import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -86,8 +87,10 @@ public class S3AutoLoadVaultSession extends S3AssumeRoleSession {
             final Vault vault = VaultFactory.get(home);
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! MUST NEVER BE RELEASED LIKE THIS
             // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 use rawFileKey,rawNameKey as vault key for now (going into cryptolib's Masterkey)
+            // Retrieve from keychain
+            final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getDeviceKeys(backend.getHost());
             final UvfMetadataPayload vaultMetadata = new VaultServiceImpl(backend).getVaultMetadataJWE(
-                    UUID.fromString(host.getUuid()), new UserKeysServiceImpl(backend).getUserKeys(backend.getHost(), FirstLoginDeviceSetupCallbackFactory.get()));
+                    UUID.fromString(host.getUuid()), new UserKeysServiceImpl(backend).getUserKeys(backend.getHost(), backend.getMe(), deviceKeys));
             final byte[] rawFileKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
             final byte[] rawNameKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
             final byte[] vaultKey = Bytes.concat(rawFileKey, rawNameKey);

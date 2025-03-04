@@ -28,10 +28,10 @@ import java.util.UUID;
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.VaultDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
+import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
+import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -46,22 +46,32 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
 
     private final HubSession session;
     private final AbstractHostCollection bookmarks;
+    private final HostPasswordStore keychain;
 
     public HubStorageVaultSyncSchedulerService(final HubSession session) {
         this(session, BookmarkCollection.defaultCollection());
     }
 
     public HubStorageVaultSyncSchedulerService(final HubSession session, final AbstractHostCollection bookmarks) {
+        this(session, bookmarks, PasswordStoreFactory.get());
+    }
+
+    public HubStorageVaultSyncSchedulerService(final HubSession session, final HostPasswordStore keychain) {
+        this(session, BookmarkCollection.defaultCollection(), keychain);
+    }
+
+    public HubStorageVaultSyncSchedulerService(final HubSession session, final AbstractHostCollection bookmarks, final HostPasswordStore keychain) {
         this.session = session;
         this.bookmarks = bookmarks;
+        this.keychain = keychain;
     }
 
     @Override
     public List<VaultDto> operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session);
-        final FirstLoginDeviceSetupCallback prompt = FirstLoginDeviceSetupCallbackFactory.get();
-        log.info("Bookmark sync for {}", session.getHost());
         try {
+            final UserKeys userKeys = new UserKeysServiceImpl(session).getUserKeys(session.getHost(), session.getMe(),
+                    new DeviceKeysServiceImpl(keychain).getDeviceKeys(session.getHost()));
             final List<VaultDto> vaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null);
             for(final VaultDto vaultDto : vaults) {
                 try {
@@ -79,10 +89,11 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                     }
                     else {
                         log.info("Adding bookmark for vault {} in hub {}", vaultDto, session.getHost());
-                        final Host bookmark = this.toBookmark(vaultId, prompt);
+                        // Find storage configuration in vault metadata
+                        final VaultMetadataJWEBackendDto vaultMetadata = new VaultServiceImpl(session).getVaultMetadataJWE(vaultId, userKeys).storage();
+                        final Host bookmark = toBookmark(session.getHost(), vaultId, vaultMetadata);
                         if(bookmark.getCredentials().isPasswordAuthentication()) {
                             log.warn("Save static access tokens for {} in keychain", vaultDto);
-                            final HostPasswordStore keychain = PasswordStoreFactory.get();
                             keychain.save(bookmark);
                             bookmark.getCredentials().reset();
                         }
@@ -93,29 +104,16 @@ public class HubStorageVaultSyncSchedulerService extends OneTimeSchedulerFeature
                 catch(AccessDeniedException e) {
                     log.info("Access not granted yet, ignoring vault {} ({}) for hub {}", vaultDto.getName(), vaultDto.getId(), session.getHost(), e);
                 }
-                catch(AccessException | SecurityFailure e) {
-                    throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
-                }
             }
+            userKeys.destroy();
             return vaults;
         }
         catch(ApiException e) {
             log.error("Scheduler for {}: Syncing vaults failed.", session, e);
             throw new HubExceptionMappingService().map(e);
         }
-    }
-
-    public Host toBookmark(final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws AccessException, BackgroundException, SecurityFailure {
-        final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(session);
-        final VaultServiceImpl vaultService = new VaultServiceImpl(session);
-        // Find storage configuration in vault metadata
-        try {
-            final VaultMetadataJWEBackendDto vaultMetadata = vaultService.getVaultMetadataJWE(vaultId,
-                    userKeysService.getUserKeys(session.getHost(), prompt)).storage();
-            return toBookmark(session.getHost(), vaultId, vaultMetadata);
-        }
-        catch(ApiException e) {
-            throw new HubExceptionMappingService().map(e);
+        catch(AccessException | SecurityFailure e) {
+            throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
     }
 

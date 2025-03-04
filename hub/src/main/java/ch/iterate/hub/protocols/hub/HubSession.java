@@ -7,9 +7,11 @@ package ch.iterate.hub.protocols.hub;
 import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostKeyCallback;
+import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
@@ -25,7 +27,6 @@ import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.proxy.ProxyFinder;
-import ch.cyberduck.core.shared.DelegatingSchedulerFeature;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.threading.CancelCallback;
@@ -40,10 +41,14 @@ import java.util.concurrent.ExecutionException;
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.HubApiClient;
 import ch.iterate.hub.client.api.ConfigResourceApi;
+import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
+import ch.iterate.hub.client.model.UserDto;
+import ch.iterate.hub.core.DeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallbackFactory;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.protocols.hub.serializer.HubConfigDtoDeserializer;
+import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
@@ -61,6 +66,8 @@ public class HubSession extends HttpSession<HubApiClient> {
      */
     public static final String HUB_UUID = "hub.uuid";
 
+    private final HostPasswordStore keychain = PasswordStoreFactory.get();
+
     /**
      * Read storage configurations from API
      */
@@ -68,11 +75,11 @@ public class HubSession extends HttpSession<HubApiClient> {
     /**
      * Read available vaults from API
      */
-    private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this);
+    private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this, keychain);
     /**
      * Periodically grant vault access to users
      */
-    private final Scheduler<?> access = new HubGrantAccessSchedulerService(this);
+    private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
 
     private final Scheduler<?> scheduler = new HubSchedulerService(Duration.ofSeconds(
             new HostPreferences(host).getLong("hub.protocol.scheduler.period")).toMillis(), profiles, vaults, access);
@@ -81,6 +88,7 @@ public class HubSession extends HttpSession<HubApiClient> {
      * Interceptor for OpenID connect flow
      */
     private OAuth2RequestInterceptor authorizationService;
+    private UserDto me;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
@@ -127,6 +135,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
+        final DeviceSetupCallback setup = DeviceSetupCallbackFactory.get();
         final Credentials credentials = authorizationService.validate();
         try {
             // Set username from OAuth ID Token for saving in keychain
@@ -137,8 +146,12 @@ public class HubSession extends HttpSession<HubApiClient> {
             throw new LoginCanceledException(e);
         }
         try {
-            // Ask for account key (setup code) and device name
-            new UserKeysServiceImpl(this).getUserKeys(host, FirstLoginDeviceSetupCallbackFactory.get());
+            me = new UsersResourceApi(client).apiUsersMeGet(true);
+            log.debug("Retrieved user {}", me);
+            final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(this);
+            final DeviceKeysServiceImpl deviceKeysService = new DeviceKeysServiceImpl(keychain);
+            userKeysService.getOrCreateUserKeys(host, me,
+                    deviceKeysService.getOrCreateDeviceKeys(host, setup), setup);
             // Fetch storage configuration once
             try {
                 scheduler.execute(prompt).get();
@@ -153,11 +166,14 @@ public class HubSession extends HttpSession<HubApiClient> {
                 throw new BackgroundException(e.getCause());
             }
         }
-        catch(AccessException | SecurityFailure e) {
+        catch(SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
+        }
+        catch(AccessException e) {
+            throw new ConnectionCanceledException(e);
         }
     }
 
@@ -165,6 +181,10 @@ public class HubSession extends HttpSession<HubApiClient> {
     protected void logout() {
         scheduler.shutdown(false);
         client.getHttpClient().close();
+    }
+
+    public UserDto getMe() {
+        return me;
     }
 
     @Override

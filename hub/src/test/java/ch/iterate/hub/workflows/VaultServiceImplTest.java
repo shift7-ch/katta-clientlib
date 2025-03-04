@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 class VaultServiceImplTest {
     @Test
-    public void testGetVaultOwnerAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
+    void testGetVaultOwnerAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
@@ -45,7 +45,7 @@ class VaultServiceImplTest {
     }
 
     @Test
-    public void testGetVaultAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
+    void testGetVaultAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
@@ -62,7 +62,7 @@ class VaultServiceImplTest {
     }
 
     @Test
-    public void testGetVaultWrongAccessTokenJWE() throws JOSEException, JsonProcessingException, ApiException {
+    void testGetVaultWrongAccessTokenJWE() throws JOSEException, JsonProcessingException, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
@@ -78,7 +78,7 @@ class VaultServiceImplTest {
     }
 
     @Test
-    public void testGetVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException, AccessException, SecurityFailure {
+    void testGetVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException, AccessException, SecurityFailure {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
@@ -103,7 +103,7 @@ class VaultServiceImplTest {
     }
 
     @Test
-    public void testGetWrongVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException {
+    void testGetWrongVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
         final VaultService service = new VaultServiceImpl(vaultResourceMock);
 

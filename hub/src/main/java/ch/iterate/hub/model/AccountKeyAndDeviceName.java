@@ -6,11 +6,7 @@ package ch.iterate.hub.model;
 
 public class AccountKeyAndDeviceName {
     private String accountKey;
-
     private String deviceName;
-
-    public AccountKeyAndDeviceName() {
-    }
 
     public String accountKey() {
         return accountKey;

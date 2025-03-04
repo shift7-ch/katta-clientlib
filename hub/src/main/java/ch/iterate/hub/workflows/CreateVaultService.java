@@ -34,7 +34,6 @@ import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.CreateS3STSBucketDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
@@ -67,24 +66,21 @@ public class CreateVaultService {
         this.hubSession = hubSession;
     }
 
-    public void createVault(final StorageProfileDtoWrapper storageProfileWrapper, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
+    public void createVault(final UserKeys userKeys, final StorageProfileDtoWrapper storageProfileWrapper, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
         try {
-            // prepare vault creation
-            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(
-                    hubSession.getHost(), FirstLoginDeviceSetupCallbackFactory.get());
-
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+            final VaultMetadataJWEBackendDto backendDto = new VaultMetadataJWEBackendDto()
+                    .provider(storageProfileWrapper.getId().toString())
+                    .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                    .nickname(vaultModel.vaultName())
+                    .username(vaultModel.accessKeyId())
+                    .password(vaultModel.secretKey());
+            final VaultMetadataJWEAutomaticAccessGrantDto accessGrantDto = new VaultMetadataJWEAutomaticAccessGrantDto()
+                    .enabled(vaultModel.automaticAccessGrant())
+                    .maxWotDepth(vaultModel.maxWotLevel());
             final UvfMetadataPayload metadataJWE = UvfMetadataPayload.create()
-                    .withStorage(new VaultMetadataJWEBackendDto()
-                            .provider(storageProfileWrapper.getId().toString())
-                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
-                            .nickname(vaultModel.vaultName())
-                            .username(vaultModel.accessKeyId())
-                            .password(vaultModel.secretKey()))
-                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
-                            .enabled(vaultModel.automaticAccessGrant())
-                            .maxWotDepth(vaultModel.maxWotLevel())
-                    );
+                    .withStorage(backendDto)
+                    .withAutomaticAccessGrant(accessGrantDto);
             log.debug("Created metadata JWE {}", metadataJWE);
             final String uvfMetadataFile = metadataJWE.encrypt(
                     String.format("%s/api", new HostUrlProvider(false, true).get(hubSession.getHost())),

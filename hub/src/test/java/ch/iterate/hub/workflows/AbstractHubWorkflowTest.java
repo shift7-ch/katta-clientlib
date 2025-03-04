@@ -26,7 +26,6 @@ import ch.iterate.hub.client.model.Role;
 import ch.iterate.hub.client.model.StorageProfileDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.client.model.VaultDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.SetupCodeJWE;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
@@ -65,7 +64,9 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             // upload template (STS: create bucket first, static: existing bucket)
             // TODO test with multiple wot levels?
 
-            new CreateVaultService(hubSession).createVault(storageProfileWrapper,
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
+            new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper,
                     new CreateVaultService.CreateVaultModel(vaultId,
                             "vault", null,
                             config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName,
@@ -99,10 +100,11 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 1);
 
             log.info("S04 {} alice adds trust to admin", setup);
-            new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), FirstLoginDeviceSetupCallback.disabled), admin);
+            new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost())), admin);
 
             log.info("S04 {} alice grants access to admin", setup);
-            new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(hubSession.getHost(), vaultId, FirstLoginDeviceSetupCallback.disabled);
+            new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
         }
         finally {

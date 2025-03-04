@@ -4,8 +4,6 @@
 
 package ch.iterate.hub.workflows;
 
-import ch.cyberduck.core.Host;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,14 +16,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
-import ch.iterate.hub.client.api.DeviceResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.MemberDto;
-import ch.iterate.hub.client.model.Role;
-import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.client.model.VaultDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
@@ -42,49 +35,27 @@ public class GrantAccessServiceImpl implements GrantAccessService {
     private static final Logger log = LogManager.getLogger(GrantAccessServiceImpl.class.getName());
 
     private final VaultResourceApi vaultResourceApi;
-    private final UsersResourceApi usersResourceApi;
-
-    private final UserKeysService userKeysService;
     private final VaultService vaultService;
     private final WoTService woTService;
 
     public GrantAccessServiceImpl(final HubSession hubSession) {
-        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()));
+        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
     }
 
-    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
-        this(vaultResourceApi, usersResourceApi, new UserKeysServiceImpl(usersResourceApi, deviceResourceApi),
-                new VaultServiceImpl(vaultResourceApi),
-                new WoTServiceImpl(usersResourceApi));
+    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final UsersResourceApi usersResourceApi) {
+        this(vaultResourceApi, new VaultServiceImpl(vaultResourceApi), new WoTServiceImpl(usersResourceApi));
     }
 
-    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final UsersResourceApi usersResourceApi,
-                                  final UserKeysService userKeysService, final VaultService vaultService, final WoTService woTService) {
+    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final VaultService vaultService, final WoTService woTService) {
         this.vaultResourceApi = vaultResourceApi;
-        this.usersResourceApi = usersResourceApi;
-        this.userKeysService = userKeysService;
         this.vaultService = vaultService;
         this.woTService = woTService;
     }
 
     @Override
-    public void grantAccessToUsersRequiringAccessGrant(final Host hub, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
-        final List<VaultDto> accessibleVaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
-        final UserDto me = usersResourceApi.apiUsersMeGet(true);
-        log.info("For hub {} ({})", usersResourceApi.getApiClient().getBasePath(), me);
-
-        for(final VaultDto accessibleVault : accessibleVaults) {
-            if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
-                continue;
-            }
-            this.grantAccessToUsersRequiringAccessGrant(hub, accessibleVault.getId(), prompt);
-        }
-    }
-
-    public void grantAccessToUsersRequiringAccessGrant(final Host hub, final UUID vaultId, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public void grantAccessToUsersRequiringAccessGrant(final UUID vaultId, final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
         final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
         log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
-        final UserKeys userKeys = userKeysService.getUserKeys(hub, prompt);
         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultId, userKeys);
         final UvfAccessTokenPayload uvfAccessToken = vaultService.getVaultAccessTokenJWE(vaultId, userKeys);
         if(vaultMetadata.automaticAccessGrant() == null || !Optional.ofNullable(vaultMetadata.automaticAccessGrant().getEnabled()).orElse(false)) {
