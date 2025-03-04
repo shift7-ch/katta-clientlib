@@ -95,17 +95,20 @@ sequenceDiagram
     activate keychain
     session->>keychain: Save OIDC Tokens
 
-    session->>katta: GET /api/users/me?withDevices=true
-    Note over session,katta: Retrieve public keys and registered devices
-    katta->>session: application/json
+    Note over User,keychain: Flow to retrieve user keys
+    alt
+        opt
+            Note over User,katta: Device key not found on server
+        end
+    else
+        alt
+            Note over User,katta: Setting up new device
+        else
+            Note over User,katta: Setting up new user keys and account key
+        end
+        Note over katta,keychain: Save device keys
+    end
 
-    session->>katta: PUT /api/users/me
-    Note over session,katta: Upload User Keys
-    katta->>session: 201 Created application/json
-
-    session->>katta: PUT /api/devices/8ED7FAA95D4F912FFC80585D776261C8D32205FB03B59BF0311193DD5E482D90
-    Note over session,katta: Register Device
-    katta->>session: 201 Created application/json
 
     loop Storage Profile Sync
         session->>katta: GET /api/storageprofile
