@@ -45,7 +45,7 @@ public interface VaultService {
     UvfAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
-     *
+     * Prepares (virtual) bookmark for vault to access its configured storage backend.
      * @param protocols Registered protocol implementations to access backend storage
      * @param configDto Hub configuration
      * @param vaultId Vault ID
