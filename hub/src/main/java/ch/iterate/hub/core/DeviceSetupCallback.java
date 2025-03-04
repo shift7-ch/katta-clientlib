@@ -12,7 +12,7 @@ import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 
-public interface FirstLoginDeviceSetupCallback {
+public interface DeviceSetupCallback {
 
     /**
      * Prompt user for device name
@@ -48,7 +48,7 @@ public interface FirstLoginDeviceSetupCallback {
         return UserKeys.create();
     }
 
-    FirstLoginDeviceSetupCallback disabled = new FirstLoginDeviceSetupCallback() {
+    DeviceSetupCallback disabled = new DeviceSetupCallback() {
         @Override
         public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
             throw new AccessException("Disabled");

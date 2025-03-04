@@ -8,7 +8,7 @@ import ch.cyberduck.core.Host;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -38,7 +38,7 @@ public class CachingUserKeysService implements UserKeysService {
     }
 
     @Override
-    public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         if(userKeys == null) {
             userKeys = proxy.getOrCreateUserKeys(hub, me, deviceKeyPair, prompt);
         }

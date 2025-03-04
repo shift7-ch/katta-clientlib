@@ -39,15 +39,15 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.function.Function;
 
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.util.MockableFirstLoginDeviceSetupCallback;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import ch.iterate.hub.core.DeviceSetupCallback;
+import ch.iterate.hub.core.util.MockableDeviceSetupCallback;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubProtocol;
 import ch.iterate.hub.protocols.hub.HubSession;
 import ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @HubIntegrationTest
 public abstract class AbstractHubTest extends VaultTest {
@@ -149,7 +149,7 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("factory.vault.class", HubCryptoVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
-        preferences.setProperty("factory.firstlogindevicesetupcallback.class", MockableFirstLoginDeviceSetupCallback.class.getName());
+        preferences.setProperty("factory.devicesetupcallback.class", MockableDeviceSetupCallback.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
         preferences.setProperty("hub.protocol.scheduler.period", 30);
@@ -177,7 +177,7 @@ public abstract class AbstractHubTest extends VaultTest {
         assertNotNull(ProtocolFactory.get().forName("s3"));
         assertNotNull(ProtocolFactory.get().forName("katta-s3"));
 
-        final FirstLoginDeviceSetupCallback proxy = new FirstLoginDeviceSetupCallback() {
+        final DeviceSetupCallback proxy = new DeviceSetupCallback() {
             @Override
             public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
                 return "firstLoginMockSetup";
@@ -194,7 +194,7 @@ public abstract class AbstractHubTest extends VaultTest {
                 return staticSetupCode();
             }
         };
-        MockableFirstLoginDeviceSetupCallback.setProxy(proxy);
+        MockableDeviceSetupCallback.setProxy(proxy);
 
         final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager());

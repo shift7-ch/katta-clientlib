@@ -14,13 +14,16 @@ import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
 
+import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
+import static ch.iterate.hub.workflows.DeviceKeysServiceImpl.COMPUTER_NAME;
+
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.api.DeviceResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.DeviceDto;
 import ch.iterate.hub.client.model.Type1;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
@@ -30,9 +33,6 @@ import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
-
-import static ch.iterate.hub.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static ch.iterate.hub.workflows.DeviceKeysServiceImpl.COMPUTER_NAME;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
@@ -67,7 +67,7 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         if(UserKeys.validate(me)) {
             try {
                 return this.getUserKeys(hub, me, deviceKeyPair);

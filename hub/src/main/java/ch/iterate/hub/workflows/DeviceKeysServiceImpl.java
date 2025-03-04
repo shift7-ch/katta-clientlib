@@ -18,7 +18,7 @@ import java.util.Base64;
 
 import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
 
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 
@@ -45,7 +45,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
     }
 
     @Override
-    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final FirstLoginDeviceSetupCallback setup) throws AccessException {
+    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final DeviceSetupCallback setup) throws AccessException {
         final DeviceKeys deviceKeys = this.getDeviceKeys(hub);
         if(DeviceKeys.validate(deviceKeys)) {
             return deviceKeys;

@@ -27,7 +27,6 @@ import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.proxy.ProxyFinder;
-import ch.cyberduck.core.shared.DelegatingSchedulerFeature;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.threading.CancelCallback;
@@ -45,8 +44,8 @@ import ch.iterate.hub.client.api.ConfigResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallbackFactory;
+import ch.iterate.hub.core.DeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallbackFactory;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.protocols.hub.serializer.HubConfigDtoDeserializer;
 import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
@@ -136,7 +135,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        final FirstLoginDeviceSetupCallback setup = FirstLoginDeviceSetupCallbackFactory.get();
+        final DeviceSetupCallback setup = DeviceSetupCallbackFactory.get();
         final Credentials credentials = authorizationService.validate();
         try {
             // Set username from OAuth ID Token for saving in keychain

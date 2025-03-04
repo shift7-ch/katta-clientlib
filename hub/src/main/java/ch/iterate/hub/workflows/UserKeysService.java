@@ -8,7 +8,7 @@ import ch.cyberduck.core.Host;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.model.UserDto;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.workflows.exceptions.AccessException;
@@ -32,5 +32,5 @@ public interface UserKeysService {
      * @throws SecurityFailure Failure decoding keys
      * @throws AccessException Failure accessing or saving device keys
      */
-    UserKeys getOrCreateUserKeys(Host hub, UserDto me, DeviceKeys deviceKeyPair, FirstLoginDeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure;
+    UserKeys getOrCreateUserKeys(Host hub, UserDto me, DeviceKeys deviceKeyPair, DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure;
 }

@@ -6,16 +6,16 @@ package ch.iterate.hub.core.util;
 
 import ch.cyberduck.core.Host;
 
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 
-public class MockableFirstLoginDeviceSetupCallback implements FirstLoginDeviceSetupCallback {
-    public static void setProxy(final FirstLoginDeviceSetupCallback proxy) {
-        MockableFirstLoginDeviceSetupCallback.proxy = proxy;
+public class MockableDeviceSetupCallback implements DeviceSetupCallback {
+    public static void setProxy(final DeviceSetupCallback proxy) {
+        MockableDeviceSetupCallback.proxy = proxy;
     }
 
-    private static FirstLoginDeviceSetupCallback proxy = null;
+    private static DeviceSetupCallback proxy = null;
 
     @Override
     public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {

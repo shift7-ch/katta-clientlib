@@ -13,16 +13,16 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-public class FirstLoginDeviceSetupCallbackFactory extends Factory<FirstLoginDeviceSetupCallback> {
-    private static final Logger log = LogManager.getLogger(FirstLoginDeviceSetupCallbackFactory.class);
+public final class DeviceSetupCallbackFactory extends Factory<DeviceSetupCallback> {
+    private static final Logger log = LogManager.getLogger(DeviceSetupCallbackFactory.class);
 
-    private FirstLoginDeviceSetupCallbackFactory() {
-        super("factory.firstlogindevicesetupcallback.class");
+    private DeviceSetupCallbackFactory() {
+        super("factory.devicesetupcallback.class");
     }
 
-    public FirstLoginDeviceSetupCallback create() {
+    public DeviceSetupCallback create() {
         try {
-            final Constructor<? extends FirstLoginDeviceSetupCallback> constructor
+            final Constructor<? extends DeviceSetupCallback> constructor
                     = ConstructorUtils.getMatchingAccessibleConstructor(clazz);
             if(null == constructor) {
                 log.warn("No default controller in {}", constructor.getClass());
@@ -33,18 +33,18 @@ public class FirstLoginDeviceSetupCallbackFactory extends Factory<FirstLoginDevi
         }
         catch(InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
             log.error("Failure loading callback class {}. {}", clazz, e.getMessage());
-            return FirstLoginDeviceSetupCallback.disabled;
+            return DeviceSetupCallback.disabled;
         }
     }
 
-    private static FirstLoginDeviceSetupCallbackFactory singleton;
+    private static DeviceSetupCallbackFactory singleton;
 
     /**
      * @return Firs tLogin Device Setup Callback instance for the current platform.
      */
-    public static synchronized FirstLoginDeviceSetupCallback get() {
+    public static synchronized DeviceSetupCallback get() {
         if(null == singleton) {
-            singleton = new FirstLoginDeviceSetupCallbackFactory();
+            singleton = new DeviceSetupCallbackFactory();
         }
         return singleton.create();
     }

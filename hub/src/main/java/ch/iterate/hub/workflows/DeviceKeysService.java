@@ -6,7 +6,7 @@ package ch.iterate.hub.workflows;
 
 import ch.cyberduck.core.Host;
 
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 
@@ -20,7 +20,7 @@ public interface DeviceKeysService {
      * @throws AccessException   Failure accessing storage or not found
      * @throws SecurityException Failure decoding device keys retrieved from storage
      */
-    DeviceKeys getOrCreateDeviceKeys(Host hub, FirstLoginDeviceSetupCallback setup) throws AccessException;
+    DeviceKeys getOrCreateDeviceKeys(Host hub, DeviceSetupCallback setup) throws AccessException;
 
     /**
      * Retrieve saved device keys
