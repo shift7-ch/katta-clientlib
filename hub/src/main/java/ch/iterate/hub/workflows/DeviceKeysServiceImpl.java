@@ -9,9 +9,7 @@ import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
 import ch.cyberduck.core.nio.LocalProtocol;
-import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
-import ch.iterate.hub.crypto.DeviceKeys;
-import ch.iterate.hub.workflows.exceptions.AccessException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,6 +17,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
 import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
+
+import ch.iterate.hub.core.FirstLoginDeviceSetupCallback;
+import ch.iterate.hub.crypto.DeviceKeys;
+import ch.iterate.hub.workflows.exceptions.AccessException;
 
 public class DeviceKeysServiceImpl implements DeviceKeysService {
     private static final Logger log = LogManager.getLogger(DeviceKeysServiceImpl.class.getName());
@@ -45,7 +47,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
     @Override
     public DeviceKeys getOrCreateDeviceKeys(final Host hub, final FirstLoginDeviceSetupCallback setup) throws AccessException {
         final DeviceKeys deviceKeys = this.getDeviceKeys(hub);
-        if (DeviceKeys.validate(deviceKeys)) {
+        if(DeviceKeys.validate(deviceKeys)) {
             return deviceKeys;
         }
         log.warn("Create new device key for {}", hub);
@@ -57,22 +59,24 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
         final String accountName = toAccountName(hub);
         try {
             final String encodedPublicDeviceKey = store.getPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName);
-            if (null == encodedPublicDeviceKey) {
+            if(null == encodedPublicDeviceKey) {
                 log.warn("No public device key found in keychain for {}", accountName);
                 return DeviceKeys.notfound;
             }
             final String encodedPrivateDeviceKey = store.getPassword(KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME, accountName);
-            if (null == encodedPrivateDeviceKey) {
+            if(null == encodedPrivateDeviceKey) {
                 log.warn("No private device key found in keychain for {}", accountName);
                 return DeviceKeys.notfound;
             }
             log.debug("Retrieved device key pair for {} from keychain", accountName);
             try {
                 return new DeviceKeys(decodeKeyPair(encodedPublicDeviceKey, encodedPrivateDeviceKey));
-            } catch (InvalidKeySpecException e) {
+            }
+            catch(InvalidKeySpecException e) {
                 throw new SecurityException(e);
             }
-        } catch (LocalAccessDeniedException e) {
+        }
+        catch(LocalAccessDeniedException e) {
             throw new AccessException(e);
         }
     }
@@ -88,7 +92,8 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
             );
             log.debug("Saved device key pair for {} in keychain", accountName);
             return deviceKeys;
-        } catch (LocalAccessDeniedException e) {
+        }
+        catch(LocalAccessDeniedException e) {
             throw new AccessException(e);
         }
     }
