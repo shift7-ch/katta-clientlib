@@ -15,13 +15,12 @@ import java.text.ParseException;
 import java.util.Base64;
 import java.util.Objects;
 
-import ch.iterate.hub.client.model.UserDto;
+import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
+import static ch.iterate.hub.crypto.UserKeyPayload.createFromPayload;
+
 import ch.iterate.hub.crypto.uvf.UvfAccessTokenPayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
-
-import static ch.iterate.hub.crypto.KeyHelper.decodeKeyPair;
-import static ch.iterate.hub.crypto.UserKeyPayload.createFromPayload;
 
 /**
  * Represents Cryptomator Hub <a href="https://docs.cryptomator.org/en/latest/security/hub/#user-key-pair>User Keys</a>.
@@ -84,10 +83,6 @@ public class UserKeys implements Destroyable {
 
     public static UserKeys create() {
         return new UserKeys(P384KeyPair.generate(), P384KeyPair.generate());
-    }
-
-    public static boolean validate(final UserDto me) {
-        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 
     private UserKeyPayload prepareForEncryption() {

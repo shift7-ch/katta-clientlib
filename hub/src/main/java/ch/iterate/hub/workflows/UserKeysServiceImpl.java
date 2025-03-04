@@ -68,7 +68,7 @@ public class UserKeysServiceImpl implements UserKeysService {
 
     @Override
     public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
-        if(UserKeys.validate(me)) {
+        if(validate(me)) {
             try {
                 return this.getUserKeys(hub, me, deviceKeyPair);
             }
@@ -83,7 +83,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 }
             }
         }
-        else if(UserKeys.validate(me)) {
+        else if(validate(me)) {
             // No device keys
             log.info("Setting up new device w/ Account Key for existing user keys.");
             return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
@@ -142,5 +142,9 @@ public class UserKeysServiceImpl implements UserKeysService {
             throw new SecurityFailure(e);
         }
         return userKeys;
+    }
+
+    private static boolean validate(final UserDto me) {
+        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 }
