@@ -26,7 +26,6 @@ import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
@@ -36,8 +35,6 @@ import ch.cyberduck.core.vault.VaultRegistry;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.time.Duration;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.HubApiClient;
@@ -70,9 +67,6 @@ public class HubSession extends HttpSession<HubApiClient> {
      * Periodically grant vault access to users
      */
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
-
-    private final Scheduler<?> scheduler = new HubSchedulerService(Duration.ofSeconds(
-            new HostPreferences(host).getLong("hub.protocol.scheduler.period")).toMillis(), access);
 
     private final HubVaultRegistry registry = new HubVaultRegistry();
 
@@ -171,7 +165,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     protected void logout() {
-        scheduler.shutdown(false);
+        access.shutdown(false);
         client.getHttpClient().close();
     }
 
@@ -186,7 +180,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             return (T) vaults;
         }
         if(type == Scheduler.class) {
-            return (T) scheduler;
+            return (T) access;
         }
         return host.getProtocol().getFeature(type);
     }
