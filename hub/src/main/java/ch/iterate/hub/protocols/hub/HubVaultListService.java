@@ -14,6 +14,7 @@ import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SessionFactory;
@@ -30,6 +31,7 @@ import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cryptomator.cryptolib.api.UVFMasterkey;
 
 import java.util.Base64;
 import java.util.EnumSet;
@@ -108,8 +110,12 @@ public class HubVaultListService implements ListService {
                             return new VaultCredentials(Base64.getEncoder().encodeToString(vaultKey));
                         }
                     }));
+                    final PathAttributes attr = storage.getFeature(AttributesFinder.class).find(vault.getHome());
+                    try (UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(decryptedPayload)) {
+                        attr.setDirectoryId(masterKey.rootDirId());
+                    }
                     vaults.add(new Path(vault.getHome()).withType(EnumSet.of(Path.Type.volume, Path.Type.directory))
-                            .withAttributes(storage.getFeature(AttributesFinder.class).find(vault.getHome())));
+                            .withAttributes(attr));
                 }
                 return vaults;
             }

@@ -5,8 +5,14 @@
 package ch.iterate.hub.protocols.hub;
 
 import ch.cyberduck.core.AbstractPath;
+import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledCancelCallback;
+import ch.cyberduck.core.DisabledHostKeyCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
+import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.ListService;
+import ch.cyberduck.core.LoginOptions;
+import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.cryptomator.ContentWriter;
@@ -14,11 +20,11 @@ import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.preferences.PreferencesFactory;
+import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.transfer.TransferStatus;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cryptomator.cryptolib.api.UVFMasterkey;
 
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
@@ -41,8 +47,8 @@ public class HubCryptoVault extends UVFVault {
         this.vaultId = vaultId;
     }
 
-    public Path encrypt(Session<?> session, Path file, byte[] directoryId, boolean metadata) throws BackgroundException {
-        log.debug("HubCryptoVault.encrypt. Use directory ID '{}' for folder {}", directoryId, file);
+    public Path encrypt(final Session<?> session, final Path file, final byte[] directoryId, final boolean metadata) throws BackgroundException {
+        log.debug("Use directory ID '{}' for folder {}", directoryId, file);
         return super.encrypt(session, file, directoryId, metadata);
     }
 
@@ -67,16 +73,6 @@ public class HubCryptoVault extends UVFVault {
 
     public UUID getVaultId() {
         return vaultId;
-    }
-
-    @Override
-    public Path getHome() {
-        final Path home = super.getHome();
-        final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.decryptedPayload);
-        byte[] directoryId = masterKey.rootDirId();
-        assert directoryId != null;
-        home.attributes().setDirectoryId(directoryId);
-        return home;
     }
 
     /**
