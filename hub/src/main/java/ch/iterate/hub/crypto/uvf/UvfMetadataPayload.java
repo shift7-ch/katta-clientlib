@@ -27,6 +27,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static ch.iterate.hub.crypto.KeyHelper.decodePrivateKey;
+
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
 import ch.iterate.hub.model.JWEPayload;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -48,8 +50,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.gen.OctetSequenceKeyGenerator;
 import com.nimbusds.jose.util.Base64URL;
-
-import static ch.iterate.hub.crypto.KeyHelper.decodePrivateKey;
 
 /**
  * Represents payload of <a href="https://github.com/encryption-alliance/unified-vault-format/blob/develop/vault%20metadata/README.md"><code>vault.uvf</code> metadata</a>.
@@ -121,12 +121,10 @@ public class UvfMetadataPayload extends JWEPayload {
         final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
         final byte[] rootDirId = masterKey.rootDirId();
-        final String hashedRootDirId = cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(rootDirId);
-        return hashedRootDirId;
+        return cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(rootDirId);
     }
 
-
-    public static class UniversalVaultFormatJWKS {
+    public static final class UniversalVaultFormatJWKS {
         private final ECKey recoveryKeyJWK;
         private final P384KeyPair recoveryKey;
 
