@@ -45,8 +45,7 @@ import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
-import com.google.common.primitives.Bytes;
-import com.nimbusds.jose.util.Base64URL;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class S3AutoLoadVaultSession extends S3AssumeRoleSession {
     private static final Logger log = LogManager.getLogger(S3AutoLoadVaultSession.class);
@@ -84,25 +83,21 @@ public class S3AutoLoadVaultSession extends S3AssumeRoleSession {
             super.login(prompt, cancel);
             final Path home = new DelegatingHomeFeature(new DefaultPathHomeFeature(host)).find();
             log.debug("Attempting to locate vault in {}", home);
-            final Vault vault = VaultFactory.get(home);
-            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! MUST NEVER BE RELEASED LIKE THIS
-            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 use rawFileKey,rawNameKey as vault key for now (going into cryptolib's Masterkey)
             // Retrieve from keychain
             final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getDeviceKeys(backend.getHost());
             final UvfMetadataPayload vaultMetadata = new VaultServiceImpl(backend).getVaultMetadataJWE(
                     UUID.fromString(host.getUuid()), new UserKeysServiceImpl(backend).getUserKeys(backend.getHost(), backend.getMe(), deviceKeys));
-            final byte[] rawFileKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
-            final byte[] rawNameKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
-            final byte[] vaultKey = Bytes.concat(rawFileKey, rawNameKey);
+            final String decryptedPayload = vaultMetadata.toJSON();
+            final Vault vault = VaultFactory.get(home, decryptedPayload, "", new byte[0]);
             registry.add(vault.load(this, new DisabledPasswordCallback() {
                 @Override
                 public Credentials prompt(final Host bookmark, final String title, final String reason, final LoginOptions options) {
-                    return new VaultCredentials(Base64.getEncoder().encodeToString(vaultKey));
+                    return new VaultCredentials(decryptedPayload);
                 }
             }));
             backend.close();
         }
-        catch(ApiException | SecurityFailure | AccessException e) {
+        catch(ApiException | SecurityFailure | AccessException | JsonProcessingException e) {
             throw new LoginFailureException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
         }
     }

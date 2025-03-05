@@ -69,51 +69,51 @@ public class CreateVaultService {
     public void createVault(final UserKeys userKeys, final StorageProfileDtoWrapper storageProfileWrapper, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
         try {
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-            final VaultMetadataJWEBackendDto backendDto = new VaultMetadataJWEBackendDto()
-                    .provider(storageProfileWrapper.getId().toString())
-                    .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
-                    .nickname(vaultModel.vaultName())
-                    .username(vaultModel.accessKeyId())
-                    .password(vaultModel.secretKey());
-            final VaultMetadataJWEAutomaticAccessGrantDto accessGrantDto = new VaultMetadataJWEAutomaticAccessGrantDto()
-                    .enabled(vaultModel.automaticAccessGrant())
-                    .maxWotDepth(vaultModel.maxWotLevel());
-            final UvfMetadataPayload metadataJWE = UvfMetadataPayload.create()
-                    .withStorage(backendDto)
-                    .withAutomaticAccessGrant(accessGrantDto);
-            log.debug("Created metadata JWE {}", metadataJWE);
-            final String uvfMetadataFile = metadataJWE.encrypt(
+            final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
+                    .withStorage(new VaultMetadataJWEBackendDto()
+                            .provider(storageProfileWrapper.getId().toString())
+                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .nickname(vaultModel.vaultName())
+                            .username(vaultModel.accessKeyId())
+                            .password(vaultModel.secretKey()))
+                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                            .enabled(vaultModel.automaticAccessGrant())
+                            .maxWotDepth(vaultModel.maxWotLevel())
+                    );
+            log.debug("Created metadata JWE {}", metadataPayload);
+            final String uvfMetadataFile = metadataPayload.encrypt(
                     String.format("%s/api", new HostUrlProvider(false, true).get(hubSession.getHost())),
                     vaultModel.vaultId(),
                     jwks.toJWKSet()
             );
             final VaultDto vaultDto = new VaultDto()
                     .id(vaultModel.vaultId())
-                    .name(metadataJWE.storage().getNickname())
+                    .name(metadataPayload.storage().getNickname())
                     .description(vaultModel.vaultDescription())
                     .archived(false)
                     .creationTime(DateTime.now())
                     .uvfMetadataFile(uvfMetadataFile)
                     .uvfKeySet(jwks.serializePublicRecoverykey());
+
+            final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
             final CreateS3STSBucketDto storageDto = new CreateS3STSBucketDto()
                     .vaultId(vaultModel.vaultId().toString())
                     .storageConfigId(storageProfileWrapper.getId())
-                    // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here as well? Only in VaultDto?
                     .vaultUvf(uvfMetadataFile)
-                    // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 do we need to store here?
-                    .rootDirHash(metadataJWE.computeRootDirIdHash(metadataJWE.computeRootDirId()))
-                    .region(metadataJWE.storage().getRegion());
+                    .rootDirHash(hashedRootDirId)
+                    .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
-            final Host bookmark = HubStorageVaultSyncSchedulerService.toBookmark(hubSession.getHost(), vaultDto.getId(), metadataJWE.storage());
+            final Host bookmark = HubStorageVaultSyncSchedulerService.toBookmark(hubSession.getHost(), vaultDto.getId(), metadataPayload.storage());
             if(storageProfileWrapper.getStsEndpoint() == null) {
-                // permanent: template upload into existing bucket
+                // permanent: template upload into existing bucket from client (not backend)
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko
                 final S3Session session = new S3Session(bookmark);
                 session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
                 session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
+
                 // upload vault template
-                new HubCryptoVault(new Path(metadataJWE.storage().getDefaultPath(), EnumSet.of(AbstractPath.Type.directory, AbstractPath.Type.vault)))
-                        .create(session, metadataJWE.storage().getRegion(), null, 42, storageDto.getVaultUvf(), storageDto.getRootDirHash());
+                new HubCryptoVault(new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(AbstractPath.Type.directory, AbstractPath.Type.vault)))
+                        .create(session, metadataPayload.storage().getRegion(), null, 42, storageDto.getVaultUvf(), hashedRootDirId);
                 session.close();
             }
             else {
@@ -148,6 +148,7 @@ public class CreateVaultService {
             throw new AccessException(e);
         }
     }
+
 
     private static TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePoliy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) throws IOException {
         log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);

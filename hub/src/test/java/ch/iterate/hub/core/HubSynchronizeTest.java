@@ -12,9 +12,9 @@ import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.stream.Stream;
 
-import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
-
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+
+import ch.iterate.hub.testsetup.HubTestSetupDockerExtension;
 
 /**
  * Test synchronization of profiles, adding profiles and adding vaults.
@@ -32,22 +32,21 @@ class HubSynchronizeTest {
     }
 
     @Nested
+    @TestInstance(PER_CLASS)
+    @Disabled("run standalone against already running hub started by runForever test for unattended configuration.")
+    public class AttendedMinio extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
+            return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
+        }
+    }
+
+    @Nested
     @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalKeycloakDev.class})
     @TestInstance(PER_CLASS)
     @Disabled("TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 implemented unattended keycloak dev with aws in ci, dedicated keycloak?")
     public class UnattendedLocalKeycloakDevOnlyStatic extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of();
-        }
-    }
-
-
-    @Nested
-    @TestInstance(PER_CLASS)
-    @Disabled("run standalone against already running hub")
-    public class AttendedMinio extends AbstractHubSynchronizeTest {
-        private Stream<Arguments> arguments() {
-            return Stream.of(minioStaticAttendedLocalOnly, minioSTSAttendedLocalOnly);
         }
     }
 

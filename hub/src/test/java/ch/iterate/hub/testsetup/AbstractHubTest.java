@@ -53,6 +53,7 @@ import ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol;
 public abstract class AbstractHubTest extends VaultTest {
 
     static {
+        // VaultTest is Junit 4 with @BeforeClass annotation, call statically in Jupiter setup.
         credentials();
     }
 
@@ -146,6 +147,7 @@ public abstract class AbstractHubTest extends VaultTest {
         });
         preferences.setLogging("debug");
         preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
+        preferences.setProperty("cryptomator.vault.autodetect", "false");
         preferences.setProperty("factory.vault.class", HubCryptoVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());

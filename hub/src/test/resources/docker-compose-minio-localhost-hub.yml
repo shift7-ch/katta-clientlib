@@ -134,7 +134,7 @@ services:
         /usr/bin/mc idp openid info myminio
 
         # if container is restarted, the bucket already exists...
-        /usr/bin/mc mb myminio/handmade || true
+        /usr/bin/mc mb myminio/handmade --with-versioning || true
         /usr/bin/mc rm --recursive --force myminio/handmade
 
         echo "createbuckets successful"
