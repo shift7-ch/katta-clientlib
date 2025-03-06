@@ -6,10 +6,13 @@ package ch.iterate.hub.crypto.uvf;
 
 import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AlphanumericRandomStringService;
+import ch.cyberduck.core.Host;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.ssl.DefaultX509KeyManager;
+import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 
 import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.junit.jupiter.api.Test;
@@ -24,7 +27,12 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static ch.iterate.hub.crypto.KeyHelper.decodePrivateKey;
+import static org.junit.jupiter.api.Assertions.*;
+
 import ch.iterate.hub.crypto.exceptions.NotECKeyException;
+import ch.iterate.hub.protocols.hub.HubProtocol;
+import ch.iterate.hub.protocols.hub.HubSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.Curve;
@@ -33,18 +41,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.util.Base64URL;
 
-import static ch.iterate.hub.crypto.KeyHelper.decodePrivateKey;
-import static org.junit.jupiter.api.Assertions.*;
-
 class UvfMetadataPayloadTest {
-
-    final ECKey alice = new ECKey.Builder(
-            Curve.P_384,
-            new Base64URL("j6Retxx-L-rURQ4WNc8LvoqjbdPtGS6n9pCJgcm1U-NAWuWEvwJ_qi2tlrv_4w4p"),
-            new Base64URL("wS-Emo-Q9qdtkHMJiDfVDAaxhF2-nSkDRn2Eg9CbG0pVwGEpaDybx_YYJwIaYooO")
-    )
-            .d(new Base64URL("wouCtU7Nw4E8_7n5C1-xBjB4xqSb_liZhYMsy8MGgxUny6Q8NCoH9xSiviwLFfK_"))
-            .build();
 
     @Test
     public void serializePublicRecoverykey() throws JOSEException {
@@ -142,16 +139,16 @@ class UvfMetadataPayloadTest {
                 .build();
 
         final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(jwe, key);
-        assertEquals(meta.fileFormat(), "AES-256-GCM-32k");
-        assertEquals(meta.nameFormat(), "AES-SIV-512-B64URL");
-        assertEquals(meta.seeds().size(), 1);
-        assertEquals(meta.seeds().get("ZO3G9w"), "p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20");
-        assertEquals(meta.initialSeed(), "ZO3G9w");
-        assertEquals(meta.latestSeed(), "ZO3G9w");
-        assertEquals(meta.kdf(), "HKDF-SHA512");
-        assertEquals(meta.kdfSalt(), "pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh_SK73Q0KvfKMY");
-        assertEquals(meta.automaticAccessGrant().getEnabled(), true);
-        assertEquals(meta.automaticAccessGrant().getMaxWotDepth(), -1);
+        assertEquals("AES-256-GCM-32k", meta.fileFormat());
+        assertEquals("AES-SIV-512-B64URL", meta.nameFormat());
+        assertEquals(1, meta.seeds().size());
+        assertEquals("p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20", meta.seeds().get("ZO3G9w"));
+        assertEquals("ZO3G9w", meta.initialSeed());
+        assertEquals("ZO3G9w", meta.latestSeed());
+        assertEquals("HKDF-SHA512", meta.kdf());
+        assertEquals("pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh_SK73Q0KvfKMY", meta.kdfSalt());
+        assertEquals(true, meta.automaticAccessGrant().getEnabled());
+        assertEquals(-1, meta.automaticAccessGrant().getMaxWotDepth());
         assertNull(meta.storage());
     }
 
@@ -162,7 +159,7 @@ class UvfMetadataPayloadTest {
         assertFalse(Arrays.equals(rootDirId, new String(rootDirId, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)));
         // restricting to alphanumeric does work
         final byte[] rootDirId2 = new AlphanumericRandomStringService(4).random().getBytes(StandardCharsets.UTF_8);
-        assertTrue(Arrays.equals(rootDirId2, new String(rootDirId2, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)));
+        assertArrayEquals(rootDirId2, new String(rootDirId2, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -174,8 +171,8 @@ class UvfMetadataPayloadTest {
     @Test
     public void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
         final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
-        final String decryptedPayload = uvfMetadataPayload.toJSON();
-        final UVFVault uvfVault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)), decryptedPayload, null, null);
-        uvfVault.load(null, null);
+        final UVFVault uvfVault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
+        uvfVault.load(new HubSession(new Host(new HubProtocol()), new DisabledX509TrustManager(), new DefaultX509KeyManager()),
+                new UvfMetadataPayloadPasswordCallback(uvfMetadataPayload));
     }
 }

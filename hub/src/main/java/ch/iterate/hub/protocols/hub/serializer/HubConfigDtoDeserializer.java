@@ -13,7 +13,7 @@ import ch.iterate.hub.client.model.ConfigDto;
 import com.dd.plist.NSDictionary;
 
 import static ch.cyberduck.core.Profile.*;
-import static ch.iterate.hub.protocols.s3.S3AutoLoadVaultProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE;
+import static ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE;
 
 public class HubConfigDtoDeserializer extends ProxyDeserializer<NSDictionary> {
 

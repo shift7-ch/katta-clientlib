@@ -8,7 +8,8 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.exception.BackgroundException;
-import ch.cyberduck.core.shared.OneTimeSchedulerFeature;
+import ch.cyberduck.core.preferences.HostPreferences;
+import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,13 +28,14 @@ import ch.iterate.hub.workflows.UserKeysServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 
-public class HubGrantAccessSchedulerService extends OneTimeSchedulerFeature<Host> {
+public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<Host> {
     private static final Logger log = LogManager.getLogger(HubGrantAccessSchedulerService.class);
 
     private final HubSession session;
     private final HostPasswordStore keychain;
 
     public HubGrantAccessSchedulerService(final HubSession session, final HostPasswordStore keychain) {
+        super(new HostPreferences(session.getHost()).getLong("hub.protocol.scheduler.period"));
         this.session = session;
         this.keychain = keychain;
     }

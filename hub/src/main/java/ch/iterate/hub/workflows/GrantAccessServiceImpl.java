@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import ch.iterate.hub.client.ApiException;
+import ch.iterate.hub.client.api.StorageProfileResourceApi;
 import ch.iterate.hub.client.api.UsersResourceApi;
 import ch.iterate.hub.client.api.VaultResourceApi;
 import ch.iterate.hub.client.model.MemberDto;
@@ -39,11 +40,11 @@ public class GrantAccessServiceImpl implements GrantAccessService {
     private final WoTService woTService;
 
     public GrantAccessServiceImpl(final HubSession hubSession) {
-        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
+        this(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
     }
 
-    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final UsersResourceApi usersResourceApi) {
-        this(vaultResourceApi, new VaultServiceImpl(vaultResourceApi), new WoTServiceImpl(usersResourceApi));
+    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final StorageProfileResourceApi storageProfileResourceApi, final UsersResourceApi usersResourceApi) {
+        this(vaultResourceApi, new VaultServiceImpl(vaultResourceApi, storageProfileResourceApi), new WoTServiceImpl(usersResourceApi));
     }
 
     public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final VaultService vaultService, final WoTService woTService) {

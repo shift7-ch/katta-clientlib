@@ -11,7 +11,7 @@ import ch.cyberduck.core.s3.S3Protocol;
 import com.google.auto.service.AutoService;
 
 @AutoService(Protocol.class)
-public class S3AutoLoadVaultProtocol extends S3Protocol {
+public class S3AssumeRoleProtocol extends S3Protocol {
 
     // Token exchange
     public static final String OAUTH_TOKENEXCHANGE = "oauth.tokenexchange";
@@ -28,17 +28,17 @@ public class S3AutoLoadVaultProtocol extends S3Protocol {
 
     private final String authorization;
 
-    public S3AutoLoadVaultProtocol() {
+    public S3AssumeRoleProtocol() {
         this("AuthorizationCode");
     }
 
-    public S3AutoLoadVaultProtocol(final String authorization) {
+    public S3AssumeRoleProtocol(final String authorization) {
         this.authorization = authorization;
     }
 
     @Override
     public String getIdentifier() {
-        return "katta-s3";
+        return "s3-assumerole";
     }
 
     @Override
@@ -48,7 +48,7 @@ public class S3AutoLoadVaultProtocol extends S3Protocol {
 
     @Override
     public String getPrefix() {
-        return String.format("%s.%s", S3AutoLoadVaultProtocol.class.getPackage().getName(), "S3AutoLoadVault");
+        return String.format("%s.%s", S3AssumeRoleProtocol.class.getPackage().getName(), "S3AssumeRole");
     }
 
     @Override

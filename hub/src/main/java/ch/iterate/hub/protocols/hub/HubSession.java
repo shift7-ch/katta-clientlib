@@ -5,6 +5,7 @@
 package ch.iterate.hub.protocols.hub;
 
 import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostKeyCallback;
 import ch.cyberduck.core.HostPasswordStore;
@@ -13,30 +14,27 @@ import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Profile;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.LoginCanceledException;
-import ch.cyberduck.core.features.AttributesFinder;
-import ch.cyberduck.core.features.Find;
-import ch.cyberduck.core.features.Read;
+import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Scheduler;
 import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.threading.CancelCallback;
+import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
 
 import ch.iterate.hub.client.ApiException;
 import ch.iterate.hub.client.HubApiClient;
@@ -46,6 +44,7 @@ import ch.iterate.hub.client.model.ConfigDto;
 import ch.iterate.hub.client.model.UserDto;
 import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.core.DeviceSetupCallbackFactory;
+import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.protocols.hub.serializer.HubConfigDtoDeserializer;
 import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
@@ -61,28 +60,18 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 public class HubSession extends HttpSession<HubApiClient> {
     private static final Logger log = LogManager.getLogger(HubSession.class);
 
-    /**
-     * Key in bookmark to reference UUID of configuration from API
-     */
-    public static final String HUB_UUID = "hub.uuid";
-
     private final HostPasswordStore keychain = PasswordStoreFactory.get();
+    private final ProtocolFactory protocols = ProtocolFactory.get();
 
-    /**
-     * Read storage configurations from API
-     */
-    private final Scheduler<?> profiles = new HubStorageProfileSyncSchedulerService(this);
-    /**
-     * Read available vaults from API
-     */
-    private final Scheduler<?> vaults = new HubStorageVaultSyncSchedulerService(this, keychain);
     /**
      * Periodically grant vault access to users
      */
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
 
-    private final Scheduler<?> scheduler = new HubSchedulerService(Duration.ofSeconds(
-            new HostPreferences(host).getLong("hub.protocol.scheduler.period")).toMillis(), profiles, vaults, access);
+    private final HubVaultRegistry registry = new HubVaultRegistry();
+
+    private final HubVaultListService vaults = new HubVaultListService(protocols,
+            this, trust, key, registry, keychain);
 
     /**
      * Interceptor for OpenID connect flow
@@ -92,6 +81,15 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
+    }
+
+    @Override
+    public Session<?> withRegistry(final VaultRegistry ignored) {
+        return super.withRegistry(registry);
+    }
+
+    public HubVaultRegistry getRegistry() {
+        return registry;
     }
 
     @Override
@@ -148,23 +146,11 @@ public class HubSession extends HttpSession<HubApiClient> {
         try {
             me = new UsersResourceApi(client).apiUsersMeGet(true);
             log.debug("Retrieved user {}", me);
-            final UserKeysServiceImpl userKeysService = new UserKeysServiceImpl(this);
-            final DeviceKeysServiceImpl deviceKeysService = new DeviceKeysServiceImpl(keychain);
-            userKeysService.getOrCreateUserKeys(host, me,
-                    deviceKeysService.getOrCreateDeviceKeys(host, setup), setup);
-            // Fetch storage configuration once
-            try {
-                scheduler.execute(prompt).get();
-            }
-            catch(InterruptedException e) {
-                throw new ConnectionCanceledException(e);
-            }
-            catch(ExecutionException e) {
-                if(e.getCause() instanceof BackgroundException) {
-                    throw (BackgroundException) e.getCause();
-                }
-                throw new BackgroundException(e.getCause());
-            }
+            final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, me,
+                    new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
+            log.debug("Retrieved user keys {}", userKeys);
+            // Ensure vaults are registered
+            vaults.list(Home.ROOT, new DisabledListProgressListener());
         }
         catch(SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
@@ -179,7 +165,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     protected void logout() {
-        scheduler.shutdown(false);
+        access.shutdown(false);
         client.getHttpClient().close();
     }
 
@@ -191,20 +177,11 @@ public class HubSession extends HttpSession<HubApiClient> {
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
         if(type == ListService.class) {
-            return (T) new HubStorageProfileListService(this);
-        }
-        if(type == Read.class) {
-            return (T) new HubStorageProfileListService(this);
-        }
-        if(type == Find.class) {
-            return (T) new HubStorageProfileListService(this).new StorageProfileFindFeature();
-        }
-        if(type == AttributesFinder.class) {
-            return (T) new HubStorageProfileListService(this).new StorageProfileAttributesFinder();
+            return (T) vaults;
         }
         if(type == Scheduler.class) {
-            return (T) scheduler;
+            return (T) access;
         }
-        return super._getFeature(type);
+        return host.getProtocol().getFeature(type);
     }
 }
