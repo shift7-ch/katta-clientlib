@@ -38,11 +38,9 @@ class GrantAccessServiceImplTest {
     })
     void grantAccessToUsersRequiringAccessGrant(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws ApiException, AccessException, SecurityFailure {
         final VaultResourceApi vaults = mock(VaultResourceApi.class);
-        final UserKeysService userKeysServiceMock = mock(UserKeysService.class);
         final VaultService vaultServiceMock = mock(VaultService.class);
         final WoTService wotServiceMock = mock(WoTService.class);
         final UUID vaultId = UUID.randomUUID();
-        final Host hub = mock(Host.class);
 
         final UserKeys aliceKeys = UserKeys.create();
         final UserKeys bobKeys = UserKeys.create();
