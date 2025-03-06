@@ -242,10 +242,10 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.ROOT, new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
 
+            final Path bucket = new Path(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+                    EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubVaultRegistry vaultRegistry = hubSession.getRegistry();
             {
-                final Path bucket = new Path(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
-                        EnumSet.of(Path.Type.volume, Path.Type.directory));
                 assertNotNull(vaults.find(new SimplePathPredicate(bucket)));
 
                 assertTrue(hubSession.getFeature(Find.class).find(bucket));
@@ -258,7 +258,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, bucket));
             }
 
-            final Path vault = vaults.get(0);
+            final Path vault = vaults.find(new SimplePathPredicate(bucket));
             {
                 // decrypted file listing
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
