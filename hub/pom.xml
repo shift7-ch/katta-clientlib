@@ -41,8 +41,8 @@
                                     <inputSpec>${project.basedir}/src/main/resources/openapi.json</inputSpec>
                                     <generatorName>java</generatorName>
                                     <output>${project.basedir}</output>
-                                    <modelPackage>ch.iterate.hub.client.model</modelPackage>
-                                    <apiPackage>ch.iterate.hub.client.api</apiPackage>
+                                    <modelPackage>cloud.katta.client.model</modelPackage>
+                                    <apiPackage>cloud.katta.client.api</apiPackage>
                                     <configOptions>
                                         <sourceFolder>src/main/java</sourceFolder>
                                         <library>jersey2</library>
