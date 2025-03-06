@@ -5,13 +5,11 @@
 package ch.iterate.hub.protocols.hub;
 
 import ch.cyberduck.core.AbstractPath;
-import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.DisabledCancelCallback;
 import ch.cyberduck.core.DisabledHostKeyCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
@@ -111,10 +109,7 @@ public class HubCryptoVault extends UVFVault {
         log.debug("Connect to {}", storage);
         storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
         storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
-        // no-interactive prompt
-        final Credentials credentials = prompt.prompt(storage.getHost(), "", "", new LoginOptions());
         super.load(storage, prompt);
-        credentials.reset();
         return this;
     }
 }
