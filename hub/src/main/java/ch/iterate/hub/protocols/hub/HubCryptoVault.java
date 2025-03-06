@@ -36,13 +36,11 @@ import java.util.UUID;
 public class HubCryptoVault extends UVFVault {
     private static final Logger log = LogManager.getLogger(HubCryptoVault.class);
 
-    private final String decryptedPayload;
     private final Session<?> storage;
     private final UUID vaultId;
 
     public HubCryptoVault(final Session<?> storage, final Path home, final UUID vaultId, final String decryptedPayload) {
         super(home, decryptedPayload, null, null);
-        this.decryptedPayload = decryptedPayload;
         this.storage = storage;
         this.vaultId = vaultId;
     }
