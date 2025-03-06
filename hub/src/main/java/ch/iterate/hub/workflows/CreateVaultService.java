@@ -115,8 +115,7 @@ public class CreateVaultService {
                 session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
                 // upload vault template
-                new HubCryptoVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)), vaultDto.getId(),
-                        storageDto.getVaultUvf())
+                new HubCryptoVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
                         .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
                 session.close();
             }

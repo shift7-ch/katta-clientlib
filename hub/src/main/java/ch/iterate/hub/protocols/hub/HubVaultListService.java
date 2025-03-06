@@ -5,13 +5,10 @@
 package ch.iterate.hub.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.Credentials;
-import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
@@ -26,14 +23,12 @@ import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.shared.DefaultPathHomeFeature;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
-import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
 
-import java.util.Base64;
 import java.util.EnumSet;
 
 import ch.iterate.hub.client.ApiException;
@@ -44,6 +39,7 @@ import ch.iterate.hub.client.model.VaultDto;
 import ch.iterate.hub.crypto.DeviceKeys;
 import ch.iterate.hub.crypto.UserKeys;
 import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
+import ch.iterate.hub.crypto.uvf.UvfMetadataPayloadPasswordCallback;
 import ch.iterate.hub.protocols.hub.exceptions.HubExceptionMappingService;
 import ch.iterate.hub.workflows.DeviceKeysServiceImpl;
 import ch.iterate.hub.workflows.UserKeysServiceImpl;
@@ -51,8 +47,6 @@ import ch.iterate.hub.workflows.VaultServiceImpl;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.primitives.Bytes;
-import com.nimbusds.jose.util.Base64URL;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
@@ -98,20 +92,10 @@ public class HubVaultListService implements ListService {
                     bookmark.getCredentials().withOauth(tokens);
                     log.debug("Configured {} for vault {}", bookmark, vaultDto);
                     final Session<?> storage = SessionFactory.create(bookmark, trust, key);
-                    final String decryptedPayload = vaultMetadata.toJSON();
-                    final HubCryptoVault vault = new HubCryptoVault(storage, new DefaultPathHomeFeature(bookmark).find(), vaultDto.getId(),
-                            decryptedPayload);
-                    registry.add(vault.load(session, new DisabledPasswordCallback() {
-                        @Override
-                        public Credentials prompt(final Host bookmark, final String title, final String reason, final LoginOptions options) {
-                            final byte[] rawFileKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
-                            final byte[] rawNameKey = Base64URL.from(vaultMetadata.seeds().get(vaultMetadata.latestSeed())).decode();
-                            final byte[] vaultKey = Bytes.concat(rawFileKey, rawNameKey);
-                            return new VaultCredentials(Base64.getEncoder().encodeToString(vaultKey));
-                        }
-                    }));
+                    final HubCryptoVault vault = new HubCryptoVault(storage, new DefaultPathHomeFeature(bookmark).find());
+                    registry.add(vault.load(session, new UvfMetadataPayloadPasswordCallback(vaultMetadata)));
                     final PathAttributes attr = storage.getFeature(AttributesFinder.class).find(vault.getHome());
-                    try (UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(decryptedPayload)) {
+                    try (UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(vaultMetadata.toJSON())) {
                         attr.setDirectoryId(masterKey.rootDirId());
                     }
                     vaults.add(new Path(vault.getHome()).withType(EnumSet.of(Path.Type.volume, Path.Type.directory))
