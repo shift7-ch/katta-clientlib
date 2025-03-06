@@ -29,7 +29,7 @@ import com.nimbusds.jose.util.Base64URL;
  *
  * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/jwe.ts">jwe.ts</a>
  */
-public class JWE {
+public final class JWE {
 
     private static final JWEAlgorithm ECDHES_DESIGNATION_ALG = JWEAlgorithm.ECDH_ES;
     private static final EncryptionMethod ECDHES_DESIGNATION_ENC = EncryptionMethod.A256GCM;
