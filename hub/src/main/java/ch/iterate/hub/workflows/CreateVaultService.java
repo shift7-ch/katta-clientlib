@@ -42,8 +42,8 @@ import ch.iterate.hub.crypto.uvf.UvfMetadataPayload;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import ch.iterate.hub.crypto.uvf.VaultMetadataJWEBackendDto;
 import ch.iterate.hub.model.StorageProfileDtoWrapper;
-import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.protocols.hub.HubUVFVault;
 import ch.iterate.hub.workflows.exceptions.AccessException;
 import ch.iterate.hub.workflows.exceptions.SecurityFailure;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -115,7 +115,7 @@ public class CreateVaultService {
                 session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
                 // upload vault template
-                new HubCryptoVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
+                new HubUVFVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
                         .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
                 session.close();
             }

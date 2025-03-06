@@ -32,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import ch.iterate.hub.core.DeviceSetupCallback;
 import ch.iterate.hub.core.util.MockableDeviceSetupCallback;
 import ch.iterate.hub.model.AccountKeyAndDeviceName;
-import ch.iterate.hub.protocols.hub.HubCryptoVault;
 import ch.iterate.hub.protocols.hub.HubProtocol;
 import ch.iterate.hub.protocols.hub.HubSession;
+import ch.iterate.hub.protocols.hub.HubUVFVault;
 import ch.iterate.hub.protocols.hub.HubVaultRegistry;
 import ch.iterate.hub.protocols.s3.S3AssumeRoleProtocol;
 
@@ -137,7 +137,7 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setLogging("debug");
         preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
         preferences.setProperty("cryptomator.vault.autodetect", "false");
-        preferences.setProperty("factory.vault.class", HubCryptoVault.class.getName());
+        preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.devicesetupcallback.class", MockableDeviceSetupCallback.class.getName());

@@ -92,7 +92,7 @@ public class HubVaultListService implements ListService {
                     bookmark.getCredentials().withOauth(tokens);
                     log.debug("Configured {} for vault {}", bookmark, vaultDto);
                     final Session<?> storage = SessionFactory.create(bookmark, trust, key);
-                    final HubCryptoVault vault = new HubCryptoVault(storage, new DefaultPathHomeFeature(bookmark).find());
+                    final HubUVFVault vault = new HubUVFVault(storage, new DefaultPathHomeFeature(bookmark).find());
                     registry.add(vault.load(session, new UvfMetadataPayloadPasswordCallback(vaultMetadata)));
                     final PathAttributes attr = storage.getFeature(AttributesFinder.class).find(vault.getHome());
                     try (UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(vaultMetadata.toJSON())) {

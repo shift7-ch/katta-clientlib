@@ -28,15 +28,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 
 /**
- * Cryptomator vault implementation for Cipherduck (without masterkey file).
+ * Unified vault format (UVF) implementation for Katta
  */
-public class HubCryptoVault extends UVFVault {
-    private static final Logger log = LogManager.getLogger(HubCryptoVault.class);
+public class HubUVFVault extends UVFVault {
+    private static final Logger log = LogManager.getLogger(HubUVFVault.class);
 
     private final Session<?> storage;
     private final Path home;
 
-    public HubCryptoVault(final Session<?> storage, final Path home) {
+    public HubUVFVault(final Session<?> storage, final Path home) {
         super(home);
         this.storage = storage;
         this.home = home;
@@ -99,7 +99,7 @@ public class HubCryptoVault extends UVFVault {
     }
 
     @Override
-    public HubCryptoVault load(final Session<?> ignore, final PasswordCallback prompt) throws BackgroundException {
+    public HubUVFVault load(final Session<?> ignore, final PasswordCallback prompt) throws BackgroundException {
         log.debug("Connect to {}", storage);
         storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
         storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
