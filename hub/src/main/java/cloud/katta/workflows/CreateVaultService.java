@@ -31,6 +31,7 @@ import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.ConfigResourceApi;
+import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
@@ -63,9 +64,27 @@ public class CreateVaultService {
     private static final Logger log = LogManager.getLogger(CreateVaultService.class);
 
     private final HubSession hubSession;
+    private final ConfigResourceApi configResource;
+    private final VaultResourceApi vaultResource;
+    private final StorageProfileResourceApi storageProfileResource;
+    private final StorageResourceApi storageResource;
+    private final UsersResourceApi users;
+    private final TemplateUploadService templateUploadService;
+    private final STSInlinePolicyService stsInlinePolicyService;
 
     public CreateVaultService(final HubSession hubSession) {
+        this(hubSession, new ConfigResourceApi(hubSession.getClient()), new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()), new StorageResourceApi(hubSession.getClient()), new TemplateUploadService(), new STSInlinePolicyService());
+    }
+
+    CreateVaultService(final HubSession hubSession, final ConfigResourceApi configResource, final VaultResourceApi vaultResource, final StorageProfileResourceApi storageProfileResource, final UsersResourceApi users, final StorageResourceApi storageResource, final TemplateUploadService templateUploadService, final STSInlinePolicyService stsInlinePolicyService) {
         this.hubSession = hubSession;
+        this.configResource = configResource;
+        this.vaultResource = vaultResource;
+        this.storageProfileResource = storageProfileResource;
+        this.storageResource = storageResource;
+        this.users = users;
+        this.templateUploadService = templateUploadService;
+        this.stsInlinePolicyService = stsInlinePolicyService;
     }
 
     public void createVault(final UserKeys userKeys, final StorageProfileDtoWrapper storageProfileWrapper, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
@@ -105,24 +124,18 @@ public class CreateVaultService {
                     .rootDirHash(hashedRootDirId)
                     .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
-            final Host bookmark = new VaultServiceImpl(hubSession).getStorageBackend(ProtocolFactory.get(),
-                    new ConfigResourceApi(hubSession.getClient()).apiConfigGet(), vaultDto.getId(), metadataPayload.storage());
+
+            final Host bookmark = new VaultServiceImpl(vaultResource, storageProfileResource).getStorageBackend(ProtocolFactory.get(),
+                    configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage());
             if(storageProfileWrapper.getStsEndpoint() == null) {
                 // permanent: template upload into existing bucket from client (not backend)
-                // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko
-                final S3Session session = new S3Session(bookmark);
-                session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
-                session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
-                // upload vault template
-                new HubUVFVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
-                        .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
-                session.close();
+                templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
             }
             else {
                 final HostPasswordStore keychain = PasswordStoreFactory.get();
                 // non-permanent: pass STS tokens (restricted by inline policy) to hub backend and have bucket created from there
-                final TemporaryAccessTokens stsTokens = getSTSTokensFromAccessTokenWithCreateBucketInlinePoliy(
+                final TemporaryAccessTokens stsTokens = stsInlinePolicyService.getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(
                         keychain.findOAuthTokens(hubSession.getHost()).getAccessToken(),
                         storageProfileWrapper.getStsRoleArnClient(),
                         vaultDto.getId().toString(),
@@ -131,19 +144,19 @@ public class CreateVaultService {
                         storageProfileWrapper.getBucketAcceleration()
                 );
                 log.debug("Create STS bucket {} for vault {}", storageDto, vaultDto);
-                new StorageResourceApi(hubSession.getClient()).apiStorageVaultIdPut(vaultDto.getId(),
+                storageResource.apiStorageVaultIdPut(vaultDto.getId(),
                         storageDto.awsAccessKey(stsTokens.getAccessKeyId())
                                 .awsSecretKey(stsTokens.getSecretAccessKey())
                                 .sessionToken(stsTokens.getSessionToken()));
             }
             // create vault in hub
             log.debug("Create vault {}", vaultDto);
-            new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdPut(vaultDto.getId(), vaultDto);
+            vaultResource.apiVaultsVaultIdPut(vaultDto.getId(), vaultDto);
 
             // upload JWE
             log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
-            final UserDto userDto = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(false);
-            new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+            final UserDto userDto = users.apiUsersMeGet(false);
+            vaultResource.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);
@@ -153,40 +166,68 @@ public class CreateVaultService {
         }
     }
 
+    static class TemplateUploadService {
+        static TemplateUploadService disabled = new TemplateUploadService() {
+            @Override
+            void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId) {
+                // do nothing
+            }
+        };
 
-    private static TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePoliy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) throws IOException {
-        log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);
+        void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId) throws BackgroundException {
+            final S3Session session = new S3Session(bookmark);
+            session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
+            session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
-        final AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
-
-        request.setWebIdentityToken(token);
-
-        String inlinePolicy = IOUtils.toString(CreateVaultService.class.getResourceAsStream("/sts_create_bucket_inline_policy_template.json"), Charset.defaultCharset()).replace("{}", bucketName);
-        if((bucketAcceleration != null) && bucketAcceleration) {
-            inlinePolicy = inlinePolicy.replace("s3:PutEncryptionConfiguration\"", "s3:PutEncryptionConfiguration\",         \"s3:GetAccelerateConfiguration\",\n        \"s3:PutAccelerateConfiguration\"");
+            // upload vault template
+            new HubUVFVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
+                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
+            session.close();
         }
+    }
 
-        request.setPolicy(inlinePolicy);
-        request.setRoleArn(roleArn);
-        request.setRoleSessionName(roleSessionName);
+    static class STSInlinePolicyService {
+        static STSInlinePolicyService disabled = new STSInlinePolicyService() {
+            @Override
+            TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) {
+                return new TemporaryAccessTokens(null);
+            }
+        };
 
-        AWSSecurityTokenServiceClientBuilder serviceBuild = AWSSecurityTokenServiceClientBuilder
-                .standard();
-        if(stsEndpoint != null) {
-            serviceBuild.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(stsEndpoint, null));
+        TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) throws IOException {
+            log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);
+
+            final AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
+
+            request.setWebIdentityToken(token);
+
+            String inlinePolicy = IOUtils.toString(CreateVaultService.class.getResourceAsStream("/sts_create_bucket_inline_policy_template.json"), Charset.defaultCharset()).replace("{}", bucketName);
+            if((bucketAcceleration != null) && bucketAcceleration) {
+                inlinePolicy = inlinePolicy.replace("s3:PutEncryptionConfiguration\"", "s3:PutEncryptionConfiguration\",         \"s3:GetAccelerateConfiguration\",\n        \"s3:PutAccelerateConfiguration\"");
+            }
+
+            request.setPolicy(inlinePolicy);
+            request.setRoleArn(roleArn);
+            request.setRoleSessionName(roleSessionName);
+
+            AWSSecurityTokenServiceClientBuilder serviceBuild = AWSSecurityTokenServiceClientBuilder
+                    .standard();
+            if(stsEndpoint != null) {
+                serviceBuild.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(stsEndpoint, null));
+            }
+            final AWSSecurityTokenService service = serviceBuild
+                    .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
+                    .build();
+
+
+            log.debug("Use request {}", request);
+            final AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(request);
+            log.debug("Received assume role identity result {}", result);
+            return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
+                    result.getCredentials().getSecretAccessKey(),
+                    result.getCredentials().getSessionToken(),
+                    result.getCredentials().getExpiration().getTime());
         }
-        final AWSSecurityTokenService service = serviceBuild
-                .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
-                .build();
-
-
-        log.debug("Use request {}", request);
-        final AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(request);
-        log.debug("Received assume role identity result {}", result);
-        return new TemporaryAccessTokens(result.getCredentials().getAccessKeyId(),
-                result.getCredentials().getSecretAccessKey(),
-                result.getCredentials().getSessionToken(),
-                result.getCredentials().getExpiration().getTime());
     }
 
     public static class CreateVaultModel {
