@@ -26,9 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.core.util.MockableDeviceSetupCallback;
 import cloud.katta.model.AccountKeyAndDeviceName;
@@ -37,6 +34,9 @@ import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @HubIntegrationTest
 public abstract class AbstractHubTest extends VaultTest {
@@ -60,69 +60,60 @@ public abstract class AbstractHubTest extends VaultTest {
     );
 
     /**
-     * Attended local only: hub, Keycloak, minio started manually.
+     * Local: hub, Keycloak, MinIO started via testcontainers+docker-compose.
      */
-    private static final HubTestConfig.Setup ATTENDED_LOCAL_ONLY = new HubTestConfig.Setup()
+    public static final HubTestConfig.Setup LOCAL;
+    public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG;
+
+    static {
+        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, "local");
+        LOCAL = new HubTestConfig.Setup()
+                .withHubURL("http://localhost:8280")
+                .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
+                .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
+                .withDockerConfig(LOCAL_DOCKER_CONFIG);
+    }
+
+    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedLocalOnly = vs -> Arguments.of(Named.of(
+            String.format("%s %s (Bucket %s)", vs.storageProfileName, LOCAL.hubURL, vs.bucketName),
+            new HubTestConfig(LOCAL, vs)));
+
+
+    public static final Arguments LOCAL_MINIO_STATIC = argumentUnattendedLocalOnly.apply(minioStaticVaultConfig);
+    public static final Arguments LOCAL_MINIO_STS = argumentUnattendedLocalOnly.apply(minioSTSVaultConfig);
+
+    /**
+     * Local attended: re-use running local stetup.
+     */
+    private static final HubTestConfig.Setup LOCAL_ATTENDED = new HubTestConfig.Setup()
             .withHubURL("http://localhost:8080")
             .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
             .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()));
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentAttendedLocalOnly = vs -> Arguments.of(Named.of(
-            String.format("%s %s (Bucket %s)", vs.storageProfileName, ATTENDED_LOCAL_ONLY.hubURL, vs.bucketName),
-            new HubTestConfig(ATTENDED_LOCAL_ONLY, vs)));
-    public static final Arguments minioStaticAttendedLocalOnly = argumentAttendedLocalOnly.apply(minioStaticVaultConfig);
-    public static final Arguments minioSTSAttendedLocalOnly = argumentAttendedLocalOnly.apply(minioSTSVaultConfig);
+            String.format("%s %s (Bucket %s)", vs.storageProfileName, LOCAL_ATTENDED.hubURL, vs.bucketName),
+            new HubTestConfig(LOCAL_ATTENDED, vs)));
 
     /**
-     * Unattended local only: hub, Keycloak, MinIO started via docker-compose.
+     * Hybrid: local hub (testcontainers+docker-compose) against AWS/MinIO/Keycloak remote.
      */
-    public static final HubTestConfig.Setup UNATTENDED_LOCAL_ONLY = new HubTestConfig.Setup()
-            .withHubURL("http://localhost:8280")
-            .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
-            .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
-            .withDockerConfig(new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280));
-    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedLocalOnly = vs -> Arguments.of(Named.of(
-            String.format("%s %s (Bucket %s)", vs.storageProfileName, UNATTENDED_LOCAL_ONLY.hubURL, vs.bucketName),
-            new HubTestConfig(UNATTENDED_LOCAL_ONLY, vs)));
-    public static final Arguments minioStaticUnattendedLocalOnly = argumentUnattendedLocalOnly.apply(minioStaticVaultConfig);
-    public static final Arguments minioSTSUnattendedLocalOnly = argumentUnattendedLocalOnly.apply(minioSTSVaultConfig);
+    public static final HubTestConfig.Setup HYBRID_TESTING;
+    public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG;
 
-    /**
-     * Unattended Keycloak Testing: local hub (docker-compose) against AWS/MinIO/Keycloak remote
-     */
-    public static final HubTestConfig.Setup UNATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestConfig.Setup()
-            // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
-            .withHubURL("http://localhost:8280")
-            .withUserConfig(new HubTestConfig.Setup.UserConfig(
-                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                    staticSetupCode()))
-            .withAdminConfig(new HubTestConfig.Setup.UserConfig(
-                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                    staticSetupCode()))
-            // TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 improvement: no need to start keycloak in this setting
-            .withDockerConfig(new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280));
-
-    /**
-     * Attended Keycloak Testing: local hub, local MinIO, remote AWS, remote Keycloak.
-     */
-    public static final HubTestConfig.Setup ATTENDED_LOCAL_KEYCLOAK_TESTING = new HubTestConfig.Setup()
-            .withHubURL("http://localhost:8080")
-            .withUserConfig(new HubTestConfig.Setup.UserConfig(
-                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                    staticSetupCode()))
-            .withAdminConfig(new HubTestConfig.Setup.UserConfig(
-                    PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                    PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                    staticSetupCode()));
-    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentAttendedLocalKeycloadkDev = vs -> Arguments.of(Named.of(
-            String.format("%s %s (Bucket %s)", vs.storageProfileName, ATTENDED_LOCAL_KEYCLOAK_TESTING.hubURL, vs.bucketName),
-            new HubTestConfig(ATTENDED_LOCAL_KEYCLOAK_TESTING, vs)));
-    public static final Arguments awsStaticAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(awsStaticVaultConfig);
-    public static final Arguments awsSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(awsSTSVaultConfig);
-    public static final Arguments minioStaticAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioStaticVaultConfig);
-    public static final Arguments minioSTSAttendedLocalKeycloadkDev = argumentAttendedLocalKeycloadkDev.apply(minioSTSVaultConfig);
+    static {
+        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, null);
+        HYBRID_TESTING = new HubTestConfig.Setup()
+                // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
+                .withHubURL("http://localhost:8280")
+                .withUserConfig(new HubTestConfig.Setup.UserConfig(
+                        PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
+                        PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
+                        staticSetupCode()))
+                .withAdminConfig(new HubTestConfig.Setup.UserConfig(
+                        PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
+                        PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
+                        staticSetupCode()))
+                .withDockerConfig(HYBRID_DOCKER_CONFIG);
+    }
 
     @BeforeAll
     public static void preferences() throws IOException {

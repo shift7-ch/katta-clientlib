@@ -40,12 +40,12 @@ import cloud.katta.workflows.VaultServiceImpl;
 import static cloud.katta.crypto.KeyHelper.decodePublicKey;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
+@ExtendWith({HubTestSetupDockerExtension.Local.class})
 public class KeyRotationTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(KeyRotationTest.class.getName());
 
     private Stream<Arguments> arguments() {
-        return Stream.of(minioSTSUnattendedLocalOnly);
+        return Stream.of(LOCAL_MINIO_STS);
     }
 
     @ParameterizedTest

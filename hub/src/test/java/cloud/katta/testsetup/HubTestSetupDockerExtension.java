@@ -20,13 +20,24 @@ import java.util.AbstractMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static cloud.katta.testsetup.AbstractHubTest.UNATTENDED_LOCAL_KEYCLOAK_TESTING;
-import static cloud.katta.testsetup.AbstractHubTest.UNATTENDED_LOCAL_ONLY;
-
+/**
+ * Profiles:
+ * - local: Hub, Keycloak, MinIO in testcontainers
+ * - hybrid-<i>stage</i>: Hub in testcontainers, use existing Keycloak and MinIO
+ * - remote-<i>stage</i>: use existing Hub, Keycloak and MinIO
+ * - remote-deployment-<i>stage</i>: deploy Hub and Keycloak
+ * <p>
+ * For each level <i>L</i>, 3 modes:
+ * - <i>L</i>: run setup, tests and teardown
+ * - <i>L</i>KeepRunning: run setup and tests, skip teardown
+ * - <i>L</i>AlreadyRunning: run tests, skip setup and teardown
+ */
 public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, AfterAllCallback {
     private static final Logger log = LogManager.getLogger(HubTestSetupDockerExtension.class.getName());
 
-    private ComposeContainer compose;
+    private static final long FOREVER = Long.MAX_VALUE;
+
+    protected ComposeContainer compose;
 
     protected void setupDocker(final HubTestConfig.Setup.DockerConfig configuration) throws URISyntaxException {
         log.info("Setup docker {}", configuration);
@@ -42,6 +53,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                                 new AbstractMap.SimpleImmutableEntry<>("MINIO_CONSOLE_PORT", Integer.toString(configuration.minioConsolePort)),
                                 new AbstractMap.SimpleImmutableEntry<>("HUB_PORT", Integer.toString(configuration.hubPort))
                         ).collect(Collectors.toMap(AbstractMap.SimpleImmutableEntry::getKey, AbstractMap.SimpleImmutableEntry::getValue)))
+                .withOptions(configuration.profile == null ? "" : String.format("--profile=%s", configuration.profile))
                 .withLogConsumer("minio-1", outputFrame -> log.debug("[minio_1] {}", outputFrame.getUtf8String()))
                 .withExposedService("minio-1", configuration.minioServicePort, Wait.forListeningPort())
                 .withExposedService("keycloak-1", configuration.keycloakServicePort, Wait.forListeningPort())
@@ -52,23 +64,85 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
         log.info("Done setup docker {}", configuration);
     }
 
-    @Override
-    public void afterAll(final ExtensionContext context) throws Exception {
-        log.info("Stop docker {}", compose);
-        compose.stop();
-    }
-
-    public static class UnattendedLocalOnly extends HubTestSetupDockerExtension {
+    /**
+     * Local
+     */
+    public static class Local extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException {
-            this.setupDocker(UNATTENDED_LOCAL_ONLY.dockerConfig);
+            this.setupDocker(AbstractHubTest.LOCAL_DOCKER_CONFIG);
+        }
+
+        @Override
+        public void afterAll(final ExtensionContext context) throws Exception {
+            log.info("Stop docker {}", this.compose);
+            this.compose.stop();
         }
     }
 
-    public static class UnattendedLocalKeycloakDev extends HubTestSetupDockerExtension {
+    public static class LocalKeepRunning extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException {
-            this.setupDocker(UNATTENDED_LOCAL_KEYCLOAK_TESTING.dockerConfig);
+            this.setupDocker(AbstractHubTest.LOCAL_DOCKER_CONFIG);
+        }
+
+        @Override
+        public void afterAll(final ExtensionContext context) throws Exception {
+            log.info("Tests done, keep running {}", this.compose);
+            Thread.sleep(FOREVER);
+        }
+    }
+
+    public static class LocalAlreadyRunning extends HubTestSetupDockerExtension {
+        @Override
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+            // no setup
+        }
+
+        @Override
+        public void afterAll(final ExtensionContext context) throws Exception {
+            // no teardown
+        }
+    }
+
+    /**
+     * Hybrid
+     */
+    public static class HybridTesting extends HubTestSetupDockerExtension {
+        @Override
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+            this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
+        }
+
+        @Override
+        public void afterAll(final ExtensionContext context) {
+            log.info("Stop docker {}", compose);
+            compose.stop();
+        }
+    }
+
+    public static class HybridTestingKeepRunning extends HubTestSetupDockerExtension {
+        @Override
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+            this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
+        }
+
+        @Override
+        public void afterAll(final ExtensionContext context) throws Exception {
+            log.info("Tests done, keep running {}", this.compose);
+            Thread.sleep(FOREVER);
+        }
+    }
+
+    public static class HybridTestingAlreadyRunning extends HubTestSetupDockerExtension {
+        @Override
+        public void beforeAll(final ExtensionContext context) {
+            // no setup
+        }
+
+        @Override
+        public void afterAll(final ExtensionContext context) {
+            // no teardown
         }
     }
 }

@@ -1,5 +1,6 @@
 services:
   keycloak:
+    profiles: [ local ]
     hostname: keycloak
     image: "${KATTA_KEYCLOAK_IMAGE}"
     pull_policy: missing
@@ -28,6 +29,7 @@ services:
       retries: 15
 
   keycloak-enable-direct-access-grant:
+    profiles: [ local ]
     image: "${KATTA_KEYCLOAK_IMAGE}"
     pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]

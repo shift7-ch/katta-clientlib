@@ -35,8 +35,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
@@ -48,9 +46,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-
-import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
-import static org.junit.jupiter.api.Assertions.*;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
@@ -73,19 +68,11 @@ import cloud.katta.workflows.UserKeysServiceImpl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
+import static org.junit.jupiter.api.Assertions.*;
+
 public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
-
-    /**
-     * Start with unattended setup (e.g. UnattendedMinio) and then run tests with corresponding attended setup (e.g. AttendedMinio) to save startup times at every test execution.
-     */
-    @Test
-    @Disabled
-    public void startUnattendedSetupToUseAttended() throws InterruptedException {
-        log.info("Unattended setup ready to be used in attended test runs.");
-        // run forever
-        Thread.sleep(924982347);
-    }
 
     /**
      * Verify storage profiles are synced from hub bookmark.

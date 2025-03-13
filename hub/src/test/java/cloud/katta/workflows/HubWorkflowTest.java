@@ -4,7 +4,6 @@
 
 package cloud.katta.workflows;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,31 +24,21 @@ class HubWorkflowTest {
 
     @Nested
     @TestInstance(PER_CLASS)
-    @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
-    public class UnattendedMinio extends AbstractHubWorkflowTest {
+    @ExtendWith({HubTestSetupDockerExtension.Local.class})
+    public class LocalStatic extends AbstractHubWorkflowTest {
         private Stream<Arguments> arguments() {
             // Needs to be run separately for every storage profile because of the hard-coded vault counts.
-            return Stream.of(minioStaticUnattendedLocalOnly);
+            return Stream.of(LOCAL_MINIO_STATIC);
         }
     }
 
     @Nested
     @TestInstance(PER_CLASS)
-    @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
-    public class UnattendedMinioSTS extends AbstractHubWorkflowTest {
+    @ExtendWith({HubTestSetupDockerExtension.Local.class})
+    public class LocalSTS extends AbstractHubWorkflowTest {
         private Stream<Arguments> arguments() {
             // Needs to be run separately for every storage profile because of the hard-coded vault counts.
-            return Stream.of(minioSTSUnattendedLocalOnly);
-        }
-    }
-
-    @Nested
-    @TestInstance(PER_CLASS)
-    @Disabled("run standalone against already running hub")
-    public class AttendedMinio extends AbstractHubWorkflowTest {
-        private Stream<Arguments> arguments() {
-            // Needs to be run separately for every storage profile because of the hard-coded vault counts.
-            return Stream.of(minioStaticAttendedLocalOnly, minioSTSAttendedLocalOnly);
+            return Stream.of(LOCAL_MINIO_STS);
         }
     }
 }
