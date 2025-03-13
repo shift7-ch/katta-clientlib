@@ -65,7 +65,7 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
             final List<VaultDto> accessibleVaults = vaults.apiVaultsAccessibleGet(Role.OWNER);
 
             for(final VaultDto accessibleVault : accessibleVaults) {
-                if(!Boolean.FALSE.equals(accessibleVault.getArchived())) {
+                if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
                     log.debug("Skip archived vault {}", accessibleVault);
                     continue;
                 }
