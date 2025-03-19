@@ -4,7 +4,9 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.ProtocolFactory;
@@ -83,7 +85,7 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public Host getStorageBackend(final ProtocolFactory protocols, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata) throws ApiException, AccessException {
+    public Host getStorageBackend(final ProtocolFactory protocols, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
         if(null == protocols.forName(vaultMetadata.getProvider())) {
             log.debug("Load missing profile {}", vaultMetadata.getProvider());
             final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
@@ -108,11 +110,13 @@ public class VaultServiceImpl implements VaultService {
         log.debug("Configure bookmark for vault {}", vaultMetadata);
         bookmark.setNickname(vaultMetadata.getNickname());
         bookmark.setDefaultPath(vaultMetadata.getDefaultPath());
+        final Credentials credentials = bookmark.getCredentials();
+        credentials.setOauth(tokens);
         if(vaultMetadata.getUsername() != null) {
-            bookmark.getCredentials().setUsername(vaultMetadata.getUsername());
+            credentials.setUsername(vaultMetadata.getUsername());
         }
         if(vaultMetadata.getPassword() != null) {
-            bookmark.getCredentials().setPassword(vaultMetadata.getPassword());
+            credentials.setPassword(vaultMetadata.getPassword());
         }
         if(protocol.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES, vaultId.toString());

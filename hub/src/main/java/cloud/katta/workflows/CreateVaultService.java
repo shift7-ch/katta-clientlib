@@ -10,6 +10,7 @@ import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.HostUrlProvider;
+import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.ProtocolFactory;
@@ -125,18 +126,19 @@ public class CreateVaultService {
                     .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
 
+            final HostPasswordStore keychain = PasswordStoreFactory.get();
+
+            final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
             final Host bookmark = new VaultServiceImpl(vaultResource, storageProfileResource).getStorageBackend(ProtocolFactory.get(),
-                    configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage());
+                    configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
             if(storageProfileWrapper.getStsEndpoint() == null) {
                 // permanent: template upload into existing bucket from client (not backend)
-
                 templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
             }
             else {
-                final HostPasswordStore keychain = PasswordStoreFactory.get();
                 // non-permanent: pass STS tokens (restricted by inline policy) to hub backend and have bucket created from there
                 final TemporaryAccessTokens stsTokens = stsInlinePolicyService.getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(
-                        keychain.findOAuthTokens(hubSession.getHost()).getAccessToken(),
+                        tokens.getAccessToken(),
                         storageProfileWrapper.getStsRoleArnClient(),
                         vaultDto.getId().toString(),
                         storageProfileWrapper.getStsEndpoint(),

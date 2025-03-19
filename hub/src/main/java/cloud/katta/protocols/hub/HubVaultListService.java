@@ -6,7 +6,6 @@ package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.OAuthTokens;
@@ -56,16 +55,16 @@ public class HubVaultListService implements ListService {
     private final X509TrustManager trust;
     private final X509KeyManager key;
     private final VaultRegistry registry;
-    private final HostPasswordStore keychain;
+    private final OAuthTokens tokens;
 
     public HubVaultListService(final ProtocolFactory protocols, final HubSession session,
-                               final X509TrustManager trust, final X509KeyManager key, final VaultRegistry registry, final HostPasswordStore keychain) {
+                               final X509TrustManager trust, final X509KeyManager key, final VaultRegistry registry, final OAuthTokens tokens) {
         this.protocols = protocols;
         this.session = session;
         this.trust = trust;
         this.key = key;
         this.registry = registry;
-        this.keychain = keychain;
+        this.tokens = tokens;
     }
 
     @Override
@@ -86,10 +85,8 @@ public class HubVaultListService implements ListService {
                     // Find storage configuration in vault metadata
                     final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                     final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), userKeys);
-                    final Host bookmark = vaultService.getStorageBackend(protocols, configDto, vaultDto.getId(), vaultMetadata.storage());
-                    final OAuthTokens tokens = keychain.findOAuthTokens(session.getHost());
-                    log.debug("Use OAuth tokens {} from {}", tokens, session.getHost());
-                    bookmark.getCredentials().withOauth(tokens);
+                    final Host bookmark = vaultService.getStorageBackend(protocols, configDto, vaultDto.getId(),
+                            vaultMetadata.storage(), tokens);
                     log.debug("Configured {} for vault {}", bookmark, vaultDto);
                     final Session<?> storage = SessionFactory.create(bookmark, trust, key);
                     final HubUVFVault vault = new HubUVFVault(storage, new DefaultPathHomeFeature(bookmark).find());
