@@ -14,6 +14,7 @@ import ch.cyberduck.core.ssl.DefaultX509TrustManager;
 import ch.cyberduck.core.vault.VaultRegistryFactory;
 import ch.cyberduck.test.VaultTest;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
@@ -162,6 +163,23 @@ public abstract class AbstractHubTest extends VaultTest {
         assertTrue(factory.forName("s3").isEnabled());
         assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
+        final DeviceSetupCallback proxy = deviceSetupCallback(setup);
+        MockableDeviceSetupCallback.setProxy(proxy);
+
+        final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
+        final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
+                .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
+        final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
+                PasswordStoreFactory.get(), new DisabledProgressListener());
+        login.check(session, new DisabledCancelCallback());
+
+        final BookmarkCollection bookmarks = BookmarkCollection.defaultCollection();
+        bookmarks.add(hub);
+
+        return session;
+    }
+
+    protected static @NotNull DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
         final DeviceSetupCallback proxy = new DeviceSetupCallback() {
             @Override
             public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
@@ -179,19 +197,7 @@ public abstract class AbstractHubTest extends VaultTest {
                 return staticSetupCode();
             }
         };
-        MockableDeviceSetupCallback.setProxy(proxy);
-
-        final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
-        final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
-                .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
-        final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
-                PasswordStoreFactory.get(), new DisabledProgressListener());
-        login.check(session, new DisabledCancelCallback());
-
-        final BookmarkCollection bookmarks = BookmarkCollection.defaultCollection();
-        bookmarks.add(hub);
-
-        return session;
+        return proxy;
     }
 }
 
