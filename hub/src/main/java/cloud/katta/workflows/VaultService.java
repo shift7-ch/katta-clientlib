@@ -8,6 +8,7 @@ import ch.cyberduck.core.Host;
 
 import java.util.UUID;
 
+import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.ProtocolFactory;
 
 import cloud.katta.client.ApiException;
@@ -54,5 +55,5 @@ public interface VaultService {
      * @throws AccessException Unsupported backend storage protocol
      * @throws ApiException Server error accessing storage profile
      */
-    Host getStorageBackend(final ProtocolFactory protocols, final ConfigDto configDto, UUID vaultId, VaultMetadataJWEBackendDto metadata) throws AccessException, ApiException;
+    Host getStorageBackend(final ProtocolFactory protocols, final ConfigDto configDto, UUID vaultId, VaultMetadataJWEBackendDto metadata, final OAuthTokens tokens) throws AccessException, ApiException;
 }

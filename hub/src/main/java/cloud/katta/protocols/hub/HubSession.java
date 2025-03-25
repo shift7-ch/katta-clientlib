@@ -12,6 +12,7 @@ import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.ProtocolFactory;
@@ -70,8 +71,7 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     private final HubVaultRegistry registry = new HubVaultRegistry();
 
-    private final HubVaultListService vaults = new HubVaultListService(protocols,
-            this, trust, key, registry, keychain);
+    private HubVaultListService vaults;
 
     /**
      * Interceptor for OpenID connect flow
@@ -150,6 +150,9 @@ public class HubSession extends HttpSession<HubApiClient> {
                     new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
             log.debug("Retrieved user keys {}", userKeys);
             // Ensure vaults are registered
+            final OAuthTokens tokens = new OAuthTokens(credentials.getOauth().getAccessToken(), credentials.getOauth().getRefreshToken(), credentials.getOauth().getExpiryInMilliseconds(),
+                    credentials.getOauth().getIdToken());
+            vaults = new HubVaultListService(protocols, this, trust, key, registry, tokens);
             vaults.list(Home.ROOT, new DisabledListProgressListener());
         }
         catch(SecurityFailure e) {
