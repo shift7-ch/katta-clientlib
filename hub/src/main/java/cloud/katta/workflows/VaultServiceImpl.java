@@ -22,15 +22,17 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.ConfigDto;
+import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
-import cloud.katta.protocols.hub.serializer.StorageProfileDtoWrapperDeserializer;
+import cloud.katta.protocols.hub.serializer.StorageProfileDtoDeserializer;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -88,19 +90,16 @@ public class VaultServiceImpl implements VaultService {
     public Host getStorageBackend(final ProtocolFactory protocols, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
         if(null == protocols.forName(vaultMetadata.getProvider())) {
             log.debug("Load missing profile {}", vaultMetadata.getProvider());
-            final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
-                    .apiStorageprofileProfileIdGet(UUID.fromString(vaultMetadata.getProvider())));
+            final StorageProfileDto storageProfile = storageProfileResourceApi.apiStorageprofileProfileIdGet(UUID.fromString(vaultMetadata.getProvider()));
             log.debug("Read storage profile {}", storageProfile);
-            switch(storageProfile.getProtocol()) {
-                case S3:
-                case S3_STS:
-                    final Profile profile = new Profile(protocols.forType(Protocol.Type.s3), new StorageProfileDtoWrapperDeserializer(
-                            new HubConfigDtoDeserializer(configDto), storageProfile));
-                    log.debug("Register storage profile {}", profile);
-                    protocols.register(profile);
-                    break;
-                default:
-                    throw new AccessException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
+            if(storageProfile.getActualInstance() instanceof StorageProfileS3Dto || storageProfile.getActualInstance() instanceof StorageProfileS3STSDto) {
+                final Profile profile = new Profile(protocols.forType(Protocol.Type.s3), new StorageProfileDtoDeserializer(
+                        new HubConfigDtoDeserializer(configDto), storageProfile));
+                log.debug("Register storage profile {}", profile);
+                protocols.register(profile);
+            }
+            else {
+                throw new AccessException(String.format("Unsupported storage configuration %s", storageProfile));
             }
         }
         final String provider = vaultMetadata.getProvider();

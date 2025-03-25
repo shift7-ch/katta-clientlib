@@ -37,13 +37,15 @@ import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.CreateS3STSBucketDto;
+import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -88,13 +90,22 @@ public class CreateVaultService {
         this.stsInlinePolicyService = stsInlinePolicyService;
     }
 
-    public void createVault(final UserKeys userKeys, final StorageProfileDtoWrapper storageProfileWrapper, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
+    public void createVault(final UserKeys userKeys, final StorageProfileDto storageProfile, final CreateVaultModel vaultModel) throws ApiException, AccessException, SecurityFailure, BackgroundException {
         try {
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+            final UUID storageProfileId;
+            if(storageProfile.getActualInstance() instanceof StorageProfileS3Dto)
+                storageProfileId = storageProfile.getStorageProfileS3Dto().getId();
+            else if(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto) {
+                storageProfileId = storageProfile.getStorageProfileS3STSDto().getId();
+            }
+            else{
+                throw new BackgroundException(String.format("Unknown type %s", storageProfile), storageProfile.getActualInstance().toString());
+            }
             final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
-                            .provider(storageProfileWrapper.getId().toString())
-                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .provider(storageProfileId.toString())
+                            .defaultPath(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto ? ((StorageProfileS3STSDto) storageProfile.getActualInstance()).getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
@@ -118,9 +129,10 @@ public class CreateVaultService {
                     .uvfKeySet(jwks.serializePublicRecoverykey());
 
             final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
+
             final CreateS3STSBucketDto storageDto = new CreateS3STSBucketDto()
                     .vaultId(vaultModel.vaultId().toString())
-                    .storageConfigId(storageProfileWrapper.getId())
+                    .storageConfigId(storageProfileId)
                     .vaultUvf(uvfMetadataFile)
                     .rootDirHash(hashedRootDirId)
                     .region(metadataPayload.storage().getRegion());
@@ -131,19 +143,20 @@ public class CreateVaultService {
             final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
             final Host bookmark = new VaultServiceImpl(vaultResource, storageProfileResource).getStorageBackend(ProtocolFactory.get(),
                     configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
-            if(storageProfileWrapper.getStsEndpoint() == null) {
+            if(storageProfile.getActualInstance() instanceof StorageProfileS3Dto) {
                 // permanent: template upload into existing bucket from client (not backend)
                 templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
             }
             else {
+                final StorageProfileS3STSDto actualInstance = (StorageProfileS3STSDto) storageProfile.getActualInstance();
                 // non-permanent: pass STS tokens (restricted by inline policy) to hub backend and have bucket created from there
                 final TemporaryAccessTokens stsTokens = stsInlinePolicyService.getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(
                         tokens.getAccessToken(),
-                        storageProfileWrapper.getStsRoleArnClient(),
+                        actualInstance.getStsRoleArnClient(),
                         vaultDto.getId().toString(),
-                        storageProfileWrapper.getStsEndpoint(),
-                        String.format("%s%s", storageProfileWrapper.getBucketPrefix(), vaultDto.getId()),
-                        storageProfileWrapper.getBucketAcceleration()
+                        actualInstance.getStsEndpoint(),
+                        String.format("%s%s", actualInstance.getBucketPrefix(), vaultDto.getId()),
+                        actualInstance.getBucketAcceleration()
                 );
                 log.debug("Create STS bucket {} for vault {}", storageDto, vaultDto);
                 storageResource.apiStorageVaultIdPut(vaultDto.getId(),

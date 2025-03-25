@@ -20,11 +20,11 @@ import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.model.SetupCodeJWE;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
@@ -47,9 +47,10 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             log.info("S01 {} alice creates vault", setup);
             final ApiClient adminApiClient = getAdminApiClient(setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
-            final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
-                    .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+            final StorageProfileDto storageProfile = storageProfiles.stream()
+                    .filter(p -> (p.getActualInstance() instanceof StorageProfileS3Dto ? p.getStorageProfileS3Dto().getId().toString() : p.getStorageProfileS3STSDto().getId().toString())
+                            .equals(config.vault.storageProfileId.toLowerCase())
+                    ).findFirst().get();
 
             final UUID vaultId = UUID.randomUUID();
             final boolean automaticAccessGrant = true;
@@ -58,7 +59,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
-            new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper,
+            new CreateVaultService(hubSession).createVault(userKeys, storageProfile,
                     new CreateVaultService.CreateVaultModel(vaultId,
                             "vault", null,
                             config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName,

@@ -63,7 +63,6 @@ import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
@@ -149,17 +148,17 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(hubSession.getClient())
                     .apiStorageprofileGet(false);
             // aws static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("72736c19-283c-49d3-80a5-ab74b5202543")));
+            assertTrue(storageProfileDtos.stream().map(StorageProfileDto::getActualInstance).filter(actualInstance -> actualInstance instanceof StorageProfileS3Dto)
+                    .map(StorageProfileS3Dto.class::cast).anyMatch(s -> s.getId().toString().equals("72736c19-283c-49d3-80a5-ab74b5202543")));
             // aws sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("844bd517-96d4-4787-bcfa-238e103149f6")));
+            assertTrue(storageProfileDtos.stream().map(StorageProfileDto::getActualInstance).filter(actualInstance -> actualInstance instanceof StorageProfileS3STSDto)
+                    .map(StorageProfileS3STSDto.class::cast).anyMatch(s -> s.getId().toString().equals("844bd517-96d4-4787-bcfa-238e103149f6")));
             // minio static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("71b910e0-2ecc-46de-a871-8db28549677e")));
+            assertTrue(storageProfileDtos.stream().map(StorageProfileDto::getActualInstance).filter(actualInstance -> actualInstance instanceof StorageProfileS3Dto)
+                    .map(StorageProfileS3Dto.class::cast).anyMatch(s -> s.getId().toString().equals("71b910e0-2ecc-46de-a871-8db28549677e")));
             // minio sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("732d43fa-3716-46c4-b931-66ea5405ef1c")));
+            assertTrue(storageProfileDtos.stream().map(StorageProfileDto::getActualInstance).filter(actualInstance -> actualInstance instanceof StorageProfileS3STSDto)
+                    .map(StorageProfileS3STSDto.class::cast).anyMatch(s -> s.getId().toString().equals("732d43fa-3716-46c4-b931-66ea5405ef1c")));
         }
         catch(ApiException e) {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
@@ -220,24 +219,24 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         try {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
-            log.info("Coercing storage profiles {}", storageProfiles);
-            final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
-                    .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+            final StorageProfileDto storageProfile = storageProfiles.stream()
+                    .filter(p -> (p.getActualInstance() instanceof StorageProfileS3Dto ? p.getStorageProfileS3Dto().getId().toString() : p.getStorageProfileS3STSDto().getId().toString())
+                            .equals(config.vault.storageProfileId.toLowerCase())
+                    ).findFirst().get();
 
             log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.randomUUID();
 
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
-            new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper, new CreateVaultService.CreateVaultModel(
+            new CreateVaultService(hubSession).createVault(userKeys, storageProfile, new CreateVaultService.CreateVaultModel(
                     vaultId, "vault", null,
                     config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName, config.vault.region, true, 3));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.ROOT, new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
 
-            final Path bucket = new Path(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+            final Path bucket = new Path(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto ? storageProfile.getStorageProfileS3STSDto().getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubVaultRegistry vaultRegistry = hubSession.getRegistry();
             {

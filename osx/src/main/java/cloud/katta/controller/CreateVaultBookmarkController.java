@@ -33,7 +33,9 @@ import org.rococoa.cocoa.foundation.NSSize;
 import java.util.List;
 import java.util.UUID;
 
-import cloud.katta.model.StorageProfileDtoWrapper;
+import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.workflows.CreateVaultService;
 
 
@@ -60,7 +62,7 @@ public class CreateVaultBookmarkController extends SheetController {
 
     private final Controller controller;
 
-    private final List<StorageProfileDtoWrapper> storageProfiles;
+    private final List<StorageProfileDto> storageProfiles;
 
     @Outlet
     private NSImageView iconView;
@@ -111,7 +113,7 @@ public class CreateVaultBookmarkController extends SheetController {
     @Outlet
     private NSButton createVaultButton;
 
-    public CreateVaultBookmarkController(final List<StorageProfileDtoWrapper> storageProfiles, final Controller controller, final CreateVaultService.CreateVaultModel model, final Callback callback) {
+    public CreateVaultBookmarkController(final List<StorageProfileDto> storageProfiles, final Controller controller, final CreateVaultService.CreateVaultModel model, final Callback callback) {
         this.model = model;
         this.callback = callback;
         this.title_ = LocaleFactory.localizedString("Create Vault", "Cipherduck");
@@ -195,9 +197,9 @@ public class CreateVaultBookmarkController extends SheetController {
         this.backendCombobox.removeAllItems();
         this.backendCombobox.setTarget(this.id());
         this.backendCombobox.setAction(Foundation.selector("backendComboboxClicked:"));
-        for(final StorageProfileDtoWrapper backend : storageProfiles) {
-            this.backendCombobox.addItemWithTitle(backend.getName());
-            this.backendCombobox.lastItem().setRepresentedObject(backend.getId().toString());
+        for(final StorageProfileDto backend : storageProfiles) {
+            this.backendCombobox.addItemWithTitle(backend.getActualInstance() instanceof StorageProfileS3Dto ? backend.getStorageProfileS3Dto().getName() : backend.getStorageProfileS3STSDto().getName());
+            this.backendCombobox.lastItem().setRepresentedObject(backend.getActualInstance() instanceof StorageProfileS3Dto ? backend.getStorageProfileS3Dto().getId().toString() : backend.getStorageProfileS3STSDto().getId().toString());
         }
         if(StringUtils.isNotBlank(this.model.storageProfileId())) {
             this.backendCombobox.selectItemAtIndex(this.backendCombobox.indexOfItemWithRepresentedObject(this.model.storageProfileId()));
@@ -219,19 +221,21 @@ public class CreateVaultBookmarkController extends SheetController {
                 return;
             }
             final String selectedStorageId = this.backendCombobox.selectedItem().representedObject();
-            final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> c.getId().toString().equals(selectedStorageId)).findFirst().get();
+            final StorageProfileDto config = storageProfiles.stream().filter(c -> (c.getActualInstance() instanceof StorageProfileS3Dto ? c.getStorageProfileS3Dto().getId().toString() : c.getStorageProfileS3STSDto().getId().toString()).equals(selectedStorageId)).findFirst().get();
 
-            final List<String> regions = config.getRegions();
-            if(null != regions) {
-                for(final String region : regions) {
-                    this.regionCombobox.addItemWithTitle(LocaleFactory.localizedString(region, "S3"));
-                    this.regionCombobox.lastItem().setRepresentedObject(region);
-                    if(config.getRegion().equals(region)) {
-                        regionCombobox.selectItem(this.regionCombobox.lastItem());
+            if(config.getActualInstance() instanceof StorageProfileS3STSDto) {
+                final List<String> regions = config.getStorageProfileS3STSDto().getRegions();
+                if(null != regions) {
+                    for(final String region : regions) {
+                        this.regionCombobox.addItemWithTitle(LocaleFactory.localizedString(region, "S3"));
+                        this.regionCombobox.lastItem().setRepresentedObject(region);
+                        if(config.getStorageProfileS3STSDto().getRegion().equals(region)) {
+                            regionCombobox.selectItem(this.regionCombobox.lastItem());
+                        }
                     }
                 }
             }
-            final boolean isPermanent = config.getStsEndpoint() == null;
+            final boolean isPermanent = config.getActualInstance() instanceof StorageProfileS3Dto;
             final boolean hiddenIfSTS = !isPermanent;
             final boolean hiddenIfPermanent = isPermanent;
             bucketNameLabel.setHidden(hiddenIfSTS);
@@ -363,8 +367,9 @@ public class CreateVaultBookmarkController extends SheetController {
             return false;
         }
         final String selectedStorageId = this.backendCombobox.selectedItem().representedObject();
-        final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> c.getId().toString().equals(selectedStorageId)).findFirst().get();
-        final boolean isPermanent = config.getStsEndpoint() == null;
+        final StorageProfileDto config = storageProfiles.stream().filter(c -> (c.getActualInstance() instanceof StorageProfileS3Dto ? c.getStorageProfileS3Dto().getId().toString() : c.getStorageProfileS3STSDto().getId().toString()).equals(selectedStorageId)).findFirst().get();
+
+        final boolean isPermanent = config.getActualInstance() instanceof StorageProfileS3Dto;
         if(isPermanent) {
             if(StringUtils.isBlank(this.accessKeyIdField.stringValue())) {
                 return false;

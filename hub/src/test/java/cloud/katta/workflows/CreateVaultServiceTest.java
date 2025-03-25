@@ -10,28 +10,11 @@ import ch.cyberduck.core.Local;
 import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.profiles.LocalProfilesFinder;
-
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.UUID;
-
 import cloud.katta.client.ApiException;
 import cloud.katta.client.HubApiClient;
-import cloud.katta.client.api.ConfigResourceApi;
-import cloud.katta.client.api.StorageProfileResourceApi;
-import cloud.katta.client.api.StorageResourceApi;
-import cloud.katta.client.api.UsersResourceApi;
-import cloud.katta.client.api.VaultResourceApi;
-import cloud.katta.client.model.ConfigDto;
-import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.StorageProfileDto;
-import cloud.katta.client.model.StorageProfileS3STSDto;
-import cloud.katta.client.model.UserDto;
+import cloud.katta.client.api.*;
+import cloud.katta.client.model.*;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
@@ -39,10 +22,15 @@ import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
-
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.times;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.UUID;
 
 class CreateVaultServiceTest {
 
@@ -69,7 +57,6 @@ class CreateVaultServiceTest {
                         .stsEndpoint("http://audley.end.point")
 
         );
-        final StorageProfileDtoWrapper storageProfileWrapper = StorageProfileDtoWrapper.coerce(storageProfile);
 
 
         Mockito.when(hubSession.getHost()).thenReturn(hub);
@@ -103,7 +90,7 @@ class CreateVaultServiceTest {
 
         final CreateVaultService createVaultService = new CreateVaultService(hubSession, config, vaults, storageProfiles, users, storage, CreateVaultService.TemplateUploadService.disabled, CreateVaultService.STSInlinePolicyService.disabled);
 
-        createVaultService.createVault(userKeys, storageProfileWrapper, createVaultModel);
+        createVaultService.createVault(userKeys, storageProfile, createVaultModel);
 
         Mockito.verify(vaults, times(1)).apiVaultsVaultIdPut(eq(vaultId), any());
         Mockito.verify(vaults, times(1)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
