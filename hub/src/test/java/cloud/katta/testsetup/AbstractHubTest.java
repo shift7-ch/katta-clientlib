@@ -15,6 +15,7 @@ import ch.cyberduck.core.vault.VaultRegistryFactory;
 import ch.cyberduck.test.VaultTest;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -115,8 +116,8 @@ public abstract class AbstractHubTest extends VaultTest {
                 .withDockerConfig(HYBRID_DOCKER_CONFIG);
     }
 
-    @BeforeAll
-    public static void preferences() throws IOException {
+    @BeforeEach
+    public void preferences() throws IOException {
         final Preferences preferences;
         PreferencesFactory.set(preferences = new MemoryPreferences() {
             @Override

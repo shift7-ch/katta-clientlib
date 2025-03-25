@@ -9,6 +9,7 @@ import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.ListService;
+import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
@@ -30,12 +31,18 @@ import ch.cyberduck.core.transfer.Transfer;
 import ch.cyberduck.core.transfer.TransferItem;
 import ch.cyberduck.core.transfer.TransferStatus;
 
+import cloud.katta.client.api.UsersResourceApi;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.ByteArrayInputStream;
@@ -71,6 +78,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.*;
 
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
 
@@ -308,6 +316,22 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         finally {
             hubSession.close();
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("arguments")
+    public void test04SetupCode(final HubTestConfig config) throws Exception {
+        final HubSession hubSession = setupConnection(config.setup);
+        assertEquals(OAuthTokens.EMPTY, hubSession.getHost().getCredentials().getOauth());
+        assertEquals(StringUtils.EMPTY, hubSession.getHost().getCredentials().getPassword());
+        final ListService feature = hubSession.getFeature(ListService.class);
+        final AttributedList<Path> vaults = feature.list(Home.ROOT, new DisabledListProgressListener());
+        assertEquals(2, vaults.size());
+        assertEquals(vaults, feature.list(Home.ROOT, new DisabledListProgressListener()));
+        for(Path vault : vaults) {
+            assertTrue(hubSession.getFeature(Find.class).find(vault));
+        }
+        new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);
     }
 
     private static byte @NotNull [] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {
