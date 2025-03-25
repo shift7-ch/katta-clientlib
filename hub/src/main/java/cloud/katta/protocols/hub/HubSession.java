@@ -27,6 +27,7 @@ import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
@@ -102,6 +103,14 @@ public class HubSession extends HttpSession<HubApiClient> {
             try {
                 // Obtain OAuth configuration
                 final ConfigDto configDto = new ConfigResourceApi(client).apiConfigGet();
+
+                int minHubApiLevel = PreferencesFactory.get().getInteger("cloud.katta.min_api_level");
+                if(configDto.getApiLevel() < minHubApiLevel) {
+                    final String detail = String.format("Client requires API level at least %s, found %s, for hub %s", minHubApiLevel, configDto.getApiLevel(), host);
+                    log.error(detail);
+                    throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), detail);
+                }
+
                 final String hubId = configDto.getUuid().toString();
                 log.debug("Configure bookmark with id {}", hubId);
                 host.setUuid(hubId);
