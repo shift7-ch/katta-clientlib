@@ -12,9 +12,9 @@ import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
-
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
+
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 /**
  * Test synchronization of profiles, adding profiles and adding vaults.
@@ -23,44 +23,31 @@ import cloud.katta.testsetup.HubTestSetupDockerExtension;
 class HubSynchronizeTest {
 
     @Nested
-    @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
+    @ExtendWith({HubTestSetupDockerExtension.Local.class})
     @TestInstance(PER_CLASS)
-    public class UnattendedMinio extends AbstractHubSynchronizeTest {
+    public class Local extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
-            return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
+            return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
     }
 
     @Nested
+    @ExtendWith({HubTestSetupDockerExtension.LocalKeepRunning.class})
     @TestInstance(PER_CLASS)
-    @Disabled("run standalone against already running hub started by runForever test for unattended configuration.")
-    public class AttendedMinio extends AbstractHubSynchronizeTest {
+    @Disabled
+    public class LocalKeepRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
-            return Stream.of(minioStaticUnattendedLocalOnly, minioSTSUnattendedLocalOnly);
+            return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
     }
 
     @Nested
-    @ExtendWith({HubTestSetupDockerExtension.UnattendedLocalKeycloakDev.class})
+    @ExtendWith({HubTestSetupDockerExtension.LocalAlreadyRunning.class})
     @TestInstance(PER_CLASS)
-    @Disabled("TODO https://github.com/shift7-ch/cipherduck-hub/issues/12 implemented unattended keycloak dev with aws in ci, dedicated keycloak?")
-    public class UnattendedLocalKeycloakDevOnlyStatic extends AbstractHubSynchronizeTest {
+    @Disabled
+    public class LocalAlreadyRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
-            return Stream.of();
-        }
-    }
-
-    @Nested
-    @TestInstance(PER_CLASS)
-    @Disabled("run standalone against already running hub")
-    public class AttendedKeycloakTesting extends AbstractHubSynchronizeTest {
-        private Stream<Arguments> arguments() {
-            return Stream.of(
-                    minioStaticAttendedLocalKeycloadkDev,
-                    minioSTSAttendedLocalKeycloadkDev,
-                    awsSTSAttendedLocalKeycloadkDev,
-                    awsStaticAttendedLocalKeycloadkDev
-            );
+            return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
     }
 }

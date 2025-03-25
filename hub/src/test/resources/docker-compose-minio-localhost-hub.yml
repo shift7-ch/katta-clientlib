@@ -1,5 +1,6 @@
 services:
   keycloak:
+    profiles: [ local ]
     hostname: keycloak
     image: "${KATTA_KEYCLOAK_IMAGE}"
     pull_policy: missing
@@ -28,6 +29,7 @@ services:
       retries: 15
 
   keycloak-enable-direct-access-grant:
+    profiles: [ local ]
     image: "${KATTA_KEYCLOAK_IMAGE}"
     pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]
@@ -35,8 +37,12 @@ services:
       - |
         set -x
         set -e
+        # enable direct access grants in client cryptomator for integration testing
         CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
         /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
+        # allow redirect URI from localhost for "attended" mode for client cryptomatorhub, i.e. dev wants to interact directly with the running setup
+        CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s 'redirectUris=["http://localhost:${HUB_PORT}/*"]'
     depends_on:
       keycloak:
         condition: service_healthy
@@ -159,6 +165,8 @@ services:
       QUARKUS_DATASOURCE_USERNAME: quarkus
       QUARKUS_DATASOURCE_PASSWORD: quarkus
       QUARKUS_LOG_LEVEL: DEBUG
+      # allow calls from frontend localhost:8280 to keycloak:8380
+      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: default-src 'self'; connect-src 'self'  keycloak:${KEYCLOAK_HTTP_PORT}; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'
       HUB_KEYCLOAK_PUBLIC_URL: http://keycloak:${KEYCLOAK_HTTP_PORT}
       HUB_KEYCLOAK_LOCAL_URL: http://keycloak:${KEYCLOAK_HTTP_PORT}
       HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: cryptomator

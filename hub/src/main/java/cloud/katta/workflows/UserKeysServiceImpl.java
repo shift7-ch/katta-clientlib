@@ -14,9 +14,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
 
-import static cloud.katta.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static cloud.katta.workflows.DeviceKeysServiceImpl.COMPUTER_NAME;
-
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.DeviceResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
@@ -33,6 +30,9 @@ import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
+
+import static cloud.katta.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
+import static cloud.katta.workflows.DeviceKeysServiceImpl.COMPUTER_NAME;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
@@ -106,7 +106,7 @@ public class UserKeysServiceImpl implements UserKeysService {
             ApiException, SecurityFailure {
         try {
             return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
-                    UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getEcdsaPublicKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
+                    UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
         }
         catch(ParseException | JOSEException | InvalidKeySpecException e) {
             throw new SecurityFailure(e);

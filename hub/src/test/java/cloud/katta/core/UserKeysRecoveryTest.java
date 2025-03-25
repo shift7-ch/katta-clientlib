@@ -27,11 +27,11 @@ import com.nimbusds.jose.JOSEException;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith({HubTestSetupDockerExtension.UnattendedLocalOnly.class})
+@ExtendWith({HubTestSetupDockerExtension.Local.class})
 public class UserKeysRecoveryTest extends AbstractHubTest {
 
     private Stream<Arguments> arguments() {
-        return Stream.of(minioSTSUnattendedLocalOnly);
+        return Stream.of(LOCAL_MINIO_STS);
     }
 
     @ParameterizedTest
