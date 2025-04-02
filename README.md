@@ -21,8 +21,6 @@ Features:
 ## One-Stop Shop Demo with Docker Compose
 
 ```bash
-echo "127.0.0.1 keycloak" >> /etc/hosts
-echo "127.0.0.1 minio" >> /etc/hosts
 docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local up -d
 docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
 ```

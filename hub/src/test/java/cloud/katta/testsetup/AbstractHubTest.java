@@ -68,9 +68,9 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG;
 
     static {
-        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, "local");
+        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8180, 9000, 9001, 8080, "local");
         LOCAL = new HubTestConfig.Setup()
-                .withHubURL("http://localhost:8280")
+                .withHubURL("http://localhost:8080")
                 .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
                 .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
                 .withDockerConfig(LOCAL_DOCKER_CONFIG);
