@@ -1,5 +1,5 @@
 server {
-    listen       8180;
+    listen       ${KEYCLOAK_HTTP_PORT};
 #     server_name  localhost;
 
     # set DNS resolver as Docker internal DNS
@@ -9,7 +9,7 @@ server {
 
     location / {
         # docker internal port!
-        proxy_pass http://keycloak:8180$uri$is_args$args;
+        proxy_pass http://keycloak:${KEYCLOAK_HTTP_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
     }
 
     access_log  /var/log/nginx/host.access.log;
@@ -23,7 +23,7 @@ server {
 }
 
 server {
-    listen       9000;
+    listen       ${MINIO_PORT};
 #     server_name  localhost;
 
     # set DNS resolver as Docker internal DNS
@@ -49,10 +49,10 @@ server {
     proxy_request_buffering off;
 
     location / {
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $${my_empty_variable}http_host;
+        proxy_set_header X-Real-IP $${my_empty_variable}remote_addr;
+        proxy_set_header X-Forwarded-For $${my_empty_variable}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $${my_empty_variable}scheme;
 
         proxy_connect_timeout 300;
         # Default is HTTP/1, keepalive is only enabled in HTTP/1.1
@@ -61,7 +61,7 @@ server {
         chunked_transfer_encoding off;
 
         # docker internal port!
-        proxy_pass http://minio:9000$uri$is_args$args;
+        proxy_pass http://minio:${MINIO_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
     }
 
     access_log  /var/log/nginx/host.access.log;

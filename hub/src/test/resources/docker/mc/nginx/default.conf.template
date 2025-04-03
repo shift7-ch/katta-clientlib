@@ -1,5 +1,5 @@
 server {
-    listen       8180;
+    listen       ${KEYCLOAK_HTTP_PORT};
 #     server_name  localhost;
 
     # set DNS resolver as Docker internal DNS
@@ -9,7 +9,7 @@ server {
 
     location / {
         # docker internal port!
-        proxy_pass http://keycloak:8180$uri$is_args$args;
+        proxy_pass http://keycloak:${KEYCLOAK_HTTP_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
     }
 
     access_log  /var/log/nginx/host.access.log;

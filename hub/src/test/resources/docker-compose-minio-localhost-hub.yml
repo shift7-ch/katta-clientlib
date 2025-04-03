@@ -34,8 +34,8 @@ services:
     entrypoint: [ "/bin/bash","-c" ]
     command:
       - |
-        set -x
-        set -e
+        set -euxo pipefail
+
         # enable direct access grants in client cryptomator and cryptomatorhub for integration testing and manual exploration
         CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
         /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
@@ -82,20 +82,32 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${MINIO_PORT}/minio/health/ready" ]
       interval: 5s
       timeout: 1s
       retries: 5
     volumes:
-      - ./docker/minio/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/minio/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
     command:
       - |
+        set -euxo pipefail
+
+        # inject ports
+        # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
+        # see https://www.baeldung.com/linux/envsubst-command
+        # https://stackoverflow.com/questions/24963705/is-there-an-escape-character-for-envsubst
+        envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+        cat /etc/nginx/conf.d/default.conf
         # reload and verify configuration
         nginx -t
         # start reverse proxy to keycloak
         systemctl start nginx.service
+        # verify reverse proxy
+        curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+        curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
 
         /minio server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
 
@@ -109,23 +121,36 @@ services:
         condition: service_healthy
     volumes:
       - ./setup:/setup
-      - ./docker/minio/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/minio/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
+    environment:
+      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      KEYCLOAK_HOSTNAME: ${KEYCLOAK_HOSTNAME}
     entrypoint: [ "/bin/bash","-c" ]
     command:
       - |
-        set -x
-        set -e
+        set -euxo pipefail
 
+        # inject ports
+        # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
+        # see https://www.baeldung.com/linux/envsubst-command
+        # https://stackoverflow.com/questions/24963705/is-there-an-escape-character-for-envsubst
+        envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+        cat /etc/nginx/conf.d/default.conf
         # reload and verify configuration
         nginx -t
         # start reverse proxy to keycloak
         systemctl start nginx.service
+        # verify reverse proxy
+        curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+        curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
 
         ls /setup
         /mc config host add myminio http://minio:${MINIO_PORT} minioadmin minioadmin
 
         /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
         /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
+
+        curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
 
         /mc idp openid add myminio cryptomator \
           config_url="http://${KEYCLOAK_HOSTNAME}:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" \
@@ -200,17 +225,31 @@ services:
       HUB_KEYCLOAK_LOCAL_URL: http://${KEYCLOAK_HOSTNAME}:${KEYCLOAK_HTTP_PORT}
       HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: cryptomator
       AWS_REGION: us-east-1
+      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      MINIO_PORT: ${MINIO_PORT}
     ports:
       - "${HUB_PORT}:${HUB_PORT}"
     volumes:
-      - ./docker/hub/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/hub/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
     command:
       - |
+        set -euxo pipefail
+
+        # inject ports
+        # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
+        # see https://www.baeldung.com/linux/envsubst-command
+        # https://stackoverflow.com/questions/24963705/is-there-an-escape-character-for-envsubst
+        envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+        cat /etc/nginx/conf.d/default.conf
         # reload and verify configuration
         nginx -t
         # start reverse proxy to keycloak and minio
         systemctl start nginx.service
+        # verify reverse proxy
+        curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+        curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+
         java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
 
   hub_setup_storage_profile:
@@ -224,22 +263,29 @@ services:
         condition: service_healthy
     volumes:
       - ./setup:/setup
-      # TODO inject ports https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose https://www.baeldung.com/linux/envsubst-command
-      - ./docker/hub_setup/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/hub_setup/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
+    environment:
+      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      HUB_PORT: ${HUB_PORT}
     command:
       - |
         set -euxo pipefail
 
-
-        # TODO extract to own Dockerfile to speed up
-        apt-get update
-        apt-get install -y jq
-
+        # inject ports
+        # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
+        # see https://www.baeldung.com/linux/envsubst-command
+        # https://stackoverflow.com/questions/24963705/is-there-an-escape-character-for-envsubst
+        envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+        cat /etc/nginx/conf.d/default.conf
         # reload and verify configuration
         nginx -t
         # start reverse proxy to keycloak and hub
         nginx
+
+        # TODO extract to own Dockerfile to speed up
+        apt-get update
+        apt-get install -y jq
 
         ls /setup
         curl --version
