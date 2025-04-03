@@ -253,7 +253,8 @@ services:
         java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
 
   hub_setup_storage_profile:
-    image: nginx
+    build:
+      dockerfile: docker/hub_setup_storage_profile/Dockerfile
     depends_on:
       keycloak:
         condition: service_healthy
@@ -282,10 +283,6 @@ services:
         nginx -t
         # start reverse proxy to keycloak and hub
         nginx
-
-        # TODO extract to own Dockerfile to speed up
-        apt-get update
-        apt-get install -y jq
 
         ls /setup
         curl --version
