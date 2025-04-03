@@ -105,13 +105,14 @@ public class HubSession extends HttpSession<HubApiClient> {
                 final ConfigDto configDto = new ConfigResourceApi(client).apiConfigGet();
 
                 int minHubApiLevel = PreferencesFactory.get().getInteger("cloud.katta.min_api_level");
-                if(configDto.getApiLevel() < minHubApiLevel) {
-                    final String detail = String.format("Client requires API level at least %s, found %s, for hub %s", minHubApiLevel, configDto.getApiLevel(), host);
+                final Integer apiLevel = configDto.getApiLevel();
+                if(apiLevel == null || apiLevel < minHubApiLevel) {
+                    final String detail = String.format("Client requires API level at least %s, found %s, for hub %s", minHubApiLevel, apiLevel, host);
                     log.error(detail);
                     throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), detail);
                 }
 
-                final String hubId = configDto.getUuid().toString();
+                final String hubId = configDto.getUuid();
                 log.debug("Configure bookmark with id {}", hubId);
                 host.setUuid(hubId);
                 final Profile profile = new Profile(host.getProtocol(), new HubConfigDtoDeserializer(configDto));
