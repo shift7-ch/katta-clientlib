@@ -113,7 +113,7 @@ services:
 
   minio_setup:
     build:
-      dockerfile: docker/mc/Dockerfile
+      dockerfile: docker/minio_setup/Dockerfile
     depends_on:
       minio:
         condition: service_healthy
