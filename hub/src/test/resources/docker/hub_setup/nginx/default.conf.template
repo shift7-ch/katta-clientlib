@@ -1,6 +1,5 @@
 server {
     listen       ${KEYCLOAK_HTTP_PORT};
-#     server_name  localhost;
 
     # set DNS resolver as Docker internal DNS
     # https://forums.docker.com/t/nginx-swarm-redeploy-timeouts/68904/4
@@ -24,7 +23,6 @@ server {
 
 server {
     listen       ${HUB_PORT};
-#     server_name  localhost;
 
     # set DNS resolver as Docker internal DNS
     # https://forums.docker.com/t/nginx-swarm-redeploy-timeouts/68904/4
