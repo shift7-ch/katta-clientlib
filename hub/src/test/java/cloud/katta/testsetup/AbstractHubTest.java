@@ -140,6 +140,7 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("hub.protocol.scheduler.period", 30);
         preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
+        preferences.setProperty("cloud.katta.min_api_level", 4);
 
         preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
     }
