@@ -47,8 +47,10 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                 .withPull(true)
                 .withEnv(
                         Stream.of(
+                                new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HOSTNAME", "localhost"),
                                 new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HTTP_PORT", Integer.toString(configuration.keycloakServicePort)),
                                 new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HTTPS_PORT", "8443"),
+                                new AbstractMap.SimpleImmutableEntry<>("MINIO_HOSTNAME", "localhost"),
                                 new AbstractMap.SimpleImmutableEntry<>("MINIO_PORT", Integer.toString(configuration.minioServicePort)),
                                 new AbstractMap.SimpleImmutableEntry<>("MINIO_CONSOLE_PORT", Integer.toString(configuration.minioConsolePort)),
                                 new AbstractMap.SimpleImmutableEntry<>("HUB_PORT", Integer.toString(configuration.hubPort))

@@ -1,0 +1,74 @@
+server {
+    listen       ${KEYCLOAK_HTTP_PORT};
+
+    # set DNS resolver as Docker internal DNS
+    # https://forums.docker.com/t/nginx-swarm-redeploy-timeouts/68904/4
+    resolver 127.0.0.11 valid=10s;
+    resolver_timeout 5s;
+
+    location / {
+        # docker internal port!
+        proxy_pass http://keycloak:${KEYCLOAK_HTTP_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
+    }
+
+    access_log  /var/log/nginx/host.access.log;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+server {
+    listen       ${MINIO_PORT};
+#     server_name  localhost;
+
+    # set DNS resolver as Docker internal DNS
+    # https://forums.docker.com/t/nginx-swarm-redeploy-timeouts/68904/4
+    resolver 127.0.0.11 valid=10s;
+    resolver_timeout 5s;
+
+    # MinIO uses a strict implementation of the S3 API, including requiring clients to sign all operations using AWS Signature V4 or the legacy Signature V2.
+    # AWS signature calculation uses the client-provided headers, such that any modification to those headers by load balancers, proxies, security programs,
+    # or other components will result in signature mismatch errors and request failure.
+    # Ensure any such intermediate components support pass-through of unaltered headers from client to server.
+    # (source: https://min.io/docs/minio/kubernetes/upstream/operations/concepts/architecture.html#distributed-minio-deployments)
+    #
+    # Configuration from https://min.io/docs/minio/linux/integrations/setup-nginx-proxy-with-minio.html:
+    #
+    # Allow special characters in headers
+    ignore_invalid_headers off;
+    # Allow any size file to be uploaded.
+    # Set to a value such as 1000m; to restrict file size to a specific value
+    client_max_body_size 0;
+    # Disable buffering
+    proxy_buffering off;
+    proxy_request_buffering off;
+
+    location / {
+        proxy_set_header Host $${my_empty_variable}http_host;
+        proxy_set_header X-Real-IP $${my_empty_variable}remote_addr;
+        proxy_set_header X-Forwarded-For $${my_empty_variable}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $${my_empty_variable}scheme;
+
+        proxy_connect_timeout 300;
+        # Default is HTTP/1, keepalive is only enabled in HTTP/1.1
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        chunked_transfer_encoding off;
+
+        # docker internal port!
+        proxy_pass http://minio:${MINIO_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
+    }
+
+    access_log  /var/log/nginx/host.access.log;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
