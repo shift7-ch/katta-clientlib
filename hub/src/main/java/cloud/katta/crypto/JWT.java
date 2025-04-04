@@ -26,7 +26,7 @@ import com.nimbusds.jwt.SignedJWT;
  * <p>
  * Counterpart of @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/jwt.ts">jwt.ts</a>
  */
-public class JWT {
+public final class JWT {
     /**
      * Decodes and verifies an ES384 JWT (signed with ECDSA using P-384 and SHA-384).
      *
