@@ -10,15 +10,18 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Properties;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 
 /**
  * Profiles:
@@ -39,37 +42,27 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     protected ComposeContainer compose;
 
-    protected void setupDocker(final HubTestConfig.Setup.DockerConfig configuration) throws URISyntaxException {
+    protected void setupDocker(final HubTestConfig.Setup.DockerConfig configuration) throws URISyntaxException, IOException {
         log.info("Setup docker {}", configuration);
+        final Properties props = new Properties();
+        props.load(this.getClass().getResourceAsStream(configuration.envFile));
+        final HashMap<String, String> env = props.entrySet().stream().collect(
+                Collectors.toMap(
+                        e -> String.valueOf(e.getKey()),
+                        e -> String.valueOf(e.getValue()),
+                        (prev, next) -> next, HashMap::new
+                ));
+        env.put("HUB_ADMIN_USER", configuration.hubAdminUser);
+        env.put("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword);
         this.compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
                 .withLocalCompose(true)
                 .withPull(true)
-                .withEnv(
-                        Stream.of(
-                                new AbstractMap.SimpleImmutableEntry<>("HUB_PORT", Integer.toString(configuration.hubPort)),
-                                new AbstractMap.SimpleImmutableEntry<>("HUB_KEYCLOAK_URL", configuration.hubKeycloakUrl),
-                                new AbstractMap.SimpleImmutableEntry<>("HUB_KEYCLOAK_REALM", configuration.hubKeycloakRealm),
-                                new AbstractMap.SimpleImmutableEntry<>("HUB_ADMIN_USER", configuration.hubAdminUser),
-                                new AbstractMap.SimpleImmutableEntry<>("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword),
-
-                                new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HOSTNAME", "localhost"),
-                                new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HTTP_PORT", Integer.toString(configuration.keycloakServicePort)),
-                                new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HTTPS_PORT", "8443"),
-
-                                new AbstractMap.SimpleImmutableEntry<>("MINIO_HOSTNAME", "localhost"),
-                                new AbstractMap.SimpleImmutableEntry<>("MINIO_PORT", Integer.toString(configuration.minioServicePort)),
-                                new AbstractMap.SimpleImmutableEntry<>("MINIO_CONSOLE_PORT", Integer.toString(configuration.minioConsolePort))
-
-                        ).collect(Collectors.toMap(AbstractMap.SimpleImmutableEntry::getKey, AbstractMap.SimpleImmutableEntry::getValue)))
+                .withEnv(env)
                 .withOptions(configuration.profile == null ? "" : String.format("--profile=%s", configuration.profile))
-                .withLogConsumer("minio-1", outputFrame -> log.debug("[minio_1] {}", outputFrame.getUtf8String()))
-                .withExposedService("minio-1", configuration.minioServicePort, Wait.forListeningPort())
-                .withExposedService("keycloak-1", configuration.keycloakServicePort, Wait.forListeningPort())
-                .withExposedService("hub-1", configuration.hubPort, Wait.forListeningPort())
-                .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)))
-                .waitingFor("hub_setup_storage_profile-1", new LogMessageWaitStrategy().withRegEx(".*createbuckets successful.*").withStartupTimeout(Duration.ofMinutes(2)));
+                .waitingFor("wait-1", new LogMessageWaitStrategy().withRegEx(".*exit 0.*").withStartupTimeout(Duration.ofMinutes(2)));
         compose.start();
+
         log.info("Done setup docker {}", configuration);
     }
 
@@ -78,7 +71,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
      */
     public static class Local extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
             this.setupDocker(AbstractHubTest.LOCAL_DOCKER_CONFIG);
         }
 
@@ -91,7 +84,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     public static class LocalKeepRunning extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
             this.setupDocker(AbstractHubTest.LOCAL_DOCKER_CONFIG);
         }
 
@@ -119,7 +112,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
      */
     public static class HybridTesting extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
             this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
         }
 
@@ -132,7 +125,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     public static class HybridTestingKeepRunning extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
+        public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
             this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
         }
 

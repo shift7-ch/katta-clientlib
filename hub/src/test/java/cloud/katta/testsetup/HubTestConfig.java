@@ -62,28 +62,16 @@ public class HubTestConfig {
 
         public static class DockerConfig {
             public final String composeFile;
-            public final int keycloakServicePort;
-            public final int minioServicePort;
-            public final int minioConsolePort;
-            public final int hubPort;
+            public final String envFile;
             public final String profile;
-            public final String hubKeycloakUrl;
-            public final String hubKeycloakBasePath;
-            public final String hubKeycloakRealm;
             public final String hubAdminUser;
             public final String hubAdminPassword;
 
 
-            public DockerConfig(final String composeFile, final int keycloakServicePort, final int minioServicePort, final int minioConsolePort, final int hubPort, final String profile, final String hubKeycloakUrl, final String hubKeycloakBasePath, final String hubKeycloakRealm, final String hubAdminUser, final String hubAdminPassword) {
+            public DockerConfig(final String composeFile, final String envFile, final String profile,  final String hubAdminUser, final String hubAdminPassword) {
                 this.composeFile = composeFile;
-                this.keycloakServicePort = keycloakServicePort;
-                this.minioServicePort = minioServicePort;
-                this.minioConsolePort = minioConsolePort;
-                this.hubPort = hubPort;
+                this.envFile = envFile;
                 this.profile = profile;
-                this.hubKeycloakUrl = hubKeycloakUrl;
-                this.hubKeycloakBasePath = hubKeycloakBasePath;
-                this.hubKeycloakRealm = hubKeycloakRealm;
                 this.hubAdminUser = hubAdminUser;
                 this.hubAdminPassword = hubAdminPassword;
             }
