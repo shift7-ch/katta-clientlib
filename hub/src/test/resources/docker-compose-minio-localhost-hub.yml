@@ -27,6 +27,7 @@ services:
       timeout: 10s
       retries: 15
 
+
   keycloak-enable-direct-access-grant:
     profiles: [ local ]
     image: "${KATTA_KEYCLOAK_IMAGE}"
@@ -47,6 +48,39 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+
+  keycloak-ready:
+    image: nginx
+    volumes:
+      - ./docker/hub_setup_storage_profile/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
+    environment:
+      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      HUB_PORT: ${HUB_PORT}
+    entrypoint: [ "/bin/bash","-c" ]
+    command:
+      - |
+        set -euxo pipefail
+
+        apt-get update && apt-get install -y wget
+
+        # inject ports
+        # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
+        # see https://www.baeldung.com/linux/envsubst-command
+        # https://stackoverflow.com/questions/24963705/is-there-an-escape-character-for-envsubst
+        envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+        cat /etc/nginx/conf.d/default.conf
+        # reload and verify configuration
+        nginx -t
+        # start reverse proxy to keycloak and hub
+        nginx
+
+        until wget -q -O- ${HUB_KEYCLOAK_URL}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration >/dev/null 2>&1; do sleep 1; done
+    healthcheck:
+      test: [ "CMD-SHELL", "exit 0" ]
+      interval: 10s
+      timeout: 1s
+      retries: 15
+
   postgres:
     image:
       docker.io/postgres:14
@@ -73,8 +107,8 @@ services:
     build:
       dockerfile: docker/minio/Dockerfile
     depends_on:
-      keycloak:
-        condition: service_healthy
+      keycloak-ready:
+        condition: service_completed_successfully
     restart: on-failure
     ports:
       - "${MINIO_PORT}:${MINIO_PORT}"
@@ -117,8 +151,8 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-      keycloak:
-        condition: service_healthy
+      keycloak-ready:
+        condition: service_completed_successfully
     volumes:
       - ./setup:/setup
       - ./docker/minio/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
@@ -195,8 +229,8 @@ services:
       args:
         KATTA_SERVER_IMAGE: "${KATTA_SERVER_IMAGE}"
     depends_on:
-      keycloak:
-        condition: service_healthy
+      keycloak-ready:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     healthcheck:
@@ -259,15 +293,13 @@ services:
     build:
       dockerfile: docker/hub_setup_storage_profile/Dockerfile
     depends_on:
-      keycloak:
-        condition: service_healthy
-      keycloak-enable-direct-access-grant:
+      keycloak-ready:
         condition: service_completed_successfully
       hub:
         condition: service_healthy
     volumes:
       - ./setup:/setup
-      - ./docker/hub_setup/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
+      - ./docker/hub_setup_storage_profile/nginx/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
     environment:
       KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
