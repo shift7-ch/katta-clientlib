@@ -50,6 +50,8 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                                 new AbstractMap.SimpleImmutableEntry<>("HUB_PORT", Integer.toString(configuration.hubPort)),
                                 new AbstractMap.SimpleImmutableEntry<>("HUB_KEYCLOAK_URL", configuration.hubKeycloakUrl),
                                 new AbstractMap.SimpleImmutableEntry<>("HUB_KEYCLOAK_REALM", configuration.hubKeycloakRealm),
+                                new AbstractMap.SimpleImmutableEntry<>("HUB_ADMIN_USER", configuration.hubAdminUser),
+                                new AbstractMap.SimpleImmutableEntry<>("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword),
 
                                 new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HOSTNAME", "localhost"),
                                 new AbstractMap.SimpleImmutableEntry<>("KEYCLOAK_HTTP_PORT", Integer.toString(configuration.keycloakServicePort)),

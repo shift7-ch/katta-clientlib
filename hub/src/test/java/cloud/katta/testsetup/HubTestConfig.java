@@ -68,9 +68,13 @@ public class HubTestConfig {
             public final int hubPort;
             public final String profile;
             public final String hubKeycloakUrl;
+            public final String hubKeycloakBasePath;
             public final String hubKeycloakRealm;
+            public final String hubAdminUser;
+            public final String hubAdminPassword;
 
-            public DockerConfig(final String composeFile, final int keycloakServicePort, final int minioServicePort, final int minioConsolePort, final int hubPort, final String profile, final String hubKeycloakUrl, final String hubKeycloakRealm) {
+
+            public DockerConfig(final String composeFile, final int keycloakServicePort, final int minioServicePort, final int minioConsolePort, final int hubPort, final String profile, final String hubKeycloakUrl, final String hubKeycloakBasePath, final String hubKeycloakRealm, final String hubAdminUser, final String hubAdminPassword) {
                 this.composeFile = composeFile;
                 this.keycloakServicePort = keycloakServicePort;
                 this.minioServicePort = minioServicePort;
@@ -78,7 +82,10 @@ public class HubTestConfig {
                 this.hubPort = hubPort;
                 this.profile = profile;
                 this.hubKeycloakUrl = hubKeycloakUrl;
+                this.hubKeycloakBasePath = hubKeycloakBasePath;
                 this.hubKeycloakRealm = hubKeycloakRealm;
+                this.hubAdminUser = hubAdminUser;
+                this.hubAdminPassword = hubAdminPassword;
             }
         }
 

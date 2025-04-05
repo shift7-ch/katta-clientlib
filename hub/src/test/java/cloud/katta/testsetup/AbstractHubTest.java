@@ -67,7 +67,7 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG;
 
     static {
-        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, "local", "http://localhost:8380", "cryptomator");
+        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, "local", "http://localhost:8380", "", "cryptomator", "admin", "admin");
         LOCAL = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
                 .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
@@ -101,7 +101,12 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG;
 
     static {
-        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, null,"https://testing.katta.cloud/kc", "tamarind");
+        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml",
+                -1, 9100, 9101, 8280, null,
+                "https://testing.katta.cloud", "/kc", "tamarind",
+                PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
+                PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN"))
+        );
         HYBRID_TESTING = new HubTestConfig.Setup()
                 // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
                 .withHubURL("http://localhost:8280")
