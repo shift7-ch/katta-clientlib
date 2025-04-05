@@ -15,7 +15,6 @@ import ch.cyberduck.core.vault.VaultRegistryFactory;
 import ch.cyberduck.test.VaultTest;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
@@ -55,9 +54,9 @@ public abstract class AbstractHubTest extends VaultTest {
     private static final HubTestConfig.VaultSpec awsSTSVaultConfig = new HubTestConfig.VaultSpec("AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
             null, null, null, null);
     private static final HubTestConfig.VaultSpec awsStaticVaultConfig = new HubTestConfig.VaultSpec("AWS static", "72736C19-283C-49D3-80A5-AB74B5202543",
-            "cipherststest",
-            PROPERTIES.get(String.format("%s.user", "cipherduck.AWS_CIPHERSTSTEST")),
-            PROPERTIES.get(String.format("%s.password", "cipherduck.AWS_CIPHERSTSTEST")),
+            "handmade2",
+            PROPERTIES.get("handmade2.s3.amazonaws.com.username"),
+            PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
             null
     );
 
@@ -68,7 +67,7 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG;
 
     static {
-        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, "local");
+        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.local.env", "local", "admin", "admin", "syncer");
         LOCAL = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
                 .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
@@ -98,24 +97,44 @@ public abstract class AbstractHubTest extends VaultTest {
     /**
      * Hybrid: local hub (testcontainers+docker-compose) against AWS/MinIO/Keycloak remote.
      */
-    public static final HubTestConfig.Setup HYBRID_TESTING;
+    public static final HubTestConfig.Setup HYBRID;
     public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG;
 
     static {
-        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", 8380, 9100, 9101, 8280, null);
-        HYBRID_TESTING = new HubTestConfig.Setup()
-                // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
+        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
+                "/docker-compose-minio-localhost-hub.yml",
+                "/.hybrid.env",
+                null,
+                PROPERTIES.get("testing.katta.cloud.chipotle.admin.name"),
+                PROPERTIES.get("testing.katta.cloud.chipotle.admin.password"),
+                PROPERTIES.get("testing.katta.cloud.chipotle.syncer.password")
+        );
+        HYBRID = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
-                .withUserConfig(new HubTestConfig.Setup.UserConfig(
-                        PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                        PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                        staticSetupCode()))
-                .withAdminConfig(new HubTestConfig.Setup.UserConfig(
-                        PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                        PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                        staticSetupCode()))
+                .withUserConfig(
+                        new HubTestConfig.Setup.UserConfig(
+                                PROPERTIES.get("testing.katta.cloud.chipotle.user.name"),
+                                PROPERTIES.get("testing.katta.cloud.chipotle.user.password"),
+                                staticSetupCode())
+                )
+                .withAdminConfig(
+                        new HubTestConfig.Setup.UserConfig(
+                                PROPERTIES.get("testing.katta.cloud.chipotle.admin.name"),
+                                PROPERTIES.get("testing.katta.cloud.chipotle.admin.password"),
+                                staticSetupCode())
+                )
                 .withDockerConfig(HYBRID_DOCKER_CONFIG);
     }
+
+    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedHybrid = vs -> Arguments.of(Named.of(
+            String.format("%s %s (Bucket %s)", vs.storageProfileName, HYBRID.hubURL, vs.bucketName),
+            new HubTestConfig(HYBRID, vs)));
+
+
+    public static final Arguments HYBRID_MINIO_STATIC = argumentUnattendedHybrid.apply(minioStaticVaultConfig);
+    public static final Arguments HYBRID_MINIO_STS = argumentUnattendedHybrid.apply(minioSTSVaultConfig);
+    public static final Arguments HYBRID_AWS_STATIC = argumentUnattendedHybrid.apply(awsStaticVaultConfig);
+    public static final Arguments HYBRID_AWS_STS = argumentUnattendedHybrid.apply(awsSTSVaultConfig);
 
     @BeforeEach
     public void preferences() throws IOException {
@@ -141,6 +160,8 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
         preferences.setProperty("cloud.katta.min_api_level", 4);
+
+        preferences.setProperty("s3.assumerole.tag", "VaultRequested");
 
         preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
     }

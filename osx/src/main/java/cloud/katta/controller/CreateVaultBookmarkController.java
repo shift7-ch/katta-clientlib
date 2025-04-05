@@ -21,6 +21,8 @@ import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.resources.IconCacheFactory;
 import ch.cyberduck.core.threading.AbstractBackgroundAction;
 
+import cloud.katta.client.model.Protocol;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -231,7 +233,7 @@ public class CreateVaultBookmarkController extends SheetController {
                     }
                 }
             }
-            final boolean isPermanent = config.getStsEndpoint() == null;
+            final boolean isPermanent = config.getProtocol() == Protocol.S3;
             final boolean hiddenIfSTS = !isPermanent;
             final boolean hiddenIfPermanent = isPermanent;
             bucketNameLabel.setHidden(hiddenIfSTS);
@@ -364,7 +366,7 @@ public class CreateVaultBookmarkController extends SheetController {
         }
         final String selectedStorageId = this.backendCombobox.selectedItem().representedObject();
         final StorageProfileDtoWrapper config = storageProfiles.stream().filter(c -> c.getId().toString().equals(selectedStorageId)).findFirst().get();
-        final boolean isPermanent = config.getStsEndpoint() == null;
+        final boolean isPermanent = config.getProtocol() == Protocol.S3;
         if(isPermanent) {
             if(StringUtils.isBlank(this.accessKeyIdField.stringValue())) {
                 return false;
