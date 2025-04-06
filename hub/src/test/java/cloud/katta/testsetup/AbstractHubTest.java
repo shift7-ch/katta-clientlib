@@ -67,7 +67,7 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG;
 
     static {
-        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.local.env", "local", "admin", "admin");
+        LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.local.env", "local", "admin", "admin", "syncer");
         LOCAL = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
                 .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
@@ -97,27 +97,32 @@ public abstract class AbstractHubTest extends VaultTest {
     /**
      * Hybrid: local hub (testcontainers+docker-compose) against AWS/MinIO/Keycloak remote.
      */
-    public static final HubTestConfig.Setup HYBRID_TESTING;
+    public static final HubTestConfig.Setup HYBRID;
     public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG;
 
     static {
         HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.hybrid.env", null,
-                PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN"))
+                PROPERTIES.get("testing.katta.cloud.tamarind.admin.user"), PROPERTIES.get("testing.katta.cloud.tamarind.admin.password"),
+                PROPERTIES.get("testing.katta.cloud.tamarind.syncer.password")
         );
-        HYBRID_TESTING = new HubTestConfig.Setup()
-                // N.B. port needs to match dev-realm.json as injected by hub/pom.xml
+        HYBRID = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
                 .withUserConfig(new HubTestConfig.Setup.UserConfig(
-                        PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
-                        PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_USER001")),
+                        PROPERTIES.get("testing.katta.cloud.tamarind.user.name"), PROPERTIES.get("testing.katta.cloud.tamarind.user.password"),
                         staticSetupCode()))
                 .withAdminConfig(new HubTestConfig.Setup.UserConfig(
-                        PROPERTIES.get(String.format("%s.user", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
-                        PROPERTIES.get(String.format("%s.password", "cipherduck.TESTING_CRYPTOMATOR_ADMIN")),
+                        PROPERTIES.get("testing.katta.cloud.tamarind.admin.user"), PROPERTIES.get("testing.katta.cloud.tamarind.admin.password"),
                         staticSetupCode()))
                 .withDockerConfig(HYBRID_DOCKER_CONFIG);
     }
+
+    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedHybrid = vs -> Arguments.of(Named.of(
+            String.format("%s %s (Bucket %s)", vs.storageProfileName, HYBRID.hubURL, vs.bucketName),
+            new HubTestConfig(HYBRID, vs)));
+
+
+    public static final Arguments HYBRID_MINIO_STATIC = argumentUnattendedHybrid.apply(minioStaticVaultConfig);
+    public static final Arguments HYBRID_MINIO_STS = argumentUnattendedHybrid.apply(minioSTSVaultConfig);
 
     @BeforeEach
     public void preferences() throws IOException {

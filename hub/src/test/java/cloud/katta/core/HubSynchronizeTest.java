@@ -50,4 +50,14 @@ class HubSynchronizeTest {
             return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
     }
+
+    @Nested
+    @ExtendWith({HubTestSetupDockerExtension.HybridTesting.class})
+    @TestInstance(PER_CLASS)
+    @Disabled
+    public class Hybrid extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
+            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
+        }
+    }
 }
