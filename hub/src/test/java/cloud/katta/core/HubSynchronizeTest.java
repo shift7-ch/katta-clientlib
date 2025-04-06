@@ -60,4 +60,24 @@ class HubSynchronizeTest {
             return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
         }
     }
+
+    @Nested
+    @ExtendWith({HubTestSetupDockerExtension.HybridTestingKeepRunning.class})
+    @TestInstance(PER_CLASS)
+    @Disabled
+    public class HybridKeepRunning extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
+            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
+        }
+    }
+
+    @Nested
+    @ExtendWith({HubTestSetupDockerExtension.HybridTestingAlreadyRunning.class})
+    @TestInstance(PER_CLASS)
+    @Disabled
+    public class HybridAlreadyRunning extends AbstractHubSynchronizeTest {
+        private Stream<Arguments> arguments() {
+            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
+        }
+    }
 }
