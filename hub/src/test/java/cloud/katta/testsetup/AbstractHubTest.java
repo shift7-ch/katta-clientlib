@@ -101,18 +101,28 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG;
 
     static {
-        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.hybrid.env", null,
-                PROPERTIES.get("testing.katta.cloud.tamarind.admin.user"), PROPERTIES.get("testing.katta.cloud.tamarind.admin.password"),
-                PROPERTIES.get("testing.katta.cloud.tamarind.syncer.password")
+        HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
+                "/docker-compose-minio-localhost-hub.yml",
+                "/.hybrid.env",
+                null,
+                PROPERTIES.get("testing.katta.cloud.chipotle.admin.name"),
+                PROPERTIES.get("testing.katta.cloud.chipotle.admin.password"),
+                PROPERTIES.get("testing.katta.cloud.chipotle.syncer.password")
         );
         HYBRID = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
-                .withUserConfig(new HubTestConfig.Setup.UserConfig(
-                        PROPERTIES.get("testing.katta.cloud.tamarind.user.name"), PROPERTIES.get("testing.katta.cloud.tamarind.user.password"),
-                        staticSetupCode()))
-                .withAdminConfig(new HubTestConfig.Setup.UserConfig(
-                        PROPERTIES.get("testing.katta.cloud.tamarind.admin.user"), PROPERTIES.get("testing.katta.cloud.tamarind.admin.password"),
-                        staticSetupCode()))
+                .withUserConfig(
+                        new HubTestConfig.Setup.UserConfig(
+                                PROPERTIES.get("testing.katta.cloud.chipotle.user.name"),
+                                PROPERTIES.get("testing.katta.cloud.chipotle.user.password"),
+                                staticSetupCode())
+                )
+                .withAdminConfig(
+                        new HubTestConfig.Setup.UserConfig(
+                                PROPERTIES.get("testing.katta.cloud.chipotle.admin.name"),
+                                PROPERTIES.get("testing.katta.cloud.chipotle.admin.password"),
+                                staticSetupCode())
+                )
                 .withDockerConfig(HYBRID_DOCKER_CONFIG);
     }
 
