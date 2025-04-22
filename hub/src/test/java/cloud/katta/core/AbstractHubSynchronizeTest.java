@@ -328,7 +328,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         final AttributedList<Path> vaults = feature.list(Home.ROOT, new DisabledListProgressListener());
         assertEquals(2, vaults.size());
         assertEquals(vaults, feature.list(Home.ROOT, new DisabledListProgressListener()));
-        for(Path vault : vaults) {
+        for(final Path vault : vaults) {
             assertTrue(hubSession.getFeature(Find.class).find(vault));
         }
         new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);
