@@ -173,6 +173,12 @@ public abstract class AbstractHubTest extends VaultTest {
 
     protected static HubSession setupConnection(final HubTestConfig.Setup setup) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
+        // ProtocolFactory.get() is static, the profiles contains OAuth token URL, leads to invalid grant exceptions when this changes during class loading lifetime (e.g. if the same storage profile ID is deployed to the LOCAL and the HYBRID hub).
+        for(final Protocol protocol : ProtocolFactory.get().find()) {
+            if(protocol instanceof Profile) {
+                factory.unregister((Profile) protocol);
+            }
+        }
         // Register parent protocol definitions
         factory.register(
                 new HubProtocol(),
