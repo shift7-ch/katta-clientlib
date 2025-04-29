@@ -54,9 +54,9 @@ public abstract class AbstractHubTest extends VaultTest {
     private static final HubTestConfig.VaultSpec awsSTSVaultConfig = new HubTestConfig.VaultSpec("AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
             null, null, null, null);
     private static final HubTestConfig.VaultSpec awsStaticVaultConfig = new HubTestConfig.VaultSpec("AWS static", "72736C19-283C-49D3-80A5-AB74B5202543",
-            "cipherststest",
-            PROPERTIES.get(String.format("%s.user", "cipherduck.AWS_CIPHERSTSTEST")),
-            PROPERTIES.get(String.format("%s.password", "cipherduck.AWS_CIPHERSTSTEST")),
+            "handmade2",
+            PROPERTIES.get("handmade2.s3.amazonaws.com.username"),
+            PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
             null
     );
 
@@ -133,6 +133,7 @@ public abstract class AbstractHubTest extends VaultTest {
 
     public static final Arguments HYBRID_MINIO_STATIC = argumentUnattendedHybrid.apply(minioStaticVaultConfig);
     public static final Arguments HYBRID_MINIO_STS = argumentUnattendedHybrid.apply(minioSTSVaultConfig);
+    public static final Arguments HYBRID_AWS_STATIC = argumentUnattendedHybrid.apply(awsStaticVaultConfig);
 
     @BeforeEach
     public void preferences() throws IOException {

@@ -26,9 +26,9 @@ public class ObjectMapperTest {
 
         final StorageProfileS3Dto awsStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/aws_static/aws_static_profile.json"), StorageProfileS3Dto.class);
         assertEquals(Protocol.S3, awsStaticProfile.getProtocol());
-        assertNull(awsStaticProfile.getScheme());
+        assertEquals("https", awsStaticProfile.getScheme());
         assertNull(awsStaticProfile.getHostname());
-        assertNull(awsStaticProfile.getPort());
+        assertEquals(443, awsStaticProfile.getPort());
         // default STANDARD from backend
         assertEquals(S3STORAGECLASSES.STANDARD, awsStaticProfile.getStorageClass());
         assertFalse(awsStaticProfile.getArchived());

@@ -94,7 +94,7 @@ public class VaultServiceImpl implements VaultService {
             switch(storageProfile.getProtocol()) {
                 case S3:
                 case S3_STS:
-                    final Profile profile = new Profile(protocols.forType(Protocol.Type.s3), new StorageProfileDtoWrapperDeserializer(
+                    final Profile profile = new Profile(protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3), new StorageProfileDtoWrapperDeserializer(
                             new HubConfigDtoDeserializer(configDto), storageProfile));
                     log.debug("Register storage profile {}", profile);
                     protocols.register(profile);

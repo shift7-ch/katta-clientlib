@@ -56,7 +56,7 @@ class HubSynchronizeTest {
     @TestInstance(PER_CLASS)
     public class Hybrid extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
-            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
+            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS, HYBRID_AWS_STATIC);
         }
     }
 
@@ -66,7 +66,7 @@ class HubSynchronizeTest {
     @Disabled
     public class HybridKeepRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
-            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
+            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS, HYBRID_AWS_STATIC);
         }
     }
 
@@ -76,7 +76,7 @@ class HubSynchronizeTest {
     @Disabled
     public class HybridAlreadyRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
-            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS);
+            return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS, HYBRID_AWS_STATIC);
         }
     }
 }
