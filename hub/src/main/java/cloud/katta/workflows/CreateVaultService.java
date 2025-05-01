@@ -37,6 +37,7 @@ import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.CreateS3STSBucketDto;
+import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
@@ -94,7 +95,7 @@ public class CreateVaultService {
             final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileWrapper.getId().toString())
-                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .defaultPath(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
@@ -131,7 +132,7 @@ public class CreateVaultService {
             final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
             final Host bookmark = new VaultServiceImpl(vaultResource, storageProfileResource).getStorageBackend(ProtocolFactory.get(),
                     configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
-            if(storageProfileWrapper.getStsEndpoint() == null) {
+            if(storageProfileWrapper.getProtocol() == Protocol.S3) {
                 // permanent: template upload into existing bucket from client (not backend)
                 templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
             }

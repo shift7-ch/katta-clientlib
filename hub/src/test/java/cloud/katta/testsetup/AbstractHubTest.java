@@ -134,6 +134,7 @@ public abstract class AbstractHubTest extends VaultTest {
     public static final Arguments HYBRID_MINIO_STATIC = argumentUnattendedHybrid.apply(minioStaticVaultConfig);
     public static final Arguments HYBRID_MINIO_STS = argumentUnattendedHybrid.apply(minioSTSVaultConfig);
     public static final Arguments HYBRID_AWS_STATIC = argumentUnattendedHybrid.apply(awsStaticVaultConfig);
+    public static final Arguments HYBRID_AWS_STS = argumentUnattendedHybrid.apply(awsSTSVaultConfig);
 
     @BeforeEach
     public void preferences() throws IOException {
@@ -159,6 +160,8 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
         preferences.setProperty("cloud.katta.min_api_level", 4);
+
+        preferences.setProperty("s3.assumerole.tag", "VaultRequested");
 
         preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
     }

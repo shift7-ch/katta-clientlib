@@ -26,8 +26,6 @@ import ch.cyberduck.core.transfer.TransferItem;
 import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.worker.DeleteWorker;
 
-import cloud.katta.client.model.ConfigDto;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +54,8 @@ import cloud.katta.client.api.ConfigResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.ConfigDto;
+import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
@@ -230,7 +230,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final UUID vaultId = UUID.randomUUID();
 
 
-            if(storageProfileWrapper.getStsEndpoint() == null) {
+            if(storageProfileWrapper.getProtocol() == Protocol.S3) {
                 // empty bucket
                 final HostPasswordStore keychain = PasswordStoreFactory.get();
 
@@ -262,7 +262,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.ROOT, new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
 
-            final Path bucket = new Path(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+            final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubVaultRegistry vaultRegistry = hubSession.getRegistry();
             {
@@ -352,7 +352,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.ROOT, new DisabledListProgressListener());
         final ConfigDto configDto = new ConfigResourceApi(hubSession.getClient()).apiConfigGet();
-        final int expectedNumberOfVaults = configDto.getKeycloakTokenEndpoint().contains("localhost") ? 2 : 3;
+        final int expectedNumberOfVaults = configDto.getKeycloakTokenEndpoint().contains("localhost") ? 2 : 4;
         assertEquals(expectedNumberOfVaults, vaults.size());
         assertEquals(vaults, feature.list(Home.ROOT, new DisabledListProgressListener()));
         for(final Path vault : vaults) {

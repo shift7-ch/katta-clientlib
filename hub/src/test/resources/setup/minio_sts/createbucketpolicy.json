@@ -10,7 +10,7 @@
         "s3:GetBucketVersioning"
       ],
       "Resource": [
-        "arn:aws:s3:::cipherduck*/"
+        "arn:aws:s3:::katta*/"
       ]
     },
     {
@@ -19,8 +19,8 @@
         "s3:PutObject"
       ],
       "Resource": [
-        "arn:aws:s3:::cipherduck*/*/",
-        "arn:aws:s3:::cipherduck*/vault.uvf"
+        "arn:aws:s3:::katta*/*/",
+        "arn:aws:s3:::katta*/vault.uvf"
       ]
     }
   ]
