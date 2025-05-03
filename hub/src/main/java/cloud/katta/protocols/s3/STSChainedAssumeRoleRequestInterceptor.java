@@ -56,11 +56,6 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
         return this.authorize(oauth, super.authorize(oauth));
     }
 
-    @Override
-    public TemporaryAccessTokens refresh(final OAuthTokens oauth) throws BackgroundException {
-        return this.authorize(oauth, super.refresh(oauth));
-    }
-
     /**
      * Assume role with previously obtained temporary access token
      *
