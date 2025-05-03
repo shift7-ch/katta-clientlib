@@ -9,6 +9,8 @@ import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.aws.CustomClientConfiguration;
 import ch.cyberduck.core.exception.LoginCanceledException;
+import ch.cyberduck.core.http.CustomServiceUnavailableRetryStrategy;
+import ch.cyberduck.core.http.ExecutionCountServiceUnavailableRetryStrategy;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferences;
@@ -92,7 +94,9 @@ public class S3AssumeRoleSession extends S3Session {
             }
             log.debug("Register interceptor {}", sts);
             configuration.addInterceptorLast(sts);
-            configuration.setServiceUnavailableRetryStrategy(new S3AuthenticationResponseInterceptor(this, sts));
+            final S3AuthenticationResponseInterceptor interceptor = new S3AuthenticationResponseInterceptor(this, sts);
+            configuration.setServiceUnavailableRetryStrategy(new CustomServiceUnavailableRetryStrategy(host,
+                    new ExecutionCountServiceUnavailableRetryStrategy(interceptor)));
             return sts;
         }
         return super.configureCredentialsStrategy(proxy, configuration, prompt);
