@@ -42,14 +42,14 @@ public class ObjectMapperTest {
 
 
         final StorageProfileS3STSDto awsSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/aws_sts/aws_sts_profile.json"), StorageProfileS3STSDto.class);
-        assertEquals("cipherduck", awsSTSProfile.getBucketPrefix());
+        assertEquals("katta", awsSTSProfile.getBucketPrefix());
         assertEquals("eu-west-1", awsSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), awsSTSProfile.getRegions());
         assertFalse(awsSTSProfile.getWithPathStyleAccessEnabled());
-        assertEquals("arn:aws:iam::930717317329:role/cipherduck-createbucket", awsSTSProfile.getStsRoleArnHub());
-        assertEquals("arn:aws:iam::930717317329:role/cipherduck-createbucket", awsSTSProfile.getStsRoleArnClient());
-        assertEquals("arn:aws:iam::930717317329:role/cipherduck_chain_01", awsSTSProfile.getStsRoleArn());
-        assertEquals("arn:aws:iam::930717317329:role/cipherduck_chain_02", awsSTSProfile.getStsRoleArn2());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-createbucket", awsSTSProfile.getStsRoleArnHub());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-createbucket", awsSTSProfile.getStsRoleArnClient());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-sts-chain-01", awsSTSProfile.getStsRoleArn());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-sts-chain-02", awsSTSProfile.getStsRoleArn2());
         assertEquals(Protocol.S3_STS, awsSTSProfile.getProtocol());
         assertNull(awsSTSProfile.getScheme());
         assertNull(awsSTSProfile.getHostname());
@@ -80,7 +80,7 @@ public class ObjectMapperTest {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class);
-        assertEquals("cipherduck", minioSTSProfile.getBucketPrefix());
+        assertEquals("katta", minioSTSProfile.getBucketPrefix());
         assertEquals("eu-central-1", minioSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), minioSTSProfile.getRegions());
         assertTrue(minioSTSProfile.getWithPathStyleAccessEnabled());
