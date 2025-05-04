@@ -200,10 +200,6 @@ public abstract class AbstractHubTest extends VaultTest {
         final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, new DisabledCancelCallback());
-
-        final BookmarkCollection bookmarks = BookmarkCollection.defaultCollection();
-        bookmarks.add(hub);
-
         return session;
     }
 
