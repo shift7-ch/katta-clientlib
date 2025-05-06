@@ -10,9 +10,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
-import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +52,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                 ));
         env.put("HUB_ADMIN_USER", configuration.hubAdminUser);
         env.put("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword);
-        env.put("HUB_KEYCLOAK_SYNCER_PASSWORD", configuration.hubKeycloakSyncerPassword);
+        env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", configuration.hubKeycloakSystemClientSecret);
         this.compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
                 .withLocalCompose(true)

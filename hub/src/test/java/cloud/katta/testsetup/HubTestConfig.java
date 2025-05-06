@@ -66,16 +66,16 @@ public class HubTestConfig {
             public final String profile;
             public final String hubAdminUser;
             public final String hubAdminPassword;
-            public final String hubKeycloakSyncerPassword;
+            public final String hubKeycloakSystemClientSecret;
 
 
-            public DockerConfig(final String composeFile, final String envFile, final String profile, final String hubAdminUser, final String hubAdminPassword, final String hubKeycloakSyncerPassword) {
+            public DockerConfig(final String composeFile, final String envFile, final String profile, final String hubAdminUser, final String hubAdminPassword, final String hubKeycloakSystemClientSecret) {
                 this.composeFile = composeFile;
                 this.envFile = envFile;
                 this.profile = profile;
                 this.hubAdminUser = hubAdminUser;
                 this.hubAdminPassword = hubAdminPassword;
-                this.hubKeycloakSyncerPassword = hubKeycloakSyncerPassword;
+                this.hubKeycloakSystemClientSecret = hubKeycloakSystemClientSecret;
             }
         }
 
