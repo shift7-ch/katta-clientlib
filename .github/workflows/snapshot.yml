@@ -13,6 +13,8 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
     steps:
+      - name: Docker network prune
+        run: docker network prune --force
       - uses: actions/checkout@v4
       - name: Set up JDK 21
         uses: actions/setup-java@v4
