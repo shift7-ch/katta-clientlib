@@ -17,7 +17,8 @@ services:
       KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/dev/certs/keycloak-server.crt.pem
       KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/dev/certs/keycloak-server.key.pem
     volumes:
-      - ./keycloak/dev-realm.json:/opt/keycloak/data/import/keycloak-realm.json
+      # renamed because of https://github.com/keycloak/keycloak/issues/37569 for Keycloak 26.1.5
+      - ./keycloak/dev-realm.json:/opt/keycloak/data/import/keycloak.json
       - ./certs:/opt/keycloak/dev/certs
     # hub to Keycloak communication inside Docker network (http://keycloak:8180) goes to the container internal port! Therefore, we need to start keycloak with the same port `--http-port 8180`
     command: start-dev --import-realm --db=dev-mem --health-enabled=true --hostname ${KEYCLOAK_HOSTNAME} --http-port ${KEYCLOAK_HTTP_PORT} --features=token-exchange,admin-fine-grained-authz
@@ -264,7 +265,8 @@ services:
       HUB_KEYCLOAK_PUBLIC_URL: ${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}
       HUB_KEYCLOAK_LOCAL_URL: ${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}
       HUB_KEYCLOAK_REALM: ${HUB_KEYCLOAK_REALM}
-      HUB_KEYCLOAK_SYNCER_PASSWORD: ${HUB_KEYCLOAK_SYNCER_PASSWORD}
+      HUB_KEYCLOAK_SYSTEM_CLIENT_ID: cryptomatorhub-system
+      HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET: ${HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET}
       HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: cryptomator
       AWS_REGION: us-east-1
     ports:
@@ -289,7 +291,7 @@ services:
           # reload and verify configuration
           nginx -t
           # start reverse proxy to keycloak and minio
-          systemctl start nginx.service
+          nginx
           # verify reverse proxy
           curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
           curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
@@ -306,7 +308,7 @@ services:
         # reload and verify configuration
         nginx -t
         # start reverse proxy to keycloak and minio
-        systemctl restart nginx.service
+        nginx -s reload || nginx
         # skip verify reverse proxy (MinIO might not be up yet).
         #        curl --fail http://localhost:${MINIO_PORT}/minio/health/ready
         #        curl --fail http://127.0.0.1:${MINIO_PORT}/minio/health/ready
