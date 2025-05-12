@@ -78,6 +78,8 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 break;
             case VENDOR_KEY:
                 return dto.getId().toString();
+            case DEFAULT_NICKNAME_KEY:
+                return dto.getName();
             case SCHEME_KEY:
                 return dto.getScheme();
             case DEFAULT_HOSTNAME_KEY:
@@ -116,6 +118,9 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 PROPERTIES_KEY,
                 OAUTH_CONFIGURABLE_KEY)
         );
+        if(dto.getName() != null) {
+            keys.add(DEFAULT_NICKNAME_KEY);
+        }
         if(dto.getScheme() != null) {
             keys.add(SCHEME_KEY);
         }
