@@ -30,6 +30,7 @@ import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.model.StorageProfileDtoWrapper;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;

@@ -16,6 +16,7 @@ import ch.cyberduck.core.features.Delete;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Home;
+import ch.cyberduck.core.features.Location;
 import ch.cyberduck.core.features.Move;
 import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Scheduler;
@@ -241,6 +242,9 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == AttributesFinder.class) {
             return (T) (AttributesFinder) (f, l) -> f.attributes();
+        }
+        if(type == Location.class) {
+            return (T) new HubStorageLocationService(this);
         }
         if(type == Find.class) {
             return (T) (Find) (file, listener) -> new SimplePathPredicate(registry.find(HubSession.this, file).getHome()).test(file);
