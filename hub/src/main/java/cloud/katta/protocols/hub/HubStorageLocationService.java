@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ */
+
+package cloud.katta.protocols.hub;
+
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.features.Location;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import cloud.katta.client.ApiException;
+import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.model.StorageProfileDtoWrapper;
+
+public class HubStorageLocationService implements Location {
+
+    private final HubSession session;
+
+    public HubStorageLocationService(final HubSession session) {
+        this.session = session;
+    }
+
+    @Override
+    public Name getDefault() {
+        return Location.unknown;
+    }
+
+    @Override
+    public Set<Name> getLocations() {
+        try {
+            final Set<Name> regions = new HashSet<>();
+            final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(session.getClient())
+                    .apiStorageprofileGet(false);
+            for(StorageProfileDto storageProfileDto : storageProfileDtos) {
+                final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
+                for(String region : storageProfile.getRegions()) {
+                    regions.add(new StorageLocation(storageProfile.getName(), region));
+                }
+            }
+            return regions;
+        }
+        catch(ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Name getLocation(final Path file) {
+        return StorageLocation.fromIdentifier(file.attributes().getRegion());
+    }
+
+    public static final class StorageLocation extends Name {
+        private final String storageProfile;
+        private final String region;
+
+        public StorageLocation(final String storageProfile, final String region) {
+            super(String.format("%s-%s", storageProfile, region));
+            this.storageProfile = storageProfile;
+            this.region = region;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s (%s)", storageProfile, region);
+        }
+
+        public static Name fromIdentifier(final String identifier) {
+            final String[] parts = identifier.split("-");
+            if(parts.length != 2) {
+                return Location.unknown;
+            }
+            return new StorageLocation(parts[0], parts[1]);
+        }
+    }
+}
