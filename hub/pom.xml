@@ -16,7 +16,7 @@
 
     <properties>
         <jwt.version>4.5.0</jwt.version>
-        <nimbus-jose.version>10.2</nimbus-jose.version>
+        <nimbus-jose.version>10.3</nimbus-jose.version>
         <swagger-annotations.version>1.6.16</swagger-annotations.version>
     </properties>
 
