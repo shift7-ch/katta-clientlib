@@ -94,7 +94,7 @@ public class VaultServiceImpl implements VaultService {
             switch(storageProfile.getProtocol()) {
                 case S3:
                 case S3_STS:
-                    final Profile profile = new Profile(protocols.forType(Protocol.Type.s3), new StorageProfileDtoWrapperDeserializer(
+                    final Profile profile = new Profile(protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3), new StorageProfileDtoWrapperDeserializer(
                             new HubConfigDtoDeserializer(configDto), storageProfile));
                     log.debug("Register storage profile {}", profile);
                     protocols.register(profile);
@@ -106,6 +106,10 @@ public class VaultServiceImpl implements VaultService {
         final String provider = vaultMetadata.getProvider();
         log.debug("Lookup provider {} from vault metadata", provider);
         final Protocol protocol = protocols.forName(provider);
+        if((protocol.getOAuthTokenUrl() != null) && (!protocol.getOAuthTokenUrl().equals(configDto.getKeycloakTokenEndpoint()))) {
+            // this may happen if the storage profile ID is deployed to two different hubs
+            throw new AccessException(String.format("Expected keycloak endpoint %s, found %s.", configDto.getKeycloakTokenEndpoint(), protocol.getOAuthTokenUrl()));
+        }
         final Host bookmark = new Host(protocol);
         log.debug("Configure bookmark for vault {}", vaultMetadata);
         bookmark.setNickname(vaultMetadata.getNickname());

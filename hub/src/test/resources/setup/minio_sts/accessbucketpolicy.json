@@ -10,7 +10,7 @@
         "s3:ListBucketMultipartUploads"
       ],
       "Resource": [
-        "arn:aws:s3:::cipherduck${jwt:client_id}"
+        "arn:aws:s3:::katta${jwt:client_id}"
       ]
     },
     {
@@ -23,7 +23,7 @@
         "s3:PutObject"
       ],
       "Resource": [
-        "arn:aws:s3:::cipherduck${jwt:client_id}/*"
+        "arn:aws:s3:::katta${jwt:client_id}/*"
       ]
     }
   ]

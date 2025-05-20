@@ -4,15 +4,7 @@
 
 package cloud.katta.core;
 
-import ch.cyberduck.core.AlphanumericRandomStringService;
-import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.DisabledConnectionCallback;
-import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.OAuthTokens;
-import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Session;
-import ch.cyberduck.core.SimplePathPredicate;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
@@ -27,11 +19,12 @@ import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.io.StatusOutputStream;
+import ch.cyberduck.core.proxy.DisabledProxyFinder;
+import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.transfer.Transfer;
 import ch.cyberduck.core.transfer.TransferItem;
 import ch.cyberduck.core.transfer.TransferStatus;
-
-import cloud.katta.client.api.UsersResourceApi;
+import ch.cyberduck.core.worker.DeleteWorker;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -53,16 +46,23 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.api.ConfigResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.api.UsersResourceApi;
+import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.ConfigDto;
+import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubVaultRegistry;
@@ -72,6 +72,7 @@ import cloud.katta.testsetup.MethodIgnorableSource;
 import cloud.katta.workflows.CreateVaultService;
 import cloud.katta.workflows.DeviceKeysServiceImpl;
 import cloud.katta.workflows.UserKeysServiceImpl;
+import cloud.katta.workflows.VaultServiceImpl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -228,6 +229,30 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.randomUUID();
 
+
+            if(storageProfileWrapper.getProtocol() == Protocol.S3) {
+                // empty bucket
+                final HostPasswordStore keychain = PasswordStoreFactory.get();
+
+                final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
+                final Host bookmark = new VaultServiceImpl(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()))
+                        .getStorageBackend(
+                                ProtocolFactory.get(),
+                                new ConfigResourceApi(hubSession.getClient()).apiConfigGet(), vaultId, new VaultMetadataJWEBackendDto()
+                                        .provider(storageProfileWrapper.getId().toString())
+                                        .defaultPath(config.vault.bucketName)
+                                        .nickname(config.vault.bucketName)
+                                        .username(config.vault.username)
+                                        .password(config.vault.password), tokens);
+                final S3Session session = new S3Session(bookmark);
+                session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
+                session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
+                new DeleteWorker(new DisabledLoginCallback(),
+                        session.getFeature(ListService.class).list(new Path("/" + config.vault.bucketName, EnumSet.of(AbstractPath.Type.directory)), new DisabledListProgressListener()).toStream().filter(f -> session.getFeature(Delete.class).isSupported(f)).collect(Collectors.toList()),
+                        new DisabledListProgressListener()).run(session);
+                session.close();
+            }
+
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
             new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper, new CreateVaultService.CreateVaultModel(
@@ -237,7 +262,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.ROOT, new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
 
-            final Path bucket = new Path(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+            final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubVaultRegistry vaultRegistry = hubSession.getRegistry();
             {
@@ -326,9 +351,11 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         assertEquals(StringUtils.EMPTY, hubSession.getHost().getCredentials().getPassword());
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.ROOT, new DisabledListProgressListener());
-        assertEquals(2, vaults.size());
+        final ConfigDto configDto = new ConfigResourceApi(hubSession.getClient()).apiConfigGet();
+        final int expectedNumberOfVaults = configDto.getKeycloakTokenEndpoint().contains("localhost") ? 2 : 4;
+        assertEquals(expectedNumberOfVaults, vaults.size());
         assertEquals(vaults, feature.list(Home.ROOT, new DisabledListProgressListener()));
-        for(Path vault : vaults) {
+        for(final Path vault : vaults) {
             assertTrue(hubSession.getFeature(Find.class).find(vault));
         }
         new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);

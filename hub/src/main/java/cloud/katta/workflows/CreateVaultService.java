@@ -37,6 +37,7 @@ import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.CreateS3STSBucketDto;
+import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
@@ -94,7 +95,7 @@ public class CreateVaultService {
             final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileWrapper.getId().toString())
-                            .defaultPath(storageProfileWrapper.getStsEndpoint() != null ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .defaultPath(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
@@ -131,7 +132,7 @@ public class CreateVaultService {
             final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
             final Host bookmark = new VaultServiceImpl(vaultResource, storageProfileResource).getStorageBackend(ProtocolFactory.get(),
                     configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
-            if(storageProfileWrapper.getStsEndpoint() == null) {
+            if(storageProfileWrapper.getProtocol() == Protocol.S3) {
                 // permanent: template upload into existing bucket from client (not backend)
                 templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
             }
@@ -143,6 +144,7 @@ public class CreateVaultService {
                         vaultDto.getId().toString(),
                         storageProfileWrapper.getStsEndpoint(),
                         String.format("%s%s", storageProfileWrapper.getBucketPrefix(), vaultDto.getId()),
+                        vaultModel.region(),
                         storageProfileWrapper.getBucketAcceleration()
                 );
                 log.debug("Create STS bucket {} for vault {}", storageDto, vaultDto);
@@ -191,12 +193,12 @@ public class CreateVaultService {
     static class STSInlinePolicyService {
         static STSInlinePolicyService disabled = new STSInlinePolicyService() {
             @Override
-            TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) {
+            TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final String region, final Boolean bucketAcceleration) {
                 return new TemporaryAccessTokens(null);
             }
         };
 
-        TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final Boolean bucketAcceleration) throws IOException {
+        TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final String region, final Boolean bucketAcceleration) throws IOException {
             log.debug("Get STS tokens from {} to pass to backend {} with role {} and session name {}", token, stsEndpoint, roleArn, roleSessionName);
 
             final AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
@@ -214,8 +216,12 @@ public class CreateVaultService {
 
             AWSSecurityTokenServiceClientBuilder serviceBuild = AWSSecurityTokenServiceClientBuilder
                     .standard();
+            // Exactly only one of Region or EndpointConfiguration may be set.
             if(stsEndpoint != null) {
                 serviceBuild.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(stsEndpoint, null));
+            }
+            else {
+                serviceBuild.withRegion(region);
             }
             final AWSSecurityTokenService service = serviceBuild
                     .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))

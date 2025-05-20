@@ -65,7 +65,7 @@ class CreateVaultServiceTest {
         final StorageProfileDto storageProfile = new StorageProfileDto(
                 new StorageProfileS3STSDto()
                         .id(storageProfileId)
-                        .protocol(Protocol.S3)
+                        .protocol(Protocol.S3_STS)
                         .stsEndpoint("http://audley.end.point")
 
         );
