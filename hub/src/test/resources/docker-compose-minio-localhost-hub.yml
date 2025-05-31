@@ -17,11 +17,11 @@ services:
       KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/dev/certs/keycloak-server.crt.pem
       KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/dev/certs/keycloak-server.key.pem
     volumes:
-      # renamed because of https://github.com/keycloak/keycloak/issues/37569 for Keycloak 26.1.5
+      # renamed because of https://github.com/keycloak/keycloak/issues/37569
       - ./keycloak/dev-realm.json:/opt/keycloak/data/import/keycloak.json
       - ./certs:/opt/keycloak/dev/certs
     # hub to Keycloak communication inside Docker network (http://keycloak:8180) goes to the container internal port! Therefore, we need to start keycloak with the same port `--http-port 8180`
-    command: start-dev --import-realm --db=dev-mem --health-enabled=true --hostname ${KEYCLOAK_HOSTNAME} --http-port ${KEYCLOAK_HTTP_PORT} --features=token-exchange,admin-fine-grained-authz
+    command: start-dev --import-realm --db=dev-mem --health-enabled=true --hostname ${KEYCLOAK_HOSTNAME} --http-port ${KEYCLOAK_HTTP_PORT}
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" ]
       interval: 5s
