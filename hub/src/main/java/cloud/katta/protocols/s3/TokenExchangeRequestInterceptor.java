@@ -54,7 +54,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE = "audience";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN = "subject_token";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE = "subject_token_type";
-    public static final String OAUTH_TOKEN_TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
+    public static final String OAUTH_TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
     // https://openid.net/specs/openid-connect-core-1_0.html
     public static final String OIDC_AUTHORIZED_PARTY = "azp";
 
@@ -101,7 +101,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
             request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_SECRET, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE_CLIENT_SECRET));
         }
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN, previous.getAccessToken());
-        request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE, OAUTH_TOKEN_TOKEN_TYPE_ACCESS_TOKEN);
+        request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE, OAUTH_TOKEN_TYPE_ACCESS_TOKEN);
         final ArrayList<String> scopes = new ArrayList<>(bookmark.getProtocol().getOAuthScopes());
         if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
             scopes.addAll(Arrays.asList(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
