@@ -26,9 +26,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.client.auth.oauth2.TokenRequest;
@@ -143,12 +143,12 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         try {
             final DecodedJWT jwt = JWT.decode(accessToken);
 
-            final String aud = jwt.getClaim(RegisteredClaims.AUDIENCE).asString();
+            final List<String> auds = jwt.getAudience();
             final String azp = jwt.getClaim(OIDC_AUTHORIZED_PARTY).asString();
 
-            final boolean audNotUnique = aud == null; // either multiple audiences or none
+            final boolean audNotUnique = 1 != auds.size(); // either multiple audiences or none
             // do exchange if aud is not unique or azp is not equal to aud
-            if(audNotUnique || !aud.equals(azp)) {
+            if(audNotUnique || !auds.get(0).equals(azp)) {
                 return credentials.withOauth(this.exchange(tokens));
             }
         }
