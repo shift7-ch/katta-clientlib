@@ -18,6 +18,8 @@ import ch.cyberduck.core.oauth.OAuthExceptionMappingService;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesReader;
 
+import com.auth0.jwt.RegisteredClaims;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
@@ -52,6 +54,8 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN = "subject_token";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE = "subject_token_type";
     public static final String OAUTH_TOKEN_TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
+    // https://openid.net/specs/openid-connect-core-1_0.html
+    public static final String OIDC_AUTHORIZED_PARTY = "azp";
 
 
     private final Host bookmark;
@@ -137,8 +141,8 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         try {
             final DecodedJWT jwt = JWT.decode(accessToken);
 
-            final String aud = jwt.getClaim("aud").asString();
-            final String azp = jwt.getClaim("azp").asString();
+            final String aud = jwt.getClaim(RegisteredClaims.AUDIENCE).asString();
+            final String azp = jwt.getClaim(OIDC_AUTHORIZED_PARTY).asString();
 
             final boolean audNotUnique = aud == null; // either multiple audiences or none
             // do exchange if aud is not unique or azp is not equal to aud
