@@ -18,8 +18,6 @@ import ch.cyberduck.core.oauth.OAuthExceptionMappingService;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesReader;
 
-import com.auth0.jwt.RegisteredClaims;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.client.auth.oauth2.TokenRequest;
@@ -40,8 +39,10 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
+import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE;
+
 /**
- * Exchange OIDC token to scoped token using OAuth 2.0 Token Exchange
+ * Exchange OIDC token to scoped token using OAuth 2.0 Token Exchange. Used for S3-STS in Katta.
  */
 public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     private static final Logger log = LogManager.getLogger(TokenExchangeRequestInterceptor.class);
@@ -136,6 +137,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         final PreferencesReader preferences = new HostPreferences(bookmark);
         final String tokenExchangeClientId = preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE);
         if(tokenExchangeClientId.isEmpty()) {
+            log.warn("Found {} empty, although {} is set to {} - misconfiguration?", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE, OAUTH_TOKENEXCHANGE, preferences.getBoolean(OAUTH_TOKENEXCHANGE));
             return credentials;
         }
         try {
