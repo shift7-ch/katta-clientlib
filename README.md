@@ -126,7 +126,7 @@ sequenceDiagram
 sequenceDiagram
     actor User
 
-    participant session as Session
+    participant session as HubSession
     participant katta as Katta API Server
 
     Note right of session: client_id=cryptomator
@@ -171,7 +171,7 @@ sequenceDiagram
     end
     deactivate katta
 
-    participant vault as S3AutoLoadVaultSession
+    participant vault as S3AssumeRoleSession
     activate vault
     vault->>keychain: Lookup OIDC tokens
     keychain->>vault: Return OIDC tokens
