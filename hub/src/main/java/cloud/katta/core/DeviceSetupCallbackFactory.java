@@ -4,6 +4,7 @@
 
 package cloud.katta.core;
 
+import ch.cyberduck.core.Controller;
 import ch.cyberduck.core.Factory;
 
 import org.apache.commons.lang3.reflect.ConstructorUtils;
@@ -20,16 +21,16 @@ public final class DeviceSetupCallbackFactory extends Factory<DeviceSetupCallbac
         super("factory.devicesetupcallback.class");
     }
 
-    public DeviceSetupCallback create() {
+    public DeviceSetupCallback create(final Controller controller) {
         try {
             final Constructor<? extends DeviceSetupCallback> constructor
-                    = ConstructorUtils.getMatchingAccessibleConstructor(clazz);
+                    = ConstructorUtils.getMatchingAccessibleConstructor(clazz, controller.getClass());
             if(null == constructor) {
-                log.warn("No default controller in {}", constructor.getClass());
+                log.warn("No matching constructor for parameter {}", controller.getClass());
                 // Call default constructor for disabled implementations
                 return clazz.getDeclaredConstructor().newInstance();
             }
-            return constructor.newInstance();
+            return constructor.newInstance(controller);
         }
         catch(InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
             log.error("Failure loading callback class {}. {}", clazz, e.getMessage());
