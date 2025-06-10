@@ -135,7 +135,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         final String accessToken = tokens.getAccessToken();
         final PreferencesReader preferences = new HostPreferences(bookmark);
         final String tokenExchangeClientId = preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID);
-        if(tokenExchangeClientId.isEmpty()) {
+        if(StringUtils.isEmpty(tokenExchangeClientId)) {
             log.warn("Found {} empty, although {} is set to {} - misconfiguration?", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID, OAUTH_TOKENEXCHANGE, preferences.getBoolean(OAUTH_TOKENEXCHANGE));
             return credentials;
         }
