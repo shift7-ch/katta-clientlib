@@ -149,6 +149,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
             final boolean audNotUnique = 1 != auds.size(); // either multiple audiences or none
             // do exchange if aud is not unique or azp is not equal to aud
             if(audNotUnique || !auds.get(0).equals(azp)) {
+                log.debug("None or multiple audiences found {} or audience differs from azp {}, triggering token-exchange.", Arrays.toString(auds.toArray()), azp);
                 return credentials.withOauth(this.exchange(tokens));
             }
         }
