@@ -11,7 +11,9 @@
         <artifactId>katta-clientlib</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>osx</artifactId>
+
+    <artifactId>katta-clientlib-osx</artifactId>
+
     <dependencies>
         <dependency>
             <groupId>cloud.katta</groupId>
