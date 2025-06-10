@@ -35,6 +35,7 @@
             <AppenderRef ref="rollingFile"/>
         </Logger>
         <Logger name="cloud.katta" level="debug"/>
+        <Logger name="org.testcontainers" level="debug"/>
 
         <Root>
             <AppenderRef ref="console"/>
