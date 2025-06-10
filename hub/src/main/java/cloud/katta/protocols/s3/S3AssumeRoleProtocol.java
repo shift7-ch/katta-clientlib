@@ -15,7 +15,8 @@ public class S3AssumeRoleProtocol extends S3Protocol {
 
     // Token exchange
     public static final String OAUTH_TOKENEXCHANGE = "oauth.tokenexchange";
-    public static final String OAUTH_TOKENEXCHANGE_AUDIENCE = "oauth.tokenexchange.audience";
+    public static final String OAUTH_TOKENEXCHANGE_CLIENT_ID = "oauth.tokenexchange.client_id";
+    public static final String OAUTH_TOKENEXCHANGE_CLIENT_SECRET = "oauth.tokenexchange.audience.client_secret";
     public static final String OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES = "oauth.tokenexchange.additional_scopes";
 
     // STS assume role with web identity from Cyberduck core (AWS + MinIO)

@@ -6,8 +6,6 @@ package cloud.katta.protocols.hub.serializer;
 
 import ch.cyberduck.core.serializer.Deserializer;
 
-import cloud.katta.client.model.Protocol;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import cloud.katta.client.model.Protocol;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 import com.dd.plist.NSDictionary;
@@ -57,6 +56,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                     if(dto.getStsDurationSeconds() != null) {
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
                     }
+                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_SECRET, ""));
                 }
                 log.debug("Return properties {} from {}", properties, dto);
                 return (List<L>) properties;

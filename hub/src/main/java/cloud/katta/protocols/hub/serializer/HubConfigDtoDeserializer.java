@@ -13,7 +13,7 @@ import cloud.katta.client.model.ConfigDto;
 import com.dd.plist.NSDictionary;
 
 import static ch.cyberduck.core.Profile.*;
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE;
+import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID;
 
 public class HubConfigDtoDeserializer extends ProxyDeserializer<NSDictionary> {
 
@@ -34,7 +34,7 @@ public class HubConfigDtoDeserializer extends ProxyDeserializer<NSDictionary> {
             case PROPERTIES_KEY:
                 final List<String> properties = new ArrayList<>(super.listForKey(key));
                 if(dto.getKeycloakClientIdCryptomatorVaults() != null) {
-                    properties.add(String.format("%s=%s", OAUTH_TOKENEXCHANGE_AUDIENCE, dto.getKeycloakClientIdCryptomatorVaults()));
+                    properties.add(String.format("%s=%s", OAUTH_TOKENEXCHANGE_CLIENT_ID, dto.getKeycloakClientIdCryptomatorVaults()));
                 }
                 return (List<L>) properties;
             case SCOPES_KEY:
