@@ -51,7 +51,6 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID = "client_id";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_SECRET = "client_secret";
-    public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_AUDIENCE = "audience";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN = "subject_token";
     public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE = "subject_token_type";
     public static final String OAUTH_TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
@@ -83,7 +82,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      *
      * @param previous Input tokens retrieved to exchange at the token endpoint
      * @return New tokens
-     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_AUDIENCE
+     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_CLIENT_ID
      * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
@@ -96,9 +95,9 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         );
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, bookmark.getProtocol().getOAuthClientId());
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE))) {
-            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE));
-            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_SECRET, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE_CLIENT_SECRET));
+        if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID))) {
+            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID));
+            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_SECRET, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_SECRET));
         }
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN, previous.getAccessToken());
         request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE, OAUTH_TOKEN_TYPE_ACCESS_TOKEN);
@@ -135,9 +134,9 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         final OAuthTokens tokens = credentials.getOauth();
         final String accessToken = tokens.getAccessToken();
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        final String tokenExchangeClientId = preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE);
+        final String tokenExchangeClientId = preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID);
         if(tokenExchangeClientId.isEmpty()) {
-            log.warn("Found {} empty, although {} is set to {} - misconfiguration?", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_AUDIENCE, OAUTH_TOKENEXCHANGE, preferences.getBoolean(OAUTH_TOKENEXCHANGE));
+            log.warn("Found {} empty, although {} is set to {} - misconfiguration?", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID, OAUTH_TOKENEXCHANGE, preferences.getBoolean(OAUTH_TOKENEXCHANGE));
             return credentials;
         }
         try {
