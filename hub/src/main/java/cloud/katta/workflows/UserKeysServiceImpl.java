@@ -5,6 +5,8 @@
 package cloud.katta.workflows;
 
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.PasswordStoreFactory;
+import ch.cyberduck.core.exception.LocalAccessDeniedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,7 +79,11 @@ public class UserKeysServiceImpl implements UserKeysService {
                     case 404:
                         log.warn("Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
                         // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
-                        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
+                        final AccountKeyAndDeviceName input = prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
+                        if(input.addToKeychain()) {
+                            this.save(hub, me, input.accountKey());
+                        }
+                        return this.recover(me, deviceKeyPair, input);
                     default:
                         throw e;
                 }
@@ -94,11 +100,22 @@ public class UserKeysServiceImpl implements UserKeysService {
             // TODO https://github.com/shift7-ch/katta-server/issues/27
             // private key generated with P384KeyPair causes "Unexpected Error: Data provided to an operation does not meet requirements" in `UserKeys.recover`: `const privateKey = await crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, false, UserKeys.KEY_USAGES);`
             final String accountKey = prompt.generateAccountKey();
-            final String deviceName = prompt.displayAccountKeyAndAskDeviceName(hub,
+            final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
                     new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
-
-            return this.uploadDeviceKeys(deviceName,
+            if(input.addToKeychain()) {
+                this.save(hub, me, accountKey);
+            }
+            return this.uploadDeviceKeys(input.deviceName(),
                     this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
+        }
+    }
+
+    private void save(final Host hub, final UserDto me, final String accountKey) {
+        try {
+            PasswordStoreFactory.get().addPassword(hub.getNickname(), me.getEmail(), accountKey);
+        }
+        catch(LocalAccessDeniedException ex) {
+            log.warn("Failure saving account key", ex);
         }
     }
 
