@@ -17,10 +17,10 @@ public interface DeviceSetupCallback {
     /**
      * Prompt user for device name
      *
-     * @return Device name
+     * @return Account key and device name
      * @throws AccessException Canceled prompt by user
      */
-    String displayAccountKeyAndAskDeviceName(Host bookmark, AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException;
+    AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(Host bookmark, AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException;
 
     /**
      * Prompt user for existing account key
@@ -50,7 +50,7 @@ public interface DeviceSetupCallback {
 
     DeviceSetupCallback disabled = new DeviceSetupCallback() {
         @Override
-        public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
+        public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
             throw new AccessException("Disabled");
         }
 

@@ -18,7 +18,7 @@ public class MockableDeviceSetupCallback implements DeviceSetupCallback {
     private static DeviceSetupCallback proxy = null;
 
     @Override
-    public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
+    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
         return proxy.displayAccountKeyAndAskDeviceName(bookmark, accountKeyAndDeviceName);
     }
 

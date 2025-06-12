@@ -199,16 +199,19 @@ public abstract class AbstractHubTest extends VaultTest {
     }
 
     protected static @NotNull DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
-        final DeviceSetupCallback proxy = new DeviceSetupCallback() {
+        return new DeviceSetupCallback() {
             @Override
-            public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
-                return "firstLoginMockSetup";
+            public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
+                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(
+                        String.format("%s %s", accountKeyAndDeviceName.deviceName(), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                                .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
             public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) {
-                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(String.format("firstLoginMockSetup %s", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
-                        .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
+                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(
+                        String.format("%s %s", initialDeviceName, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                                .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
@@ -216,7 +219,6 @@ public abstract class AbstractHubTest extends VaultTest {
                 return staticSetupCode();
             }
         };
-        return proxy;
     }
 }
 

@@ -27,7 +27,7 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
     }
 
     @Override
-    public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
+    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
         if(log.isDebugEnabled()) {
             log.debug(String.format("Display Account Key for %s", bookmark));
         }
@@ -37,7 +37,7 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
             case SheetCallback.ALTERNATE_OPTION:
                 throw new AccessException(new ConnectionCanceledException());
         }
-        return accountKeyAndDeviceName.deviceName();
+        return accountKeyAndDeviceName;
     }
 
     @Override
