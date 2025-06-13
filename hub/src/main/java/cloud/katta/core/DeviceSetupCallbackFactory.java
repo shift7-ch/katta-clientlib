@@ -43,10 +43,10 @@ public final class DeviceSetupCallbackFactory extends Factory<DeviceSetupCallbac
     /**
      * @return Firs tLogin Device Setup Callback instance for the current platform.
      */
-    public static synchronized DeviceSetupCallback get() {
+    public static synchronized DeviceSetupCallback get(final Controller controller) {
         if(null == singleton) {
             singleton = new DeviceSetupCallbackFactory();
         }
-        return singleton.create();
+        return singleton.create(controller);
     }
 }
