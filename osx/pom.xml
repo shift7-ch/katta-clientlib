@@ -22,7 +22,8 @@
         </dependency>
         <dependency>
             <groupId>ch.cyberduck</groupId>
-            <artifactId>binding</artifactId>
+            <artifactId>osx</artifactId>
+            <version>${cyberduck.version}</version>
         </dependency>
     </dependencies>
 </project>

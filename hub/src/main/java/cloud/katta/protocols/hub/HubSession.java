@@ -45,7 +45,6 @@ import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.ConfigDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.core.DeviceSetupCallbackFactory;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
@@ -143,9 +142,9 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        final DeviceSetupCallback setup = DeviceSetupCallbackFactory.get();
-        final Credentials credentials = host.getCredentials();
-        credentials.setOauth(authorizationService.validate(credentials.getOauth()));
+        final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+        log.debug("Configured with setup prompt {}", setup);
+        final Credentials credentials = authorizationService.validate();
         try {
             // Set username from OAuth ID Token for saving in keychain
             credentials.setUsername(JWT.decode(credentials.getOauth().getIdToken()).getSubject());

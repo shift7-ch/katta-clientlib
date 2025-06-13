@@ -9,6 +9,7 @@ import ch.cyberduck.binding.SheetController;
 import ch.cyberduck.binding.application.SheetCallback;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
+import ch.cyberduck.ui.cocoa.callback.PromptLoginCallback;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,12 +18,13 @@ import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.model.AccountKeyAndDeviceName;
 import cloud.katta.workflows.exceptions.AccessException;
 
-public class PromptDeviceSetupCallback implements DeviceSetupCallback {
+public class PromptDeviceSetupCallback extends PromptLoginCallback implements DeviceSetupCallback {
     private static final Logger log = LogManager.getLogger(PromptDeviceSetupCallback.class.getName());
 
     private final ProxyController controller;
 
     public PromptDeviceSetupCallback(final ProxyController controller) {
+        super(controller);
         this.controller = controller;
     }
 
@@ -53,5 +55,14 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
                 throw new AccessException(new ConnectionCanceledException());
         }
         return accountKeyAndDeviceName;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T getFeature(final Class<T> type) {
+        if(type == DeviceSetupCallback.class) {
+            return (T) this;
+        }
+        return null;
     }
 }
