@@ -90,7 +90,7 @@ public class HubUVFVault extends UVFVault {
         final Path firstLevel = secondLevel.getParent();
         final Path dataDir = firstLevel.getParent();
         log.debug("Create vault root directory at {}", secondLevel);
-        final TransferStatus status = (new TransferStatus()).withRegion(region);
+        final TransferStatus status = (new TransferStatus()).setRegion(region);
 
         directory.mkdir(dataDir, status);
         directory.mkdir(firstLevel, status);
