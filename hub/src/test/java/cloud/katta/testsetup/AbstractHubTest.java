@@ -14,7 +14,6 @@ import ch.cyberduck.core.ssl.DefaultX509TrustManager;
 import ch.cyberduck.core.vault.VaultRegistryFactory;
 import ch.cyberduck.test.VaultTest;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,7 +27,6 @@ import java.time.format.FormatStyle;
 import java.util.function.Function;
 
 import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.core.util.MockableDeviceSetupCallback;
 import cloud.katta.model.AccountKeyAndDeviceName;
 import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
@@ -149,7 +147,6 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
-        preferences.setProperty("factory.devicesetupcallback.class", MockableDeviceSetupCallback.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
@@ -188,19 +185,29 @@ public abstract class AbstractHubTest extends VaultTest {
         assertTrue(factory.forName("s3").isEnabled());
         assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
-        final DeviceSetupCallback proxy = deviceSetupCallback(setup);
-        MockableDeviceSetupCallback.setProxy(proxy);
-
         final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
-        final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
+        final LoginConnectionService login = new LoginConnectionService(loginCallback(setup), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, new DisabledCancelCallback());
         return session;
     }
 
-    protected static @NotNull DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
+    protected static LoginCallback loginCallback(HubTestConfig.Setup setup) {
+        return new DisabledLoginCallback() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T> T getFeature(final Class<T> type) {
+                if(DeviceSetupCallback.class == type) {
+                    return (T) deviceSetupCallback(setup);
+                }
+                return null;
+            }
+        };
+    }
+
+    protected static DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
         return new DeviceSetupCallback() {
             @Override
             public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
