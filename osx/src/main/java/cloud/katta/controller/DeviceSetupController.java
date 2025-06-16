@@ -50,6 +50,8 @@ public class DeviceSetupController extends AlertController {
         alert.setInformativeText(new StringAppender()
                 .append(LocaleFactory.localizedString("This is your first login on this device.", "Hub"))
                 .append(LocaleFactory.localizedString("Your Account Key is required to link this browser to your account.", "Hub")).toString());
+        alert.addButtonWithTitle(LocaleFactory.localizedString("Finish Setup", "Hub"));
+        alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
         alert.setShowsSuppressionButton(true);
         alert.suppressionButton().setTitle(LocaleFactory.localizedString("Add to Keychain", "Login"));
         alert.suppressionButton().setState(PreferencesFactory.get().getBoolean("cryptomator.vault.keychain") ? NSCell.NSOnState : NSCell.NSOffState);
