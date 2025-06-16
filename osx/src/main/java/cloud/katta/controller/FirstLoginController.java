@@ -35,9 +35,6 @@ public class FirstLoginController extends AlertController {
     private final NSTextField accountKeyField = NSTextField.textFieldWithString(StringUtils.EMPTY);
 
     @Outlet
-    private final NSTextField accountKeyConfirmField = NSSecureTextField.textFieldWithString(StringUtils.EMPTY);
-
-    @Outlet
     private final NSTextField deviceNameField = NSTextField.textFieldWithString(StringUtils.EMPTY);
 
     public FirstLoginController(final AccountKeyAndDeviceName accountKeyAndDeviceName) {
@@ -74,12 +71,6 @@ public class FirstLoginController extends AlertController {
         }
 
         {
-            accountKeyConfirmField.cell().setPlaceholderString(LocaleFactory.localizedString("Confirm Account Key", "Hub"));
-            accountKeyConfirmField.setToolTip(LocaleFactory.localizedString("I stored my Account Key securely.", "Hub"));
-            this.addAccessorySubview(accessoryView, accountKeyConfirmField);
-        }
-
-        {
             this.updateField(deviceNameField, accountKeyAndDeviceName.deviceName());
             deviceNameField.cell().setPlaceholderString(LocaleFactory.localizedString("Device Name", "Hub"));
             deviceNameField.setToolTip(LocaleFactory.localizedString("Name this device for easy identification in your authorized devices list.", "Hub"));
@@ -102,9 +93,7 @@ public class FirstLoginController extends AlertController {
     @Override
     public boolean validate(final int option) {
         if(SheetCallback.DEFAULT_OPTION == option) {
-            if(StringUtils.equals(accountKeyField.stringValue(), accountKeyConfirmField.stringValue())) {
-                return StringUtils.isNotBlank(deviceNameField.stringValue());
-            }
+            return StringUtils.isNotBlank(deviceNameField.stringValue());
         }
         return true;
     }
