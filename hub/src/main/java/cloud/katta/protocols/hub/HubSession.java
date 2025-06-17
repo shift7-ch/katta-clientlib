@@ -4,7 +4,20 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.*;
+import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledListProgressListener;
+import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostKeyCallback;
+import ch.cyberduck.core.HostPasswordStore;
+import ch.cyberduck.core.ListService;
+import ch.cyberduck.core.LocaleFactory;
+import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.OAuthTokens;
+import ch.cyberduck.core.PasswordStoreFactory;
+import ch.cyberduck.core.Profile;
+import ch.cyberduck.core.Protocol;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
@@ -85,7 +98,8 @@ public class HubSession extends HttpSession<HubApiClient> {
     protected HubApiClient connect(final ProxyFinder proxy, final HostKeyCallback key,
                                    final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final HttpClientBuilder configuration = builder.build(proxy, this, prompt);
-        if(host.getProtocol().isBundled()) {
+        final Protocol bundled = host.getProtocol();
+        if(bundled.isBundled()) {
             // Use REST API for bootstrapping via /api/config
             final HubApiClient client = new HubApiClient(host, configuration.build());
             try {
@@ -103,7 +117,7 @@ public class HubSession extends HttpSession<HubApiClient> {
                 final String hubId = configDto.getUuid();
                 log.debug("Configure bookmark with id {}", hubId);
                 host.setUuid(hubId);
-                final Profile profile = new Profile(host.getProtocol(), new HubConfigDtoDeserializer(configDto));
+                final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(configDto));
                 log.debug("Apply profile {} to bookmark {}", profile, host);
                 host.setProtocol(profile);
             }
