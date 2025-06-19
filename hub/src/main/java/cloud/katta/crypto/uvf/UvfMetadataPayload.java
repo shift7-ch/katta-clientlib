@@ -11,6 +11,8 @@ import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.cryptomator.cryptolib.api.Cryptor;
 import org.cryptomator.cryptolib.api.CryptorProvider;
+import org.cryptomator.cryptolib.api.DirectoryContentCryptor;
+import org.cryptomator.cryptolib.api.DirectoryMetadata;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.openapitools.jackson.nullable.JsonNullableModule;
@@ -122,6 +124,16 @@ public class UvfMetadataPayload extends JWEPayload {
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
         final byte[] rootDirId = masterKey.rootDirId();
         return cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(rootDirId);
+    }
+
+    public byte[] computeRootDirUvf() throws JsonProcessingException {
+        final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
+        final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
+        final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
+        DirectoryMetadata rootDirMetadata = cryptor.directoryContentCryptor().rootDirectoryMetadata();
+        DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
+        byte[] rootDirUvfFileContents = dirContentCryptor.encryptDirectoryMetadata(rootDirMetadata);
+        return rootDirUvfFileContents;
     }
 
     public static final class UniversalVaultFormatJWKS {
