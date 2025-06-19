@@ -70,7 +70,7 @@ public class HubUVFVault extends UVFVault {
      * Upload vault template into existing bucket (permanent credentials)
      */
     // TODO https://github.com/shift7-ch/cipherduck-hub/issues/19 review @dko check method signature?
-    public synchronized Path create(final Session<?> session, final String region, final String metadata, final String hashedRootDirId) throws BackgroundException {
+    public synchronized Path create(final Session<?> session, final String region, final String metadata, final String hashedRootDirId, final byte[] rootDirUvf) throws BackgroundException {
         log.debug("Uploading vault template {} in {} ", home, session.getHost());
 
         // N.B. there seems to be no API to check write permissions without actually writing.
@@ -81,6 +81,8 @@ public class HubUVFVault extends UVFVault {
         // See https://github.com/cryptomator/hub/blob/develop/frontend/src/common/vaultconfig.ts
         //        zip.file('vault.cryptomator', this.vaultConfigToken);
         //        zip.folder('d')?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));
+
+        // /vault.uvf
         new ContentWriter(session).write(new Path(home, PreferencesFactory.get().getProperty("cryptomator.vault.config.filename"), EnumSet.of(AbstractPath.Type.file, AbstractPath.Type.vault)), metadata.getBytes(StandardCharsets.US_ASCII));
         Directory<?> directory = (Directory<?>) session._getFeature(Directory.class);
 
@@ -95,6 +97,7 @@ public class HubUVFVault extends UVFVault {
         directory.mkdir(dataDir, status);
         directory.mkdir(firstLevel, status);
         directory.mkdir(secondLevel, status);
+        new ContentWriter(session).write(new Path(secondLevel, "dir.uvf", EnumSet.of(AbstractPath.Type.file)), rootDirUvf);
         return home;
     }
 

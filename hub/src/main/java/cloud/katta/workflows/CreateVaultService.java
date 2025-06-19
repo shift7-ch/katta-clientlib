@@ -119,6 +119,7 @@ public class CreateVaultService {
                     .uvfKeySet(jwks.serializePublicRecoverykey());
 
             final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
+            final byte[] rootDirUvf = metadataPayload.computeRootDirUvf();
             final CreateS3STSBucketDto storageDto = new CreateS3STSBucketDto()
                     .vaultId(vaultModel.vaultId().toString())
                     .storageConfigId(storageProfileWrapper.getId())
@@ -134,7 +135,7 @@ public class CreateVaultService {
                     configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
             if(storageProfileWrapper.getProtocol() == Protocol.S3) {
                 // permanent: template upload into existing bucket from client (not backend)
-                templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
+                templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId, rootDirUvf);
             }
             else {
                 // non-permanent: pass STS tokens (restricted by inline policy) to hub backend and have bucket created from there
@@ -173,19 +174,19 @@ public class CreateVaultService {
     static class TemplateUploadService {
         static TemplateUploadService disabled = new TemplateUploadService() {
             @Override
-            void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId) {
+            void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId, final byte[] rootDirUvf) {
                 // do nothing
             }
         };
 
-        void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId) throws BackgroundException {
+        void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId, final byte[] rootDirUvf) throws BackgroundException {
             final S3Session session = new S3Session(bookmark);
             session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
             session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
             // upload vault template
             new HubUVFVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
-                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
+                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId, rootDirUvf);
             session.close();
         }
     }
@@ -226,7 +227,6 @@ public class CreateVaultService {
             final AWSSecurityTokenService service = serviceBuild
                     .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
                     .build();
-
 
             log.debug("Use request {}", request);
             final AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(request);
