@@ -32,6 +32,8 @@
         <string>${oauth.handler.scheme}:oauth</string>
         <key>OAuth Client Secret</key>
         <string/>
+        <key>OAuth PKCE</key>
+        <true/>
         <key>Password Configurable</key>
         <false/>
         <key>Username Configurable</key>
