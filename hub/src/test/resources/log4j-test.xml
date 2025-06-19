@@ -36,6 +36,7 @@
         </Logger>
         <Logger name="cloud.katta" level="debug"/>
         <Logger name="org.testcontainers" level="debug"/>
+        <Logger name="tc.docker" level="debug"/>
 
         <Root>
             <AppenderRef ref="console"/>
