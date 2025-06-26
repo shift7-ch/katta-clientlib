@@ -7,6 +7,10 @@ package cloud.katta.protocols.hub;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.features.Location;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +21,7 @@ import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 
 public class HubStorageLocationService implements Location {
+    private static final Logger log = LogManager.getLogger(HubStorageLocationService.class);
 
     private final HubSession session;
 
@@ -38,13 +43,14 @@ public class HubStorageLocationService implements Location {
             for(StorageProfileDto storageProfileDto : storageProfileDtos) {
                 final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
                 for(String region : storageProfile.getRegions()) {
-                    regions.add(new StorageLocation(storageProfile.getName(), region));
+                    regions.add(new StorageLocation(storageProfile.getId().toString(), region));
                 }
             }
             return regions;
         }
         catch(ApiException e) {
-            throw new RuntimeException(e);
+            log.warn("Failed to retrieve storage locations from server", e);
+            return Collections.emptySet();
         }
     }
 
@@ -54,6 +60,9 @@ public class HubStorageLocationService implements Location {
     }
 
     public static final class StorageLocation extends Name {
+        /**
+         * UUID of storage profile configuration
+         */
         private final String storageProfile;
         private final String region;
 
