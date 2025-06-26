@@ -10,6 +10,10 @@ on:
     - cron: '30 5 * * *'
 jobs:
   build:
+    permissions:
+      checks: write
+      contents: read
+      packages: read
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
