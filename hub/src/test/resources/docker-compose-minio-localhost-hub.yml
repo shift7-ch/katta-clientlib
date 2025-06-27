@@ -38,6 +38,10 @@ services:
       - |
         set -euxo pipefail
 
+        # fix for Docker Desktop 4.42.1 based on https://github.com/keycloak/keycloak/discussions/12155
+        /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm master --user admin --password admin realms/master -s sslRequired=NONE
+        /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin realms/cryptomator -s sslRequired=NONE
+
         # enable direct access grants in client cryptomator and cryptomatorhub for integration testing and manual exploration
         CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
         /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
@@ -46,6 +50,7 @@ services:
         # allow redirect URI from localhost for "attended" mode for client cryptomatorhub, i.e. dev wants to interact directly with the running setup
         CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
         /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s 'redirectUris=["http://localhost:${HUB_PORT}/*"]'
+
     depends_on:
       keycloak:
         condition: service_healthy
