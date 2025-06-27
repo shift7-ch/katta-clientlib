@@ -26,6 +26,7 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -96,6 +97,7 @@ public class CreateVaultService {
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileWrapper.getId().toString())
                             .defaultPath(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .region(vaultModel.region())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
@@ -119,12 +121,12 @@ public class CreateVaultService {
                     .uvfKeySet(jwks.serializePublicRecoverykey());
 
             final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
-            final byte[] rootDirUvf = metadataPayload.computeRootDirUvf();
             final CreateS3STSBucketDto storageDto = new CreateS3STSBucketDto()
                     .vaultId(vaultModel.vaultId().toString())
                     .storageConfigId(storageProfileWrapper.getId())
                     .vaultUvf(uvfMetadataFile)
                     .rootDirHash(hashedRootDirId)
+                    .dirUvf(Base64.getUrlEncoder().encodeToString(metadataPayload.computeRootDirUvf()))
                     .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
 
@@ -135,7 +137,7 @@ public class CreateVaultService {
                     configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
             if(storageProfileWrapper.getProtocol() == Protocol.S3) {
                 // permanent: template upload into existing bucket from client (not backend)
-                templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId, rootDirUvf);
+                templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
             }
             else {
                 // non-permanent: pass STS tokens (restricted by inline policy) to hub backend and have bucket created from there
@@ -174,19 +176,19 @@ public class CreateVaultService {
     static class TemplateUploadService {
         static TemplateUploadService disabled = new TemplateUploadService() {
             @Override
-            void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId, final byte[] rootDirUvf) {
+            void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId) {
                 // do nothing
             }
         };
 
-        void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId, final byte[] rootDirUvf) throws BackgroundException {
+        void uploadTemplate(final Host bookmark, final UvfMetadataPayload metadataPayload, final CreateS3STSBucketDto storageDto, final String hashedRootDirId) throws BackgroundException {
             final S3Session session = new S3Session(bookmark);
             session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
             session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
 
             // upload vault template
             new HubUVFVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
-                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId, rootDirUvf);
+                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId, Base64.getUrlDecoder().decode(storageDto.getDirUvf()));
             session.close();
         }
     }

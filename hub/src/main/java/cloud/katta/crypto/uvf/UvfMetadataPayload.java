@@ -132,8 +132,7 @@ public class UvfMetadataPayload extends JWEPayload {
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
         DirectoryMetadata rootDirMetadata = cryptor.directoryContentCryptor().rootDirectoryMetadata();
         DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
-        byte[] rootDirUvfFileContents = dirContentCryptor.encryptDirectoryMetadata(rootDirMetadata);
-        return rootDirUvfFileContents;
+        return dirContentCryptor.encryptDirectoryMetadata(rootDirMetadata);
     }
 
     public static final class UniversalVaultFormatJWKS {
