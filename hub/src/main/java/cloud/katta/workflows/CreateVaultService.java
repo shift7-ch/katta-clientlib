@@ -160,7 +160,7 @@ public class CreateVaultService {
 
             // upload JWE
             log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
-            final UserDto userDto = users.apiUsersMeGet(false);
+            final UserDto userDto = users.apiUsersMeGet(false, false);
             vaultResource.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {

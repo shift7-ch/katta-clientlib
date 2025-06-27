@@ -154,7 +154,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             throw new LoginCanceledException(e);
         }
         try {
-            me = new UsersResourceApi(client).apiUsersMeGet(true);
+            me = new UsersResourceApi(client).apiUsersMeGet(true, false);
             log.debug("Retrieved user {}", me);
             final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, me,
                     new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);

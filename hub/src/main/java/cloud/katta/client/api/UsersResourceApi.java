@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
- */
-
 package cloud.katta.client.api;
 
 import cloud.katta.client.ApiException;
@@ -16,11 +12,12 @@ import cloud.katta.client.model.TrustedUserDto;
 import cloud.katta.client.model.UserDto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.11.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class UsersResourceApi {
   private ApiClient apiClient;
 
@@ -52,7 +49,7 @@ public class UsersResourceApi {
 
   /**
    * list all users
-   *
+   * 
    * @return List&lt;UserDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -60,8 +57,8 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public List<UserDto> apiUsersGet() throws ApiException {
@@ -70,7 +67,7 @@ public class UsersResourceApi {
 
   /**
    * list all users
-   *
+   * 
    * @return ApiResponse&lt;List&lt;UserDto&gt;&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -78,8 +75,8 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public ApiResponse<List<UserDto>> apiUsersGetWithHttpInfo() throws ApiException {
@@ -94,25 +91,26 @@ public class UsersResourceApi {
   /**
    * adds/updates user-specific vault keys
    * Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).
-   * @param requestBody  (optional)
+   * @param requestBody  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> all keys stored </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
+       <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiUsersMeAccessTokensPost(Map<String, String> requestBody) throws ApiException {
+  public void apiUsersMeAccessTokensPost(@javax.annotation.Nonnull Map<String, String> requestBody) throws ApiException {
     apiUsersMeAccessTokensPostWithHttpInfo(requestBody);
   }
 
   /**
    * adds/updates user-specific vault keys
    * Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).
-   * @param requestBody  (optional)
+   * @param requestBody  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -120,11 +118,17 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> all keys stored </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
+       <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiUsersMeAccessTokensPostWithHttpInfo(Map<String, String> requestBody) throws ApiException {
+  public ApiResponse<Void> apiUsersMeAccessTokensPostWithHttpInfo(@javax.annotation.Nonnull Map<String, String> requestBody) throws ApiException {
+    // Check required parameters
+    if (requestBody == null) {
+      throw new ApiException(400, "Missing the required parameter 'requestBody' when calling apiUsersMeAccessTokensPost");
+    }
+
     String localVarAccept = apiClient.selectHeaderAccept();
     String localVarContentType = apiClient.selectHeaderContentType("application/json");
     String[] localVarAuthNames = new String[] {"SecurityScheme"};
@@ -134,8 +138,9 @@ public class UsersResourceApi {
   }
   /**
    * get the logged-in user
-   *
+   * 
    * @param withDevices  (optional)
+   * @param withLastAccess adds last access values to the devices (if present) (optional)
    * @return UserDto
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -144,18 +149,19 @@ public class UsersResourceApi {
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> returns the current user </td><td>  -  </td></tr>
        <tr><td> 404 </td><td> no user matching the subject of the JWT passed as Bearer Token </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public UserDto apiUsersMeGet(Boolean withDevices) throws ApiException {
-    return apiUsersMeGetWithHttpInfo(withDevices).getData();
+  public UserDto apiUsersMeGet(@javax.annotation.Nullable Boolean withDevices, @javax.annotation.Nullable Boolean withLastAccess) throws ApiException {
+    return apiUsersMeGetWithHttpInfo(withDevices, withLastAccess).getData();
   }
 
   /**
    * get the logged-in user
-   *
+   * 
    * @param withDevices  (optional)
+   * @param withLastAccess adds last access values to the devices (if present) (optional)
    * @return ApiResponse&lt;UserDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -164,15 +170,16 @@ public class UsersResourceApi {
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> returns the current user </td><td>  -  </td></tr>
        <tr><td> 404 </td><td> no user matching the subject of the JWT passed as Bearer Token </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<UserDto> apiUsersMeGetWithHttpInfo(Boolean withDevices) throws ApiException {
+  public ApiResponse<UserDto> apiUsersMeGetWithHttpInfo(@javax.annotation.Nullable Boolean withDevices, @javax.annotation.Nullable Boolean withLastAccess) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("", "withDevices", withDevices)
     );
+    localVarQueryParams.addAll(apiClient.parameterToPairs("", "withLastAccess", withLastAccess));
 
     String localVarAccept = apiClient.selectHeaderAccept("application/json");
     String localVarContentType = apiClient.selectHeaderContentType();
@@ -184,26 +191,27 @@ public class UsersResourceApi {
   }
   /**
    * update the logged-in user
-   *
-   * @param userDto  (optional)
+   * 
+   * @param userDto  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 201 </td><td> user created or updated </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
+       <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiUsersMePut(UserDto userDto) throws ApiException {
+  public void apiUsersMePut(@javax.annotation.Nonnull UserDto userDto) throws ApiException {
     apiUsersMePutWithHttpInfo(userDto);
   }
 
   /**
    * update the logged-in user
-   *
-   * @param userDto  (optional)
+   * 
+   * @param userDto  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -211,11 +219,17 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 201 </td><td> user created or updated </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
+       <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiUsersMePutWithHttpInfo(UserDto userDto) throws ApiException {
+  public ApiResponse<Void> apiUsersMePutWithHttpInfo(@javax.annotation.Nonnull UserDto userDto) throws ApiException {
+    // Check required parameters
+    if (userDto == null) {
+      throw new ApiException(400, "Missing the required parameter 'userDto' when calling apiUsersMePut");
+    }
+
     String localVarAccept = apiClient.selectHeaderAccept();
     String localVarContentType = apiClient.selectHeaderContentType("application/json");
     String[] localVarAuthNames = new String[] {"SecurityScheme"};
@@ -225,15 +239,15 @@ public class UsersResourceApi {
   }
   /**
    * resets the user account
-   *
+   * 
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 204 </td><td> deleted keys, devices and access permissions </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public void apiUsersMeResetPost() throws ApiException {
@@ -242,7 +256,7 @@ public class UsersResourceApi {
 
   /**
    * resets the user account
-   *
+   * 
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -250,8 +264,8 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 204 </td><td> deleted keys, devices and access permissions </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public ApiResponse<Void> apiUsersMeResetPostWithHttpInfo() throws ApiException {
@@ -263,6 +277,53 @@ public class UsersResourceApi {
                                localVarAuthNames, null, false);
   }
   /**
+   * get the logged-in user
+   * 
+   * @return UserDto
+   * @throws ApiException if fails to make API call
+   * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+       <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+       <tr><td> 200 </td><td> returns the current user </td><td>  -  </td></tr>
+       <tr><td> 404 </td><td> no user matching the subject of the JWT passed as Bearer Token </td><td>  -  </td></tr>
+       <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
+     </table>
+   * @deprecated
+   */
+  @Deprecated
+  public UserDto apiUsersMeWithLegacyDevicesAndAccessGet() throws ApiException {
+    return apiUsersMeWithLegacyDevicesAndAccessGetWithHttpInfo().getData();
+  }
+
+  /**
+   * get the logged-in user
+   * 
+   * @return ApiResponse&lt;UserDto&gt;
+   * @throws ApiException if fails to make API call
+   * @http.response.details
+     <table border="1">
+       <caption>Response Details</caption>
+       <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
+       <tr><td> 200 </td><td> returns the current user </td><td>  -  </td></tr>
+       <tr><td> 404 </td><td> no user matching the subject of the JWT passed as Bearer Token </td><td>  -  </td></tr>
+       <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
+     </table>
+   * @deprecated
+   */
+  @Deprecated
+  public ApiResponse<UserDto> apiUsersMeWithLegacyDevicesAndAccessGetWithHttpInfo() throws ApiException {
+    String localVarAccept = apiClient.selectHeaderAccept("application/json");
+    String localVarContentType = apiClient.selectHeaderContentType();
+    String[] localVarAuthNames = new String[] {"SecurityScheme"};
+    GenericType<UserDto> localVarReturnType = new GenericType<UserDto>() {};
+    return apiClient.invokeAPI("UsersResourceApi.apiUsersMeWithLegacyDevicesAndAccessGet", "/api/users/me-with-legacy-devices-and-access", "GET", new ArrayList<>(), null,
+                               new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), localVarAccept, localVarContentType,
+                               localVarAuthNames, localVarReturnType, false);
+  }
+  /**
    * get trusted users
    * returns a list of users trusted by the currently logged-in user
    * @return List&lt;TrustedUserDto&gt;
@@ -272,8 +333,8 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public List<TrustedUserDto> apiUsersTrustedGet() throws ApiException {
@@ -290,8 +351,8 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public ApiResponse<List<TrustedUserDto>> apiUsersTrustedGetWithHttpInfo() throws ApiException {
@@ -315,11 +376,11 @@ public class UsersResourceApi {
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
        <tr><td> 404 </td><td> if no sufficiently short trust chain between the invoking user and the user with the given id has been found </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public TrustedUserDto apiUsersTrustedUserIdGet(String userId) throws ApiException {
+  public TrustedUserDto apiUsersTrustedUserIdGet(@javax.annotation.Nonnull String userId) throws ApiException {
     return apiUsersTrustedUserIdGetWithHttpInfo(userId).getData();
   }
 
@@ -335,11 +396,11 @@ public class UsersResourceApi {
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
        <tr><td> 404 </td><td> if no sufficiently short trust chain between the invoking user and the user with the given id has been found </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<TrustedUserDto> apiUsersTrustedUserIdGetWithHttpInfo(String userId) throws ApiException {
+  public ApiResponse<TrustedUserDto> apiUsersTrustedUserIdGetWithHttpInfo(@javax.annotation.Nonnull String userId) throws ApiException {
     // Check required parameters
     if (userId == null) {
       throw new ApiException(400, "Missing the required parameter 'userId' when calling apiUsersTrustedUserIdGet");
@@ -368,11 +429,11 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 204 </td><td> signature stored </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public void apiUsersTrustedUserIdPut(String userId, String body) throws ApiException {
+  public void apiUsersTrustedUserIdPut(@javax.annotation.Nonnull String userId, @javax.annotation.Nonnull String body) throws ApiException {
     apiUsersTrustedUserIdPutWithHttpInfo(userId, body);
   }
 
@@ -388,11 +449,11 @@ public class UsersResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 204 </td><td> signature stored </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiUsersTrustedUserIdPutWithHttpInfo(String userId, String body) throws ApiException {
+  public ApiResponse<Void> apiUsersTrustedUserIdPutWithHttpInfo(@javax.annotation.Nonnull String userId, @javax.annotation.Nonnull String body) throws ApiException {
     // Check required parameters
     if (userId == null) {
       throw new ApiException(400, "Missing the required parameter 'userId' when calling apiUsersTrustedUserIdPut");

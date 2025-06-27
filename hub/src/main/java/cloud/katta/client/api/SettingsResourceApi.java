@@ -1,22 +1,22 @@
-/*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
- */
-
 package cloud.katta.client.api;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
 
 import javax.ws.rs.core.GenericType;
 
 import cloud.katta.client.model.SettingsDto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.11.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SettingsResourceApi {
   private ApiClient apiClient;
 
@@ -48,7 +48,7 @@ public class SettingsResourceApi {
 
   /**
    * get the billing information
-   *
+   * 
    * @return SettingsDto
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -56,8 +56,8 @@ public class SettingsResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public SettingsDto apiSettingsGet() throws ApiException {
@@ -66,7 +66,7 @@ public class SettingsResourceApi {
 
   /**
    * get the billing information
-   *
+   * 
    * @return ApiResponse&lt;SettingsDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -74,8 +74,8 @@ public class SettingsResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public ApiResponse<SettingsDto> apiSettingsGetWithHttpInfo() throws ApiException {
@@ -89,8 +89,8 @@ public class SettingsResourceApi {
   }
   /**
    * update settings
-   *
-   * @param settingsDto  (optional)
+   * 
+   * @param settingsDto  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
@@ -102,14 +102,14 @@ public class SettingsResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiSettingsPut(SettingsDto settingsDto) throws ApiException {
+  public void apiSettingsPut(@javax.annotation.Nonnull SettingsDto settingsDto) throws ApiException {
     apiSettingsPutWithHttpInfo(settingsDto);
   }
 
   /**
    * update settings
-   *
-   * @param settingsDto  (optional)
+   * 
+   * @param settingsDto  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -122,7 +122,12 @@ public class SettingsResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiSettingsPutWithHttpInfo(SettingsDto settingsDto) throws ApiException {
+  public ApiResponse<Void> apiSettingsPutWithHttpInfo(@javax.annotation.Nonnull SettingsDto settingsDto) throws ApiException {
+    // Check required parameters
+    if (settingsDto == null) {
+      throw new ApiException(400, "Missing the required parameter 'settingsDto' when calling apiSettingsPut");
+    }
+
     String localVarAccept = apiClient.selectHeaderAccept();
     String localVarContentType = apiClient.selectHeaderContentType("application/json");
     String[] localVarAuthNames = new String[] {"SecurityScheme"};

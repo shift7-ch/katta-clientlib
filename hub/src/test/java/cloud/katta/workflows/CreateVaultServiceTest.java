@@ -88,7 +88,7 @@ class CreateVaultServiceTest {
         Mockito.when(config.apiConfigGet()).thenReturn(new ConfigDto().keycloakClientIdCryptomatorVaults("hex"));
 
         final UserDto me = new UserDto();
-        Mockito.when(users.apiUsersMeGet(false)).thenReturn(me);
+        Mockito.when(users.apiUsersMeGet(false, false)).thenReturn(me);
 
         final ProtocolFactory factory = ProtocolFactory.get();
         // Register parent protocol definitions

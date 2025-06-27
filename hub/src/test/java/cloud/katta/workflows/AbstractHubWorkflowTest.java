@@ -83,7 +83,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final UsersResourceApi users = new UsersResourceApi(adminApiClient);
 
             // TODO https://github.com/shift7-ch/katta-server/issues/4 bad code smell - encapsulate initial setup
-            final UserDto admin = users.apiUsersMeGet(false)
+            final UserDto admin = users.apiUsersMeGet(false, false)
                     .ecdhPublicKey(adminKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(adminKeys.encodedEcdsaPublicKey())
                     .privateKey(adminKeys.encryptWithSetupCode(adminAccountKey))

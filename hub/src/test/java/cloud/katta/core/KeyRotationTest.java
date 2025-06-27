@@ -55,7 +55,7 @@ public class KeyRotationTest extends AbstractHubTest {
         try {
             final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
-            final UserDto me = usersResourceApi.apiUsersMeGet(false);
+            final UserDto me = usersResourceApi.apiUsersMeGet(false, false);
             log.info(me);
 
             final List<VaultDto> vaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);

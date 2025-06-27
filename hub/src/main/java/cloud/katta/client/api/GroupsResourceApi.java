@@ -1,13 +1,10 @@
-/*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
- */
-
 package cloud.katta.client.api;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
 
 import javax.ws.rs.core.GenericType;
 
@@ -15,10 +12,12 @@ import cloud.katta.client.model.GroupDto;
 import cloud.katta.client.model.UserDto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.11.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class GroupsResourceApi {
   private ApiClient apiClient;
 
@@ -50,7 +49,7 @@ public class GroupsResourceApi {
 
   /**
    * list all groups
-   *
+   * 
    * @return List&lt;GroupDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -58,8 +57,8 @@ public class GroupsResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public List<GroupDto> apiGroupsGet() throws ApiException {
@@ -68,7 +67,7 @@ public class GroupsResourceApi {
 
   /**
    * list all groups
-   *
+   * 
    * @return ApiResponse&lt;List&lt;GroupDto&gt;&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -76,8 +75,8 @@ public class GroupsResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public ApiResponse<List<GroupDto>> apiGroupsGetWithHttpInfo() throws ApiException {
@@ -91,7 +90,7 @@ public class GroupsResourceApi {
   }
   /**
    * list all effective group members
-   *
+   * 
    * @param groupId  (required)
    * @return List&lt;UserDto&gt;
    * @throws ApiException if fails to make API call
@@ -100,17 +99,17 @@ public class GroupsResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<UserDto> apiGroupsGroupIdEffectiveMembersGet(String groupId) throws ApiException {
+  public List<UserDto> apiGroupsGroupIdEffectiveMembersGet(@javax.annotation.Nonnull String groupId) throws ApiException {
     return apiGroupsGroupIdEffectiveMembersGetWithHttpInfo(groupId).getData();
   }
 
   /**
    * list all effective group members
-   *
+   * 
    * @param groupId  (required)
    * @return ApiResponse&lt;List&lt;UserDto&gt;&gt;
    * @throws ApiException if fails to make API call
@@ -119,11 +118,11 @@ public class GroupsResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<UserDto>> apiGroupsGroupIdEffectiveMembersGetWithHttpInfo(String groupId) throws ApiException {
+  public ApiResponse<List<UserDto>> apiGroupsGroupIdEffectiveMembersGetWithHttpInfo(@javax.annotation.Nonnull String groupId) throws ApiException {
     // Check required parameters
     if (groupId == null) {
       throw new ApiException(400, "Missing the required parameter 'groupId' when calling apiGroupsGroupIdEffectiveMembersGet");
