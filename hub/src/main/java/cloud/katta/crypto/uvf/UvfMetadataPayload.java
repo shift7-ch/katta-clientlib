@@ -110,12 +110,12 @@ public class UvfMetadataPayload extends JWEPayload {
                 .withFileFormat("AES-256-GCM-32k")
                 .withNameFormat("AES-SIV-512-B64URL")
                 .withSeeds(new HashMap<String, String>() {{
-                    put(kid, Base64.getEncoder().encodeToString(rawSeed));
+                    put(kid, Base64.getUrlEncoder().encodeToString(rawSeed));
                 }})
                 .withLatestSeed(kid)
                 .withinitialSeed(kid)
                 .withKdf("HKDF-SHA512")
-                .withKdfSalt(Base64.getEncoder().encodeToString(kdfSalt));
+                .withKdfSalt(Base64.getUrlEncoder().encodeToString(kdfSalt));
     }
 
     public String computeRootDirIdHash() throws JsonProcessingException {
