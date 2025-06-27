@@ -42,11 +42,6 @@ public class HubUVFVault extends UVFVault {
         this.home = home;
     }
 
-    public Path encrypt(final Session<?> session, final Path file, final byte[] directoryId, final boolean metadata) throws BackgroundException {
-        log.debug("Use directory ID '{}' for folder {}", directoryId, file);
-        return super.encrypt(session, file, directoryId, metadata);
-    }
-
     @Override
     public <T> T getFeature(final Session<?> ignore, final Class<T> type, final T delegate) {
         log.debug("Delegate to {} for feature {}", storage, type);
