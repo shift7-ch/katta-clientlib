@@ -18,6 +18,7 @@ import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
@@ -28,8 +29,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
 
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.model.JWEPayload;
@@ -51,7 +50,8 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.gen.OctetSequenceKeyGenerator;
-import com.nimbusds.jose.util.Base64URL;
+
+import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
 
 /**
  * Represents payload of <a href="https://github.com/encryption-alliance/unified-vault-format/blob/develop/vault%20metadata/README.md"><code>vault.uvf</code> metadata</a>.
@@ -101,7 +101,7 @@ public class UvfMetadataPayload extends JWEPayload {
     }
 
     public static UvfMetadataPayload create() {
-        final String kid = Base64URL.encode(new AlphanumericRandomStringService(4).random()).toString();
+        final String kid = Base64.getUrlEncoder().encodeToString(new AlphanumericRandomStringService(4).random().getBytes(StandardCharsets.UTF_8));
         final byte[] rawSeed = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawSeed);
         final byte[] kdfSalt = new byte[32];
@@ -110,12 +110,12 @@ public class UvfMetadataPayload extends JWEPayload {
                 .withFileFormat("AES-256-GCM-32k")
                 .withNameFormat("AES-SIV-512-B64URL")
                 .withSeeds(new HashMap<String, String>() {{
-                    put(kid, Base64.getEncoder().encodeToString(rawSeed));
+                    put(kid, Base64.getUrlEncoder().encodeToString(rawSeed));
                 }})
                 .withLatestSeed(kid)
                 .withinitialSeed(kid)
                 .withKdf("HKDF-SHA512")
-                .withKdfSalt(Base64.getEncoder().encodeToString(kdfSalt));
+                .withKdfSalt(Base64.getUrlEncoder().encodeToString(kdfSalt));
     }
 
     public String computeRootDirIdHash() throws JsonProcessingException {
