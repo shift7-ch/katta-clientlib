@@ -20,7 +20,7 @@
       ],
       "Resource": [
         "arn:aws:s3:::katta*/*/",
-        "arn:aws:s3:::katta*/vault.uvf"
+        "arn:aws:s3:::katta*/*.uvf"
       ]
     }
   ]
