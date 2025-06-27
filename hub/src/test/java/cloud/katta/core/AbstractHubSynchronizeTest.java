@@ -358,7 +358,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         for(final Path vault : vaults) {
             assertTrue(hubSession.getFeature(Find.class).find(vault));
         }
-        new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);
+        new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
     }
 
     private static byte @NotNull [] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {

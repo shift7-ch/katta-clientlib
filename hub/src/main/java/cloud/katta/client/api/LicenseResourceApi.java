@@ -1,22 +1,22 @@
-/*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
- */
-
 package cloud.katta.client.api;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
 
 import javax.ws.rs.core.GenericType;
 
 import cloud.katta.client.model.LicenseUserInfoDto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.11.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LicenseResourceApi {
   private ApiClient apiClient;
 
@@ -56,8 +56,8 @@ public class LicenseResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public LicenseUserInfoDto apiLicenseUserInfoGet() throws ApiException {
@@ -74,8 +74,8 @@ public class LicenseResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> OK </td><td>  -  </td></tr>
-       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
+       <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
   public ApiResponse<LicenseUserInfoDto> apiLicenseUserInfoGetWithHttpInfo() throws ApiException {

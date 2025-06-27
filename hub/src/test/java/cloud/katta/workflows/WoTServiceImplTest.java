@@ -84,7 +84,7 @@ class WoTServiceImplTest {
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
-        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
+        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(alice);
         Mockito.when(usersMock.apiUsersGet()).thenReturn(Arrays.asList(alice, bob, oscar));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
 
@@ -122,7 +122,7 @@ class WoTServiceImplTest {
         final UserKeys aliceKeys = previousKeys;
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
+        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(alice);
 
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         wot.verify(aliceKeys, signatureChain, SignedKeys.fromUser(bob));
@@ -143,7 +143,7 @@ class WoTServiceImplTest {
         final String expectedSignature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
+        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(alice);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         final TrustedUserDto expectedTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(Collections.singletonList(expectedSignature));
         Mockito.when(usersMock.apiUsersTrustedUserIdGet(bob.getId())).thenReturn(expectedTrust);

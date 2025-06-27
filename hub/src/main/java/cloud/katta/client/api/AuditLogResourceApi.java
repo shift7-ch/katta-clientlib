@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
- */
-
 package cloud.katta.client.api;
 
 import cloud.katta.client.ApiException;
@@ -16,10 +12,12 @@ import cloud.katta.client.model.AuditEventDto;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.11.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AuditLogResourceApi {
   private ApiClient apiClient;
 
@@ -57,6 +55,7 @@ public class AuditLogResourceApi {
    * @param paginationId The smallest (asc ordering) or highest (desc ordering) audit entry id, not included in results. Used for pagination.  (optional)
    * @param order The order of the queried table. Determines if most recent (desc) or oldest entries (asc) are considered first. Allowed Values are &#39;desc&#39; (default) or &#39;asc&#39;. Used for pagination. (optional, default to desc)
    * @param pageSize the maximum number of entries to return. Must be between 1 and 100. (optional, default to 20)
+   * @param type the list of type of events to return. Empty list is all events. (optional)
    * @return List&lt;AuditEventDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -64,14 +63,14 @@ public class AuditLogResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> Body contains list of events in the specified time interval </td><td>  -  </td></tr>
-       <tr><td> 400 </td><td> startDate or endDate not specified, startDate &gt; endDate, order specified and not in [&#39;asc&#39;,&#39;desc&#39;] or pageSize not in [1 .. 100] </td><td>  -  </td></tr>
+       <tr><td> 400 </td><td> startDate or endDate not specified, startDate &gt; endDate, order specified and not in [&#39;asc&#39;,&#39;desc&#39;], pageSize not in [1 .. 100] or type is not valid </td><td>  -  </td></tr>
        <tr><td> 402 </td><td> Community license used or license expired </td><td>  -  </td></tr>
        <tr><td> 403 </td><td> requesting user does not have admin role </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public List<AuditEventDto> apiAuditlogGet(DateTime startDate, DateTime endDate, Long paginationId, String order, Integer pageSize) throws ApiException {
-    return apiAuditlogGetWithHttpInfo(startDate, endDate, paginationId, order, pageSize).getData();
+  public List<AuditEventDto> apiAuditlogGet(@javax.annotation.Nullable DateTime startDate, @javax.annotation.Nullable DateTime endDate, @javax.annotation.Nullable Long paginationId, @javax.annotation.Nullable String order, @javax.annotation.Nullable Integer pageSize, @javax.annotation.Nullable List<String> type) throws ApiException {
+    return apiAuditlogGetWithHttpInfo(startDate, endDate, paginationId, order, pageSize, type).getData();
   }
 
   /**
@@ -82,6 +81,7 @@ public class AuditLogResourceApi {
    * @param paginationId The smallest (asc ordering) or highest (desc ordering) audit entry id, not included in results. Used for pagination.  (optional)
    * @param order The order of the queried table. Determines if most recent (desc) or oldest entries (asc) are considered first. Allowed Values are &#39;desc&#39; (default) or &#39;asc&#39;. Used for pagination. (optional, default to desc)
    * @param pageSize the maximum number of entries to return. Must be between 1 and 100. (optional, default to 20)
+   * @param type the list of type of events to return. Empty list is all events. (optional)
    * @return ApiResponse&lt;List&lt;AuditEventDto&gt;&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -89,13 +89,13 @@ public class AuditLogResourceApi {
        <caption>Response Details</caption>
        <tr><td> Status Code </td><td> Description </td><td> Response Headers </td></tr>
        <tr><td> 200 </td><td> Body contains list of events in the specified time interval </td><td>  -  </td></tr>
-       <tr><td> 400 </td><td> startDate or endDate not specified, startDate &gt; endDate, order specified and not in [&#39;asc&#39;,&#39;desc&#39;] or pageSize not in [1 .. 100] </td><td>  -  </td></tr>
+       <tr><td> 400 </td><td> startDate or endDate not specified, startDate &gt; endDate, order specified and not in [&#39;asc&#39;,&#39;desc&#39;], pageSize not in [1 .. 100] or type is not valid </td><td>  -  </td></tr>
        <tr><td> 402 </td><td> Community license used or license expired </td><td>  -  </td></tr>
        <tr><td> 403 </td><td> requesting user does not have admin role </td><td>  -  </td></tr>
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<AuditEventDto>> apiAuditlogGetWithHttpInfo(DateTime startDate, DateTime endDate, Long paginationId, String order, Integer pageSize) throws ApiException {
+  public ApiResponse<List<AuditEventDto>> apiAuditlogGetWithHttpInfo(@javax.annotation.Nullable DateTime startDate, @javax.annotation.Nullable DateTime endDate, @javax.annotation.Nullable Long paginationId, @javax.annotation.Nullable String order, @javax.annotation.Nullable Integer pageSize, @javax.annotation.Nullable List<String> type) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("", "startDate", startDate)
@@ -104,6 +104,7 @@ public class AuditLogResourceApi {
     localVarQueryParams.addAll(apiClient.parameterToPairs("", "paginationId", paginationId));
     localVarQueryParams.addAll(apiClient.parameterToPairs("", "order", order));
     localVarQueryParams.addAll(apiClient.parameterToPairs("", "pageSize", pageSize));
+    localVarQueryParams.addAll(apiClient.parameterToPairs("multi", "type", type));
 
     String localVarAccept = apiClient.selectHeaderAccept("application/json");
     String localVarContentType = apiClient.selectHeaderContentType();
