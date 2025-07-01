@@ -97,6 +97,7 @@ public class CreateVaultService {
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileWrapper.getId().toString())
                             .defaultPath(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .region(vaultModel.region())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
