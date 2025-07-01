@@ -15,6 +15,7 @@
     <modules>
         <module>hub</module>
         <module>osx</module>
+        <module>admin-cli</module>
     </modules>
 
     <properties>
