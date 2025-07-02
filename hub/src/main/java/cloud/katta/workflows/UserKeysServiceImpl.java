@@ -4,7 +4,9 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.BookmarkNameProvider;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.LocalAccessDeniedException;
 
@@ -42,13 +44,24 @@ public class UserKeysServiceImpl implements UserKeysService {
     private final UsersResourceApi usersResourceApi;
     private final DeviceResourceApi deviceResourceApi;
 
+    private final PasswordStore store;
+
     public UserKeysServiceImpl(final HubSession hubSession) {
-        this(new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()));
+        this(hubSession, PasswordStoreFactory.get());
+    }
+
+    public UserKeysServiceImpl(final HubSession hubSession, PasswordStore store) {
+        this(new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()), store);
     }
 
     public UserKeysServiceImpl(final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
+        this(usersResourceApi, deviceResourceApi, PasswordStoreFactory.get());
+    }
+
+    public UserKeysServiceImpl(final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi, PasswordStore store) {
         this.usersResourceApi = usersResourceApi;
         this.deviceResourceApi = deviceResourceApi;
+        this.store = store;
     }
 
     @Override
@@ -112,7 +125,7 @@ public class UserKeysServiceImpl implements UserKeysService {
 
     private void save(final Host hub, final UserDto me, final String accountKey) {
         try {
-            PasswordStoreFactory.get().addPassword(hub.getNickname(), me.getEmail(), accountKey);
+            store.addPassword(BookmarkNameProvider.toString(hub), me.getEmail(), accountKey);
         }
         catch(LocalAccessDeniedException ex) {
             log.warn("Failure saving account key", ex);

@@ -159,7 +159,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         try {
             me = new UsersResourceApi(client).apiUsersMeGet(true, false);
             log.debug("Retrieved user {}", me);
-            final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, me,
+            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host, me,
                     new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
             log.debug("Retrieved user keys {}", userKeys);
             // Ensure vaults are registered
