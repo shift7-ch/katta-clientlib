@@ -1,23 +1,20 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
+import org.joda.time.DateTime;
+
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
 import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
 import cloud.katta.client.model.AuditEventDto;
-import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class AuditLogResourceApi {
   private ApiClient apiClient;
 
@@ -69,7 +66,7 @@ public class AuditLogResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public List<AuditEventDto> apiAuditlogGet(@javax.annotation.Nullable DateTime startDate, @javax.annotation.Nullable DateTime endDate, @javax.annotation.Nullable Long paginationId, @javax.annotation.Nullable String order, @javax.annotation.Nullable Integer pageSize, @javax.annotation.Nullable List<String> type) throws ApiException {
+  public List<AuditEventDto> apiAuditlogGet(DateTime startDate, DateTime endDate, Long paginationId, String order, Integer pageSize, List<String> type) throws ApiException {
     return apiAuditlogGetWithHttpInfo(startDate, endDate, paginationId, order, pageSize, type).getData();
   }
 
@@ -95,7 +92,7 @@ public class AuditLogResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<AuditEventDto>> apiAuditlogGetWithHttpInfo(@javax.annotation.Nullable DateTime startDate, @javax.annotation.Nullable DateTime endDate, @javax.annotation.Nullable Long paginationId, @javax.annotation.Nullable String order, @javax.annotation.Nullable Integer pageSize, @javax.annotation.Nullable List<String> type) throws ApiException {
+  public ApiResponse<List<AuditEventDto>> apiAuditlogGetWithHttpInfo(DateTime startDate, DateTime endDate, Long paginationId, String order, Integer pageSize, List<String> type) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("", "startDate", startDate)

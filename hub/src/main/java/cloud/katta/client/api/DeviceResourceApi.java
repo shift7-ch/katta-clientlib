@@ -1,22 +1,19 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
-import cloud.katta.client.ApiClient;
-import cloud.katta.client.ApiResponse;
-import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
 import javax.ws.rs.core.GenericType;
-
-import cloud.katta.client.model.DeviceDto;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
+import cloud.katta.client.ApiResponse;
+import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
+import cloud.katta.client.model.DeviceDto;
+
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class DeviceResourceApi {
   private ApiClient apiClient;
 
@@ -61,7 +58,7 @@ public class DeviceResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public void apiDevicesDeviceIdDelete(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public void apiDevicesDeviceIdDelete(String deviceId) throws ApiException {
     apiDevicesDeviceIdDeleteWithHttpInfo(deviceId);
   }
 
@@ -81,7 +78,7 @@ public class DeviceResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiDevicesDeviceIdDeleteWithHttpInfo(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public ApiResponse<Void> apiDevicesDeviceIdDeleteWithHttpInfo(String deviceId) throws ApiException {
     // Check required parameters
     if (deviceId == null) {
       throw new ApiException(400, "Missing the required parameter 'deviceId' when calling apiDevicesDeviceIdDelete");
@@ -114,7 +111,7 @@ public class DeviceResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public DeviceDto apiDevicesDeviceIdGet(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public DeviceDto apiDevicesDeviceIdGet(String deviceId) throws ApiException {
     return apiDevicesDeviceIdGetWithHttpInfo(deviceId).getData();
   }
 
@@ -134,7 +131,7 @@ public class DeviceResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<DeviceDto> apiDevicesDeviceIdGetWithHttpInfo(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public ApiResponse<DeviceDto> apiDevicesDeviceIdGetWithHttpInfo(String deviceId) throws ApiException {
     // Check required parameters
     if (deviceId == null) {
       throw new ApiException(400, "Missing the required parameter 'deviceId' when calling apiDevicesDeviceIdGet");
@@ -169,7 +166,7 @@ public class DeviceResourceApi {
    * @deprecated
    */
   @Deprecated
-  public Map<String, String> apiDevicesDeviceIdLegacyAccessTokensGet(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public Map<String, String> apiDevicesDeviceIdLegacyAccessTokensGet(String deviceId) throws ApiException {
     return apiDevicesDeviceIdLegacyAccessTokensGetWithHttpInfo(deviceId).getData();
   }
 
@@ -190,7 +187,7 @@ public class DeviceResourceApi {
    * @deprecated
    */
   @Deprecated
-  public ApiResponse<Map<String, String>> apiDevicesDeviceIdLegacyAccessTokensGetWithHttpInfo(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public ApiResponse<Map<String, String>> apiDevicesDeviceIdLegacyAccessTokensGetWithHttpInfo(String deviceId) throws ApiException {
     // Check required parameters
     if (deviceId == null) {
       throw new ApiException(400, "Missing the required parameter 'deviceId' when calling apiDevicesDeviceIdLegacyAccessTokensGet");
@@ -225,7 +222,7 @@ public class DeviceResourceApi {
    * @deprecated
    */
   @Deprecated
-  public void apiDevicesDeviceIdLegacyDeviceDelete(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public void apiDevicesDeviceIdLegacyDeviceDelete(String deviceId) throws ApiException {
     apiDevicesDeviceIdLegacyDeviceDeleteWithHttpInfo(deviceId);
   }
 
@@ -247,7 +244,7 @@ public class DeviceResourceApi {
    * @deprecated
    */
   @Deprecated
-  public ApiResponse<Void> apiDevicesDeviceIdLegacyDeviceDeleteWithHttpInfo(@javax.annotation.Nonnull String deviceId) throws ApiException {
+  public ApiResponse<Void> apiDevicesDeviceIdLegacyDeviceDeleteWithHttpInfo(String deviceId) throws ApiException {
     // Check required parameters
     if (deviceId == null) {
       throw new ApiException(400, "Missing the required parameter 'deviceId' when calling apiDevicesDeviceIdLegacyDeviceDelete");
@@ -281,7 +278,7 @@ public class DeviceResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiDevicesDeviceIdPut(@javax.annotation.Nonnull String deviceId, @javax.annotation.Nonnull DeviceDto deviceDto) throws ApiException {
+  public void apiDevicesDeviceIdPut(String deviceId, DeviceDto deviceDto) throws ApiException {
     apiDevicesDeviceIdPutWithHttpInfo(deviceId, deviceDto);
   }
 
@@ -303,7 +300,7 @@ public class DeviceResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiDevicesDeviceIdPutWithHttpInfo(@javax.annotation.Nonnull String deviceId, @javax.annotation.Nonnull DeviceDto deviceDto) throws ApiException {
+  public ApiResponse<Void> apiDevicesDeviceIdPutWithHttpInfo(String deviceId, DeviceDto deviceDto) throws ApiException {
     // Check required parameters
     if (deviceId == null) {
       throw new ApiException(400, "Missing the required parameter 'deviceId' when calling apiDevicesDeviceIdPut");
@@ -338,7 +335,7 @@ public class DeviceResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<DeviceDto> apiDevicesGet(@javax.annotation.Nullable List<String> ids) throws ApiException {
+  public List<DeviceDto> apiDevicesGet(List<String> ids) throws ApiException {
     return apiDevicesGetWithHttpInfo(ids).getData();
   }
 
@@ -357,7 +354,7 @@ public class DeviceResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<DeviceDto>> apiDevicesGetWithHttpInfo(@javax.annotation.Nullable List<String> ids) throws ApiException {
+  public ApiResponse<List<DeviceDto>> apiDevicesGetWithHttpInfo(List<String> ids) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("multi", "ids", ids)
@@ -388,7 +385,7 @@ public class DeviceResourceApi {
    * @deprecated
    */
   @Deprecated
-  public List<DeviceDto> apiDevicesLegacyDevicesGet(@javax.annotation.Nullable List<String> ids) throws ApiException {
+  public List<DeviceDto> apiDevicesLegacyDevicesGet(List<String> ids) throws ApiException {
     return apiDevicesLegacyDevicesGetWithHttpInfo(ids).getData();
   }
 
@@ -409,7 +406,7 @@ public class DeviceResourceApi {
    * @deprecated
    */
   @Deprecated
-  public ApiResponse<List<DeviceDto>> apiDevicesLegacyDevicesGetWithHttpInfo(@javax.annotation.Nullable List<String> ids) throws ApiException {
+  public ApiResponse<List<DeviceDto>> apiDevicesLegacyDevicesGetWithHttpInfo(List<String> ids) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("multi", "ids", ids)

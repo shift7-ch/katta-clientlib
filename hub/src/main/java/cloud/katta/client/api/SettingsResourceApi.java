@@ -1,22 +1,16 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
 import cloud.katta.client.model.SettingsDto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class SettingsResourceApi {
   private ApiClient apiClient;
 
@@ -48,7 +42,7 @@ public class SettingsResourceApi {
 
   /**
    * get the billing information
-   * 
+   *
    * @return SettingsDto
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -66,7 +60,7 @@ public class SettingsResourceApi {
 
   /**
    * get the billing information
-   * 
+   *
    * @return ApiResponse&lt;SettingsDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -89,7 +83,7 @@ public class SettingsResourceApi {
   }
   /**
    * update settings
-   * 
+   *
    * @param settingsDto  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -102,13 +96,13 @@ public class SettingsResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiSettingsPut(@javax.annotation.Nonnull SettingsDto settingsDto) throws ApiException {
+  public void apiSettingsPut(SettingsDto settingsDto) throws ApiException {
     apiSettingsPutWithHttpInfo(settingsDto);
   }
 
   /**
    * update settings
-   * 
+   *
    * @param settingsDto  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
@@ -122,7 +116,7 @@ public class SettingsResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiSettingsPutWithHttpInfo(@javax.annotation.Nonnull SettingsDto settingsDto) throws ApiException {
+  public ApiResponse<Void> apiSettingsPutWithHttpInfo(SettingsDto settingsDto) throws ApiException {
     // Check required parameters
     if (settingsDto == null) {
       throw new ApiException(400, "Missing the required parameter 'settingsDto' when calling apiSettingsPut");

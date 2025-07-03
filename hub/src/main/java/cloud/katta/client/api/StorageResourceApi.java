@@ -1,23 +1,16 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
-import cloud.katta.client.ApiClient;
-import cloud.katta.client.ApiResponse;
-import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
-import cloud.katta.client.model.CreateS3STSBucketDto;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
+import cloud.katta.client.ApiResponse;
+import cloud.katta.client.Configuration;
+import cloud.katta.client.model.CreateS3STSBucketDto;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class StorageResourceApi {
   private ApiClient apiClient;
 
@@ -65,7 +58,7 @@ public class StorageResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public void apiStorageVaultIdPut(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nonnull CreateS3STSBucketDto createS3STSBucketDto) throws ApiException {
+  public void apiStorageVaultIdPut(UUID vaultId, CreateS3STSBucketDto createS3STSBucketDto) throws ApiException {
     apiStorageVaultIdPutWithHttpInfo(vaultId, createS3STSBucketDto);
   }
 
@@ -88,7 +81,7 @@ public class StorageResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiStorageVaultIdPutWithHttpInfo(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nonnull CreateS3STSBucketDto createS3STSBucketDto) throws ApiException {
+  public ApiResponse<Void> apiStorageVaultIdPutWithHttpInfo(UUID vaultId, CreateS3STSBucketDto createS3STSBucketDto) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiStorageVaultIdPut");

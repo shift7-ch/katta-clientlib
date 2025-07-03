@@ -1,25 +1,22 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
-import cloud.katta.client.ApiClient;
-import cloud.katta.client.ApiResponse;
-import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
 import javax.ws.rs.core.GenericType;
-
-import cloud.katta.client.model.MemberDto;
-import cloud.katta.client.model.Role;
-import java.util.UUID;
-import cloud.katta.client.model.VaultDto;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
+import cloud.katta.client.ApiResponse;
+import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
+import cloud.katta.client.model.MemberDto;
+import cloud.katta.client.model.Role;
+import cloud.katta.client.model.VaultDto;
+
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class VaultResourceApi {
   private ApiClient apiClient;
 
@@ -64,7 +61,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<VaultDto> apiVaultsAccessibleGet(@javax.annotation.Nullable Role role) throws ApiException {
+  public List<VaultDto> apiVaultsAccessibleGet(Role role) throws ApiException {
     return apiVaultsAccessibleGetWithHttpInfo(role).getData();
   }
 
@@ -83,7 +80,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<VaultDto>> apiVaultsAccessibleGetWithHttpInfo(@javax.annotation.Nullable Role role) throws ApiException {
+  public ApiResponse<List<VaultDto>> apiVaultsAccessibleGetWithHttpInfo(Role role) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("", "role", role)
@@ -140,7 +137,7 @@ public class VaultResourceApi {
   }
   /**
    * list all vaults corresponding to the given ids
-   * list for each id in the list its corresponding vault. Ignores all id&#39;s where a vault does not exist, 
+   * list for each id in the list its corresponding vault. Ignores all id&#39;s where a vault does not exist,
    * @param ids  (optional)
    * @return List&lt;VaultDto&gt;
    * @throws ApiException if fails to make API call
@@ -153,13 +150,13 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<VaultDto> apiVaultsSomeGet(@javax.annotation.Nullable List<UUID> ids) throws ApiException {
+  public List<VaultDto> apiVaultsSomeGet(List<UUID> ids) throws ApiException {
     return apiVaultsSomeGetWithHttpInfo(ids).getData();
   }
 
   /**
    * list all vaults corresponding to the given ids
-   * list for each id in the list its corresponding vault. Ignores all id&#39;s where a vault does not exist, 
+   * list for each id in the list its corresponding vault. Ignores all id&#39;s where a vault does not exist,
    * @param ids  (optional)
    * @return ApiResponse&lt;List&lt;VaultDto&gt;&gt;
    * @throws ApiException if fails to make API call
@@ -172,7 +169,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<VaultDto>> apiVaultsSomeGetWithHttpInfo(@javax.annotation.Nullable List<UUID> ids) throws ApiException {
+  public ApiResponse<List<VaultDto>> apiVaultsSomeGetWithHttpInfo(List<UUID> ids) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("multi", "ids", ids)
@@ -206,7 +203,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public String apiVaultsVaultIdAccessTokenGet(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable Boolean evenIfArchived) throws ApiException {
+  public String apiVaultsVaultIdAccessTokenGet(UUID vaultId, Boolean evenIfArchived) throws ApiException {
     return apiVaultsVaultIdAccessTokenGetWithHttpInfo(vaultId, evenIfArchived).getData();
   }
 
@@ -230,7 +227,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<String> apiVaultsVaultIdAccessTokenGetWithHttpInfo(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable Boolean evenIfArchived) throws ApiException {
+  public ApiResponse<String> apiVaultsVaultIdAccessTokenGetWithHttpInfo(UUID vaultId, Boolean evenIfArchived) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdAccessTokenGet");
@@ -271,7 +268,7 @@ public class VaultResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiVaultsVaultIdAccessTokensPost(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nonnull Map<String, String> requestBody) throws ApiException {
+  public void apiVaultsVaultIdAccessTokensPost(UUID vaultId, Map<String, String> requestBody) throws ApiException {
     apiVaultsVaultIdAccessTokensPostWithHttpInfo(vaultId, requestBody);
   }
 
@@ -294,7 +291,7 @@ public class VaultResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiVaultsVaultIdAccessTokensPostWithHttpInfo(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nonnull Map<String, String> requestBody) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdAccessTokensPostWithHttpInfo(UUID vaultId, Map<String, String> requestBody) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdAccessTokensPost");
@@ -329,7 +326,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiVaultsVaultIdAuthorityAuthorityIdDelete(@javax.annotation.Nonnull String authorityId, @javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public void apiVaultsVaultIdAuthorityAuthorityIdDelete(String authorityId, UUID vaultId) throws ApiException {
     apiVaultsVaultIdAuthorityAuthorityIdDeleteWithHttpInfo(authorityId, vaultId);
   }
 
@@ -349,7 +346,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiVaultsVaultIdAuthorityAuthorityIdDeleteWithHttpInfo(@javax.annotation.Nonnull String authorityId, @javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdAuthorityAuthorityIdDeleteWithHttpInfo(String authorityId, UUID vaultId) throws ApiException {
     // Check required parameters
     if (authorityId == null) {
       throw new ApiException(400, "Missing the required parameter 'authorityId' when calling apiVaultsVaultIdAuthorityAuthorityIdDelete");
@@ -388,7 +385,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public void apiVaultsVaultIdClaimOwnershipPost(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable String proof) throws ApiException {
+  public void apiVaultsVaultIdClaimOwnershipPost(UUID vaultId, String proof) throws ApiException {
     apiVaultsVaultIdClaimOwnershipPostWithHttpInfo(vaultId, proof);
   }
 
@@ -411,7 +408,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiVaultsVaultIdClaimOwnershipPostWithHttpInfo(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable String proof) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdClaimOwnershipPostWithHttpInfo(UUID vaultId, String proof) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdClaimOwnershipPost");
@@ -436,7 +433,7 @@ public class VaultResourceApi {
   }
   /**
    * gets a vault
-   * 
+   *
    * @param vaultId  (required)
    * @return VaultDto
    * @throws ApiException if fails to make API call
@@ -449,13 +446,13 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public VaultDto apiVaultsVaultIdGet(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public VaultDto apiVaultsVaultIdGet(UUID vaultId) throws ApiException {
     return apiVaultsVaultIdGetWithHttpInfo(vaultId).getData();
   }
 
   /**
    * gets a vault
-   * 
+   *
    * @param vaultId  (required)
    * @return ApiResponse&lt;VaultDto&gt;
    * @throws ApiException if fails to make API call
@@ -468,7 +465,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<VaultDto> apiVaultsVaultIdGetWithHttpInfo(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<VaultDto> apiVaultsVaultIdGetWithHttpInfo(UUID vaultId) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdGet");
@@ -488,10 +485,10 @@ public class VaultResourceApi {
   }
   /**
    * adds a group to this vault or updates its role
-   * 
+   *
    * @param groupId  (required)
    * @param vaultId  (required)
-   * @param role the role to grant to this group (defaults to MEMBER) (optional, default to MEMBER)
+   * @param role the role to grant to this group (defaults to MEMBER) (optional)
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
@@ -505,16 +502,16 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiVaultsVaultIdGroupsGroupIdPut(@javax.annotation.Nonnull String groupId, @javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable Role role) throws ApiException {
+  public void apiVaultsVaultIdGroupsGroupIdPut(String groupId, UUID vaultId, Role role) throws ApiException {
     apiVaultsVaultIdGroupsGroupIdPutWithHttpInfo(groupId, vaultId, role);
   }
 
   /**
    * adds a group to this vault or updates its role
-   * 
+   *
    * @param groupId  (required)
    * @param vaultId  (required)
-   * @param role the role to grant to this group (defaults to MEMBER) (optional, default to MEMBER)
+   * @param role the role to grant to this group (defaults to MEMBER) (optional)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -529,7 +526,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiVaultsVaultIdGroupsGroupIdPutWithHttpInfo(@javax.annotation.Nonnull String groupId, @javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable Role role) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdGroupsGroupIdPutWithHttpInfo(String groupId, UUID vaultId, Role role) throws ApiException {
     // Check required parameters
     if (groupId == null) {
       throw new ApiException(400, "Missing the required parameter 'groupId' when calling apiVaultsVaultIdGroupsGroupIdPut");
@@ -557,7 +554,7 @@ public class VaultResourceApi {
   }
   /**
    * get the device-specific masterkey of a non-archived vault
-   * 
+   *
    * @param deviceId  (required)
    * @param vaultId  (required)
    * @throws ApiException if fails to make API call
@@ -574,13 +571,13 @@ public class VaultResourceApi {
    * @deprecated
    */
   @Deprecated
-  public void apiVaultsVaultIdKeysDeviceIdGet(@javax.annotation.Nonnull String deviceId, @javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public void apiVaultsVaultIdKeysDeviceIdGet(String deviceId, UUID vaultId) throws ApiException {
     apiVaultsVaultIdKeysDeviceIdGetWithHttpInfo(deviceId, vaultId);
   }
 
   /**
    * get the device-specific masterkey of a non-archived vault
-   * 
+   *
    * @param deviceId  (required)
    * @param vaultId  (required)
    * @return ApiResponse&lt;Void&gt;
@@ -598,7 +595,7 @@ public class VaultResourceApi {
    * @deprecated
    */
   @Deprecated
-  public ApiResponse<Void> apiVaultsVaultIdKeysDeviceIdGetWithHttpInfo(@javax.annotation.Nonnull String deviceId, @javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdKeysDeviceIdGetWithHttpInfo(String deviceId, UUID vaultId) throws ApiException {
     // Check required parameters
     if (deviceId == null) {
       throw new ApiException(400, "Missing the required parameter 'deviceId' when calling apiVaultsVaultIdKeysDeviceIdGet");
@@ -634,7 +631,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public List<MemberDto> apiVaultsVaultIdMembersGet(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public List<MemberDto> apiVaultsVaultIdMembersGet(UUID vaultId) throws ApiException {
     return apiVaultsVaultIdMembersGetWithHttpInfo(vaultId).getData();
   }
 
@@ -653,7 +650,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<MemberDto>> apiVaultsVaultIdMembersGetWithHttpInfo(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<List<MemberDto>> apiVaultsVaultIdMembersGetWithHttpInfo(UUID vaultId) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdMembersGet");
@@ -689,7 +686,7 @@ public class VaultResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiVaultsVaultIdPut(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nonnull VaultDto vaultDto) throws ApiException {
+  public void apiVaultsVaultIdPut(UUID vaultId, VaultDto vaultDto) throws ApiException {
     apiVaultsVaultIdPutWithHttpInfo(vaultId, vaultDto);
   }
 
@@ -712,7 +709,7 @@ public class VaultResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiVaultsVaultIdPutWithHttpInfo(@javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nonnull VaultDto vaultDto) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdPutWithHttpInfo(UUID vaultId, VaultDto vaultDto) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdPut");
@@ -747,7 +744,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public List<MemberDto> apiVaultsVaultIdUsersRequiringAccessGrantGet(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public List<MemberDto> apiVaultsVaultIdUsersRequiringAccessGrantGet(UUID vaultId) throws ApiException {
     return apiVaultsVaultIdUsersRequiringAccessGrantGetWithHttpInfo(vaultId).getData();
   }
 
@@ -766,7 +763,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<MemberDto>> apiVaultsVaultIdUsersRequiringAccessGrantGetWithHttpInfo(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<List<MemberDto>> apiVaultsVaultIdUsersRequiringAccessGrantGetWithHttpInfo(UUID vaultId) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdUsersRequiringAccessGrantGet");
@@ -786,10 +783,10 @@ public class VaultResourceApi {
   }
   /**
    * adds a user to this vault or updates her role
-   * 
+   *
    * @param userId  (required)
    * @param vaultId  (required)
-   * @param role the role to grant to this user (defaults to MEMBER) (optional, default to MEMBER)
+   * @param role the role to grant to this user (defaults to MEMBER) (optional)
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
@@ -803,16 +800,16 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiVaultsVaultIdUsersUserIdPut(@javax.annotation.Nonnull String userId, @javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable Role role) throws ApiException {
+  public void apiVaultsVaultIdUsersUserIdPut(String userId, UUID vaultId, Role role) throws ApiException {
     apiVaultsVaultIdUsersUserIdPutWithHttpInfo(userId, vaultId, role);
   }
 
   /**
    * adds a user to this vault or updates her role
-   * 
+   *
    * @param userId  (required)
    * @param vaultId  (required)
-   * @param role the role to grant to this user (defaults to MEMBER) (optional, default to MEMBER)
+   * @param role the role to grant to this user (defaults to MEMBER) (optional)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -827,7 +824,7 @@ public class VaultResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiVaultsVaultIdUsersUserIdPutWithHttpInfo(@javax.annotation.Nonnull String userId, @javax.annotation.Nonnull UUID vaultId, @javax.annotation.Nullable Role role) throws ApiException {
+  public ApiResponse<Void> apiVaultsVaultIdUsersUserIdPutWithHttpInfo(String userId, UUID vaultId, Role role) throws ApiException {
     // Check required parameters
     if (userId == null) {
       throw new ApiException(400, "Missing the required parameter 'userId' when calling apiVaultsVaultIdUsersUserIdPut");
@@ -869,7 +866,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public String apiVaultsVaultIdUvfJwksJsonGet(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public String apiVaultsVaultIdUvfJwksJsonGet(UUID vaultId) throws ApiException {
     return apiVaultsVaultIdUvfJwksJsonGetWithHttpInfo(vaultId).getData();
   }
 
@@ -889,7 +886,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<String> apiVaultsVaultIdUvfJwksJsonGetWithHttpInfo(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<String> apiVaultsVaultIdUvfJwksJsonGetWithHttpInfo(UUID vaultId) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdUvfJwksJsonGet");
@@ -909,7 +906,7 @@ public class VaultResourceApi {
   }
   /**
    * get the vault.uvf file
-   * 
+   *
    * @param vaultId  (required)
    * @return String
    * @throws ApiException if fails to make API call
@@ -923,13 +920,13 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public String apiVaultsVaultIdUvfVaultUvfGet(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public String apiVaultsVaultIdUvfVaultUvfGet(UUID vaultId) throws ApiException {
     return apiVaultsVaultIdUvfVaultUvfGetWithHttpInfo(vaultId).getData();
   }
 
   /**
    * get the vault.uvf file
-   * 
+   *
    * @param vaultId  (required)
    * @return ApiResponse&lt;String&gt;
    * @throws ApiException if fails to make API call
@@ -943,7 +940,7 @@ public class VaultResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<String> apiVaultsVaultIdUvfVaultUvfGetWithHttpInfo(@javax.annotation.Nonnull UUID vaultId) throws ApiException {
+  public ApiResponse<String> apiVaultsVaultIdUvfVaultUvfGetWithHttpInfo(UUID vaultId) throws ApiException {
     // Check required parameters
     if (vaultId == null) {
       throw new ApiException(400, "Missing the required parameter 'vaultId' when calling apiVaultsVaultIdUvfVaultUvfGet");

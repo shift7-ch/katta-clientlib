@@ -1,22 +1,16 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
 import cloud.katta.client.model.BillingDto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class BillingResourceApi {
   private ApiClient apiClient;
 
@@ -48,7 +42,7 @@ public class BillingResourceApi {
 
   /**
    * get the billing information
-   * 
+   *
    * @return BillingDto
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -66,7 +60,7 @@ public class BillingResourceApi {
 
   /**
    * get the billing information
-   * 
+   *
    * @return ApiResponse&lt;BillingDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -89,7 +83,7 @@ public class BillingResourceApi {
   }
   /**
    * set the token
-   * 
+   *
    * @param body  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -102,13 +96,13 @@ public class BillingResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiBillingTokenPut(@javax.annotation.Nonnull String body) throws ApiException {
+  public void apiBillingTokenPut(String body) throws ApiException {
     apiBillingTokenPutWithHttpInfo(body);
   }
 
   /**
    * set the token
-   * 
+   *
    * @param body  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
@@ -122,7 +116,7 @@ public class BillingResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiBillingTokenPutWithHttpInfo(@javax.annotation.Nonnull String body) throws ApiException {
+  public ApiResponse<Void> apiBillingTokenPutWithHttpInfo(String body) throws ApiException {
     // Check required parameters
     if (body == null) {
       throw new ApiException(400, "Missing the required parameter 'body' when calling apiBillingTokenPut");

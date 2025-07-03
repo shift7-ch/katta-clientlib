@@ -1,23 +1,20 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
-import cloud.katta.client.ApiClient;
-import cloud.katta.client.ApiResponse;
-import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
 import javax.ws.rs.core.GenericType;
-
-import cloud.katta.client.model.TrustedUserDto;
-import cloud.katta.client.model.UserDto;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
+import cloud.katta.client.ApiResponse;
+import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
+import cloud.katta.client.model.TrustedUserDto;
+import cloud.katta.client.model.UserDto;
+
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class UsersResourceApi {
   private ApiClient apiClient;
 
@@ -49,7 +46,7 @@ public class UsersResourceApi {
 
   /**
    * list all users
-   * 
+   *
    * @return List&lt;UserDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -67,7 +64,7 @@ public class UsersResourceApi {
 
   /**
    * list all users
-   * 
+   *
    * @return ApiResponse&lt;List&lt;UserDto&gt;&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -103,7 +100,7 @@ public class UsersResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiUsersMeAccessTokensPost(@javax.annotation.Nonnull Map<String, String> requestBody) throws ApiException {
+  public void apiUsersMeAccessTokensPost(Map<String, String> requestBody) throws ApiException {
     apiUsersMeAccessTokensPostWithHttpInfo(requestBody);
   }
 
@@ -123,7 +120,7 @@ public class UsersResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiUsersMeAccessTokensPostWithHttpInfo(@javax.annotation.Nonnull Map<String, String> requestBody) throws ApiException {
+  public ApiResponse<Void> apiUsersMeAccessTokensPostWithHttpInfo(Map<String, String> requestBody) throws ApiException {
     // Check required parameters
     if (requestBody == null) {
       throw new ApiException(400, "Missing the required parameter 'requestBody' when calling apiUsersMeAccessTokensPost");
@@ -138,7 +135,7 @@ public class UsersResourceApi {
   }
   /**
    * get the logged-in user
-   * 
+   *
    * @param withDevices  (optional)
    * @param withLastAccess adds last access values to the devices (if present) (optional)
    * @return UserDto
@@ -153,13 +150,13 @@ public class UsersResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public UserDto apiUsersMeGet(@javax.annotation.Nullable Boolean withDevices, @javax.annotation.Nullable Boolean withLastAccess) throws ApiException {
+  public UserDto apiUsersMeGet(Boolean withDevices, Boolean withLastAccess) throws ApiException {
     return apiUsersMeGetWithHttpInfo(withDevices, withLastAccess).getData();
   }
 
   /**
    * get the logged-in user
-   * 
+   *
    * @param withDevices  (optional)
    * @param withLastAccess adds last access values to the devices (if present) (optional)
    * @return ApiResponse&lt;UserDto&gt;
@@ -174,7 +171,7 @@ public class UsersResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<UserDto> apiUsersMeGetWithHttpInfo(@javax.annotation.Nullable Boolean withDevices, @javax.annotation.Nullable Boolean withLastAccess) throws ApiException {
+  public ApiResponse<UserDto> apiUsersMeGetWithHttpInfo(Boolean withDevices, Boolean withLastAccess) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("", "withDevices", withDevices)
@@ -191,7 +188,7 @@ public class UsersResourceApi {
   }
   /**
    * update the logged-in user
-   * 
+   *
    * @param userDto  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -204,13 +201,13 @@ public class UsersResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiUsersMePut(@javax.annotation.Nonnull UserDto userDto) throws ApiException {
+  public void apiUsersMePut(UserDto userDto) throws ApiException {
     apiUsersMePutWithHttpInfo(userDto);
   }
 
   /**
    * update the logged-in user
-   * 
+   *
    * @param userDto  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
@@ -224,7 +221,7 @@ public class UsersResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiUsersMePutWithHttpInfo(@javax.annotation.Nonnull UserDto userDto) throws ApiException {
+  public ApiResponse<Void> apiUsersMePutWithHttpInfo(UserDto userDto) throws ApiException {
     // Check required parameters
     if (userDto == null) {
       throw new ApiException(400, "Missing the required parameter 'userDto' when calling apiUsersMePut");
@@ -239,7 +236,7 @@ public class UsersResourceApi {
   }
   /**
    * resets the user account
-   * 
+   *
    * @throws ApiException if fails to make API call
    * @http.response.details
      <table border="1">
@@ -256,7 +253,7 @@ public class UsersResourceApi {
 
   /**
    * resets the user account
-   * 
+   *
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -278,7 +275,7 @@ public class UsersResourceApi {
   }
   /**
    * get the logged-in user
-   * 
+   *
    * @return UserDto
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -299,7 +296,7 @@ public class UsersResourceApi {
 
   /**
    * get the logged-in user
-   * 
+   *
    * @return ApiResponse&lt;UserDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -380,7 +377,7 @@ public class UsersResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public TrustedUserDto apiUsersTrustedUserIdGet(@javax.annotation.Nonnull String userId) throws ApiException {
+  public TrustedUserDto apiUsersTrustedUserIdGet(String userId) throws ApiException {
     return apiUsersTrustedUserIdGetWithHttpInfo(userId).getData();
   }
 
@@ -400,7 +397,7 @@ public class UsersResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<TrustedUserDto> apiUsersTrustedUserIdGetWithHttpInfo(@javax.annotation.Nonnull String userId) throws ApiException {
+  public ApiResponse<TrustedUserDto> apiUsersTrustedUserIdGetWithHttpInfo(String userId) throws ApiException {
     // Check required parameters
     if (userId == null) {
       throw new ApiException(400, "Missing the required parameter 'userId' when calling apiUsersTrustedUserIdGet");
@@ -433,7 +430,7 @@ public class UsersResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public void apiUsersTrustedUserIdPut(@javax.annotation.Nonnull String userId, @javax.annotation.Nonnull String body) throws ApiException {
+  public void apiUsersTrustedUserIdPut(String userId, String body) throws ApiException {
     apiUsersTrustedUserIdPutWithHttpInfo(userId, body);
   }
 
@@ -453,7 +450,7 @@ public class UsersResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiUsersTrustedUserIdPutWithHttpInfo(@javax.annotation.Nonnull String userId, @javax.annotation.Nonnull String body) throws ApiException {
+  public ApiResponse<Void> apiUsersTrustedUserIdPutWithHttpInfo(String userId, String body) throws ApiException {
     // Check required parameters
     if (userId == null) {
       throw new ApiException(400, "Missing the required parameter 'userId' when calling apiUsersTrustedUserIdPut");

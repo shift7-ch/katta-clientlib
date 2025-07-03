@@ -1,25 +1,22 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
-import cloud.katta.client.ApiClient;
-import cloud.katta.client.ApiResponse;
-import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
 import javax.ws.rs.core.GenericType;
-
-import cloud.katta.client.model.StorageProfileDto;
-import cloud.katta.client.model.StorageProfileS3Dto;
-import cloud.katta.client.model.StorageProfileS3STSDto;
-import java.util.UUID;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
+import cloud.katta.client.ApiResponse;
+import cloud.katta.client.Configuration;
+import cloud.katta.client.Pair;
+import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3STSDto;
+
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class StorageProfileResourceApi {
   private ApiClient apiClient;
 
@@ -64,7 +61,7 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public List<StorageProfileDto> apiStorageprofileGet(@javax.annotation.Nullable Boolean archived) throws ApiException {
+  public List<StorageProfileDto> apiStorageprofileGet(Boolean archived) throws ApiException {
     return apiStorageprofileGetWithHttpInfo(archived).getData();
   }
 
@@ -83,7 +80,7 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<StorageProfileDto>> apiStorageprofileGetWithHttpInfo(@javax.annotation.Nullable Boolean archived) throws ApiException {
+  public ApiResponse<List<StorageProfileDto>> apiStorageprofileGetWithHttpInfo(Boolean archived) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("", "archived", archived)
@@ -99,7 +96,7 @@ public class StorageProfileResourceApi {
   }
   /**
    * gets a storage profile
-   * 
+   *
    * @param profileId  (required)
    * @return StorageProfileDto
    * @throws ApiException if fails to make API call
@@ -112,13 +109,13 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public StorageProfileDto apiStorageprofileProfileIdGet(@javax.annotation.Nonnull UUID profileId) throws ApiException {
+  public StorageProfileDto apiStorageprofileProfileIdGet(UUID profileId) throws ApiException {
     return apiStorageprofileProfileIdGetWithHttpInfo(profileId).getData();
   }
 
   /**
    * gets a storage profile
-   * 
+   *
    * @param profileId  (required)
    * @return ApiResponse&lt;StorageProfileDto&gt;
    * @throws ApiException if fails to make API call
@@ -131,7 +128,7 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<StorageProfileDto> apiStorageprofileProfileIdGetWithHttpInfo(@javax.annotation.Nonnull UUID profileId) throws ApiException {
+  public ApiResponse<StorageProfileDto> apiStorageprofileProfileIdGetWithHttpInfo(UUID profileId) throws ApiException {
     // Check required parameters
     if (profileId == null) {
       throw new ApiException(400, "Missing the required parameter 'profileId' when calling apiStorageprofileProfileIdGet");
@@ -151,7 +148,7 @@ public class StorageProfileResourceApi {
   }
   /**
    * archive a storage profile
-   * 
+   *
    * @param profileId  (required)
    * @param archived  (optional)
    * @throws ApiException if fails to make API call
@@ -165,13 +162,13 @@ public class StorageProfileResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public void apiStorageprofileProfileIdPut(@javax.annotation.Nonnull UUID profileId, @javax.annotation.Nullable Boolean archived) throws ApiException {
+  public void apiStorageprofileProfileIdPut(UUID profileId, Boolean archived) throws ApiException {
     apiStorageprofileProfileIdPutWithHttpInfo(profileId, archived);
   }
 
   /**
    * archive a storage profile
-   * 
+   *
    * @param profileId  (required)
    * @param archived  (optional)
    * @return ApiResponse&lt;Void&gt;
@@ -186,7 +183,7 @@ public class StorageProfileResourceApi {
        <tr><td> 400 </td><td> Bad Request </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiStorageprofileProfileIdPutWithHttpInfo(@javax.annotation.Nonnull UUID profileId, @javax.annotation.Nullable Boolean archived) throws ApiException {
+  public ApiResponse<Void> apiStorageprofileProfileIdPutWithHttpInfo(UUID profileId, Boolean archived) throws ApiException {
     // Check required parameters
     if (profileId == null) {
       throw new ApiException(400, "Missing the required parameter 'profileId' when calling apiStorageprofileProfileIdPut");
@@ -252,7 +249,7 @@ public class StorageProfileResourceApi {
   }
   /**
    * Upload Storage Profile
-   * 
+   *
    * @param storageProfileS3Dto  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -266,13 +263,13 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiStorageprofileS3Put(@javax.annotation.Nonnull StorageProfileS3Dto storageProfileS3Dto) throws ApiException {
+  public void apiStorageprofileS3Put(StorageProfileS3Dto storageProfileS3Dto) throws ApiException {
     apiStorageprofileS3PutWithHttpInfo(storageProfileS3Dto);
   }
 
   /**
    * Upload Storage Profile
-   * 
+   *
    * @param storageProfileS3Dto  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
@@ -287,7 +284,7 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiStorageprofileS3PutWithHttpInfo(@javax.annotation.Nonnull StorageProfileS3Dto storageProfileS3Dto) throws ApiException {
+  public ApiResponse<Void> apiStorageprofileS3PutWithHttpInfo(StorageProfileS3Dto storageProfileS3Dto) throws ApiException {
     // Check required parameters
     if (storageProfileS3Dto == null) {
       throw new ApiException(400, "Missing the required parameter 'storageProfileS3Dto' when calling apiStorageprofileS3Put");
@@ -302,7 +299,7 @@ public class StorageProfileResourceApi {
   }
   /**
    * Upload Storage Profile
-   * 
+   *
    * @param storageProfileS3STSDto  (required)
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -316,13 +313,13 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public void apiStorageprofileS3stsPut(@javax.annotation.Nonnull StorageProfileS3STSDto storageProfileS3STSDto) throws ApiException {
+  public void apiStorageprofileS3stsPut(StorageProfileS3STSDto storageProfileS3STSDto) throws ApiException {
     apiStorageprofileS3stsPutWithHttpInfo(storageProfileS3STSDto);
   }
 
   /**
    * Upload Storage Profile
-   * 
+   *
    * @param storageProfileS3STSDto  (required)
    * @return ApiResponse&lt;Void&gt;
    * @throws ApiException if fails to make API call
@@ -337,7 +334,7 @@ public class StorageProfileResourceApi {
        <tr><td> 401 </td><td> Not Authorized </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<Void> apiStorageprofileS3stsPutWithHttpInfo(@javax.annotation.Nonnull StorageProfileS3STSDto storageProfileS3STSDto) throws ApiException {
+  public ApiResponse<Void> apiStorageprofileS3stsPutWithHttpInfo(StorageProfileS3STSDto storageProfileS3STSDto) throws ApiException {
     // Check required parameters
     if (storageProfileS3STSDto == null) {
       throw new ApiException(400, "Missing the required parameter 'storageProfileS3STSDto' when calling apiStorageprofileS3stsPut");

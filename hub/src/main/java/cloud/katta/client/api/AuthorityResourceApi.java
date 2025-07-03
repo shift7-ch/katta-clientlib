@@ -1,22 +1,18 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
 import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
 import cloud.katta.client.model.AuthorityDto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class AuthorityResourceApi {
   private ApiClient apiClient;
 
@@ -61,7 +57,7 @@ public class AuthorityResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<AuthorityDto> apiAuthoritiesGet(@javax.annotation.Nullable List<String> ids) throws ApiException {
+  public List<AuthorityDto> apiAuthoritiesGet(List<String> ids) throws ApiException {
     return apiAuthoritiesGetWithHttpInfo(ids).getData();
   }
 
@@ -80,7 +76,7 @@ public class AuthorityResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<AuthorityDto>> apiAuthoritiesGetWithHttpInfo(@javax.annotation.Nullable List<String> ids) throws ApiException {
+  public ApiResponse<List<AuthorityDto>> apiAuthoritiesGetWithHttpInfo(List<String> ids) throws ApiException {
     // Query parameters
     List<Pair> localVarQueryParams = new ArrayList<>(
             apiClient.parameterToPairs("multi", "ids", ids)
@@ -96,7 +92,7 @@ public class AuthorityResourceApi {
   }
   /**
    * search authority by name
-   * 
+   *
    * @param query  (required)
    * @param withMemberSize  (optional)
    * @return List&lt;AuthorityDto&gt;
@@ -110,13 +106,13 @@ public class AuthorityResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<AuthorityDto> apiAuthoritiesSearchGet(@javax.annotation.Nonnull String query, @javax.annotation.Nullable Boolean withMemberSize) throws ApiException {
+  public List<AuthorityDto> apiAuthoritiesSearchGet(String query, Boolean withMemberSize) throws ApiException {
     return apiAuthoritiesSearchGetWithHttpInfo(query, withMemberSize).getData();
   }
 
   /**
    * search authority by name
-   * 
+   *
    * @param query  (required)
    * @param withMemberSize  (optional)
    * @return ApiResponse&lt;List&lt;AuthorityDto&gt;&gt;
@@ -130,7 +126,7 @@ public class AuthorityResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<AuthorityDto>> apiAuthoritiesSearchGetWithHttpInfo(@javax.annotation.Nonnull String query, @javax.annotation.Nullable Boolean withMemberSize) throws ApiException {
+  public ApiResponse<List<AuthorityDto>> apiAuthoritiesSearchGetWithHttpInfo(String query, Boolean withMemberSize) throws ApiException {
     // Check required parameters
     if (query == null) {
       throw new ApiException(400, "Missing the required parameter 'query' when calling apiAuthoritiesSearchGet");

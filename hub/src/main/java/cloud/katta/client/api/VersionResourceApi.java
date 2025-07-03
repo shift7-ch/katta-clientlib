@@ -1,22 +1,16 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
 import cloud.katta.client.model.VersionDto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class VersionResourceApi {
   private ApiClient apiClient;
 
@@ -48,7 +42,7 @@ public class VersionResourceApi {
 
   /**
    * get version of hub and keycloak
-   * 
+   *
    * @return VersionDto
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -64,7 +58,7 @@ public class VersionResourceApi {
 
   /**
    * get version of hub and keycloak
-   * 
+   *
    * @return ApiResponse&lt;VersionDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details

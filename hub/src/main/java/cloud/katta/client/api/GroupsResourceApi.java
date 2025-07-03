@@ -1,23 +1,18 @@
 package cloud.katta.client.api;
 
-import cloud.katta.client.ApiException;
+import javax.ws.rs.core.GenericType;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.ApiResponse;
 import cloud.katta.client.Configuration;
-import cloud.katta.client.Pair;
-
-import javax.ws.rs.core.GenericType;
-
 import cloud.katta.client.model.GroupDto;
 import cloud.katta.client.model.UserDto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.12.0")
 public class GroupsResourceApi {
   private ApiClient apiClient;
 
@@ -49,7 +44,7 @@ public class GroupsResourceApi {
 
   /**
    * list all groups
-   * 
+   *
    * @return List&lt;GroupDto&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -67,7 +62,7 @@ public class GroupsResourceApi {
 
   /**
    * list all groups
-   * 
+   *
    * @return ApiResponse&lt;List&lt;GroupDto&gt;&gt;
    * @throws ApiException if fails to make API call
    * @http.response.details
@@ -90,7 +85,7 @@ public class GroupsResourceApi {
   }
   /**
    * list all effective group members
-   * 
+   *
    * @param groupId  (required)
    * @return List&lt;UserDto&gt;
    * @throws ApiException if fails to make API call
@@ -103,13 +98,13 @@ public class GroupsResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public List<UserDto> apiGroupsGroupIdEffectiveMembersGet(@javax.annotation.Nonnull String groupId) throws ApiException {
+  public List<UserDto> apiGroupsGroupIdEffectiveMembersGet(String groupId) throws ApiException {
     return apiGroupsGroupIdEffectiveMembersGetWithHttpInfo(groupId).getData();
   }
 
   /**
    * list all effective group members
-   * 
+   *
    * @param groupId  (required)
    * @return ApiResponse&lt;List&lt;UserDto&gt;&gt;
    * @throws ApiException if fails to make API call
@@ -122,7 +117,7 @@ public class GroupsResourceApi {
        <tr><td> 403 </td><td> Not Allowed </td><td>  -  </td></tr>
      </table>
    */
-  public ApiResponse<List<UserDto>> apiGroupsGroupIdEffectiveMembersGetWithHttpInfo(@javax.annotation.Nonnull String groupId) throws ApiException {
+  public ApiResponse<List<UserDto>> apiGroupsGroupIdEffectiveMembersGetWithHttpInfo(String groupId) throws ApiException {
     // Check required parameters
     if (groupId == null) {
       throw new ApiException(400, "Missing the required parameter 'groupId' when calling apiGroupsGroupIdEffectiveMembersGet");
