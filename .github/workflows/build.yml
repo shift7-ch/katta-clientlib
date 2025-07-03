@@ -33,6 +33,8 @@ jobs:
           distribution: 'temurin'
           java-version: 21
           cache: maven
+      - name: Verify codegen
+        run: mvn clean compile -Pcodegen
       - name: Build with Maven
         run: mvn --no-transfer-progress --batch-mode verify -U
         env:
