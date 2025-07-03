@@ -32,5 +32,7 @@
         <false/>
         <key>Password Configurable</key>
         <false/>
+        <key>Authorization</key>
+        <string>AuthorizationCode</string>
     </dict>
 </plist>
