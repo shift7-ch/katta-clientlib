@@ -24,6 +24,7 @@ import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.vault.VaultRegistry;
 
+import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
@@ -84,7 +85,17 @@ public class HubVaultListService implements ListService {
                     log.debug("Read vault {}", vaultDto);
                     // Find storage configuration in vault metadata
                     final VaultServiceImpl vaultService = new VaultServiceImpl(session);
-                    final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), userKeys);
+                    final UvfMetadataPayload vaultMetadata;
+                    try {
+                        vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), userKeys);
+                    }
+                    catch(ApiException e) {
+                        if(HttpStatus.SC_FORBIDDEN == e.getCode()) {
+                            log.warn("Skip vault {} with insufficient permissions", vaultDto);
+                            continue;
+                        }
+                        throw e;
+                    }
                     final Host bookmark = vaultService.getStorageBackend(protocols, configDto, vaultDto.getId(),
                             vaultMetadata.storage(), tokens);
                     log.debug("Configured {} for vault {}", bookmark, vaultDto);
