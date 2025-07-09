@@ -47,7 +47,7 @@
                             <modelPackage>cloud.katta.client.model</modelPackage>
                             <apiPackage>cloud.katta.client.api</apiPackage>
                             <configOptions>
-                                <sourceFolder>src/main/java</sourceFolder>
+                                <sourceFolder>target/generated-sources/openapi</sourceFolder>
                                 <library>jersey2</library>
                                 <dateLibrary>joda</dateLibrary>
                                 <java8>true</java8>
