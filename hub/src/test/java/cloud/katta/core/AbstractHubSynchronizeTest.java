@@ -259,7 +259,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     vaultId, "vault", null,
                     config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName, config.vault.region, true, 3));
 
-            final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.ROOT, new DisabledListProgressListener());
+            final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
 
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
@@ -350,20 +350,20 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         assertEquals(OAuthTokens.EMPTY, hubSession.getHost().getCredentials().getOauth());
         assertEquals(StringUtils.EMPTY, hubSession.getHost().getCredentials().getPassword());
         final ListService feature = hubSession.getFeature(ListService.class);
-        final AttributedList<Path> vaults = feature.list(Home.ROOT, new DisabledListProgressListener());
+        final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
         final ConfigDto configDto = new ConfigResourceApi(hubSession.getClient()).apiConfigGet();
         final int expectedNumberOfVaults = configDto.getKeycloakTokenEndpoint().contains("localhost") ? 2 : 4;
         assertEquals(expectedNumberOfVaults, vaults.size());
-        assertEquals(vaults, feature.list(Home.ROOT, new DisabledListProgressListener()));
+        assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));
         for(final Path vault : vaults) {
             assertTrue(hubSession.getFeature(Find.class).find(vault));
         }
-        new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);
+        new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
     }
 
     private static byte @NotNull [] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {
         final byte[] content = RandomUtils.nextBytes(size);
-        final TransferStatus transferStatus = new TransferStatus().withLength(content.length);
+        final TransferStatus transferStatus = new TransferStatus().setLength(content.length);
         transferStatus.setChecksum(session.getFeature(Write.class).checksum(file, transferStatus).compute(new ByteArrayInputStream(content), transferStatus));
         session.getFeature(Bulk.class).pre(Transfer.Type.upload, Collections.singletonMap(new TransferItem(file), transferStatus), new DisabledConnectionCallback());
         final StatusOutputStream<?> out = session.getFeature(Write.class).write(file, transferStatus, new DisabledConnectionCallback());

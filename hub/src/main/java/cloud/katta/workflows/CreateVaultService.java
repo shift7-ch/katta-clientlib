@@ -26,6 +26,7 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -96,6 +97,7 @@ public class CreateVaultService {
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileWrapper.getId().toString())
                             .defaultPath(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultModel.vaultId() : vaultModel.bucketName())
+                            .region(vaultModel.region())
                             .nickname(vaultModel.vaultName())
                             .username(vaultModel.accessKeyId())
                             .password(vaultModel.secretKey()))
@@ -124,6 +126,7 @@ public class CreateVaultService {
                     .storageConfigId(storageProfileWrapper.getId())
                     .vaultUvf(uvfMetadataFile)
                     .rootDirHash(hashedRootDirId)
+                    .dirUvf(Base64.getUrlEncoder().encodeToString(metadataPayload.computeRootDirUvf()))
                     .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
 
@@ -159,7 +162,7 @@ public class CreateVaultService {
 
             // upload JWE
             log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
-            final UserDto userDto = users.apiUsersMeGet(false);
+            final UserDto userDto = users.apiUsersMeGet(false, false);
             vaultResource.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {
@@ -185,7 +188,7 @@ public class CreateVaultService {
 
             // upload vault template
             new HubUVFVault(session, new Path(metadataPayload.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.vault)))
-                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId);
+                    .create(session, metadataPayload.storage().getRegion(), storageDto.getVaultUvf(), hashedRootDirId, Base64.getUrlDecoder().decode(storageDto.getDirUvf()));
             session.close();
         }
     }
@@ -226,7 +229,6 @@ public class CreateVaultService {
             final AWSSecurityTokenService service = serviceBuild
                     .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
                     .build();
-
 
             log.debug("Use request {}", request);
             final AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(request);

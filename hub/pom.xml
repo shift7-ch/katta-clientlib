@@ -18,57 +18,60 @@
         <jwt.version>4.5.0</jwt.version>
         <nimbus-jose.version>10.3</nimbus-jose.version>
         <swagger-annotations.version>1.6.16</swagger-annotations.version>
+
+        <jersey-version>2.37</jersey-version>
+        <jackson-version>2.19.0</jackson-version>
+        <jackson-databind-nullable-version>0.2.6</jackson-databind-nullable-version>
+        <jakarta-annotation-version>1.3.5</jakarta-annotation-version>
     </properties>
 
-    <profiles>
-        <profile>
-            <id>codegen</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <!-- https://openapi-generator.tech/docs/plugins/ -->
-                        <groupId>org.openapitools</groupId>
-                        <artifactId>openapi-generator-maven-plugin</artifactId>
-                        <version>7.14.0</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>generate</goal>
-                                </goals>
-                                <configuration>
-                                    <!-- https://github.com/OpenAPITools/openapi-generator/blob/master/modules/openapi-generator-maven-plugin/README.md -->
-                                    <!-- https://openapi-generator.tech/docs/generators/java/ -->
-                                    <inputSpec>${project.basedir}/src/main/resources/openapi.json</inputSpec>
-                                    <generatorName>java</generatorName>
-                                    <output>${project.basedir}</output>
-                                    <modelPackage>cloud.katta.client.model</modelPackage>
-                                    <apiPackage>cloud.katta.client.api</apiPackage>
-                                    <configOptions>
-                                        <sourceFolder>src/main/java</sourceFolder>
-                                        <library>jersey2</library>
-                                        <dateLibrary>joda</dateLibrary>
-                                        <java8>true</java8>
-                                        <hideGenerationTimestamp>true</hideGenerationTimestamp>
-                                        <!-- workaround for https://github.com/OpenAPITools/openapi-generator/issues/10645 -->
-                                        <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-                                        </additionalModelTypeAnnotations>
-                                        <useOneOfDiscriminatorLookup>true</useOneOfDiscriminatorLookup>
-                                    </configOptions>
-                                    <generateApiTests>false</generateApiTests>
-                                    <generateModelTests>false</generateModelTests>
-                                    <generateSupportingFiles>true</generateSupportingFiles>
-                                    <supportingFilesToGenerate>
-                                        ApiCallback.java,ApiClient.java,ApiException.java,ApiResponse.java,Configuration.java,Pair.java,ProgressRequestBody.java,ProgressResponseBody.java,StringUtil.java,ApiKeyAuth.java,Authentication.java,HttpBasicAuth.java,JSON.java,OAuth.java,EncodingUtils.java
-                                    </supportingFilesToGenerate>
-                                    <generateApiDocumentation>false</generateApiDocumentation>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <build>
+        <plugins>
+            <plugin>
+                <!-- https://openapi-generator.tech/docs/plugins/ -->
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.14.0</version>
+                <executions>
+                    <execution>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- https://github.com/OpenAPITools/openapi-generator/blob/master/modules/openapi-generator-maven-plugin/README.md -->
+                            <!-- https://openapi-generator.tech/docs/generators/java/ -->
+                            <inputSpec>${project.basedir}/src/main/resources/openapi.json</inputSpec>
+                            <generatorName>java</generatorName>
+                            <output>${project.basedir}</output>
+                            <modelPackage>cloud.katta.client.model</modelPackage>
+                            <apiPackage>cloud.katta.client.api</apiPackage>
+                            <configOptions>
+                                <sourceFolder>target/generated-sources/openapi</sourceFolder>
+                                <library>jersey2</library>
+                                <dateLibrary>joda</dateLibrary>
+                                <java8>true</java8>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <!-- workaround for https://github.com/OpenAPITools/openapi-generator/issues/10645 -->
+                                <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+                                </additionalModelTypeAnnotations>
+                                <useOneOfDiscriminatorLookup>true</useOneOfDiscriminatorLookup>
+                            </configOptions>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <supportingFilesToGenerate>
+                                ApiCallback.java,ApiClient.java,ApiException.java,ApiResponse.java,Configuration.java,Pair.java,ProgressRequestBody.java,ProgressResponseBody.java,StringUtil.java,ApiKeyAuth.java,Authentication.java,HttpBasicAuth.java,HttpBearerAuth.java,JSON.java,OAuth.java,EncodingUtils.java,RFC3339DateFormat.java,RFC3339JavaTimeModule.java,RFC3339InstantDeserializer.java,AbstractOpenApiSchema.java,ServerConfiguration.java,ServerVariable.java
+                            </supportingFilesToGenerate>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -102,12 +105,6 @@
             <version>${nimbus-jose.version}</version>
         </dependency>
         <dependency>
-            <!-- used in code generated by openapitools  -->
-            <groupId>org.openapitools</groupId>
-            <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.6</version>
-        </dependency>
-        <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger-annotations.version}</version>
@@ -128,6 +125,88 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- @Nullable annotation -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+        <!-- HTTP client: jersey-client -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>${jersey-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <version>${jersey-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>${jersey-version}</version>
+        </dependency>
+
+        <!-- JSON processing: jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>${jackson-databind-nullable-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-joda</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-cbor</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>${jakarta-annotation-version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.connectors</groupId>
+            <artifactId>jersey-apache-connector</artifactId>
+            <version>${jersey-version}</version>
         </dependency>
     </dependencies>
 </project>

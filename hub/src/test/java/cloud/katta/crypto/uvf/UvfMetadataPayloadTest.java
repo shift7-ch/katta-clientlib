@@ -79,8 +79,8 @@ class UvfMetadataPayloadTest {
         final byte[] rawMasterKey = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawMasterKey);
         final HashMap<String, String> keys = new HashMap<String, String>() {{
-            put("key01", Base64URL.encode(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
-            put("key02", Base64URL.encode(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
+            put("key01", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
+            put("key02", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
         }};
         final UvfMetadataPayload orig = new UvfMetadataPayload()
                 .withFileFormat("AES-256-GCM-32k")

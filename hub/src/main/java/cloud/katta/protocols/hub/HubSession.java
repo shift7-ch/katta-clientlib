@@ -154,7 +154,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             throw new LoginCanceledException(e);
         }
         try {
-            me = new UsersResourceApi(client).apiUsersMeGet(true);
+            me = new UsersResourceApi(client).apiUsersMeGet(true, false);
             log.debug("Retrieved user {}", me);
             final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, me,
                     new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
@@ -163,7 +163,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             final OAuthTokens tokens = new OAuthTokens(credentials.getOauth().getAccessToken(), credentials.getOauth().getRefreshToken(), credentials.getOauth().getExpiryInMilliseconds(),
                     credentials.getOauth().getIdToken());
             vaults = new HubVaultListService(protocols, this, trust, key, registry, tokens);
-            vaults.list(Home.ROOT, new DisabledListProgressListener());
+            vaults.list(Home.root(), new DisabledListProgressListener());
         }
         catch(SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
