@@ -1,4 +1,4 @@
-[![CI Build](https://github.com/shift7-ch/katta-clientlib/actions/workflows/build.yml/badge.svg)](https://github.com/shift7-ch/katta-clientlib/actions/workflows/build.yml)
+[![CI Build](https://github.com/shift7-ch/katta-clientlib/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/shift7-ch/katta-clientlib/actions/workflows/build.yml)
 
 # Katta: the secure and easy way to work in teams
 
