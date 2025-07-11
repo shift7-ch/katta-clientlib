@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -70,8 +71,8 @@ public abstract class AbstractHubTest extends VaultTest {
         LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.local.env", "local", "admin", "admin", "top-secret");
         LOCAL = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
-                .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()))
-                .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
+                .withUserConfig(new HubTestConfig.Setup.UserConfig(new Credentials("alice", "asd"), staticSetupCode()))
+                .withAdminConfig(new HubTestConfig.Setup.UserConfig(new Credentials("admin", "admin"), staticSetupCode()))
                 .withDockerConfig(LOCAL_DOCKER_CONFIG);
     }
 
@@ -88,8 +89,8 @@ public abstract class AbstractHubTest extends VaultTest {
      */
     private static final HubTestConfig.Setup LOCAL_ATTENDED = new HubTestConfig.Setup()
             .withHubURL("http://localhost:8080")
-            .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
-            .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()));
+            .withAdminConfig(new HubTestConfig.Setup.UserConfig(new Credentials("admin", "admin"), staticSetupCode()))
+            .withUserConfig(new HubTestConfig.Setup.UserConfig(new Credentials("alice", "asd"), staticSetupCode()));
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentAttendedLocalOnly = vs -> Arguments.of(Named.of(
             String.format("%s %s (Bucket %s)", vs.storageProfileName, LOCAL_ATTENDED.hubURL, vs.bucketName),
             new HubTestConfig(LOCAL_ATTENDED, vs)));
@@ -112,15 +113,15 @@ public abstract class AbstractHubTest extends VaultTest {
         HYBRID = new HubTestConfig.Setup()
                 .withHubURL("http://localhost:8280")
                 .withUserConfig(
-                        new HubTestConfig.Setup.UserConfig(
+                        new HubTestConfig.Setup.UserConfig(new Credentials(
                                 PROPERTIES.get("testing.katta.cloud.chipotle.user.name"),
-                                PROPERTIES.get("testing.katta.cloud.chipotle.user.password"),
+                                PROPERTIES.get("testing.katta.cloud.chipotle.user.password")),
                                 staticSetupCode())
                 )
                 .withAdminConfig(
-                        new HubTestConfig.Setup.UserConfig(
+                        new HubTestConfig.Setup.UserConfig(new Credentials(
                                 PROPERTIES.get("testing.katta.cloud.chipotle.admin.name"),
-                                PROPERTIES.get("testing.katta.cloud.chipotle.admin.password"),
+                                PROPERTIES.get("testing.katta.cloud.chipotle.admin.password")),
                                 staticSetupCode())
                 )
                 .withDockerConfig(HYBRID_DOCKER_CONFIG);
@@ -194,7 +195,16 @@ public abstract class AbstractHubTest extends VaultTest {
         final DeviceSetupCallback proxy = deviceSetupCallback(setup);
         MockableDeviceSetupCallback.setProxy(proxy);
 
-        final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
+        final Scheme scheme = setup.hubURL.startsWith("https://") ? Scheme.https : Scheme.http;
+        final Protocol profile = factory.find(p -> p.getScheme().equals(scheme) && p.getIdentifier().equals("hub") && p.isEnabled()).getFirst();
+        factory.find(p -> p.getIdentifier().equals("hub") && !p.getScheme().equals(scheme) && p instanceof Profile).stream().forEach(p -> factory.unregister((Profile) p));
+        assertNotNull(factory.forName("hub"));
+        assertNotNull(factory.forName("s3"));
+        final Host hub = new Host(profile).withCredentials(new Credentials(setup.userConfig.credentials).withOauth(new OAuthTokens(setup.userConfig.credentials.getOauth() != null ? setup.userConfig.credentials.getOauth() : OAuthTokens.EMPTY)));
+        hub.setHostname(HostParser.parse(setup.hubURL).getHostname());
+        hub.setDefaultPath(HostParser.parse(setup.hubURL).getDefaultPath());
+        hub.setPort(URI.create(setup.hubURL).getPort() > 0 ? URI.create(setup.hubURL).getPort() : scheme.getPort());
+
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
         final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),

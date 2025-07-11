@@ -4,6 +4,8 @@
 
 package cloud.katta.testsetup;
 
+import ch.cyberduck.core.Credentials;
+
 public class HubTestConfig {
     public final Setup setup;
     public final VaultSpec vault;
@@ -80,21 +82,18 @@ public class HubTestConfig {
         }
 
         public static class UserConfig {
-            public final String username;
-            public final String password;
             public final String setupCode;
+            public final Credentials credentials;
 
-            public UserConfig(final String username, final String password, final String setupCode) {
-                this.username = username;
-                this.password = password;
+            public UserConfig(final Credentials credentials, final String setupCode) {
                 this.setupCode = setupCode;
+                this.credentials = credentials;
             }
 
             @Override
             public String toString() {
                 final StringBuilder sb = new StringBuilder("HubTestSetupUserConfig{");
-                sb.append("username='").append(username).append('\'');
-                sb.append(", password='").append(password).append('\'');
+                sb.append("credentials='").append(credentials).append('\'');
                 sb.append(", setupCode='").append(setupCode).append('\'');
                 sb.append('}');
                 return sb.toString();

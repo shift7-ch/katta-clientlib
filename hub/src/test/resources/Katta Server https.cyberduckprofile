@@ -13,12 +13,10 @@
         <key>Bundled</key>
         <true/>
         <key>Scheme</key>
-        <string>http</string>
+        <string>https</string>
         <key>Schemes</key>
         <array>
-            <string>http</string>
             <string>https</string>
-            <string>katta</string>
         </array>
         <key>Hostname Configurable</key>
         <true/>

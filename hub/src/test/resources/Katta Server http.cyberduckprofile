@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2025 shift7 GmbH. All rights reserved.
+  -->
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Protocol</key>
+        <string>hub</string>
+        <key>Vendor</key>
+        <string>Shift 7 GmbH</string>
+        <key>Bundled</key>
+        <true/>
+        <key>Scheme</key>
+        <string>http</string>
+        <key>Schemes</key>
+        <array>
+            <string>http</string>
+        </array>
+        <key>Hostname Configurable</key>
+        <true/>
+        <key>Authorization</key>
+        <string>PasswordGrant</string>
+        <key>Scopes</key>
+        <array>
+            <string>openid</string>
+        </array>
+        <key>OAuth Redirect Url</key>
+        <string>${oauth.handler.scheme}:oauth</string>
+        <key>OAuth Client Secret</key>
+        <string/>
+        <key>Password Configurable</key>
+        <false/>
+        <key>Username Configurable</key>
+        <false/>
+    </dict>
+</plist>
