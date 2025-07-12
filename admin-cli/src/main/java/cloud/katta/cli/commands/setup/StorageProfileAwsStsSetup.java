@@ -39,6 +39,10 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
     protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
 
+        call(uuid, storageProfileResourceApi);
+    }
+
+    protected void call(UUID uuid, StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         storageProfileResourceApi.apiStorageprofileS3stsPut(new StorageProfileS3STSDto()
                 .id(uuid)
                 .name("AWS S3 STS")
@@ -58,7 +62,6 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-createbucket
                 .stsRoleArnClient(String.format("%s-createbucket", rolePrefix))
                 .stsRoleArnHub(String.format("%s-createbucket", rolePrefix))
-
                 .scheme("https")
                 .port(443)
         );
