@@ -10,7 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.coffeelibs.tinyoauth2client.TinyOAuth2;
 import picocli.CommandLine;
 
-// https://github.com/cryptomator/hub-cli/commit/bffcf2805530976c4a758990958ff75f9df68c0e#diff-c349f933a7698e31cfe25bd0a638ae487a02ac6fcb429bcce3e315aa8832be8b
+
+/**
+ * Based on <a href="https://github.com/cryptomator/hub-cli/commit/bffcf2805530976c4a758990958ff75f9df68c0e#diff-c349f933a7698e31cfe25bd0a638ae487a02ac6fcb429bcce3e315aa8832be8b">hub-cli</a>.
+ */
 @CommandLine.Command(name = "authorizationCode", description = "Get token using authorization code flow.", mixinStandardHelpOptions = true)
 public class AuthorizationCode implements Callable<Void> {
 
