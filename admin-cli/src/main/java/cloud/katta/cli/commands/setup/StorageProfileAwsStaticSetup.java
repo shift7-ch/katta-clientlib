@@ -2,12 +2,13 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands;
+package cloud.katta.cli.commands.setup;
 
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
+import cloud.katta.cli.commands.AbstractAuthorizationCode;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -33,7 +34,7 @@ public class StorageProfileAwsStaticSetup extends AbstractAuthorizationCode impl
     @Override
     public Void call() throws Exception {
         final UUID uuid = UUID.randomUUID();
-        accessToken = login();
+        final String accessToken = login();
         call(hubUrl, accessToken, uuid);
         return null;
     }
