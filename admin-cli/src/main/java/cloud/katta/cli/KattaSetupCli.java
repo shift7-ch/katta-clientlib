@@ -4,13 +4,17 @@
 
 package cloud.katta.cli;
 
-import cloud.katta.cli.commands.*;
+import cloud.katta.cli.commands.AuthorizationCode;
+import cloud.katta.cli.commands.AwsStsSetup;
+import cloud.katta.cli.commands.StorageProfileArchive;
+import cloud.katta.cli.commands.StorageProfileAwsStaticSetup;
+import cloud.katta.cli.commands.StorageProfileAwsStsSetup;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "katta-admin-cli",
         mixinStandardHelpOptions = true,
         subcommands = {
-                AwsSTSSetup.class, CommandLine.HelpCommand.class, StorageProfileAWSSTSSetup.class, StorageProfileAWSStaticSetup.class,
+                AwsStsSetup.class, CommandLine.HelpCommand.class, StorageProfileAwsStsSetup.class, StorageProfileAwsStaticSetup.class,
                 AuthorizationCode.class,
                 StorageProfileArchive.class
         })
