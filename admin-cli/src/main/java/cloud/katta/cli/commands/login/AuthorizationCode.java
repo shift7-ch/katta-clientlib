@@ -1,4 +1,8 @@
-package cloud.katta.cli.commands;
+/*
+ * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ */
+
+package cloud.katta.cli.commands.login;
 
 import java.net.URI;
 import java.net.http.HttpClient;
