@@ -2,7 +2,7 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands;
+package cloud.katta.cli.commands.setup;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
