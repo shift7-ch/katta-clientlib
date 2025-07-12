@@ -30,6 +30,10 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
     protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
 
+        call(uuid, storageProfileResourceApi);
+    }
+
+    protected void call(UUID uuid, StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         storageProfileResourceApi.apiStorageprofileS3Put(new StorageProfileS3Dto()
                 .id(uuid)
                 .name("AWS S3 static")
