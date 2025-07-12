@@ -38,6 +38,21 @@ import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
 import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
 import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThumbprintRequest;
 
+/**
+ * Sets up AWS for Katta in STS mode:
+ * <ul>
+ *  <li> creates/updates OIDC provider for cryptomator, cryptomatorhub and cryptomatorvaults clients.</li>
+ *  <li> creates roles and role policy for
+ *      <ul>
+ *          <li>creating vaults: access restricted to creating buckets with given prefix</li>
+ *          <li> accessing vaults using <a href="role chaining">https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html</a>: access restricted to reading/writing to single bucket.</li>
+ *      </ul>
+ *  </li>
+ * </ul>
+ * Requires <code>admin</code> role in Katta Server.
+ * <p>
+ * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
+ */
 @CommandLine.Command(name = "awsSetup", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
 public class AwsSTSSetup implements Callable<Void> {
 
