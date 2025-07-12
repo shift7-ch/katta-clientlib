@@ -4,6 +4,11 @@
 
 package cloud.katta.cli.commands;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -13,11 +18,13 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-
+/**
+ * Uploads a storage profile to Katta Server for use with AWS STS. Requires AWS STS setup.
+ * <p>
+ * The storage profile then allows users with <code>create-vaults</code> role to create vaults and their corresponding S3 bucket seamlessly.
+ * <p>
+ * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#storage-profiles">katta docs</a>.
+ */
 @CommandLine.Command(name = "storageProfileAWSSTS",
         description = "Upload storage profile for AWS STS.",
         mixinStandardHelpOptions = true)

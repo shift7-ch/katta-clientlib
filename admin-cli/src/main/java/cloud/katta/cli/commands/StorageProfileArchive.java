@@ -12,6 +12,13 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import picocli.CommandLine;
 
+/**
+ * Archives a storage profile using <code>/api/storageprofile</code>.
+ * <p>
+ * Requires <code>admin</code> role in Katta Server.
+ * <p>
+ * See also <a href="https://github.com/shift7-ch/katta-clientlib/blob/main/hub/src/main/resources/openapi.json>OpenAPI Specification</a>.
+ */
 @CommandLine.Command(name = "storageProfileArchive",
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
