@@ -42,12 +42,17 @@ public class StorageProfileArchive extends AbstractAuthorizationCode implements 
         final ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(hubUrl);
         apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
+        call(uuid, apiClient);
+    }
 
+    protected void call(final String uuid, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
+        call(uuid, storageProfileResourceApi);
+    }
 
+    protected void call(final String uuid, final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         System.out.println("storage profiles:");
         System.out.println(storageProfileResourceApi.apiStorageprofileGet(null));
-
         storageProfileResourceApi.apiStorageprofileProfileIdPut(UUID.fromString(uuid), true);
         System.out.println("updated:");
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(UUID.fromString(uuid)));
