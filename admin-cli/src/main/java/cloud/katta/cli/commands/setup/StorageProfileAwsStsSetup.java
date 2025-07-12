@@ -4,12 +4,10 @@
 
 package cloud.katta.cli.commands.setup;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
-import cloud.katta.cli.commands.AbstractAuthorizationCode;
+import cloud.katta.cli.commands.hub.AbstractStorageProfile;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -29,10 +27,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "storageProfileAWSSTS",
         description = "Upload storage profile for AWS STS.",
         mixinStandardHelpOptions = true)
-public class StorageProfileAwsStsSetup extends AbstractAuthorizationCode implements Callable<Void> {
-
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
-    String hubUrl;
+public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
 
     @CommandLine.Option(names = {"--rolePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind\"", required = true)
     String rolePrefix;
@@ -41,20 +36,7 @@ public class StorageProfileAwsStsSetup extends AbstractAuthorizationCode impleme
     String bucketPrefix;
 
     @Override
-    public Void call() throws Exception {
-        final UUID uuid = UUID.randomUUID();
-
-        final String accessToken = login();
-        call(hubUrl, accessToken, uuid);
-
-        return null;
-    }
-
-    private void call(final String hubUrl, final String accessToken, final UUID uuid) throws IOException, ApiException {
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setBasePath(hubUrl);
-        apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
-
+    protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
 
         storageProfileResourceApi.apiStorageprofileS3stsPut(new StorageProfileS3STSDto()

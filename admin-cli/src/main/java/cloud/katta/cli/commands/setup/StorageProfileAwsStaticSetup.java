@@ -4,11 +4,9 @@
 
 package cloud.katta.cli.commands.setup;
 
-import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
-import cloud.katta.cli.commands.AbstractAuthorizationCode;
+import cloud.katta.cli.commands.hub.AbstractStorageProfile;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -26,24 +24,10 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "storageProfileAWSStatic",
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
-public class StorageProfileAwsStaticSetup extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
-    String hubUrl;
-
+public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
 
     @Override
-    public Void call() throws Exception {
-        final UUID uuid = UUID.randomUUID();
-        final String accessToken = login();
-        call(hubUrl, accessToken, uuid);
-        return null;
-    }
-
-    protected void call(final String hubUrl, final String accessToken, final UUID uuid) throws IOException, ApiException {
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setBasePath(hubUrl);
-        apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
-
+    protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
 
         storageProfileResourceApi.apiStorageprofileS3Put(new StorageProfileS3Dto()
