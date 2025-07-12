@@ -48,7 +48,12 @@ public class HubUVFVault extends UVFVault {
     public <T> T getFeature(final Session<?> ignore, final Class<T> type, final T delegate) throws UnsupportedException {
         log.debug("Delegate to {} for feature {}", storage, type);
         // Ignore feature implementation but delegate to storage backend
-        return super.getFeature(storage, type, storage._getFeature(type));
+        final T feature = storage._getFeature(type);
+        if(null == feature) {
+            log.warn("No feature {} available for {}", type, storage);
+            return null;
+        }
+        return super.getFeature(storage, type, feature);
     }
 
     @Override
