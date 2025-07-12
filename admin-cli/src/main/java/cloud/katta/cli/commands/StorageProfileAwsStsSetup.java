@@ -28,7 +28,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "storageProfileAWSSTS",
         description = "Upload storage profile for AWS STS.",
         mixinStandardHelpOptions = true)
-public class StorageProfileAWSSTSSetup extends AbstractAuthorizationCode implements Callable<Void> {
+public class StorageProfileAwsStsSetup extends AbstractAuthorizationCode implements Callable<Void> {
 
     @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
     String hubUrl;
