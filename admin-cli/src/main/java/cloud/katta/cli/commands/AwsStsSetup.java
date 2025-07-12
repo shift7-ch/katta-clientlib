@@ -54,7 +54,7 @@ import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThum
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
 @CommandLine.Command(name = "awsSetup", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
-public class AwsSTSSetup implements Callable<Void> {
+public class AwsStsSetup implements Callable<Void> {
 
     @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\"", required = true)
     String realmUrl;
