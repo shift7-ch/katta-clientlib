@@ -5,16 +5,13 @@
 package cloud.katta.protocols.s3;
 
 import ch.cyberduck.core.Credentials;
-import ch.cyberduck.core.DefaultIOExceptionMappingService;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
-import ch.cyberduck.core.http.DefaultHttpResponseExceptionMappingService;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.oauth.OAuthExceptionMappingService;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesReader;
 
@@ -23,21 +20,19 @@ import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
+import cloud.katta.client.api.StorageResourceApi;
+import cloud.katta.client.auth.HttpBearerAuth;
+import cloud.katta.client.model.AccessTokenResponse;
+import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.api.client.auth.oauth2.TokenRequest;
-import com.google.api.client.auth.oauth2.TokenResponse;
-import com.google.api.client.auth.oauth2.TokenResponseException;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.apache.v2.ApacheHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 
 import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE;
 
@@ -47,13 +42,6 @@ import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE;
 public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     private static final Logger log = LogManager.getLogger(TokenExchangeRequestInterceptor.class);
 
-    // https://datatracker.ietf.org/doc/html/rfc8693#name-request
-    public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
-    public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID = "client_id";
-    public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_SECRET = "client_secret";
-    public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN = "subject_token";
-    public static final String OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE = "subject_token_type";
-    public static final String OAUTH_TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
     // https://openid.net/specs/openid-connect-core-1_0.html
     public static final String OIDC_AUTHORIZED_PARTY = "azp";
 
@@ -87,44 +75,23 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info("Exchange tokens {} for {}", previous, bookmark);
-        final TokenRequest request = new TokenRequest(
-                new ApacheHttpTransport(client),
-                new GsonFactory(),
-                new GenericUrl(bookmark.getProtocol().getOAuthTokenUrl()),
-                OAUTH_GRANT_TYPE_TOKEN_EXCHANGE
-        );
-        request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, bookmark.getProtocol().getOAuthClientId());
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID))) {
-            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_ID, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID));
-            request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_CLIENT_SECRET, preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_SECRET));
-        }
-        request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN, previous.getAccessToken());
-        request.set(OAUTH_GRANT_TYPE_TOKEN_EXCHANGE_SUBJECT_TOKEN_TYPE, OAUTH_TOKEN_TYPE_ACCESS_TOKEN);
-        final ArrayList<String> scopes = new ArrayList<>(bookmark.getProtocol().getOAuthScopes());
-        if(!StringUtils.isEmpty(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))) {
-            scopes.addAll(Arrays.asList(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES).split(" ")));
-        }
-        request.setScopes(scopes);
-        log.debug("Token exchange request {} for {}", request, bookmark);
+        final ApiClient apiClient = new ApiClient(Collections.singletonMap("bearer", new HttpBearerAuth("bearer")));
+        apiClient.addDefaultHeader("Authorization",String.format("Bearer %s", previous.getAccessToken()));
+        apiClient.setBasePath("http://localhost:8280/");
+
+        final StorageResourceApi api = new StorageResourceApi(apiClient);
         try {
-            final TokenResponse tokenExchangeResponse = request.execute();
+            AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES));
             // N.B. token exchange with Id token does not work!
             final OAuthTokens tokens = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                     tokenExchangeResponse.getRefreshToken(),
-                    System.currentTimeMillis() + tokenExchangeResponse.getExpiresInSeconds() * 1000);
+                    System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000);
             log.debug("Received exchanged token {} for {}", tokens, bookmark);
             return tokens;
         }
-        catch(TokenResponseException e) {
-            throw new OAuthExceptionMappingService().map(e);
-        }
-        catch(HttpResponseException e) {
-            throw new DefaultHttpResponseExceptionMappingService().map(new org.apache.http.client
-                    .HttpResponseException(e.getStatusCode(), e.getStatusMessage()));
-        }
-        catch(IOException e) {
-            throw new DefaultIOExceptionMappingService().map(e);
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
         }
     }
 
