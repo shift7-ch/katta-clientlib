@@ -15,6 +15,8 @@ import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesReader;
 
+import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_BASEPATH;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
@@ -70,19 +72,19 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      *
      * @param previous Input tokens retrieved to exchange at the token endpoint
      * @return New tokens
-     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_CLIENT_ID
-     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES
+     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_VAULT
+     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_BASEPATH
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info("Exchange tokens {} for {}", previous, bookmark);
         final PreferencesReader preferences = new HostPreferences(bookmark);
         final ApiClient apiClient = new ApiClient(Collections.singletonMap("bearer", new HttpBearerAuth("bearer")));
         apiClient.addDefaultHeader("Authorization",String.format("Bearer %s", previous.getAccessToken()));
-        apiClient.setBasePath("http://localhost:8280/");
+        apiClient.setBasePath(preferences.getProperty(OAUTH_TOKENEXCHANGE_BASEPATH));
 
         final StorageResourceApi api = new StorageResourceApi(apiClient);
         try {
-            AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES));
+            AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT));
             // N.B. token exchange with Id token does not work!
             final OAuthTokens tokens = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                     tokenExchangeResponse.getRefreshToken(),
@@ -100,12 +102,6 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         final Credentials credentials = super.validate();
         final OAuthTokens tokens = credentials.getOauth();
         final String accessToken = tokens.getAccessToken();
-        final PreferencesReader preferences = new HostPreferences(bookmark);
-        final String tokenExchangeClientId = preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID);
-        if(StringUtils.isEmpty(tokenExchangeClientId)) {
-            log.warn("Found {} empty, although {} is set to {} - misconfiguration?", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_ID, OAUTH_TOKENEXCHANGE, preferences.getBoolean(OAUTH_TOKENEXCHANGE));
-            return credentials;
-        }
         try {
             final DecodedJWT jwt = JWT.decode(accessToken);
 

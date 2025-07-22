@@ -114,7 +114,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleCredent
         if(StringUtils.isNotBlank(preferences.getProperty("s3.assumerole.tag"))) {
             request.setTags(Collections.singletonList(new Tag()
                     .withKey(preferences.getProperty("s3.assumerole.tag"))
-                    .withValue(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES))));
+                    .withValue(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT))));
         }
         try {
             log.debug("Use request {}", request);

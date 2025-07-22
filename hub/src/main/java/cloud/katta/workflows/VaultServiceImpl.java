@@ -38,8 +38,7 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 
 import static cloud.katta.crypto.uvf.UvfMetadataPayload.UniversalVaultFormatJWKS.memberKeyFromRawKey;
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES;
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN;
+import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.*;
 
 public class VaultServiceImpl implements VaultService {
     private static final Logger log = LogManager.getLogger(VaultServiceImpl.class);
@@ -123,7 +122,8 @@ public class VaultServiceImpl implements VaultService {
             credentials.setPassword(vaultMetadata.getPassword());
         }
         if(protocol.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
-            bookmark.setProperty(OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES, vaultId.toString());
+            bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
+            bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, this.vaultResource.getApiClient().getBasePath());
         }
         // region as chosen by user upon vault creation (STS) or as retrieved from bucket (permanent)
         bookmark.setRegion(vaultMetadata.getRegion());
