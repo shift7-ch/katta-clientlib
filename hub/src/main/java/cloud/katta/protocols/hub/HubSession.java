@@ -27,6 +27,7 @@ import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
@@ -73,6 +74,8 @@ public class HubSession extends HttpSession<HubApiClient> {
     private final HubVaultRegistry registry = new HubVaultRegistry();
 
     private HubVaultListService vaults;
+
+    public static final String SKIP_LISTING_UPON_LOGIN = "skip.listing.upon.login";
 
     /**
      * Interceptor for OpenID connect flow
@@ -163,7 +166,10 @@ public class HubSession extends HttpSession<HubApiClient> {
             final OAuthTokens tokens = new OAuthTokens(credentials.getOauth().getAccessToken(), credentials.getOauth().getRefreshToken(), credentials.getOauth().getExpiryInMilliseconds(),
                     credentials.getOauth().getIdToken());
             vaults = new HubVaultListService(protocols, this, trust, key, registry, tokens);
-            vaults.list(Home.root(), new DisabledListProgressListener());
+
+            if(!new HostPreferences(host).getBoolean(SKIP_LISTING_UPON_LOGIN)) {
+                vaults.list(Home.root(), new DisabledListProgressListener());
+            }
         }
         catch(SecurityFailure e) {
             throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);

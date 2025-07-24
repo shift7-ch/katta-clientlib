@@ -5,38 +5,49 @@
 package cloud.katta.protocols.s3;
 
 import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledCancelCallback;
+import ch.cyberduck.core.DisabledHostKeyCallback;
+import ch.cyberduck.core.DisabledLoginCallback;
+import ch.cyberduck.core.DisabledPasswordCallback;
+import ch.cyberduck.core.DisabledProgressListener;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostParser;
 import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.LoginConnectionService;
 import ch.cyberduck.core.OAuthTokens;
+import ch.cyberduck.core.PasswordStoreFactory;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.SessionFactory;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferences;
 import ch.cyberduck.core.preferences.PreferencesReader;
+import ch.cyberduck.core.ssl.DefaultX509KeyManager;
+import ch.cyberduck.core.ssl.DefaultX509TrustManager;
+import ch.cyberduck.core.vault.VaultRegistryFactory;
 
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_BASEPATH;
+import static cloud.katta.protocols.hub.HubSession.SKIP_LISTING_UPON_LOGIN;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageResourceApi;
-import cloud.katta.client.auth.HttpBearerAuth;
 import cloud.katta.client.model.AccessTokenResponse;
+import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE;
+import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_BASEPATH;
 
 /**
  * Exchange OIDC token to scoped token using OAuth 2.0 Token Exchange. Used for S3-STS in Katta.
@@ -78,9 +89,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info("Exchange tokens {} for {}", previous, bookmark);
         final PreferencesReader preferences = new HostPreferences(bookmark);
-        final ApiClient apiClient = new ApiClient(Collections.singletonMap("bearer", new HttpBearerAuth("bearer")));
-        apiClient.addDefaultHeader("Authorization",String.format("Bearer %s", previous.getAccessToken()));
-        apiClient.setBasePath(preferences.getProperty(OAUTH_TOKENEXCHANGE_BASEPATH));
+        final ApiClient apiClient = getHubApiClient(previous, preferences);
 
         final StorageResourceApi api = new StorageResourceApi(apiClient);
         try {
@@ -95,6 +104,18 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
         }
+    }
+
+    private static ApiClient getHubApiClient(final OAuthTokens previous, final PreferencesReader preferences) throws BackgroundException {
+        final ProtocolFactory factory = ProtocolFactory.get();
+        final Host hub = new HostParser(factory).get(preferences.getProperty(OAUTH_TOKENEXCHANGE_BASEPATH)).withCredentials(new Credentials().withOauth(new OAuthTokens(previous)));
+        hub.setProperty(SKIP_LISTING_UPON_LOGIN, "true"); // prevent infinite recursion
+        final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
+                .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
+        final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
+                PasswordStoreFactory.get(), new DisabledProgressListener());
+        login.check(session, new DisabledCancelCallback());
+        return session.getClient();
     }
 
     @Override
