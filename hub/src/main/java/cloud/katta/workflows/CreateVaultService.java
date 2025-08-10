@@ -134,7 +134,7 @@ public class CreateVaultService {
 
             final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
             final Host bookmark = new VaultServiceImpl(vaultResource, storageProfileResource).getStorageBackend(ProtocolFactory.get(),
-                    configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
+                    hubSession, configResource.apiConfigGet(), vaultDto.getId(), metadataPayload.storage(), tokens);
             if(storageProfileWrapper.getProtocol() == Protocol.S3) {
                 // permanent: template upload into existing bucket from client (not backend)
                 templateUploadService.uploadTemplate(bookmark, metadataPayload, storageDto, hashedRootDirId);
