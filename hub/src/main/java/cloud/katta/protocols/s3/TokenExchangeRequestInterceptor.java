@@ -55,7 +55,10 @@ import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_
 public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
     private static final Logger log = LogManager.getLogger(TokenExchangeRequestInterceptor.class);
 
-    // https://openid.net/specs/openid-connect-core-1_0.html
+    /**
+     * The party to which the ID Token was issued
+     * <a href="https://openid.net/specs/openid-connect-core-1_0.html">...</a>
+     */
     public static final String OIDC_AUTHORIZED_PARTY = "azp";
 
 
