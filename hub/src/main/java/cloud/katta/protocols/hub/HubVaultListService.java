@@ -8,6 +8,7 @@ import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
+import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
@@ -29,6 +30,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
 
+import java.text.MessageFormat;
 import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
@@ -130,6 +132,7 @@ public class HubVaultListService implements ListService {
             return;
         }
         log.warn("Deny directory listing with no vault available for {}", directory);
-        throw new AccessDeniedException();
+        throw new AccessDeniedException(MessageFormat.format(LocaleFactory.localizedString("Listing directory {0} failed", "Error"),
+                directory.getName())).withFile(directory);
     }
 }
