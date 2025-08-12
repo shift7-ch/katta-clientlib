@@ -56,7 +56,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                     if(dto.getStsDurationSeconds() != null) {
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
                     }
-                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_CLIENT_SECRET, ""));
                 }
                 log.debug("Return properties {} from {}", properties, dto);
                 return (List<L>) properties;

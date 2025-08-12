@@ -71,7 +71,6 @@ class CreateVaultServiceTest {
         );
         final StorageProfileDtoWrapper storageProfileWrapper = StorageProfileDtoWrapper.coerce(storageProfile);
 
-
         Mockito.when(hubSession.getHost()).thenReturn(hub);
         Mockito.when(hub.getProtocol()).thenReturn(new HubProtocol() {
             @Override
@@ -81,8 +80,8 @@ class CreateVaultServiceTest {
         });
         Mockito.when(hub.getCredentials()).thenReturn(new Credentials());
         Mockito.when(hub.getHostname()).thenReturn("storage");
-
-        Mockito.when(hubSession.getClient()).thenReturn(apiClient);
+        Mockito.when(apiClient.getBasePath()).thenReturn("http://nix.com/api");
+        Mockito.when(vaults.getApiClient()).thenReturn(apiClient);
 
         Mockito.when(storageProfiles.apiStorageprofileProfileIdGet(storageProfileId)).thenReturn(storageProfile);
         Mockito.when(config.apiConfigGet()).thenReturn(new ConfigDto().keycloakClientIdCryptomatorVaults("hex"));

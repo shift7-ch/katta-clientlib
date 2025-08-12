@@ -238,6 +238,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final Host bookmark = new VaultServiceImpl(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()))
                         .getStorageBackend(
                                 ProtocolFactory.get(),
+                                hubSession,
                                 new ConfigResourceApi(hubSession.getClient()).apiConfigGet(), vaultId, new VaultMetadataJWEBackendDto()
                                         .provider(storageProfileWrapper.getId().toString())
                                         .defaultPath(config.vault.bucketName)

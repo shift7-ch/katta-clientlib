@@ -38,8 +38,7 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 
 import static cloud.katta.crypto.uvf.UvfMetadataPayload.UniversalVaultFormatJWKS.memberKeyFromRawKey;
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES;
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN;
+import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.*;
 
 public class VaultServiceImpl implements VaultService {
     private static final Logger log = LogManager.getLogger(VaultServiceImpl.class);
@@ -85,7 +84,7 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public Host getStorageBackend(final ProtocolFactory protocols, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
+    public Host getStorageBackend(final ProtocolFactory protocols, final HubSession hub, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
         if(null == protocols.forName(vaultMetadata.getProvider())) {
             log.debug("Load missing profile {}", vaultMetadata.getProvider());
             final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
@@ -94,8 +93,8 @@ public class VaultServiceImpl implements VaultService {
             switch(storageProfile.getProtocol()) {
                 case S3:
                 case S3_STS:
-                    final Profile profile = new Profile(protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3), new StorageProfileDtoWrapperDeserializer(
-                            new HubConfigDtoDeserializer(configDto), storageProfile));
+                    final Profile profile = new HubAwareProfile(hub, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Type.s3),
+                            configDto, storageProfile);
                     log.debug("Register storage profile {}", profile);
                     protocols.register(profile);
                     break;
@@ -123,10 +122,30 @@ public class VaultServiceImpl implements VaultService {
             credentials.setPassword(vaultMetadata.getPassword());
         }
         if(protocol.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
-            bookmark.setProperty(OAUTH_TOKENEXCHANGE_ADDITIONAL_SCOPES, vaultId.toString());
+            bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
+            bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, this.vaultResource.getApiClient().getBasePath());
         }
         // region as chosen by user upon vault creation (STS) or as retrieved from bucket (permanent)
         bookmark.setRegion(vaultMetadata.getRegion());
         return bookmark;
+    }
+
+    private static final class HubAwareProfile extends Profile {
+        private final HubSession hub;
+
+        public HubAwareProfile(final HubSession hub, final Protocol parent, final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) {
+            super(parent, new StorageProfileDtoWrapperDeserializer(
+                    new HubConfigDtoDeserializer(configDto), storageProfile));
+            this.hub = hub;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public <T> T getFeature(final Class<T> type) {
+            if(type == HubSession.class) {
+                return (T) hub;
+            }
+            return super.getFeature(type);
+        }
     }
 }

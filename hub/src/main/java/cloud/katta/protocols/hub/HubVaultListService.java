@@ -96,7 +96,7 @@ public class HubVaultListService implements ListService {
                         }
                         throw e;
                     }
-                    final Host bookmark = vaultService.getStorageBackend(protocols, configDto, vaultDto.getId(),
+                    final Host bookmark = vaultService.getStorageBackend(protocols, session, configDto, vaultDto.getId(),
                             vaultMetadata.storage(), tokens);
                     log.debug("Configured {} for vault {}", bookmark, vaultDto);
                     final Session<?> storage = SessionFactory.create(bookmark, trust, key);

@@ -53,6 +53,8 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
         env.put("HUB_ADMIN_USER", configuration.hubAdminUser);
         env.put("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword);
         env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", configuration.hubKeycloakSystemClientSecret);
+        env.put("HUB_KEYCLOAK_OIDC_CRYPTOMATOR_VAULTS_CLIENT_SECRET", configuration.hubKeycloakSystemClientSecret);
+
         this.compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
                 .withLocalCompose(true)
