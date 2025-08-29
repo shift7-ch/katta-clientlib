@@ -20,6 +20,7 @@ import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.UnsupportedException;
+import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.ssl.X509KeyManager;
