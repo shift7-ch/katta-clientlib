@@ -62,4 +62,9 @@ public class HubProtocol extends AbstractProtocol {
     public boolean isPasswordConfigurable() {
         return false;
     }
+
+    @Override
+    public VersioningMode getVersioningMode() {
+        return VersioningMode.storage;
+    }
 }
