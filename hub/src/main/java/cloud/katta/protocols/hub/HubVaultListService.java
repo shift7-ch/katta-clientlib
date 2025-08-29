@@ -108,6 +108,7 @@ public class HubVaultListService implements ListService {
                     try (UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(vaultMetadata.toJSON())) {
                         attr.setDirectoryId(masterKey.rootDirId());
                     }
+                    attr.setDisplayname(vaultMetadata.storage().getNickname());
                     vaults.add(new Path(vault.getHome()).withType(EnumSet.of(Path.Type.volume, Path.Type.directory))
                             .withAttributes(attr));
                 }
