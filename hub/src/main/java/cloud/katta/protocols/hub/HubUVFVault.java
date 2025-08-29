@@ -51,7 +51,7 @@ public class HubUVFVault extends UVFVault {
         final T feature = storage._getFeature(type);
         if(null == feature) {
             log.warn("No feature {} available for {}", type, storage);
-            return null;
+            throw new UnsupportedException();
         }
         return super.getFeature(storage, type, feature);
     }
