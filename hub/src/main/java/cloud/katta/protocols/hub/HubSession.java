@@ -5,15 +5,27 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.*;
+import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.LoginCanceledException;
+import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
+import ch.cyberduck.core.features.Copy;
+import ch.cyberduck.core.features.Delete;
+import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Home;
+import ch.cyberduck.core.features.Move;
+import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Scheduler;
+import ch.cyberduck.core.features.Timestamp;
+import ch.cyberduck.core.features.Touch;
+import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.http.HttpSession;
+import ch.cyberduck.core.io.StatusOutputStream;
+import ch.cyberduck.core.io.StreamListener;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
@@ -22,11 +34,16 @@ import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.threading.CancelCallback;
+import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Optional;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.HubApiClient;
@@ -194,6 +211,109 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == Find.class) {
             return (T) (Find) (file, listener) -> new SimplePathPredicate(registry.find(HubSession.this, file).getHome()).test(file);
+        }
+        if(type == Read.class) {
+            return (T) new Read() {
+                @Override
+                public InputStream read(final Path file, final TransferStatus status, final ConnectionCallback callback) throws BackgroundException {
+                    log.warn("Deny read access to {}", file);
+                    throw new UnsupportedException().withFile(file);
+                }
+
+                @Override
+                public void preflight(final Path file) throws BackgroundException {
+                    throw new UnsupportedException().withFile(file);
+                }
+            };
+        }
+        if(type == Write.class) {
+            return (T) new Write<Void>() {
+                @Override
+                public StatusOutputStream<Void> write(final Path file, final TransferStatus status, final ConnectionCallback callback) throws BackgroundException {
+                    log.warn("Deny write access to {}", file);
+                    throw new UnsupportedException().withFile(file);
+                }
+
+                @Override
+                public void preflight(final Path file) throws BackgroundException {
+                    throw new UnsupportedException().withFile(file);
+                }
+            };
+        }
+        if(type == Touch.class) {
+            return (T) new Touch<Void>() {
+                @Override
+                public Path touch(final Write<Void> writer, final Path file, final TransferStatus status) throws BackgroundException {
+                    log.warn("Deny write access to {}", file);
+                    throw new UnsupportedException().withFile(file);
+                }
+
+                @Override
+                public void preflight(final Path workdir, final String filename) throws BackgroundException {
+                    throw new UnsupportedException().withFile(workdir);
+                }
+            };
+        }
+        if(type == Directory.class) {
+            return (T) new Directory<Void>() {
+                @Override
+                public Path mkdir(final Write<Void> writer, final Path folder, final TransferStatus status) throws BackgroundException {
+                    log.warn("Deny write access to {}", folder);
+                    throw new UnsupportedException().withFile(folder);
+                }
+
+                @Override
+                public void preflight(final Path workdir, final String filename) throws BackgroundException {
+                    throw new UnsupportedException().withFile(workdir);
+                }
+            };
+        }
+        if(type == Move.class) {
+            return (T) new Move() {
+                @Override
+                public Path move(final Path source, final Path target, final TransferStatus status, final Delete.Callback delete, final ConnectionCallback prompt) throws BackgroundException {
+                    log.warn("Deny write access to {}", source);
+                    throw new UnsupportedException().withFile(source);
+                }
+
+                @Override
+                public void preflight(final Path source, final Optional<Path> target) throws BackgroundException {
+                    throw new UnsupportedException().withFile(source);
+                }
+            };
+        }
+        if(type == Copy.class) {
+            return (T) new Copy() {
+                @Override
+                public Path copy(final Path source, final Path target, final TransferStatus status, final ConnectionCallback prompt, final StreamListener listener) throws BackgroundException {
+                    log.warn("Deny write access to {}", source);
+                    throw new UnsupportedException().withFile(source);
+                }
+
+                @Override
+                public void preflight(final Path source, final Optional<Path> target) throws BackgroundException {
+                    throw new UnsupportedException().withFile(source);
+                }
+            };
+        }
+        if(type == Delete.class) {
+            return (T) new Delete() {
+                @Override
+                public void delete(final Map<Path, TransferStatus> files, final PasswordCallback prompt, final Callback callback) throws BackgroundException {
+                    log.warn("Deny write access to {}", files);
+                    throw new UnsupportedException();
+                }
+
+                @Override
+                public void preflight(final Path file) throws BackgroundException {
+                    throw new UnsupportedException().withFile(file);
+                }
+            };
+        }
+        if(type == Timestamp.class) {
+            return (T) (Timestamp) (file, status) -> {
+                throw new UnsupportedException().withFile(file);
+            };
         }
         return host.getProtocol().getFeature(type);
     }
