@@ -111,6 +111,7 @@ public class HubVaultListService implements ListService {
                     attr.setDisplayname(vaultMetadata.storage().getNickname());
                     vaults.add(new Path(vault.getHome()).withType(EnumSet.of(Path.Type.volume, Path.Type.directory))
                             .withAttributes(attr));
+                    listener.chunk(directory, vaults);
                 }
                 return vaults;
             }
