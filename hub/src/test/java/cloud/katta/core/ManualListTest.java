@@ -4,8 +4,15 @@
 
 package cloud.katta.core;
 
+import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledListProgressListener;
+import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.OAuthTokens;
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.SimplePathPredicate;
+import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.features.Home;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -16,6 +23,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,7 +54,9 @@ public class ManualListTest extends AbstractHubTest {
         final String username = System.getenv().get("username");
         final String accountKey = System.getenv().get("account_key");
 
-        final String storageProfileId = "45a3cd17-9955-4580-9e60-790d84f5785f";
+//        final String storageProfileId = "45a3cd17-9955-4580-9e60-790d84f5785f";
+        final String storageProfileId = null;
+
         final String vaultName = "vault " + username + " " + new Date();
         final String vaultDescription = "fancy";
 
@@ -104,11 +114,30 @@ public class ManualListTest extends AbstractHubTest {
 
     }
 
-    private static void printVaults(HubSession hubSession) throws ApiException {
-        List<VaultDto> vaultL = new VaultResourceApi(hubSession.getClient()).apiVaultsAccessibleGet(null);
+    private static void printVaults(HubSession hubSession) throws ApiException, BackgroundException {
+        final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
+        final List<VaultDto> vaultL = new VaultResourceApi(hubSession.getClient()).apiVaultsAccessibleGet(null);
         for(VaultDto vaultDto : vaultL) {
-            System.out.println(vaultDto);
+            if(vaultDto.getArchived()) {
+                continue;
+            }
+            final Path bucket = new Path("katta" + vaultDto.getId(), EnumSet.of(Path.Type.volume, Path.Type.directory));
+            final Path vault = vaults.find(new SimplePathPredicate(bucket));
+            {
+                // decrypted file listing
+                try {
+                    final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
+                    System.out.printf("success on %s (%s) %n", vault, vaultDto.getName());
+                    System.out.println("==================>>>");
+                    for(Path path : list) {
+                        System.out.println(path);
+                    }
+                    System.out.println("===================<<<");
+                }
+                catch(IllegalArgumentException e) {
+                    System.out.printf("failed on %s (%s): %s %n", vault, vaultDto.getName(), vaultDto);
+                }
+            }
         }
     }
-
 }
