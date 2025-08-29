@@ -16,7 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class HubVaultRegistry extends DefaultVaultRegistry {
-    private static final Logger log = LogManager.getLogger(HubSession.class);
+    private static final Logger log = LogManager.getLogger(HubVaultRegistry.class);
 
     public HubVaultRegistry() {
         super(new DisabledPasswordCallback());
