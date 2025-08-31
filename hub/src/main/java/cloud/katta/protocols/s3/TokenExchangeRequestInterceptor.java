@@ -75,11 +75,11 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
         log.debug("Exchange token with hub {}", hub);
         final StorageResourceApi api = new StorageResourceApi(hub.getClient());
         try {
-            AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT));
+            final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(preferences.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT));
             // N.B. token exchange with Id token does not work!
             final OAuthTokens tokens = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                     tokenExchangeResponse.getRefreshToken(),
-                    System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000);
+                    tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
             log.debug("Received exchanged token {} for {}", tokens, bookmark);
             return tokens;
         }
