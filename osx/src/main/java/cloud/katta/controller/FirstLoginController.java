@@ -45,7 +45,6 @@ public class FirstLoginController extends AlertController {
     public NSAlert loadAlert() {
         final NSAlert alert = NSAlert.alert();
         alert.setAlertStyle(NSAlert.NSInformationalAlertStyle);
-        alert.setIcon(IconCacheFactory.<NSImage>get().iconNamed("cryptomator.tiff", 64));
         alert.setMessageText(LocaleFactory.localizedString("Account Key", "Hub"));
         alert.setInformativeText(new StringAppender()
                 .append(LocaleFactory.localizedString("On first login, every user gets a unique Account Key", "Hub"))
