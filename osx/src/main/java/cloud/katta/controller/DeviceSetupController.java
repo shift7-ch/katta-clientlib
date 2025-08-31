@@ -44,7 +44,6 @@ public class DeviceSetupController extends AlertController {
     @Override
     public NSAlert loadAlert() {
         final NSAlert alert = NSAlert.alert();
-        alert.setIcon(IconCacheFactory.<NSImage>get().iconNamed("cryptomator.tiff", 64));
         alert.setAlertStyle(NSAlert.NSInformationalAlertStyle);
         alert.setMessageText(LocaleFactory.localizedString("Authorization Required", "Hub"));
         alert.setInformativeText(new StringAppender()
