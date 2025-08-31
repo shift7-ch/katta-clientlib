@@ -5,7 +5,6 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.*;
-import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
@@ -150,8 +149,6 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-        log.debug("Configured with setup prompt {}", setup);
         final Credentials credentials = authorizationService.validate();
         try {
             // Set username from OAuth ID Token for saving in keychain
@@ -164,23 +161,36 @@ public class HubSession extends HttpSession<HubApiClient> {
         try {
             me = new UsersResourceApi(client).apiUsersMeGet(true, false);
             log.debug("Retrieved user {}", me);
-            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host, me,
-                    new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
-            log.debug("Retrieved user keys {}", userKeys);
+            // Ensure device key is available
+            final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+            log.debug("Configured with setup prompt {}", setup);
+            this.pair(setup);
             // Ensure vaults are registered
             final OAuthTokens tokens = new OAuthTokens(credentials.getOauth().getAccessToken(), credentials.getOauth().getRefreshToken(), credentials.getOauth().getExpiryInMilliseconds(),
                     credentials.getOauth().getIdToken());
             vaults = new HubVaultListService(protocols, this, trust, key, registry, tokens);
             vaults.list(Home.root(), new DisabledListProgressListener());
         }
-        catch(SecurityFailure e) {
-            throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), e);
-        }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
         }
+    }
+
+    private void pair(final DeviceSetupCallback setup) throws BackgroundException {
+        try {
+            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host, me,
+                    new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
+            log.debug("Retrieved user keys {}", userKeys);
+        }
+        catch(SecurityFailure e) {
+            // Repeat until canceled by user
+            this.pair(setup);
+        }
         catch(AccessException e) {
             throw new ConnectionCanceledException(e);
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
         }
     }
 
