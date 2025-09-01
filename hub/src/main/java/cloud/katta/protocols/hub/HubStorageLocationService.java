@@ -30,12 +30,12 @@ public class HubStorageLocationService implements Location {
     }
 
     @Override
-    public Name getDefault() {
+    public Name getDefault(final Path file) {
         return Location.unknown;
     }
 
     @Override
-    public Set<Name> getLocations() {
+    public Set<Name> getLocations(final Path file) {
         try {
             final Set<Name> regions = new HashSet<>();
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(session.getClient())
