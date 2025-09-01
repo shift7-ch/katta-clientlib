@@ -44,6 +44,10 @@ public class HubUVFVault extends UVFVault {
         this.home = home;
     }
 
+    public Session<?> getStorage() {
+        return storage;
+    }
+
     @Override
     public <T> T getFeature(final Session<?> ignore, final Class<T> type, final T delegate) throws UnsupportedException {
         log.debug("Delegate to {} for feature {}", storage, type);
