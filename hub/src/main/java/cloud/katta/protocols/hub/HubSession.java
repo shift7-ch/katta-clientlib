@@ -77,8 +77,6 @@ public class HubSession extends HttpSession<HubApiClient> {
      */
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
 
-    private final HubVaultRegistry registry = new HubVaultRegistry();
-
     private HubVaultListService vaults;
 
     /**
@@ -91,12 +89,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         super(host, trust, key);
     }
 
-    @Override
-    public Session<?> withRegistry(final VaultRegistry ignored) {
-        return super.withRegistry(registry);
-    }
-
-    public HubVaultRegistry getRegistry() {
+    public VaultRegistry getRegistry() {
         return registry;
     }
 
