@@ -24,6 +24,7 @@ import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.transfer.Transfer;
 import ch.cyberduck.core.transfer.TransferItem;
 import ch.cyberduck.core.transfer.TransferStatus;
+import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.worker.DeleteWorker;
 
 import org.apache.commons.io.IOUtils;
@@ -265,7 +266,8 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
-            final HubVaultRegistry vaultRegistry = hubSession.getRegistry();
+            final VaultRegistry vaultRegistry = hubSession.getRegistry();
+            assertTrue(vaultRegistry instanceof HubVaultRegistry);
             {
                 assertNotNull(vaults.find(new SimplePathPredicate(bucket)));
 
