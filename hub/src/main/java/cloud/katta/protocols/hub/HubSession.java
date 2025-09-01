@@ -34,12 +34,10 @@ import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
-import ch.cyberduck.core.synchronization.Comparison;
 import ch.cyberduck.core.synchronization.ComparisonService;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultRegistry;
-import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -325,38 +323,9 @@ public class HubSession extends HttpSession<HubApiClient> {
             };
         }
         if(type == ComparisonService.class) {
-            return (T) new ComparisonService() {
-                @Override
-                public Comparison compare(final Path.Type type, final PathAttributes local, final PathAttributes remote) {
-                    try {
-                        final ComparisonService feature = this.getFeature(remote.getVault());
-                        return feature.compare(type, local, remote);
-                    }
-                    catch(VaultUnlockCancelException e) {
-                        return Comparison.unknown;
-                    }
-                }
-
-                @Override
-                public int hashCode(final Path.Type type, final PathAttributes attr) {
-                    try {
-                        final ComparisonService feature = this.getFeature(attr.getVault());
-                        return feature.hashCode(type, attr);
-                    }
-                    catch(VaultUnlockCancelException e) {
-                        return 0;
-                    }
-                }
-
-                private ComparisonService getFeature(final Path vault) throws VaultUnlockCancelException {
-                    if(null == vault) {
-                        return ComparisonService.disabled;
-                    }
-                    final HubUVFVault cryptomator = (HubUVFVault) registry.find(HubSession.this, vault);
-                    return cryptomator.getStorage().getFeature(ComparisonService.class);
-                }
-            };
+            return (T) new HubVaultStorageAwareComparisonService(this);
         }
         return host.getProtocol().getFeature(type);
     }
+
 }
