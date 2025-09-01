@@ -22,6 +22,8 @@ import ch.cyberduck.core.features.Scheduler;
 import ch.cyberduck.core.features.Timestamp;
 import ch.cyberduck.core.features.Touch;
 import ch.cyberduck.core.features.Write;
+import ch.cyberduck.core.http.CustomServiceUnavailableRetryStrategy;
+import ch.cyberduck.core.http.ExecutionCountServiceUnavailableRetryStrategy;
 import ch.cyberduck.core.http.HttpSession;
 import ch.cyberduck.core.io.StatusOutputStream;
 import ch.cyberduck.core.io.StreamListener;
@@ -142,7 +144,8 @@ public class HubSession extends HttpSession<HubApiClient> {
                 host.getProtocol().isOAuthPKCE(), prompt)
                 .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
                 .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
-        configuration.setServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService));
+        configuration.setServiceUnavailableRetryStrategy(new CustomServiceUnavailableRetryStrategy(host,
+                new ExecutionCountServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService))));
         configuration.addInterceptorLast(authorizationService);
         return new HubApiClient(host, configuration.build());
     }
