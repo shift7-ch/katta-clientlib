@@ -10,7 +10,6 @@ import ch.cyberduck.binding.Outlet;
 import ch.cyberduck.binding.application.NSAlert;
 import ch.cyberduck.binding.application.NSCell;
 import ch.cyberduck.binding.application.NSControl;
-import ch.cyberduck.binding.application.NSImage;
 import ch.cyberduck.binding.application.NSSecureTextField;
 import ch.cyberduck.binding.application.NSTextField;
 import ch.cyberduck.binding.application.NSView;
@@ -20,7 +19,6 @@ import ch.cyberduck.binding.foundation.NSNotificationCenter;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.preferences.PreferencesFactory;
-import ch.cyberduck.core.resources.IconCacheFactory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rococoa.Foundation;
