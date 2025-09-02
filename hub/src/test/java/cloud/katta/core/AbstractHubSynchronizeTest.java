@@ -230,30 +230,6 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.randomUUID();
 
-
-            if(storageProfileWrapper.getProtocol() == Protocol.S3) {
-                // empty bucket
-                final HostPasswordStore keychain = PasswordStoreFactory.get();
-
-                final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
-                final Host bookmark = new VaultServiceImpl(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()))
-                        .getStorageBackend(
-                                hubSession,
-                                new ConfigResourceApi(hubSession.getClient()).apiConfigGet(), vaultId, new VaultMetadataJWEBackendDto()
-                                        .provider(storageProfileWrapper.getId().toString())
-                                        .defaultPath(config.vault.bucketName)
-                                        .nickname(config.vault.bucketName)
-                                        .username(config.vault.username)
-                                        .password(config.vault.password), tokens);
-                final S3Session session = new S3Session(bookmark);
-                session.open(new DisabledProxyFinder(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
-                session.login(new DisabledLoginCallback(), new DisabledCancelCallback());
-                new DeleteWorker(new DisabledLoginCallback(),
-                        session.getFeature(ListService.class).list(new Path("/" + config.vault.bucketName, EnumSet.of(AbstractPath.Type.directory)), new DisabledListProgressListener()).toStream().filter(f -> session.getFeature(Delete.class).isSupported(f)).collect(Collectors.toList()),
-                        new DisabledListProgressListener()).run(session);
-                session.close();
-            }
-
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
             new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper, new CreateVaultService.CreateVaultModel(
