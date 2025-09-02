@@ -242,7 +242,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final VaultRegistry vaultRegistry = hubSession.getRegistry();
-            assertTrue(vaultRegistry instanceof HubVaultRegistry);
+            assertInstanceOf(HubVaultRegistry.class, vaultRegistry);
             {
                 assertNotNull(vaults.find(new SimplePathPredicate(bucket)));
 
