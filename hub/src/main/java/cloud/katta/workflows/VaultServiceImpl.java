@@ -10,8 +10,6 @@ import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.ProtocolFactory;
 
-import cloud.katta.protocols.hub.HubAwareProfile;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,6 +27,7 @@ import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
+import cloud.katta.protocols.hub.HubAwareProfile;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -83,10 +82,15 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public Host getStorageBackend(final HubSession hub, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
-        log.debug("Load profile {}", vaultMetadata.getProvider());
-        final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
-                .apiStorageprofileProfileIdGet(UUID.fromString(vaultMetadata.getProvider())));
+    public StorageProfileDtoWrapper getVaultStorageProfile(final UvfMetadataPayload metadataPayload) throws ApiException {
+        log.debug("Load profile {}", metadataPayload.storage().getProvider());
+        return StorageProfileDtoWrapper.coerce(storageProfileResourceApi
+                .apiStorageprofileProfileIdGet(UUID.fromString(metadataPayload.storage().getProvider())));
+    }
+
+    @Override
+    public Host getStorageBackend(final HubSession hub, final ConfigDto configDto, final UUID vaultId, final UvfMetadataPayload vaultMetadataPayload, final OAuthTokens tokens) throws ApiException, AccessException {
+        final StorageProfileDtoWrapper storageProfile = this.getVaultStorageProfile(vaultMetadataPayload);
         log.debug("Read storage profile {}", storageProfile);
         final Profile profile;
         switch(storageProfile.getProtocol()) {
@@ -101,23 +105,24 @@ public class VaultServiceImpl implements VaultService {
                 throw new AccessException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
         }
         final Host bookmark = new Host(profile);
-        log.debug("Configure bookmark for vault {}", vaultMetadata);
-        bookmark.setNickname(vaultMetadata.getNickname());
-        bookmark.setDefaultPath(vaultMetadata.getDefaultPath());
+        final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadataPayload.storage();
+        log.debug("Configure bookmark for vault {}", vaultStorageMetadata);
+        bookmark.setNickname(vaultStorageMetadata.getNickname());
+        bookmark.setDefaultPath(vaultStorageMetadata.getDefaultPath());
         final Credentials credentials = bookmark.getCredentials();
         credentials.setOauth(tokens);
-        if(vaultMetadata.getUsername() != null) {
-            credentials.setUsername(vaultMetadata.getUsername());
+        if(vaultStorageMetadata.getUsername() != null) {
+            credentials.setUsername(vaultStorageMetadata.getUsername());
         }
-        if(vaultMetadata.getPassword() != null) {
-            credentials.setPassword(vaultMetadata.getPassword());
+        if(vaultStorageMetadata.getPassword() != null) {
+            credentials.setPassword(vaultStorageMetadata.getPassword());
         }
         if(profile.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, vaultResource.getApiClient().getBasePath());
         }
         // region as chosen by user upon vault creation (STS) or as retrieved from bucket (permanent)
-        bookmark.setRegion(vaultMetadata.getRegion());
+        bookmark.setRegion(vaultStorageMetadata.getRegion());
         return bookmark;
     }
 }
