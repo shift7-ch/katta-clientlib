@@ -8,8 +8,9 @@ import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
-import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.ProtocolFactory;
+
+import cloud.katta.protocols.hub.HubAwareProfile;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,8 +30,6 @@ import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
-import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
-import cloud.katta.protocols.hub.serializer.StorageProfileDtoWrapperDeserializer;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -115,29 +114,10 @@ public class VaultServiceImpl implements VaultService {
         }
         if(profile.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
-            bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, this.vaultResource.getApiClient().getBasePath());
+            bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, vaultResource.getApiClient().getBasePath());
         }
         // region as chosen by user upon vault creation (STS) or as retrieved from bucket (permanent)
         bookmark.setRegion(vaultMetadata.getRegion());
         return bookmark;
-    }
-
-    private static final class HubAwareProfile extends Profile {
-        private final HubSession hub;
-
-        public HubAwareProfile(final HubSession hub, final Protocol parent, final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) {
-            super(parent, new StorageProfileDtoWrapperDeserializer(
-                    new HubConfigDtoDeserializer(configDto), storageProfile));
-            this.hub = hub;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public <T> T getFeature(final Class<T> type) {
-            if(type == HubSession.class) {
-                return (T) hub;
-            }
-            return super.getFeature(type);
-        }
     }
 }
