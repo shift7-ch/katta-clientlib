@@ -85,31 +85,23 @@ public class VaultServiceImpl implements VaultService {
 
     @Override
     public Host getStorageBackend(final ProtocolFactory protocols, final HubSession hub, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
-        if(null == protocols.forName(vaultMetadata.getProvider())) {
-            log.debug("Load missing profile {}", vaultMetadata.getProvider());
-            final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
-                    .apiStorageprofileProfileIdGet(UUID.fromString(vaultMetadata.getProvider())));
-            log.debug("Read storage profile {}", storageProfile);
-            switch(storageProfile.getProtocol()) {
-                case S3:
-                case S3_STS:
-                    final Profile profile = new HubAwareProfile(hub, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Type.s3),
-                            configDto, storageProfile);
-                    log.debug("Register storage profile {}", profile);
-                    protocols.register(profile);
-                    break;
-                default:
-                    throw new AccessException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
-            }
+        log.debug("Load profile {}", vaultMetadata.getProvider());
+        final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
+                .apiStorageprofileProfileIdGet(UUID.fromString(vaultMetadata.getProvider())));
+        log.debug("Read storage profile {}", storageProfile);
+        final Profile profile;
+        switch(storageProfile.getProtocol()) {
+            case S3:
+            case S3_STS:
+                profile = new HubAwareProfile(hub, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Type.s3),
+                        configDto, storageProfile);
+                log.debug("Loaded profile {}", profile);
+                protocols.register(profile);
+                break;
+            default:
+                throw new AccessException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
         }
-        final String provider = vaultMetadata.getProvider();
-        log.debug("Lookup provider {} from vault metadata", provider);
-        final Protocol protocol = protocols.forName(provider);
-        if((protocol.getOAuthTokenUrl() != null) && (!protocol.getOAuthTokenUrl().equals(configDto.getKeycloakTokenEndpoint()))) {
-            // this may happen if the storage profile ID is deployed to two different hubs
-            throw new AccessException(String.format("Expected keycloak endpoint %s, found %s.", configDto.getKeycloakTokenEndpoint(), protocol.getOAuthTokenUrl()));
-        }
-        final Host bookmark = new Host(protocol);
+        final Host bookmark = new Host(profile);
         log.debug("Configure bookmark for vault {}", vaultMetadata);
         bookmark.setNickname(vaultMetadata.getNickname());
         bookmark.setDefaultPath(vaultMetadata.getDefaultPath());
@@ -121,7 +113,7 @@ public class VaultServiceImpl implements VaultService {
         if(vaultMetadata.getPassword() != null) {
             credentials.setPassword(vaultMetadata.getPassword());
         }
-        if(protocol.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
+        if(profile.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, this.vaultResource.getApiClient().getBasePath());
         }
