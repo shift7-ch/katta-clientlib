@@ -53,20 +53,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
-    private final ProtocolFactory protocols;
     private final HubSession session;
-    private final X509TrustManager trust;
-    private final X509KeyManager key;
-    private final VaultRegistry registry;
     private final OAuthTokens tokens;
 
-    public HubVaultListService(final ProtocolFactory protocols, final HubSession session,
-                               final X509TrustManager trust, final X509KeyManager key, final VaultRegistry registry, final OAuthTokens tokens) {
-        this.protocols = protocols;
+    public HubVaultListService(final HubSession session, final OAuthTokens tokens) {
         this.session = session;
-        this.trust = trust;
-        this.key = key;
-        this.registry = registry;
         this.tokens = tokens;
     }
 
@@ -98,11 +89,13 @@ public class HubVaultListService implements ListService {
                         }
                         throw e;
                     }
-                    final Host bookmark = vaultService.getStorageBackend(protocols, session, configDto, vaultDto.getId(),
+                    final Host bookmark = vaultService.getStorageBackend(session, configDto, vaultDto.getId(),
                             vaultMetadata.storage(), tokens);
                     log.debug("Configured {} for vault {}", bookmark, vaultDto);
-                    final Session<?> storage = SessionFactory.create(bookmark, trust, key);
+                    final Session<?> storage = SessionFactory.create(bookmark,
+                            session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
                     final HubUVFVault vault = new HubUVFVault(storage, new DefaultPathHomeFeature(bookmark).find());
+                    final VaultRegistry registry = session.getRegistry();
                     registry.add(vault.load(session, new UvfMetadataPayloadPasswordCallback(vaultMetadata)));
                     final PathAttributes attr = storage.getFeature(AttributesFinder.class).find(vault.getHome());
                     try (UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(vaultMetadata.toJSON())) {
@@ -130,7 +123,7 @@ public class HubVaultListService implements ListService {
         if(directory.isRoot()) {
             return;
         }
-        if(registry.contains(directory)) {
+        if(session.getRegistry().contains(directory)) {
             return;
         }
         log.warn("Deny directory listing with no vault available for {}", directory);
