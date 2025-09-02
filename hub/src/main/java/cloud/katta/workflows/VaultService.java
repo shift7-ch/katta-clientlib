@@ -14,7 +14,7 @@ import cloud.katta.client.model.ConfigDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
+import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -31,7 +31,7 @@ public interface VaultService {
      * @param userKeys EC key pair
      * @return Vault metadata
      */
-    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, SecurityFailure, AccessException;
+    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get vault access token containing vault member key and recovery key (if owner)
@@ -45,15 +45,23 @@ public interface VaultService {
     UvfAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
+     * Get storage configuration for vault
+     *
+     * @param metadataPayload Vault metadata including storage configuration
+     * @return Storage profile
+     */
+    StorageProfileDtoWrapper getVaultStorageProfile(UvfMetadataPayload metadataPayload) throws ApiException, AccessException, SecurityFailure;
+
+    /**
      * Prepares (virtual) bookmark for vault to access its configured storage backend.
      *
-     * @param hub           Hub API Connection
-     * @param configDto     Hub configuration
-     * @param vaultId       Vault ID
-     * @param vaultMetadata Storage Backend configuration
+     * @param hub             Hub API Connection
+     * @param configDto       Hub configuration
+     * @param vaultId         Vault ID
+     * @param metadataPayload Storage Backend configuration
      * @return Configuration
      * @throws AccessException Unsupported backend storage protocol
      * @throws ApiException    Server error accessing storage profile
      */
-    Host getStorageBackend(final HubSession hub, final ConfigDto configDto, UUID vaultId, VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws AccessException, ApiException;
+    Host getStorageBackend(final HubSession hub, final ConfigDto configDto, UUID vaultId, final UvfMetadataPayload metadataPayload, final OAuthTokens tokens) throws AccessException, ApiException;
 }
