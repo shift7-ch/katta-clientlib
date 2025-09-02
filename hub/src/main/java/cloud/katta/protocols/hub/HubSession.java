@@ -89,10 +89,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         super(host, trust, key);
     }
 
-    public VaultRegistry getRegistry() {
-        return registry;
-    }
-
     @Override
     protected HubApiClient connect(final ProxyFinder proxy, final HostKeyCallback key,
                                    final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
