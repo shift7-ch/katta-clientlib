@@ -6,7 +6,6 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.OAuthTokens;
-import ch.cyberduck.core.ProtocolFactory;
 
 import java.util.UUID;
 
@@ -48,14 +47,13 @@ public interface VaultService {
     /**
      * Prepares (virtual) bookmark for vault to access its configured storage backend.
      *
-     * @param protocols Registered protocol implementations to access backend storage
-     * @param hub       Hub API Connection
-     * @param configDto Hub configuration
-     * @param vaultId   Vault ID
-     * @param metadata  Storage Backend configuration
+     * @param hub           Hub API Connection
+     * @param configDto     Hub configuration
+     * @param vaultId       Vault ID
+     * @param vaultMetadata Storage Backend configuration
      * @return Configuration
      * @throws AccessException Unsupported backend storage protocol
      * @throws ApiException    Server error accessing storage profile
      */
-    Host getStorageBackend(final ProtocolFactory protocols, final HubSession hub, final ConfigDto configDto, UUID vaultId, VaultMetadataJWEBackendDto metadata, final OAuthTokens tokens) throws AccessException, ApiException;
+    Host getStorageBackend(final HubSession hub, final ConfigDto configDto, UUID vaultId, VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws AccessException, ApiException;
 }

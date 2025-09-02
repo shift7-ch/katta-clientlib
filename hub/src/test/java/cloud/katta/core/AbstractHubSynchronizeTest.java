@@ -238,7 +238,6 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
                 final Host bookmark = new VaultServiceImpl(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()))
                         .getStorageBackend(
-                                ProtocolFactory.get(),
                                 hubSession,
                                 new ConfigResourceApi(hubSession.getClient()).apiConfigGet(), vaultId, new VaultMetadataJWEBackendDto()
                                         .provider(storageProfileWrapper.getId().toString())

@@ -71,7 +71,6 @@ public class HubSession extends HttpSession<HubApiClient> {
     private static final Logger log = LogManager.getLogger(HubSession.class);
 
     private final HostPasswordStore keychain = PasswordStoreFactory.get();
-    private final ProtocolFactory protocols = ProtocolFactory.get();
 
     /**
      * Periodically grant vault access to users
@@ -165,7 +164,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             // Ensure vaults are registered
             final OAuthTokens tokens = new OAuthTokens(credentials.getOauth().getAccessToken(), credentials.getOauth().getRefreshToken(), credentials.getOauth().getExpiryInMilliseconds(),
                     credentials.getOauth().getIdToken());
-            vaults = new HubVaultListService(protocols, this, trust, key, registry, tokens);
+            vaults = new HubVaultListService(this, tokens);
             vaults.list(Home.root(), new DisabledListProgressListener());
         }
         catch(ApiException e) {
@@ -325,7 +324,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         if(type == ComparisonService.class) {
             return (T) new HubVaultStorageAwareComparisonService(this);
         }
-        return host.getProtocol().getFeature(type);
+        return super._getFeature(type);
     }
-
 }

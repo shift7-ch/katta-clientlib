@@ -84,7 +84,7 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public Host getStorageBackend(final ProtocolFactory protocols, final HubSession hub, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
+    public Host getStorageBackend(final HubSession hub, final ConfigDto configDto, final UUID vaultId, final VaultMetadataJWEBackendDto vaultMetadata, final OAuthTokens tokens) throws ApiException, AccessException {
         log.debug("Load profile {}", vaultMetadata.getProvider());
         final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileResourceApi
                 .apiStorageprofileProfileIdGet(UUID.fromString(vaultMetadata.getProvider())));
@@ -93,6 +93,7 @@ public class VaultServiceImpl implements VaultService {
         switch(storageProfile.getProtocol()) {
             case S3:
             case S3_STS:
+                final ProtocolFactory protocols = ProtocolFactory.get();
                 profile = new HubAwareProfile(hub, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Type.s3),
                         configDto, storageProfile);
                 log.debug("Loaded profile {}", profile);
