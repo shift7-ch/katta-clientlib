@@ -96,7 +96,6 @@ public class VaultServiceImpl implements VaultService {
                 profile = new HubAwareProfile(hub, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Type.s3),
                         configDto, storageProfile);
                 log.debug("Loaded profile {}", profile);
-                protocols.register(profile);
                 break;
             default:
                 throw new AccessException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
