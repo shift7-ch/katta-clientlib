@@ -12,7 +12,7 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.LoginFailureException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.preferences.HostPreferences;
+import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
 
 import org.apache.http.client.HttpClient;
@@ -69,7 +69,7 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info("Exchange tokens {} for {}", previous, bookmark);
-        final PreferencesReader preferences = new HostPreferences(bookmark);
+        final PreferencesReader preferences = HostPreferencesFactory.get(bookmark);
         final HubSession hub = bookmark.getProtocol().getFeature(HubSession.class);
         log.debug("Exchange token with hub {}", hub);
         final StorageResourceApi api = new StorageResourceApi(hub.getClient());
