@@ -355,6 +355,9 @@ public class HubSession extends HttpSession<HubApiClient> {
         if(type == ComparisonService.class) {
             return (T) new HubVaultStorageAwareComparisonService(this);
         }
+        if(type == CredentialsConfigurator.class) {
+            return (T) new HubOAuthTokensCredentialsConfigurator(keychain, host);
+        }
         return super._getFeature(type);
     }
 }

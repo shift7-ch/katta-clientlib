@@ -163,7 +163,8 @@ public class HubUVFVault extends UVFVault {
             // Upload vault template to storage
             final Protocol profile = ProtocolFactory.get().forName(storageProfile);
             log.debug("Loaded profile {} for vault {}", profile, this);
-            final Host bookmark = new Host(profile);
+            final Host bookmark = new Host(profile,
+                    session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost()));
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
             bookmark.setRegion(location.getRegion());
             log.debug("Configured {} for vault {}", bookmark, this);
@@ -223,7 +224,8 @@ public class HubUVFVault extends UVFVault {
             final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultId, hub.getUserKeys());
             final Protocol profile = ProtocolFactory.get().forName(vaultMetadata.storage().getProvider());
             log.debug("Loaded profile {} for vault {}", profile, this);
-            final Credentials credentials = new Credentials(hub.getHost().getCredentials());
+            final Credentials credentials =
+                    session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost());
             log.debug("Copy credentials {}", credentials);
             final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
             if(vaultStorageMetadata.getUsername() != null) {
