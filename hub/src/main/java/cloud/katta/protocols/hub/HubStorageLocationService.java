@@ -64,6 +64,9 @@ public class HubStorageLocationService implements Location {
          * UUID of storage profile configuration
          */
         private final String storageProfile;
+        /**
+         * AWS location
+         */
         private final String region;
 
         public StorageLocation(final String storageProfile, final String region) {
@@ -77,6 +80,11 @@ public class HubStorageLocationService implements Location {
             return String.format("%s (%s)", storageProfile, region);
         }
 
+        /**
+         * Parse a storage location from an identifier containing storage profile and AWS location.
+         * @param identifier Storage profile identifier and AWS region separated by dash
+         * @return Location with storage profile as identifier and AWS location as region
+         */
         public static Name fromIdentifier(final String identifier) {
             final String[] parts = identifier.split("-");
             if(parts.length != 2) {
