@@ -8,10 +8,8 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.exception.BackgroundException;
-import ch.cyberduck.core.preferences.HostPreferences;
+import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
-
-import cloud.katta.client.api.StorageProfileResourceApi;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +18,7 @@ import java.util.List;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.DeviceResourceApi;
+import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.Role;
@@ -39,7 +38,7 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
     private final HostPasswordStore keychain;
 
     public HubGrantAccessSchedulerService(final HubSession session, final HostPasswordStore keychain) {
-        super(new HostPreferences(session.getHost()).getLong("hub.protocol.scheduler.period"));
+        super(HostPreferencesFactory.get(session.getHost()).getLong("hub.protocol.scheduler.period"));
         this.session = session;
         this.keychain = keychain;
     }
