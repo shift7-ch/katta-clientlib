@@ -8,17 +8,15 @@ import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.Protocol;
 
 import cloud.katta.client.model.ConfigDto;
-import cloud.katta.client.model.VaultDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
 import cloud.katta.protocols.hub.serializer.StorageProfileDtoWrapperDeserializer;
-import cloud.katta.protocols.hub.serializer.VaultDtoDeserializer;
 
 public final class HubAwareProfile extends Profile {
     private final HubSession hub;
 
-    public HubAwareProfile(final HubSession hub, final Protocol parent, final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile, final VaultDto vaultDto) {
-        super(parent, new HubConfigDtoDeserializer(configDto, new StorageProfileDtoWrapperDeserializer(storageProfile, new VaultDtoDeserializer(vaultDto))));
+    public HubAwareProfile(final HubSession hub, final Protocol parent, final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) {
+        super(parent, new HubConfigDtoDeserializer(configDto, new StorageProfileDtoWrapperDeserializer(storageProfile)));
         this.hub = hub;
     }
 

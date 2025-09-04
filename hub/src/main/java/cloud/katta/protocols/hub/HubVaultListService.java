@@ -67,7 +67,7 @@ public class HubVaultListService implements ListService {
                         case S3_STS:
                             final ProtocolFactory protocols = ProtocolFactory.get();
                             final Profile profile = new HubAwareProfile(session, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
-                                    session.getConfig(), storageProfile, vaultDto);
+                                    session.getConfig(), storageProfile);
                             log.debug("Register profile {}", profile);
                             protocols.register(profile);
                             break;
