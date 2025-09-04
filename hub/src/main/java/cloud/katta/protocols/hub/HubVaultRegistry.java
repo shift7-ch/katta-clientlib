@@ -5,13 +5,23 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.DisabledPasswordCallback;
+import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Session;
+import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
 
 public class HubVaultRegistry extends DefaultVaultRegistry {
 
     public HubVaultRegistry() {
-        super(new DisabledPasswordCallback());
+        this(new DisabledPasswordCallback());
+    }
+
+    public HubVaultRegistry(final PasswordCallback prompt) {
+        super(prompt);
+    }
+
+    public HubVaultRegistry(final PasswordCallback prompt, final Vault... vaults) {
+        super(prompt, vaults);
     }
 
     @Override
