@@ -4,11 +4,15 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.vault.VaultCredentials;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +22,7 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
+import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.UserDto;
@@ -26,6 +31,7 @@ import cloud.katta.crypto.UserKeys;
 import cloud.katta.model.SetupCodeJWE;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
@@ -52,17 +58,14 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             final UUID vaultId = UUID.randomUUID();
-            final boolean automaticAccessGrant = true;
             // upload template (STS: create bucket first, static: existing bucket)
             // TODO test with multiple wot levels?
 
-            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
-                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
-            new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper,
-                    new CreateVaultService.CreateVaultModel(vaultId,
-                            "vault", null,
-                            config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName,
-                            config.vault.region, automaticAccessGrant, 3));
+            final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+                    EnumSet.of(Path.Type.volume, Path.Type.directory));
+            final HubUVFVault cryptomator = new HubUVFVault(bucket);
+            cryptomator.create(hubSession, storageProfileWrapper.getRegion(), new VaultCredentials("test"));
+
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 
             log.info("S02 {} alice shares vault with admin as owner", setup);
@@ -96,6 +99,8 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost())), admin);
 
             log.info("S04 {} alice grants access to admin", setup);
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
         }
