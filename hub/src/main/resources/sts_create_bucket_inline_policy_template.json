@@ -9,7 +9,9 @@
         "s3:PutBucketVersioning",
         "s3:GetBucketVersioning",
         "s3:GetEncryptionConfiguration",
-        "s3:PutEncryptionConfiguration"
+        "s3:PutEncryptionConfiguration",
+        "s3:GetAccelerateConfiguration",
+        "s3:PutAccelerateConfiguration"
       ],
       "Resource": "arn:aws:s3:::{}"
     },
