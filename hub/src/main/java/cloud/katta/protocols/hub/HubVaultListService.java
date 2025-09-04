@@ -10,6 +10,7 @@ import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.ProtocolFactory;
@@ -24,13 +25,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
+import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.model.StorageProfileDtoWrapper;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -76,7 +77,9 @@ public class HubVaultListService implements ListService {
                         default:
                             throw new VaultException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
                     }
-                    final HubUVFVault vault = new HubUVFVault(vaultDto.getId(), vaultMetadata.storage().getDefaultPath());
+                    final HubUVFVault vault = new HubUVFVault(vaultDto.getId(),
+                            new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+                                    new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())));
                     try {
                         registry.add(vault.load(session, prompt));
                         vaults.add(vault.getHome());
