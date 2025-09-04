@@ -25,6 +25,7 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.MessageFormat;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -212,7 +213,9 @@ public class CreateVaultService {
 
             request.setWebIdentityToken(token);
 
-            final String inlinePolicy = IOUtils.toString(CreateVaultService.class.getResourceAsStream("/sts_create_bucket_inline_policy_template.json"), Charset.defaultCharset()).replace("{}", bucketName);
+            final String inlinePolicy = MessageFormat.format(
+                    IOUtils.toString(CreateVaultService.class.getResourceAsStream("/sts_create_bucket_inline_policy_template.json"), Charset.defaultCharset()),
+                    bucketName);
             request.setPolicy(inlinePolicy);
             request.setRoleArn(roleArn);
             request.setRoleSessionName(roleSessionName);
