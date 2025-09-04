@@ -167,6 +167,7 @@ public class HubSession extends HttpSession<HubApiClient> {
                 vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());
             }
             finally {
+                log.debug("Destroyed user keys {}", userKeys);
                 // Short-lived
                 userKeys.destroy();
             }
