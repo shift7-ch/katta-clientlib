@@ -15,19 +15,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class UvfMetadataPayloadPasswordCallback extends DisabledPasswordCallback {
 
-    private final UvfMetadataPayload payload;
+    private final String payloadJson;
 
-    public UvfMetadataPayloadPasswordCallback(final UvfMetadataPayload payload) {
-        this.payload = payload;
+    public UvfMetadataPayloadPasswordCallback(final UvfMetadataPayload payload) throws JsonProcessingException {
+        this(payload.toJSON());
+    }
+
+    public UvfMetadataPayloadPasswordCallback(final String payloadJson) {
+        this.payloadJson = payloadJson;
     }
 
     @Override
     public Credentials prompt(final Host bookmark, final String title, final String reason, final LoginOptions options) throws LoginCanceledException {
-        try {
-            return new VaultCredentials(payload.toJSON());
-        }
-        catch(JsonProcessingException e) {
-            throw new LoginCanceledException(e);
-        }
+        return new VaultCredentials(payloadJson);
     }
 }
