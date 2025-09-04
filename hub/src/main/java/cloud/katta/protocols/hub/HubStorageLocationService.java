@@ -43,7 +43,7 @@ public class HubStorageLocationService implements Location {
             for(StorageProfileDto storageProfileDto : storageProfileDtos) {
                 final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
                 for(String region : storageProfile.getRegions()) {
-                    regions.add(new StorageLocation(storageProfile.getId().toString(), region));
+                    regions.add(new StorageLocation(storageProfile.getId().toString(), region, storageProfile.getName()));
                 }
             }
             return regions;
@@ -60,19 +60,22 @@ public class HubStorageLocationService implements Location {
     }
 
     public static final class StorageLocation extends Name {
-        /**
-         * UUID of storage profile configuration
-         */
-        private final String storageProfile;
+        private final String storageProfileName;
         /**
          * AWS location
          */
         private final String region;
 
-        public StorageLocation(final String storageProfile, final String region) {
+        /**
+         *
+         * @param storageProfile     UUID of storage profile configuration
+         * @param region             AWS location
+         * @param storageProfileName Description
+         */
+        public StorageLocation(final String storageProfile, final String region, final String storageProfileName) {
             super(String.format("%s-%s", storageProfile, region));
-            this.storageProfile = storageProfile;
             this.region = region;
+            this.storageProfileName = storageProfileName;
         }
 
         public String getRegion() {
@@ -81,20 +84,21 @@ public class HubStorageLocationService implements Location {
 
         @Override
         public String toString() {
-            return String.format("%s (%s)", storageProfile, region);
+            return String.format("%s (%s)", storageProfileName, region);
         }
 
         /**
          * Parse a storage location from an identifier containing storage profile and AWS location.
+         *
          * @param identifier Storage profile identifier and AWS region separated by dash
          * @return Location with storage profile as identifier and AWS location as region
          */
         public static StorageLocation fromIdentifier(final String identifier) {
             final String[] parts = identifier.split("-");
             if(parts.length != 2) {
-                return new StorageLocation(identifier, null);
+                return new StorageLocation(identifier, null, null);
             }
-            return new StorageLocation(parts[0], parts[1]);
+            return new StorageLocation(parts[0], parts[1], null);
         }
     }
 }
