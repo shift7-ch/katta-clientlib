@@ -75,6 +75,10 @@ public class HubStorageLocationService implements Location {
             this.region = region;
         }
 
+        public String getRegion() {
+            return region;
+        }
+
         @Override
         public String toString() {
             return String.format("%s (%s)", storageProfile, region);
@@ -85,10 +89,10 @@ public class HubStorageLocationService implements Location {
          * @param identifier Storage profile identifier and AWS region separated by dash
          * @return Location with storage profile as identifier and AWS location as region
          */
-        public static Name fromIdentifier(final String identifier) {
+        public static StorageLocation fromIdentifier(final String identifier) {
             final String[] parts = identifier.split("-");
             if(parts.length != 2) {
-                return Location.unknown;
+                return new StorageLocation(identifier, null);
             }
             return new StorageLocation(parts[0], parts[1]);
         }
