@@ -66,7 +66,6 @@ public class TokenExchangeRequestInterceptor extends OAuth2RequestInterceptor {
      * @param previous Input tokens retrieved to exchange at the token endpoint
      * @return New tokens
      * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_VAULT
-     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_BASEPATH
      */
     public OAuthTokens exchange(final OAuthTokens previous) throws BackgroundException {
         log.info("Exchange tokens {} for {}", previous, bookmark);

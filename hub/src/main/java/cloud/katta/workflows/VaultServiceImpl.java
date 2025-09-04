@@ -119,7 +119,6 @@ public class VaultServiceImpl implements VaultService {
         }
         if(profile.getProperties().get(S3_ASSUMEROLE_ROLEARN) != null) {
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
-            bookmark.setProperty(OAUTH_TOKENEXCHANGE_BASEPATH, vaultResource.getApiClient().getBasePath());
         }
         // region as chosen by user upon vault creation (STS) or as retrieved from bucket (permanent)
         bookmark.setRegion(vaultStorageMetadata.getRegion());

@@ -17,7 +17,6 @@ public class S3AssumeRoleProtocol extends S3Protocol {
     // Token exchange
     public static final String OAUTH_TOKENEXCHANGE = "oauth.tokenexchange";
     public static final String OAUTH_TOKENEXCHANGE_VAULT = "oauth.tokenexchange.vault";
-    public static final String OAUTH_TOKENEXCHANGE_BASEPATH = "oauth.tokenexchange.basepath";
 
     // STS assume role with web identity resource name
     public static final String S3_ASSUMEROLE_ROLEARN = Profile.STS_ROLE_ARN_PROPERTY_KEY;
