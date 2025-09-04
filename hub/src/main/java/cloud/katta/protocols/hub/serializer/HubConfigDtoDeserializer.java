@@ -4,6 +4,8 @@
 
 package cloud.katta.protocols.hub.serializer;
 
+import ch.cyberduck.core.serializer.Deserializer;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,11 +20,15 @@ public class HubConfigDtoDeserializer extends ProxyDeserializer<NSDictionary> {
 
     private final ConfigDto dto;
 
+    public HubConfigDtoDeserializer(final ConfigDto dto) {
+        this(dto, ProxyDeserializer.empty());
+    }
+
     /**
      * @param dto Hub configuration
      */
-    public HubConfigDtoDeserializer(final ConfigDto dto) {
-        super(ProxyDeserializer.empty());
+    public HubConfigDtoDeserializer(final ConfigDto dto, final Deserializer<NSDictionary> parent) {
+        super(parent);
         this.dto = dto;
     }
 
