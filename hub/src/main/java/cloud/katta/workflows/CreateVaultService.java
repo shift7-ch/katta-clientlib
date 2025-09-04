@@ -13,7 +13,6 @@ import ch.cyberduck.core.HostUrlProvider;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.proxy.DisabledProxyFinder;
@@ -213,11 +212,7 @@ public class CreateVaultService {
 
             request.setWebIdentityToken(token);
 
-            String inlinePolicy = IOUtils.toString(CreateVaultService.class.getResourceAsStream("/sts_create_bucket_inline_policy_template.json"), Charset.defaultCharset()).replace("{}", bucketName);
-            if((bucketAcceleration != null) && bucketAcceleration) {
-                inlinePolicy = inlinePolicy.replace("s3:PutEncryptionConfiguration\"", "s3:PutEncryptionConfiguration\",         \"s3:GetAccelerateConfiguration\",\n        \"s3:PutAccelerateConfiguration\"");
-            }
-
+            final String inlinePolicy = IOUtils.toString(CreateVaultService.class.getResourceAsStream("/sts_create_bucket_inline_policy_template.json"), Charset.defaultCharset()).replace("{}", bucketName);
             request.setPolicy(inlinePolicy);
             request.setRoleArn(roleArn);
             request.setRoleSessionName(roleSessionName);
