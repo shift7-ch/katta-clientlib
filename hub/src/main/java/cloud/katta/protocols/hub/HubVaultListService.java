@@ -74,8 +74,7 @@ public class HubVaultListService implements ListService {
                         default:
                             throw new VaultException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
                     }
-                    final String bucketPrefix = storageProfile.getBucketPrefix();
-                    final HubUVFVault vault = new HubUVFVault(vaultDto.getId(), String.format("%s%s", bucketPrefix, vaultDto.getId()));
+                    final HubUVFVault vault = new HubUVFVault(vaultDto.getId(), vaultMetadata.storage().getDefaultPath());
                     registry.add(vault.load(session, prompt));
                     vaults.add(vault.getHome());
                     listener.chunk(directory, vaults);
