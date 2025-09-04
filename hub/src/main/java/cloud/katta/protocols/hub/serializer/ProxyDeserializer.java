@@ -56,31 +56,31 @@ public class ProxyDeserializer<T> implements Deserializer<T> {
         return new Deserializer<T>() {
             @Override
             public String stringForKey(final String key) {
-                log.warn("Unknown key {}", key);
+                log.trace("Unknown key {}", key);
                 return null;
             }
 
             @Override
             public T objectForKey(final String key) {
-                log.warn("Unknown key {}", key);
+                log.trace("Unknown key {}", key);
                 return null;
             }
 
             @Override
             public <L> List<L> listForKey(final String key) {
-                log.warn("Unknown key {}", key);
+                log.trace("Unknown key {}", key);
                 return Collections.emptyList();
             }
 
             @Override
             public Map<String, String> mapForKey(final String key) {
-                log.warn("Unknown key {}", key);
+                log.trace("Unknown key {}", key);
                 return Collections.emptyMap();
             }
 
             @Override
             public Boolean booleanForKey(final String key) {
-                log.warn("Unknown key {}", key);
+                log.trace("Unknown key {}", key);
                 return null;
             }
 
