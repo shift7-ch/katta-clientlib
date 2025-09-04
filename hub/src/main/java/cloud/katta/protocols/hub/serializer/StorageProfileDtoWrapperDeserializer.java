@@ -25,10 +25,14 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
 
     private final StorageProfileDtoWrapper dto;
 
+    public StorageProfileDtoWrapperDeserializer(final StorageProfileDtoWrapper dto) {
+        this(dto, ProxyDeserializer.empty());
+    }
+
     /**
      * @param dto Storage configuration
      */
-    public StorageProfileDtoWrapperDeserializer(final Deserializer<NSDictionary> parent, final StorageProfileDtoWrapper dto) {
+    public StorageProfileDtoWrapperDeserializer(final StorageProfileDtoWrapper dto, final Deserializer<NSDictionary> parent) {
         super(parent);
         this.dto = dto;
     }
@@ -76,8 +80,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                         return new S3AssumeRoleProtocol().getIdentifier();
                 }
                 break;
-            case VENDOR_KEY:
-                return dto.getId().toString();
             case DEFAULT_NICKNAME_KEY:
                 return dto.getName();
             case SCHEME_KEY:
@@ -114,7 +116,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         final List<String> keys = new ArrayList<>(super.keys());
         keys.addAll(Arrays.asList(
                 PROTOCOL_KEY,
-                VENDOR_KEY,
                 PROPERTIES_KEY,
                 OAUTH_CONFIGURABLE_KEY)
         );
