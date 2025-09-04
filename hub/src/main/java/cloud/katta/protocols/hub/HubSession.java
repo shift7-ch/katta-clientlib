@@ -30,14 +30,13 @@ import ch.cyberduck.core.io.StreamListener;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2ErrorResponseInterceptor;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.preferences.PreferencesFactory;
+import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.synchronization.ComparisonService;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.transfer.TransferStatus;
-import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +53,7 @@ import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.ConfigDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
+import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
@@ -77,16 +77,22 @@ public class HubSession extends HttpSession<HubApiClient> {
      */
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
 
-    private HubVaultListService vaults;
-
     /**
      * Interceptor for OpenID connect flow
      */
     private OAuth2RequestInterceptor authorizationService;
+
     private UserDto me;
+    private ConfigDto config;
+    private UserKeys userKeys;
+    private AttributedList<Path> vaults;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
+    }
+
+    public static HubSession coerce(final Session<?> session) {
+        return (HubSession) session;
     }
 
     @Override
@@ -99,20 +105,19 @@ public class HubSession extends HttpSession<HubApiClient> {
             final HubApiClient client = new HubApiClient(host, configuration.build());
             try {
                 // Obtain OAuth configuration
-                final ConfigDto configDto = new ConfigResourceApi(client).apiConfigGet();
-
-                int minHubApiLevel = PreferencesFactory.get().getInteger("cloud.katta.min_api_level");
-                final Integer apiLevel = configDto.getApiLevel();
+                config = new ConfigResourceApi(client).apiConfigGet();
+                final int minHubApiLevel = HostPreferencesFactory.get(host).getInteger("cloud.katta.min_api_level");
+                final Integer apiLevel = config.getApiLevel();
                 if(apiLevel == null || apiLevel < minHubApiLevel) {
                     final String detail = String.format("Client requires API level at least %s, found %s, for hub %s", minHubApiLevel, apiLevel, host);
                     log.error(detail);
                     throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), detail);
                 }
 
-                final String hubId = configDto.getUuid();
+                final String hubId = config.getUuid();
                 log.debug("Configure bookmark with id {}", hubId);
                 host.setUuid(hubId);
-                final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(configDto));
+                final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(config));
                 log.debug("Apply profile {} to bookmark {}", profile, host);
                 host.setProtocol(profile);
             }
@@ -156,27 +161,32 @@ public class HubSession extends HttpSession<HubApiClient> {
             // Ensure device key is available
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             log.debug("Configured with setup prompt {}", setup);
-            this.pair(setup);
+            userKeys = this.pair(setup);
             // Ensure vaults are registered
-            final OAuthTokens tokens = new OAuthTokens(credentials.getOauth().getAccessToken(), credentials.getOauth().getRefreshToken(), credentials.getOauth().getExpiryInMilliseconds(),
-                    credentials.getOauth().getIdToken());
-            vaults = new HubVaultListService(this, tokens);
-            vaults.list(Home.root(), new DisabledListProgressListener());
+            try {
+                vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());
+            }
+            finally {
+                // Short-lived
+                userKeys.destroy();
+            }
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
         }
     }
 
-    private void pair(final DeviceSetupCallback setup) throws BackgroundException {
+    private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
         try {
-            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host, me,
-                    new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup), setup);
+            final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup);
+            log.debug("Retrieved device keys {}", deviceKeys);
+            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host, me, deviceKeys, setup);
             log.debug("Retrieved user keys {}", userKeys);
+            return userKeys;
         }
         catch(SecurityFailure e) {
             // Repeat until canceled by user
-            this.pair(setup);
+            return this.pair(setup);
         }
         catch(AccessException e) {
             throw new ConnectionCanceledException(e);
@@ -192,15 +202,35 @@ public class HubSession extends HttpSession<HubApiClient> {
         client.getHttpClient().close();
     }
 
+    /**
+     *
+     * @return Null prior login
+     */
     public UserDto getMe() {
         return me;
+    }
+
+    /**
+     *
+     * @return Null when not connected
+     */
+    public ConfigDto getConfig() {
+        return config;
+    }
+
+    /**
+     *
+     * @return Destroyed keys after login
+     */
+    public UserKeys getUserKeys() {
+        return userKeys;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
         if(type == ListService.class) {
-            return (T) vaults;
+            return (T) (ListService) (directory, listener) -> vaults;
         }
         if(type == Scheduler.class) {
             return (T) access;
