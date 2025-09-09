@@ -35,7 +35,9 @@ public class HubOAuthTokensCredentialsConfigurator implements CredentialsConfigu
 
     @Override
     public CredentialsConfigurator reload() {
-        tokens = keychain.findOAuthTokens(host);
+        if(tokens.isExpired()) {
+            tokens = keychain.findOAuthTokens(host);
+        }
         return this;
     }
 }
