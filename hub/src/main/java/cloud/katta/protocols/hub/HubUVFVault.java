@@ -244,8 +244,14 @@ public class HubUVFVault extends UVFVault {
             log.debug("Configured {} for vault {}", bookmark, this);
             storage = SessionFactory.create(bookmark, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
             log.debug("Connect to {}", storage);
-            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
-            storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
+            try {
+                storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
+                storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
+            }
+            catch(BackgroundException e) {
+                log.warn("Skip loading vault with failure {} connecting to storage", e.toString());
+                throw new VaultUnlockCancelException(this, e);
+            }
             final PathAttributes attr = storage.getFeature(AttributesFinder.class).find(home);
             attr.setDisplayname(vaultMetadata.storage().getNickname());
             home.setAttributes(attr);
