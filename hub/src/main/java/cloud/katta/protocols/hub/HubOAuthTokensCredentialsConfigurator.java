@@ -10,7 +10,11 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.OAuthTokens;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class HubOAuthTokensCredentialsConfigurator implements CredentialsConfigurator {
+    private static final Logger log = LogManager.getLogger(HubOAuthTokensCredentialsConfigurator.class);
 
     private final HostPasswordStore keychain;
     private final Host host;
@@ -26,9 +30,10 @@ public class HubOAuthTokensCredentialsConfigurator implements CredentialsConfigu
                 credentials.getOauth().getRefreshToken(),
                 credentials.getOauth().getExpiryInMilliseconds(),
                 credentials.getOauth().getIdToken());
+        log.debug("Initialized tokens {}", tokens);
     }
 
-        @Override
+    @Override
     public Credentials configure(final Host host) {
         return new Credentials(host.getCredentials()).withOauth(tokens);
     }
@@ -36,7 +41,9 @@ public class HubOAuthTokensCredentialsConfigurator implements CredentialsConfigu
     @Override
     public CredentialsConfigurator reload() {
         if(tokens.isExpired()) {
+            log.debug("Reload expired tokens from keychain for {}", host);
             tokens = keychain.findOAuthTokens(host);
+            log.debug("Retrieved tokens {}", tokens);
         }
         return this;
     }
