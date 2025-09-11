@@ -17,6 +17,7 @@ import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.vault.VaultException;
 import ch.cyberduck.core.vault.VaultRegistry;
+import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -75,13 +76,19 @@ public class HubVaultListService implements ListService {
                             throw new VaultException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
                     }
                     final HubUVFVault vault = new HubUVFVault(vaultDto.getId(), vaultMetadata.storage().getDefaultPath());
-                    registry.add(vault.load(session, prompt));
-                    vaults.add(vault.getHome());
-                    listener.chunk(directory, vaults);
+                    try {
+                        registry.add(vault.load(session, prompt));
+                        vaults.add(vault.getHome());
+                        listener.chunk(directory, vaults);
+                    }
+                    catch(VaultUnlockCancelException e) {
+                        log.warn("Skip vault {} with failure {} loading", vaultDto, e);
+                        continue;
+                    }
                 }
                 catch(ApiException e) {
                     if(HttpStatus.SC_FORBIDDEN == e.getCode()) {
-                        log.warn("Skip vault {} with insufficient permissions", vaultDto);
+                        log.warn("Skip vault {} with insufficient permissions {}", vaultDto, e);
                         continue;
                     }
                     throw e;
