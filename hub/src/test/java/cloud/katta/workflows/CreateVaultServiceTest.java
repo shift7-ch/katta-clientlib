@@ -67,6 +67,9 @@ class CreateVaultServiceTest {
                         .id(storageProfileId)
                         .protocol(Protocol.S3_STS)
                         .stsEndpoint("http://audley.end.point")
+                        // AWS has both role arns filled in
+                        .stsRoleArn("arnaud")
+                        .stsRoleArn2("ducret")
 
         );
         final StorageProfileDtoWrapper storageProfileWrapper = StorageProfileDtoWrapper.coerce(storageProfile);
@@ -104,7 +107,9 @@ class CreateVaultServiceTest {
 
         createVaultService.createVault(userKeys, storageProfileWrapper, createVaultModel);
 
-        Mockito.verify(vaults, times(1)).apiVaultsVaultIdPut(eq(vaultId), any());
+        final boolean expectedMinio = false;
+        final boolean expectedAWS = true;
+        Mockito.verify(vaults, times(1)).apiVaultsVaultIdPut(eq(vaultId), any(), eq(expectedMinio), eq(expectedAWS));
         Mockito.verify(vaults, times(1)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
         Mockito.verify(storage, times(1)).apiStorageVaultIdPut(eq(vaultId), any());
     }
