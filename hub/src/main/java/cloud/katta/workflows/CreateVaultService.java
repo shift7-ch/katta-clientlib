@@ -120,6 +120,7 @@ public class CreateVaultService {
                     .uvfMetadataFile(uvfMetadataFile)
                     .uvfKeySet(jwks.serializePublicRecoverykey());
 
+            // create storage dto
             final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
             final CreateS3STSBucketDto storageDto = new CreateS3STSBucketDto()
                     .vaultId(vaultModel.vaultId().toString())
@@ -130,6 +131,13 @@ public class CreateVaultService {
                     .region(metadataPayload.storage().getRegion());
             log.debug("Created storage dto {}", storageDto);
 
+            // (1) create vault in hub, incl. Keycloak sync
+            final boolean minio = storageProfileWrapper.getStsRoleArn() != null && storageProfileWrapper.getStsRoleArn2() == null;
+            final boolean aws = storageProfileWrapper.getStsRoleArn() != null && storageProfileWrapper.getStsRoleArn2() != null;
+            log.debug("Create vault {}, minio={}, aws={}", vaultDto, minio, aws);
+            vaultResource.apiVaultsVaultIdPut(vaultDto.getId(), vaultDto, minio, aws);
+
+            // (2) create bucket
             final HostPasswordStore keychain = PasswordStoreFactory.get();
 
             final OAuthTokens tokens = keychain.findOAuthTokens(hubSession.getHost());
@@ -156,11 +164,8 @@ public class CreateVaultService {
                                 .awsSecretKey(stsTokens.getSecretAccessKey())
                                 .sessionToken(stsTokens.getSessionToken()));
             }
-            // create vault in hub
-            log.debug("Create vault {}", vaultDto);
-            vaultResource.apiVaultsVaultIdPut(vaultDto.getId(), vaultDto);
 
-            // upload JWE
+            // (3) upload JWE to hub
             log.debug("Upload JWE {} for vault {}", uvfMetadataFile, vaultDto);
             final UserDto userDto = users.apiUsersMeGet(false, false);
             vaultResource.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));

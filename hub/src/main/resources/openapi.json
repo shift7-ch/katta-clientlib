@@ -8,44 +8,20 @@
                     "access_token": {
                         "type": "string"
                     },
-                    "expires_in": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "refresh_expires_in": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "refresh_token": {
+                    "issued_token_type": {
                         "type": "string"
                     },
                     "token_type": {
                         "type": "string"
                     },
-                    "id_token": {
-                        "type": "string"
-                    },
-                    "not-before-policy": {
+                    "expires_in": {
                         "type": "integer",
-                        "format": "int32"
-                    },
-                    "session_state": {
-                        "type": "string"
-                    },
-                    "otherClaims": {
-                        "type": "object",
-                        "additionalProperties": {}
+                        "format": "int64"
                     },
                     "scope": {
                         "type": "string"
                     },
-                    "error": {
-                        "type": "string"
-                    },
-                    "error_description": {
-                        "type": "string"
-                    },
-                    "error_uri": {
+                    "refresh_token": {
                         "type": "string"
                     }
                 }
@@ -1624,6 +1600,9 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "bad request"
+                    },
                     "401": {
                         "description": "Not Authorized"
                     },
@@ -2500,6 +2479,24 @@
                 "summary": "creates or updates a vault",
                 "description": "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.",
                 "parameters": [
+                    {
+                        "description": "the role to grant to this user (defaults to False)",
+                        "in": "query",
+                        "name": "minio",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    },
+                    {
+                        "description": "the role to grant to this user (defaults to False)",
+                        "in": "query",
+                        "name": "aws",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    },
                     {
                         "name": "vaultId",
                         "in": "path",
