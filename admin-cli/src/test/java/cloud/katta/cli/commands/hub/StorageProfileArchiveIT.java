@@ -7,22 +7,21 @@ package cloud.katta.cli.commands.hub;
 
 import ch.cyberduck.core.PasswordStoreFactory;
 
-import cloud.katta.client.model.StorageProfileS3Dto;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.ComposeContainer;
 
+import java.util.Optional;
+
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.testcontainers.AbtractAdminCliIT;
 import cloud.katta.testsetup.HubTestConfig;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.List;
-import java.util.Optional;
 
 class StorageProfileArchiveIT extends AbtractAdminCliIT {
     private static final Logger log = LogManager.getLogger(StorageProfileArchiveIT.class.getName());
