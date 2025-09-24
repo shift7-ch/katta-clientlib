@@ -41,11 +41,11 @@ import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThum
 /**
  * Sets up AWS for Katta in STS mode:
  * <ul>
- *  <li> creates/updates OIDC provider for cryptomator, cryptomatorhub and cryptomatorvaults clients.</li>
- *  <li> creates roles and role policy for
+ *  <li>creates/updates OIDC provider for cryptomator, cryptomatorhub and cryptomatorvaults clients.</li>
+ *  <li>creates roles and role policy for
  *      <ul>
  *          <li>creating vaults: access restricted to creating buckets with given prefix</li>
- *          <li> accessing vaults using <a href="role chaining">https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html</a>: access restricted to reading/writing to single bucket.</li>
+ *          <li>accessing vaults using <a href="role chaining">https://docs.aws.amazon.com/IAM/latest/UserGuide/id_session-tags.html</a>: access restricted to reading/writing to single bucket.</li>
  *      </ul>
  *  </li>
  * </ul>
