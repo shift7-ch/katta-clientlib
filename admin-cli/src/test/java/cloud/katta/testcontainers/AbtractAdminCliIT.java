@@ -2,7 +2,7 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.hub;
+package cloud.katta.testcontainers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,7 +32,7 @@ public class AbtractAdminCliIT extends AbstractHubTest {
         final HubTestConfig.Setup.DockerConfig configuration = new HubTestConfig.Setup.DockerConfig("/docker-compose-minio-localhost-hub.yml", "/.local.env", "local", "admin", "admin", "top-secret");
         log.info("Setup docker {}", configuration);
         final Properties props = new Properties();
-        props.load(StorageProfileArchiveIT.class.getResourceAsStream(configuration.envFile));
+        props.load(AbtractAdminCliIT.class.getResourceAsStream(configuration.envFile));
         final HashMap<String, String> env = props.entrySet().stream().collect(
                 Collectors.toMap(
                         e -> String.valueOf(e.getKey()),
