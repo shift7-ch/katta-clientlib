@@ -7,35 +7,21 @@ package cloud.katta.cli.commands.hub;
 
 import ch.cyberduck.core.PasswordStoreFactory;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.ComposeContainer;
 
 import java.util.Optional;
 
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.StorageProfileS3Dto;
-import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.testcontainers.AbtractAdminCliIT;
-import cloud.katta.testsetup.HubTestConfig;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StorageProfileArchiveIT extends AbtractAdminCliIT {
-    private static final Logger log = LogManager.getLogger(StorageProfileArchiveIT.class.getName());
-    public static ComposeContainer compose;
-
-
     @Test
     public void testStorageProfileArchive() throws Exception {
-        HubTestConfig.Setup config = new HubTestConfig.Setup().withUserConfig(
-                new HubTestConfig.Setup.UserConfig("admin", "admin", "setupcode")
-        ).withHubURL("http://localhost:8280");
-        final HubSession hubSession = setupConnection(config);
         final String accessToken = PasswordStoreFactory.get().findOAuthTokens(hubSession.getHost()).getAccessToken();
-
 
         final String storageProfileId = "732D43FA-3716-46C4-B931-66EA5405EF1C".toLowerCase();
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(hubSession.getClient());
