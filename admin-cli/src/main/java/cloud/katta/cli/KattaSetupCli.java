@@ -5,11 +5,11 @@
 package cloud.katta.cli;
 
 import cloud.katta.cli.commands.hub.StorageProfileArchive;
+import cloud.katta.cli.commands.hub.StorageProfileAwsStaticSetup;
+import cloud.katta.cli.commands.hub.StorageProfileAwsStsSetup;
 import cloud.katta.cli.commands.login.AuthorizationCode;
-import cloud.katta.cli.commands.setup.AwsStsSetup;
-import cloud.katta.cli.commands.setup.MinioStsSetup;
-import cloud.katta.cli.commands.setup.StorageProfileAwsStaticSetup;
-import cloud.katta.cli.commands.setup.StorageProfileAwsStsSetup;
+import cloud.katta.cli.commands.storage.AwsStsSetup;
+import cloud.katta.cli.commands.storage.MinioStsSetup;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "katta-admin-cli",
