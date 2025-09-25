@@ -51,33 +51,57 @@ public class MinioStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)
     Integer maxSessionDuration;
 
+    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {bucketPrefix}createbucketPolicy.")
+    String createbucketPolicyName;
+
+    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {bucketPrefix}accessbucketpolicy.")
+    String accessbucketPolicyName;
+
     @Override
     public Void call() throws Exception {
-        final String createbucketPolicyName = "cipherduckcreatebucket";
+        if(createbucketPolicyName == null) {
+            createbucketPolicyName = String.format("%screatebucketpolicy", bucketPrefix);
+        }
+        if(accessbucketPolicyName == null) {
+            accessbucketPolicyName = String.format("%saccessbucketpolicy", bucketPrefix);
+        }
 
-        final JSONObject miniocreatebucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/createbucketpolicy.json"), Charset.defaultCharset()));
         final MinioAdminClient minioAdminClient = new MinioAdminClient.Builder()
                 .credentials(accessKey, secretKey)
                 .endpoint(endpointUrl).build();
 
-        //        /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
-        final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
-        for(int i = 0; i < statements.length(); i++) {
-            final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
-            statements.getJSONObject(i).put("Resource", list);
+        // /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
+        {
+            final JSONObject miniocreatebucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/createbucketpolicy.json"), Charset.defaultCharset()));
+            final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
+            for(int i = 0; i < statements.length(); i++) {
+                final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
+                statements.getJSONObject(i).put("Resource", list);
+            }
+            minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toString());
+            System.out.println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
         }
-        minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toString());
-        System.out.println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
+        // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
+        {
+            final JSONObject minioaccessbucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/accessbucketpolicy.json"), Charset.defaultCharset()));
+            final JSONArray statements = minioaccessbucketpolicy.getJSONArray("Statement");
+            for(int i = 0; i < statements.length(); i++) {
+                final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
+                statements.getJSONObject(i).put("Resource", list);
+            }
+            minioAdminClient.addCannedPolicy(accessbucketPolicyName, minioaccessbucketpolicy.toString());
+            System.out.println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
+        }
 
 
-//                /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
-//
-//
-//                /mc idp openid add myminio cryptomator \
-//        config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
-//        client_id="cryptomator" \
-//        client_secret="ignore-me" \
-//        role_policy="cipherduckcreatebucket"
+        //                /mc idp openid add myminio cryptomator \
+        //        config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
+        //        client_id="cryptomator" \
+        //        client_secret="ignore-me" \
+        //        role_policy="cipherduckcreatebucket"
+//        {
+//            minioClient.
+//        }
 //                /mc idp openid add myminio cryptomatorhub \
 //        config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
 //        client_id="cryptomatorhub" \
