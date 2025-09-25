@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
-import cloud.katta.testsetup.HubTestSetupDockerExtension;
 
 public class AbtractAdminCliIT extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbtractAdminCliIT.class.getName());
@@ -47,7 +46,7 @@ public class AbtractAdminCliIT extends AbstractHubTest {
         env.put("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword);
         env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", configuration.hubKeycloakSystemClientSecret);
         compose = new ComposeContainer(
-                new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
+                new File(AbtractAdminCliIT.class.getResource(configuration.composeFile).toURI()))
                 .withLocalCompose(true)
                 .withPull(true)
                 .withEnv(env)
