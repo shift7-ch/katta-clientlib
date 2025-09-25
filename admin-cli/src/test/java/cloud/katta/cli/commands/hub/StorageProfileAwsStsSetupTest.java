@@ -2,7 +2,7 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.setup;
+package cloud.katta.cli.commands.hub;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -2,12 +2,11 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.setup;
+package cloud.katta.cli.commands.hub;
 
 import java.util.Arrays;
 import java.util.UUID;
 
-import cloud.katta.cli.commands.hub.AbstractStorageProfile;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
