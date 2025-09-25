@@ -49,7 +49,6 @@ import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThum
  *      </ul>
  *  </li>
  * </ul>
- * Requires <code>admin</code> role in Katta Server.
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
