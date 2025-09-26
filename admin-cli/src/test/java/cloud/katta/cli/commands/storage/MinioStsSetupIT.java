@@ -19,10 +19,11 @@ import java.util.Objects;
 class MinioStsSetupIT extends AbtractAdminCliIT {
 
     @Test
-    public void testStorageProfileAwsStsSetup() throws Exception {
+    public void testMinioSetup() throws Exception {
         int rc = new CommandLine(new KattaSetupCli()).execute(
-                "minioSetup",
+                "minioStsSetup",
                 "--endpointUrl", "http://localhost:9100",
+                "--hubUrl", "http://localhost:8280",
                 "--accessKey", "minioadmin",
                 "--secretKey", "minioadmin",
                 "--bucketPrefix", "fusilli"
