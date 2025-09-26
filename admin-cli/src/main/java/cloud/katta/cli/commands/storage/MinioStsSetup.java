@@ -4,18 +4,18 @@
 
 package cloud.katta.cli.commands.storage;
 
+import cloud.katta.cli.KattaSetupCli;
+import io.minio.admin.MinioAdminClient;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import picocli.CommandLine;
 
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-
-import cloud.katta.cli.KattaSetupCli;
-import io.minio.admin.MinioAdminClient;
-import picocli.CommandLine;
 
 /**
  * Sets up MinIO for Katta in STS mode:
@@ -31,10 +31,13 @@ import picocli.CommandLine;
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
-@CommandLine.Command(name = "minioSetup", description = "Setup/update OIDC provider and roles for STS in MinIO.", mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "minioStsSetup", description = "Setup/update OIDC provider and roles for STS in MinIO.", mixinStandardHelpOptions = true)
 public class MinioStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO URL. Example: \"http://localhost:9000\"", required = true)
     String endpointUrl;
+
+    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
+    String hubUrl;
 
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = false)
     String profileName;
@@ -59,10 +62,10 @@ public class MinioStsSetup implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
-        if(createbucketPolicyName == null) {
+        if (createbucketPolicyName == null) {
             createbucketPolicyName = String.format("%screatebucketpolicy", bucketPrefix);
         }
-        if(accessbucketPolicyName == null) {
+        if (accessbucketPolicyName == null) {
             accessbucketPolicyName = String.format("%saccessbucketpolicy", bucketPrefix);
         }
 
@@ -74,7 +77,7 @@ public class MinioStsSetup implements Callable<Void> {
         {
             final JSONObject miniocreatebucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/createbucketpolicy.json"), Charset.defaultCharset()));
             final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
-            for(int i = 0; i < statements.length(); i++) {
+            for (int i = 0; i < statements.length(); i++) {
                 final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
                 statements.getJSONObject(i).put("Resource", list);
             }
@@ -85,7 +88,7 @@ public class MinioStsSetup implements Callable<Void> {
         {
             final JSONObject minioaccessbucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/accessbucketpolicy.json"), Charset.defaultCharset()));
             final JSONArray statements = minioaccessbucketpolicy.getJSONArray("Statement");
-            for(int i = 0; i < statements.length(); i++) {
+            for (int i = 0; i < statements.length(); i++) {
                 final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
                 statements.getJSONObject(i).put("Resource", list);
             }
@@ -93,26 +96,40 @@ public class MinioStsSetup implements Callable<Void> {
             System.out.println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
         }
 
+        final String json = IOUtils.toString(URI.create(hubUrl + "/api/config"), Charset.forName("UTF-8"));
+        final JSONObject apiConfig = new JSONObject(json);
+        final String wellKnown = String.format("%s/realms/%s/.well-known/openid-configuration", apiConfig.getString("keycloakUrl"), apiConfig.getString("keycloakRealm"));
 
-        //                /mc idp openid add myminio cryptomator \
-        //        config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
-        //        client_id="cryptomator" \
-        //        client_secret="ignore-me" \
-        //        role_policy="cipherduckcreatebucket"
-//        {
-//            minioClient.
-//        }
-//                /mc idp openid add myminio cryptomatorhub \
-//        config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
-//        client_id="cryptomatorhub" \
-//        client_secret="ignore-me" \
-//        role_policy="cipherduckcreatebucket"
-//                /mc idp openid add myminio cryptomatorvaults \
-//        config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
-//        client_id="cryptomatorvaults" \
-//        client_secret="ignore-me" \
-//        role_policy="cipherduckaccessbucket"
+        String keycloakClientIdCryptomator = apiConfig.getString("keycloakClientIdCryptomator");
+        String keycloakClientIdHub = apiConfig.getString("keycloakClientIdHub");
+        String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
+        System.out.println(String.format("""
+                        # The MinIO Client API is incomplete (https://github.com/minio/minio/issues/16151).
+                        # Please execute the following commands on the command line.
+                        # Further info: https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio
 
+                        mc alias set myminio %s %s %s
+
+                        mc idp openid add myminio %s \\
+                            config_url="%s" \\
+                            client_id="%s" \\
+                            client_secret="ignore-me" \\
+                            role_policy="%s"
+                        mc idp openid add myminio %s \\
+                            config_url="%s" \\
+                            client_id="%s" \\
+                            client_secret="ignore-me" \\
+                            role_policy="%s"   \s
+                        mc idp openid add myminio %s \\
+                            config_url="%s" \\
+                            client_id="%s" \\
+                            client_secret="ignore-me" \\
+                            role_policy="%s"   \s
+                        mc admin service restart myminio
+                        """, endpointUrl, accessKey, secretKey,
+                keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createbucketPolicyName,
+                keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
+                keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName));
         return null;
     }
 }
