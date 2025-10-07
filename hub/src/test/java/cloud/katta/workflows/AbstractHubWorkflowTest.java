@@ -13,10 +13,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
 
 import cloud.katta.client.ApiClient;
@@ -26,9 +28,14 @@ import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.Role;
+import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
+import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
+import cloud.katta.core.AbstractHubSynchronizeTest;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
@@ -41,6 +48,8 @@ import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,8 +65,47 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             checkNumberOfVaults(hubSession, config, null, 0, 0, 0, 0, -1);
 
             final HubTestConfig.Setup setup = config.setup;
-            log.info("S01 {} alice creates vault", setup);
             final ApiClient adminApiClient = getAdminApiClient(setup);
+            final Properties props = new Properties();
+            props.load(this.getClass().getResourceAsStream(config.setup.dockerConfig.envFile));
+
+            log.info("S00 admin uploads storage profile");
+            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            mapper.registerModule(new JsonNullableModule());
+            {
+                final StorageProfileS3Dto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3Dto.class)
+                        .storageClass(S3STORAGECLASSES.STANDARD);
+                final String minioPort = props.getProperty("MINIO_PORT");
+                if(minioPort != null) {
+                    storageProfile.setPort(Integer.valueOf(minioPort));
+                }
+                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
+                if(minioHostname != null) {
+                    storageProfile.setHostname(minioHostname);
+                }
+                adminStorageProfileApi.apiStorageprofileS3Put(storageProfile);
+            }
+            {
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class)
+                        .storageClass(S3STORAGECLASSES.STANDARD)
+                        .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
+                final String minioPort = props.getProperty("MINIO_PORT");
+                if(minioPort != null) {
+                    storageProfile.setPort(Integer.valueOf(minioPort));
+                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("9000", minioPort));
+                }
+                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
+                if(minioHostname != null) {
+                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("minio", minioHostname));
+                    storageProfile.setHostname(minioHostname);
+                }
+                adminStorageProfileApi.apiStorageprofileS3stsPut(storageProfile);
+            }
+
+
+            log.info("S01 {} alice creates vault", setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)

@@ -191,8 +191,8 @@ services:
         ls /setup
         /mc config host add myminio http://minio:${MINIO_PORT} minioadmin minioadmin
 
-        /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
-        /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
+        /mc admin policy create myminio cipherduckcreatebucket /setup/local/minio_sts/createbucketpolicy.json
+        /mc admin policy create myminio cipherduckaccessbucket /setup/local/minio_sts/accessbucketpolicy.json
 
 
         /mc idp openid add myminio cryptomator \
@@ -226,8 +226,11 @@ services:
         /mc idp openid ls myminio
         /mc idp openid info myminio
 
-        # if container is restarted, the bucket already exists
-        /mc rb myminio/handmade || true
+        /mc admin user add myminio handmade_access top-secret
+        /mc admin policy create myminio handmade_accesspolicy /setup/local/minio_static/handmade_accessbucketpolicy.json
+        /mc admin policy create myminio handmade_createpolicy /setup/local/minio_static/handmade_createbucketpolicy.json
+        /mc admin policy attach myminio handmade_accesspolicy --user handmade_access
+        /mc admin policy attach myminio handmade_createpolicy --user handmade_access
 
         echo "Completed MinIO Setup"
 
@@ -322,6 +325,7 @@ services:
         java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
 
   hub_setup_storage_profile:
+    profiles: [ demo ]
     build:
       dockerfile: docker/hub_setup_storage_profile/Dockerfile
     depends_on:
@@ -381,22 +385,39 @@ services:
 
         echo $$ACCESS_TOKEN
 
-        cat /setup/minio_sts/minio_sts_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_sts_profile.json
-        cat /setup/minio_static/minio_static_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_static_profile.json
+        cat /setup/local/minio_sts/minio_sts_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_sts_profile.json
+        cat /setup/local/minio_static/minio_static_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_static_profile.json
 
         curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/minio_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
         curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/minio_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/aws_sts/aws_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/aws_static/aws_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/local/aws_sts/aws_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/local/aws_static/aws_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
         curl -v --fail http://localhost:${HUB_PORT}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 
-  wait: # force `docker compose up -d` to wait for and check for the conditions below:
+  wait-demo: # force `docker compose up -d` to wait for and check for the conditions below:
+    profiles: [ demo ]
     image: busybox
     depends_on:
       minio_setup:
         condition: service_completed_successfully
       hub_setup_storage_profile:
+        condition: service_completed_successfully
+    entrypoint: [ "sh","-c" ]
+    command:
+      - |
+        set -euxo pipefail
+        exit 0
+    healthcheck:
+      test: [ "CMD-SHELL", "exit 0" ]
+      interval: 10s
+      timeout: 1s
+      retries: 30
+
+  wait: # force `docker compose up -d` to wait for and check for the conditions below:
+    image: busybox
+    depends_on:
+      minio_setup:
         condition: service_completed_successfully
     entrypoint: [ "sh","-c" ]
     command:

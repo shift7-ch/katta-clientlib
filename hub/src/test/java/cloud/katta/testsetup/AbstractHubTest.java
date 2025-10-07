@@ -44,18 +44,9 @@ public abstract class AbstractHubTest extends VaultTest {
         credentials();
     }
 
-    private static final HubTestConfig.VaultSpec minioSTSVaultConfig = new HubTestConfig.VaultSpec("MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
-            null, null, "eu-central-1");
-    private static final HubTestConfig.VaultSpec minioStaticVaultConfig = new HubTestConfig.VaultSpec("MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
-            "minioadmin", "minioadmin", "us-east-1");
-    private static final HubTestConfig.VaultSpec awsSTSVaultConfig = new HubTestConfig.VaultSpec("AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
-            null, null, "eu-west-1");
-    private static final HubTestConfig.VaultSpec awsStaticVaultConfig = new HubTestConfig.VaultSpec("AWS static", "72736C19-283C-49D3-80A5-AB74B5202543",
-            PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"), "us-east-1"
-    );
 
     /**
-     * Local: hub, Keycloak, MinIO started via testcontainers+docker-compose.
+     * LOCAL: hub, Keycloak, MinIO, localstack started via testcontainers+docker-compose.
      */
     public static final HubTestConfig.Setup LOCAL;
     public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG;
@@ -69,27 +60,18 @@ public abstract class AbstractHubTest extends VaultTest {
                 .withDockerConfig(LOCAL_DOCKER_CONFIG);
     }
 
-    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedLocalOnly = vs -> Arguments.of(Named.of(
+    private static final Function<HubTestConfig.VaultSpec, Arguments> prepareArgumentLocal = vs -> Arguments.of(Named.of(
             String.format("%s %s", vs.storageProfileName, LOCAL.hubURL),
             new HubTestConfig(LOCAL, vs)));
 
+    public static final Arguments LOCAL_MINIO_STATIC = prepareArgumentLocal.apply(new HubTestConfig.VaultSpec(
+            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E", "handmade_access", "top-secret", "us-east-1"));
+    public static final Arguments LOCAL_MINIO_STS = prepareArgumentLocal.apply(new HubTestConfig.VaultSpec(
+            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C", null, null, "eu-central-1"));
 
-    public static final Arguments LOCAL_MINIO_STATIC = argumentUnattendedLocalOnly.apply(minioStaticVaultConfig);
-    public static final Arguments LOCAL_MINIO_STS = argumentUnattendedLocalOnly.apply(minioSTSVaultConfig);
-
-    /**
-     * Local attended: re-use running local stetup.
-     */
-    private static final HubTestConfig.Setup LOCAL_ATTENDED = new HubTestConfig.Setup()
-            .withHubURL("http://localhost:8080")
-            .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
-            .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()));
-    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentAttendedLocalOnly = vs -> Arguments.of(Named.of(
-            String.format("%s %s", vs.storageProfileName, LOCAL_ATTENDED.hubURL),
-            new HubTestConfig(LOCAL_ATTENDED, vs)));
 
     /**
-     * Hybrid: local hub (testcontainers+docker-compose) against AWS/MinIO/Keycloak remote.
+     * HYBRID: local hub (testcontainers+docker-compose) against AWS/MinIO/Keycloak remote.
      */
     public static final HubTestConfig.Setup HYBRID;
     public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG;
@@ -98,7 +80,7 @@ public abstract class AbstractHubTest extends VaultTest {
         HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
                 "/docker-compose-minio-localhost-hub.yml",
                 "/.hybrid.env",
-                null,
+                "hybrid",
                 PROPERTIES.get("testing.katta.cloud.chipotle.admin.name"),
                 PROPERTIES.get("testing.katta.cloud.chipotle.admin.password"),
                 PROPERTIES.get("testing.katta.cloud.chipotle.syncer.password")
@@ -120,15 +102,27 @@ public abstract class AbstractHubTest extends VaultTest {
                 .withDockerConfig(HYBRID_DOCKER_CONFIG);
     }
 
-    private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedHybrid = vs -> Arguments.of(Named.of(
+    private static final Function<HubTestConfig.VaultSpec, Arguments> prepareArgumentsHybrid = vs -> Arguments.of(Named.of(
             String.format("%s %s", vs.storageProfileName, HYBRID.hubURL),
             new HubTestConfig(HYBRID, vs)));
 
 
-    public static final Arguments HYBRID_MINIO_STATIC = argumentUnattendedHybrid.apply(minioStaticVaultConfig);
-    public static final Arguments HYBRID_MINIO_STS = argumentUnattendedHybrid.apply(minioSTSVaultConfig);
-    public static final Arguments HYBRID_AWS_STATIC = argumentUnattendedHybrid.apply(awsStaticVaultConfig);
-    public static final Arguments HYBRID_AWS_STS = argumentUnattendedHybrid.apply(awsSTSVaultConfig);
+    public static final Arguments HYBRID_MINIO_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E", PROPERTIES.get("minio.testing.katta.cloud.handmade_access_user.name"), PROPERTIES.get("minio.testing.katta.cloud.handmade_access_user.password"), "us-east-1"
+    ));
+    public static final Arguments HYBRID_MINIO_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C", null, null, "eu-central-1"
+    ));
+
+    public static final Arguments HYBRID_AWS_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+            "AWS static", "72736C19-283C-49D3-80A5-AB74B5202543", PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
+            // TODO https://github.com/shift7-ch/katta-server/issues/87
+            // "eu-north-1"
+            "us-east-1"
+    ));
+    public static final Arguments HYBRID_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+            "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6", null, null, "eu-west-1"
+    ));
 
     @BeforeEach
     public void preferences() throws IOException {
