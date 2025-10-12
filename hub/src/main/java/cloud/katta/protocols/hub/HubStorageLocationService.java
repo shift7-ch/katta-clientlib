@@ -60,7 +60,7 @@ public class HubStorageLocationService implements Location {
     }
 
     public static final class StorageLocation extends Name {
-        private final String storageProfile;
+        private final String storageProfileId;
         /**
          * AWS location
          */
@@ -69,13 +69,13 @@ public class HubStorageLocationService implements Location {
 
         /**
          *
-         * @param storageProfile     UUID of storage profile configuration
+         * @param storageProfileId   UUID of storage profile configuration
          * @param region             AWS location
          * @param storageProfileName Description
          */
-        public StorageLocation(final String storageProfile, final String region, final String storageProfileName) {
-            super(String.format("%s,%s", storageProfile, region));
-            this.storageProfile = storageProfile;
+        public StorageLocation(final String storageProfileId, final String region, final String storageProfileName) {
+            super(String.format("%s,%s", storageProfileId, region));
+            this.storageProfileId = storageProfileId;
             this.region = region;
             this.storageProfileName = storageProfileName;
         }
@@ -85,7 +85,7 @@ public class HubStorageLocationService implements Location {
          * @return Storage Profile Id
          */
         public String getProfile() {
-            return storageProfile;
+            return storageProfileId;
         }
 
         public String getRegion() {
