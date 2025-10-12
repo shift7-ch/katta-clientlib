@@ -44,18 +44,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.HubApiClient;
 import cloud.katta.client.api.ConfigResourceApi;
+import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.ConfigDto;
+import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
 import cloud.katta.workflows.DeviceKeysServiceImpl;
@@ -163,6 +167,23 @@ public class HubSession extends HttpSession<HubApiClient> {
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             log.debug("Configured with setup prompt {}", setup);
             userKeys = this.pair(setup);
+            final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(client).apiStorageprofileGet(false);
+            for(StorageProfileDto storageProfileDto : storageProfileDtos) {
+                final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
+                log.debug("Read storage profile {}", storageProfile);
+                switch(storageProfile.getProtocol()) {
+                    case S3:
+                    case S3_STS:
+                        final ProtocolFactory protocols = ProtocolFactory.get();
+                        final Profile profile = new HubAwareProfile(this, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
+                                config, storageProfile);
+                        log.debug("Register profile {}", profile);
+                        protocols.register(profile);
+                        break;
+                    default:
+                        throw new InteroperabilityException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
+                }
+            }
             // Ensure vaults are registered
             try {
                 vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());

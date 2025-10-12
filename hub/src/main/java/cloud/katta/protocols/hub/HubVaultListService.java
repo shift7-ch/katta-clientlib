@@ -11,12 +11,8 @@ import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
-import ch.cyberduck.core.Profile;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
-import ch.cyberduck.core.vault.VaultException;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
@@ -31,7 +27,6 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -63,20 +58,6 @@ public class HubVaultListService implements ListService {
                     // Find storage configuration in vault metadata
                     final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                     final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys());
-                    final StorageProfileDtoWrapper storageProfile = new VaultServiceImpl(session).getVaultStorageProfile(vaultMetadata);
-                    log.debug("Read storage profile {}", storageProfile);
-                    switch(storageProfile.getProtocol()) {
-                        case S3:
-                        case S3_STS:
-                            final ProtocolFactory protocols = ProtocolFactory.get();
-                            final Profile profile = new HubAwareProfile(session, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
-                                    session.getConfig(), storageProfile);
-                            log.debug("Register profile {}", profile);
-                            protocols.register(profile);
-                            break;
-                        default:
-                            throw new VaultException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
-                    }
                     final HubUVFVault vault = new HubUVFVault(vaultDto.getId(),
                             new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                                     new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())));
