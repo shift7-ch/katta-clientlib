@@ -126,10 +126,10 @@ public class HubUVFVault extends UVFVault {
     public Path create(final Session<?> session, final String region, final VaultCredentials credentials) throws BackgroundException {
         try {
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromIdentifier(region);
-            final String storageProfile = location.getProfile();
+            final String storageProfileId = location.getProfile();
             final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
-                            .provider(storageProfile)
+                            .provider(storageProfileId)
                             .defaultPath(session.getFeature(PathContainerService.class).getContainer(home).getName())
                             .region(location.getRegion())
                             .nickname(null != home.attributes().getDisplayname() ? home.attributes().getDisplayname() : "Vault"))
@@ -163,7 +163,7 @@ public class HubUVFVault extends UVFVault {
             vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(),
                     Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
             // Upload vault template to storage
-            final Protocol profile = ProtocolFactory.get().forName(storageProfile);
+            final Protocol profile = ProtocolFactory.get().forName(storageProfileId);
             log.debug("Loaded profile {} for vault {}", profile, this);
             final Host bookmark = new Host(profile,
                     session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost()));
