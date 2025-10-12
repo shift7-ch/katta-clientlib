@@ -31,6 +31,7 @@ import cloud.katta.crypto.UserKeys;
 import cloud.katta.model.SetupCodeJWE;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.hub.HubStorageLocationService;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
@@ -64,7 +65,8 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubUVFVault cryptomator = new HubUVFVault(bucket);
-            cryptomator.create(hubSession, storageProfileWrapper.getRegion(), new VaultCredentials("test"));
+            cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
+                    storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials("test"));
 
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 

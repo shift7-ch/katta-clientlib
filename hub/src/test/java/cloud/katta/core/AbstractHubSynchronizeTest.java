@@ -68,6 +68,7 @@ import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.hub.HubStorageLocationService;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
@@ -232,7 +233,9 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubUVFVault cryptomator = new HubUVFVault(bucket);
-            cryptomator.create(hubSession, storageProfileWrapper.getRegion(), new VaultCredentials("test"));
+
+            cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
+                            storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials("test"));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
