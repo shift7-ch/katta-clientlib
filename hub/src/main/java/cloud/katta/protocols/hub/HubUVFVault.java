@@ -66,6 +66,7 @@ public class HubUVFVault extends UVFVault {
      * Storage connection only available after loading vault
      */
     private Session<?> storage;
+    private Path home;
 
     public HubUVFVault(final Path home) {
         this(home, null, null, null);
@@ -78,6 +79,7 @@ public class HubUVFVault extends UVFVault {
      */
     public HubUVFVault(final Path home, final String masterkey, final String config, final byte[] pepper) {
         super(home);
+        this.home = home;
         this.vaultId = UUID.fromString(new UUIDRandomStringService().random());
     }
 
@@ -175,7 +177,7 @@ public class HubUVFVault extends UVFVault {
             log.debug("Upload vault template to {}", storage);
             final Path vault;
             if(false) {
-                vault = super.create(storage, region, credentials);
+                return super.create(storage, region, credentials);
             }
             else { // Obsolete when implemented in super
                 final Directory<?> directory = (Directory<?>) storage._getFeature(Directory.class);
