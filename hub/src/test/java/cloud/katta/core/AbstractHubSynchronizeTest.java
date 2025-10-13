@@ -6,6 +6,7 @@ package cloud.katta.core;
 
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.ListService;
@@ -13,6 +14,7 @@ import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
+import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
@@ -232,8 +234,8 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
-            final HubUVFVault cryptomator = new HubUVFVault(bucket);
-
+            final HubUVFVault cryptomator = new HubUVFVault(UUID.fromString(new UUIDRandomStringService().random()), bucket,
+                    new Credentials(config.vault.username, config.vault.password));
             cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
@@ -247,9 +249,6 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 assertTrue(hubSession.getFeature(Find.class).find(bucket));
                 assertEquals(config.vault.region, hubSession.getFeature(AttributesFinder.class).find(bucket).getRegion());
 
-                assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, bucket));
-
-                // listing decrypted file names
                 assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, bucket));
             }
 
