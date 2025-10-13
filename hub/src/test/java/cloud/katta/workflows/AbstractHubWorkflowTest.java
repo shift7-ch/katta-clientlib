@@ -4,7 +4,9 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.vault.VaultCredentials;
 
 import org.apache.commons.lang3.StringUtils;
@@ -65,7 +67,8 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
-            final HubUVFVault cryptomator = new HubUVFVault(bucket);
+            final HubUVFVault cryptomator = new HubUVFVault(UUID.fromString(new UUIDRandomStringService().random()), bucket,
+                    new Credentials(config.vault.username, config.vault.password));
             cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 

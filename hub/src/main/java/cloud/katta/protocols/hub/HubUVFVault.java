@@ -4,7 +4,20 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.*;
+import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.CredentialsConfigurator;
+import ch.cyberduck.core.DisabledCancelCallback;
+import ch.cyberduck.core.DisabledHostKeyCallback;
+import ch.cyberduck.core.DisabledLoginCallback;
+import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostUrlProvider;
+import ch.cyberduck.core.PasswordCallback;
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
+import ch.cyberduck.core.Protocol;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
+import ch.cyberduck.core.SessionFactory;
 import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -66,32 +79,20 @@ public class HubUVFVault extends UVFVault {
      */
     private Session<?> storage;
     private final Path home;
-
-    public HubUVFVault(final Path home) {
-        this(home, null, null, null);
-    }
-
-    /**
-     * Constructor for factory creating new vault
-     *
-     * @param home Bucket
-     */
-    public HubUVFVault(final Path home, final String masterkey, final String config, final byte[] pepper) {
-        super(home);
-        this.home = home;
-        this.vaultId = UUID.fromString(new UUIDRandomStringService().random());
-    }
+    private final Credentials credentials;
 
     /**
      * Open from existing metadata
      *
-     * @param vaultId Vault ID Used to lookup profile
-     * @param bucket  Bucket name
+     * @param vaultId     Vault ID Used to lookup profile
+     * @param bucket      Bucket name
+     * @param credentials Storage access credentials
      */
-    public HubUVFVault(final UUID vaultId, final Path bucket) {
+    public HubUVFVault(final UUID vaultId, final Path bucket, final Credentials credentials) {
         super(bucket);
         this.vaultId = vaultId;
         this.home = bucket;
+        this.credentials = credentials;
     }
 
     public Session<?> getStorage() {
@@ -123,14 +124,14 @@ public class HubUVFVault extends UVFVault {
     }
 
     @Override
-    public Path create(final Session<?> session, final String region, final VaultCredentials credentials) throws BackgroundException {
+    public Path create(final Session<?> session, final String region, final VaultCredentials noop) throws BackgroundException {
         try {
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromIdentifier(region);
             final String storageProfileId = location.getProfile();
             final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .provider(storageProfileId)
-                            .defaultPath(session.getFeature(PathContainerService.class).getContainer(home).getName())
+                            .defaultPath(home.getAbsolute())
                             .region(location.getRegion())
                             .nickname(null != home.attributes().getDisplayname() ? home.attributes().getDisplayname() : "Vault"))
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
@@ -166,10 +167,10 @@ public class HubUVFVault extends UVFVault {
             // Upload vault template to storage
             final Protocol profile = ProtocolFactory.get().forName(storageProfileId);
             log.debug("Loaded profile {} for vault {}", profile, this);
-            final Host bookmark = new Host(profile,
-                    session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost()));
+            final Host bookmark = new Host(profile, credentials);
             bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
             bookmark.setRegion(location.getRegion());
+            bookmark.setDefaultPath(home.getAbsolute());
             log.debug("Configured {} for vault {}", bookmark, this);
             storage = SessionFactory.create(bookmark, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
             log.debug("Connect to {}", storage);
@@ -178,7 +179,7 @@ public class HubUVFVault extends UVFVault {
             log.debug("Upload vault template to {}", storage);
             final Path vault;
             if(false) {
-                return super.create(storage, region, credentials);
+                return super.create(storage, region, noop);
             }
             else { // Obsolete when implemented in super
                 final Directory<?> directory = (Directory<?>) storage._getFeature(Directory.class);
@@ -277,8 +278,9 @@ public class HubUVFVault extends UVFVault {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("HubUVFVault{");
-        sb.append("storage=").append(storage);
-        sb.append(", vaultId=").append(vaultId);
+        sb.append("vaultId=").append(vaultId);
+        sb.append(", home=").append(home);
+        sb.append(", credentials=").append(credentials);
         sb.append('}');
         return sb.toString();
     }

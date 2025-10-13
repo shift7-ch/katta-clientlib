@@ -5,6 +5,7 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
@@ -27,6 +28,7 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -56,9 +58,11 @@ public class HubVaultListService implements ListService {
                     // Find storage configuration in vault metadata
                     final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                     final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys());
+                    final VaultMetadataJWEBackendDto storage = vaultMetadata.storage();
                     final HubUVFVault vault = new HubUVFVault(vaultDto.getId(),
-                            new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
-                                    new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())));
+                            new Path(storage.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+                                    new PathAttributes().setDisplayname(storage.getNickname())),
+                            new Credentials(storage.getUsername(), storage.getPassword()));
                     try {
                         registry.add(vault.load(session, new DisabledPasswordCallback()));
                         vaults.add(vault.getHome());
