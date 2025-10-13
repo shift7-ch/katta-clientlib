@@ -304,7 +304,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 // directory creation and listing
                 final Path folder = new Path(vault, new AlphanumericRandomStringService(25).random(), EnumSet.of(Path.Type.directory));
 
-                hubSession.getFeature(Directory.class).mkdir(folder, new TransferStatus());
+                hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertEquals(2, list.size()); // a file and a folder
 
