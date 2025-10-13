@@ -90,7 +90,6 @@ public class HubSession extends HttpSession<HubApiClient> {
     private UserDto me;
     private ConfigDto config;
     private UserKeys userKeys;
-    private AttributedList<Path> vaults;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
@@ -184,15 +183,6 @@ public class HubSession extends HttpSession<HubApiClient> {
                         throw new InteroperabilityException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
                 }
             }
-            // Ensure vaults are registered
-            try {
-                vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());
-            }
-            finally {
-                log.debug("Destroyed user keys {}", userKeys);
-                // Short-lived
-                userKeys.destroy();
-            }
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
@@ -253,7 +243,7 @@ public class HubSession extends HttpSession<HubApiClient> {
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
         if(type == ListService.class) {
-            return (T) (ListService) (directory, listener) -> vaults;
+            return (T) new HubVaultListService(this);
         }
         if(type == Scheduler.class) {
             return (T) access;
