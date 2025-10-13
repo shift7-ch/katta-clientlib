@@ -21,13 +21,10 @@ import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.resources.IconCacheFactory;
 import ch.cyberduck.core.threading.AbstractBackgroundAction;
 
-import cloud.katta.client.model.Protocol;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rococoa.Foundation;
-import org.rococoa.ID;
 import org.rococoa.cocoa.foundation.NSPoint;
 import org.rococoa.cocoa.foundation.NSRect;
 import org.rococoa.cocoa.foundation.NSSize;
@@ -35,6 +32,7 @@ import org.rococoa.cocoa.foundation.NSSize;
 import java.util.List;
 import java.util.UUID;
 
+import cloud.katta.client.model.Protocol;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.workflows.CreateVaultService;
 
@@ -379,11 +377,6 @@ public class CreateVaultBookmarkController extends SheetController {
             }
         }
         return true;
-    }
-
-    @Override
-    public void cancel(final ID sender) {
-        window.close();
     }
 
     @Override
