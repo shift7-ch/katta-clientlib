@@ -7,6 +7,7 @@ package cloud.katta.workflows;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.vault.VaultCredentials;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -66,7 +67,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubUVFVault cryptomator = new HubUVFVault(bucket);
             cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
-                    storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials("test"));
+                    storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 
