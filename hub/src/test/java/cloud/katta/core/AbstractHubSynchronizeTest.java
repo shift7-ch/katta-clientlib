@@ -235,7 +235,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final HubUVFVault cryptomator = new HubUVFVault(bucket);
 
             cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
-                            storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials("test"));
+                    storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
