@@ -9,13 +9,12 @@ import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
-import ch.cyberduck.core.exception.UnsupportedException;
-import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFactory;
+import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.transfer.TransferStatus;
@@ -154,7 +153,8 @@ public class HubUVFVault extends UVFVault {
             // Create vault in Hub
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hub.getClient());
             log.debug("Create vault {}", vaultDto);
-            vaultResourceApi.apiVaultsVaultIdPut(vaultDto.getId(), vaultDto);
+            vaultResourceApi.apiVaultsVaultIdPut(vaultDto.getId(), vaultDto,
+                    !S3Session.isAwsHostname(session.getHost().getHostname()), S3Session.isAwsHostname(session.getHost().getHostname()));
             // Upload JWE
             log.debug("Grant access to vault {}", vaultDto);
             final UserDto userDto = new UsersResourceApi(hub.getClient()).apiUsersMeGet(false, false);
