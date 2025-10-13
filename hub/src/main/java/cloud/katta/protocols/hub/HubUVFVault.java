@@ -65,7 +65,7 @@ public class HubUVFVault extends UVFVault {
      * Storage connection only available after loading vault
      */
     private Session<?> storage;
-    private Path home;
+    private final Path home;
 
     public HubUVFVault(final Path home) {
         this(home, null, null, null);
@@ -91,6 +91,7 @@ public class HubUVFVault extends UVFVault {
     public HubUVFVault(final UUID vaultId, final Path bucket) {
         super(bucket);
         this.vaultId = vaultId;
+        this.home = bucket;
     }
 
     public Session<?> getStorage() {
