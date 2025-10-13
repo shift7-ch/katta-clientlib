@@ -5,10 +5,10 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
-import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.exception.AccessDeniedException;
@@ -36,11 +36,9 @@ public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
     private final HubSession session;
-    private final PasswordCallback prompt;
 
-    public HubVaultListService(final HubSession session, final PasswordCallback prompt) {
+    public HubVaultListService(final HubSession session) {
         this.session = session;
-        this.prompt = prompt;
     }
 
     @Override
@@ -62,7 +60,7 @@ public class HubVaultListService implements ListService {
                             new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                                     new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())));
                     try {
-                        registry.add(vault.load(session, prompt));
+                        registry.add(vault.load(session, new DisabledPasswordCallback()));
                         vaults.add(vault.getHome());
                         listener.chunk(directory, vaults);
                     }
