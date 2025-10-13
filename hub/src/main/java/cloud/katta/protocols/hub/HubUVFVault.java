@@ -17,6 +17,7 @@ import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Directory;
+import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.transfer.TransferStatus;
@@ -89,9 +90,9 @@ public class HubUVFVault extends UVFVault {
         log.debug("Create vault root directory at {}", secondLevel);
         final TransferStatus status = (new TransferStatus()).setRegion(region);
 
-        directory.mkdir(dataDir, status);
-        directory.mkdir(firstLevel, status);
-        directory.mkdir(secondLevel, status);
+        directory.mkdir(session._getFeature(Write.class), dataDir, status);
+        directory.mkdir(session._getFeature(Write.class), firstLevel, status);
+        directory.mkdir(session._getFeature(Write.class), secondLevel, status);
         new ContentWriter(session).write(new Path(secondLevel, "dir.uvf", EnumSet.of(AbstractPath.Type.file)), rootDirUvf);
         return home;
     }
