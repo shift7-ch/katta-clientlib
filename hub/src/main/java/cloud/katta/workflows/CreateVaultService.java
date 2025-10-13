@@ -202,7 +202,7 @@ public class CreateVaultService {
         static STSInlinePolicyService disabled = new STSInlinePolicyService() {
             @Override
             TemporaryAccessTokens getSTSTokensFromAccessTokenWithCreateBucketInlinePolicy(final String token, final String roleArn, final String roleSessionName, final String stsEndpoint, final String bucketName, final String region, final Boolean bucketAcceleration) {
-                return new TemporaryAccessTokens(null);
+                return TemporaryAccessTokens.EMPTY;
             }
         };
 
