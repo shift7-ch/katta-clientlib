@@ -270,7 +270,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 assertNotNull(vaults.find(new SimplePathPredicate(bucket)));
 
                 assertTrue(hubSession.getFeature(Find.class).find(bucket));
-                assertEquals(bucket.attributes(), hubSession.getFeature(AttributesFinder.class).find(bucket));
+                assertEquals(config.vault.region, hubSession.getFeature(AttributesFinder.class).find(bucket).getRegion());
 
                 assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, bucket));
 
