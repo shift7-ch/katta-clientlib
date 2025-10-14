@@ -7,6 +7,7 @@ package cloud.katta.protocols.hub;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.features.Location;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -74,7 +75,7 @@ public class HubStorageLocationService implements Location {
          * @param storageProfileName Description
          */
         public StorageLocation(final String storageProfileId, final String region, final String storageProfileName) {
-            super(String.format("%s,%s", storageProfileId, region));
+            super(String.format("%s,%s", storageProfileId, null == region ? StringUtils.EMPTY : region));
             this.storageProfileId = storageProfileId;
             this.region = region;
             this.storageProfileName = storageProfileName;
@@ -108,7 +109,7 @@ public class HubStorageLocationService implements Location {
             if(parts.length != 2) {
                 return new StorageLocation(identifier, null, null);
             }
-            return new StorageLocation(parts[0], parts[1], null);
+            return new StorageLocation(StringUtils.isBlank(parts[0]) ? null : parts[0], StringUtils.isBlank(parts[1]) ? null : parts[1], null);
         }
     }
 }
