@@ -159,9 +159,8 @@ public class HubUVFVault extends UVFVault {
                     !S3Session.isAwsHostname(session.getHost().getHostname()), S3Session.isAwsHostname(session.getHost().getHostname()));
             // Upload JWE
             log.debug("Grant access to vault {}", vaultDto);
-            final UserDto userDto = new UsersResourceApi(hub.getClient()).apiUsersMeGet(false, false);
-            final DeviceKeys deviceKeys = new DeviceKeysServiceImpl().getDeviceKeys(session.getHost());
-            final UserKeys userKeys = new UserKeysServiceImpl(hub).getUserKeys(session.getHost(), hub.getMe(), deviceKeys);
+            final UserDto userDto = hub.getMe();
+            final UserKeys userKeys = hub.getUserKeys();
             vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(),
                     Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
             // Upload vault template to storage
