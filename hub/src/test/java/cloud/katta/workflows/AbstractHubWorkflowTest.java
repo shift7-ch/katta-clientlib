@@ -4,7 +4,6 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.vault.VaultCredentials;
@@ -31,6 +30,9 @@ import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.SetupCodeJWE;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
@@ -61,16 +63,24 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .map(StorageProfileDtoWrapper::coerce)
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
-            final UUID vaultId = UUID.randomUUID();
-            // upload template (STS: create bucket first, static: existing bucket)
-            // TODO test with multiple wot levels?
-
+            final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
             final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
-            final HubUVFVault cryptomator = new HubUVFVault(UUID.fromString(new UUIDRandomStringService().random()), bucket,
-                    new Credentials(config.vault.username, config.vault.password));
-            cryptomator.create(hubSession, new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
-                    storageProfileWrapper.getName()).getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
+            final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
+                    storageProfileWrapper.getName());
+            final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()
+                    .withStorage(new VaultMetadataJWEBackendDto()
+                            .username(config.vault.username)
+                            .password(config.vault.password)
+                            .provider(location.getProfile())
+                            .defaultPath(bucket.getAbsolute())
+                            .region(location.getRegion())
+                            .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
+                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                            .enabled(true)
+                            .maxWotDepth(3));
+            final HubUVFVault cryptomator = new HubUVFVault(hubSession, vaultId, bucket, vaultMetadata);
+            cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 

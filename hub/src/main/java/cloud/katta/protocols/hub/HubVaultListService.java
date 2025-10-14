@@ -5,13 +5,11 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
@@ -23,13 +21,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
-import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -47,50 +43,46 @@ public class HubVaultListService implements ListService {
     @Override
     public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
         if(directory.isRoot()) {
-        try {
-            final VaultRegistry registry = session.getRegistry();
-            final AttributedList<Path> vaults = new AttributedList<>();
-            for(final VaultDto vaultDto : new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null)) {
-                if(Boolean.TRUE.equals(vaultDto.getArchived())) {
-                    log.debug("Skip archived vault {}", vaultDto);
-                    continue;
-                }
-                log.debug("Load vault {}", vaultDto);
-                try {
-                    // Find storage configuration in vault metadata
-                    final VaultServiceImpl vaultService = new VaultServiceImpl(session);
-                    final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys());
-                    final VaultMetadataJWEBackendDto storage = vaultMetadata.storage();
-                    final HubUVFVault vault = new HubUVFVault(vaultDto.getId(),
-                            new Path(storage.getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
-                                    new PathAttributes().setDisplayname(storage.getNickname())),
-                            new Credentials(storage.getUsername(), storage.getPassword()));
+            try {
+                final VaultRegistry registry = session.getRegistry();
+                final AttributedList<Path> vaults = new AttributedList<>();
+                for(final VaultDto vaultDto : new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null)) {
+                    if(Boolean.TRUE.equals(vaultDto.getArchived())) {
+                        log.debug("Skip archived vault {}", vaultDto);
+                        continue;
+                    }
+                    log.debug("Load vault {}", vaultDto);
                     try {
-                        registry.add(vault.load(session, new DisabledPasswordCallback()));
-                        vaults.add(vault.getHome());
-                        listener.chunk(directory, vaults);
+                        // Find storage configuration in vault metadata
+                        final VaultServiceImpl vaultService = new VaultServiceImpl(session);
+                        final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys());
+                        final HubUVFVault vault = new HubUVFVault(session, vaultDto.getId(), vaultMetadata);
+                        try {
+                            registry.add(vault.load(session, new DisabledPasswordCallback()));
+                            vaults.add(vault.getHome());
+                            listener.chunk(directory, vaults);
+                        }
+                        catch(VaultUnlockCancelException e) {
+                            log.warn("Skip vault {} with failure {} loading", vaultDto, e);
+                            continue;
+                        }
                     }
-                    catch(VaultUnlockCancelException e) {
-                        log.warn("Skip vault {} with failure {} loading", vaultDto, e);
-                        continue;
+                    catch(ApiException e) {
+                        if(HttpStatus.SC_FORBIDDEN == e.getCode()) {
+                            log.warn("Skip vault {} with insufficient permissions {}", vaultDto, e);
+                            continue;
+                        }
+                        throw e;
+                    }
+                    catch(AccessException | SecurityFailure e) {
+                        throw new AccessDeniedException(e.getMessage(), e);
                     }
                 }
-                catch(ApiException e) {
-                    if(HttpStatus.SC_FORBIDDEN == e.getCode()) {
-                        log.warn("Skip vault {} with insufficient permissions {}", vaultDto, e);
-                        continue;
-                    }
-                    throw e;
-                }
-                catch(AccessException | SecurityFailure e) {
-                    throw new AccessDeniedException(e.getMessage(), e);
-                }
+                return vaults;
             }
-            return vaults;
-        }
-        catch(ApiException e) {
-            throw new HubExceptionMappingService().map("Listing directory {0} failed", e, directory);
-        }
+            catch(ApiException e) {
+                throw new HubExceptionMappingService().map("Listing directory {0} failed", e, directory);
+            }
         }
         throw new NotfoundException(directory.getAbsolute());
     }
