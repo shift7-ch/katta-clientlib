@@ -4,28 +4,17 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.Credentials;
-import ch.cyberduck.core.CredentialsConfigurator;
-import ch.cyberduck.core.DisabledCancelCallback;
-import ch.cyberduck.core.DisabledHostKeyCallback;
-import ch.cyberduck.core.DisabledLoginCallback;
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.HostUrlProvider;
-import ch.cyberduck.core.PasswordCallback;
-import ch.cyberduck.core.Path;
-import ch.cyberduck.core.PathAttributes;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
-import ch.cyberduck.core.Session;
-import ch.cyberduck.core.SessionFactory;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.preferences.PreferencesFactory;
+import ch.cyberduck.core.preferences.ProxyPreferencesReader;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
@@ -34,7 +23,6 @@ import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
-import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -45,22 +33,16 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
-import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayloadPasswordCallback;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
-import cloud.katta.workflows.DeviceKeysServiceImpl;
-import cloud.katta.workflows.UserKeysServiceImpl;
-import cloud.katta.workflows.VaultServiceImpl;
-import cloud.katta.workflows.exceptions.AccessException;
-import cloud.katta.workflows.exceptions.SecurityFailure;
+import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
@@ -73,28 +55,76 @@ public class HubUVFVault extends UVFVault {
     private static final Logger log = LogManager.getLogger(HubUVFVault.class);
 
     private final UUID vaultId;
+    private final UvfMetadataPayload vaultMetadata;
 
     /**
      * Storage connection only available after loading vault
      */
-    private Session<?> storage;
+    private final Session<?> storage;
+
     private final Path home;
-    private final Credentials credentials;
+
+    public HubUVFVault(final HubSession hub, final Path bucket, final HubStorageLocationService.StorageLocation location) throws ConnectionCanceledException {
+        this(hub, UUID.fromString(new UUIDRandomStringService().random()), bucket, location);
+    }
+
+    /**
+     * Constructor for factory creating new vault
+     *
+     * @param bucket Bucket
+     */
+    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location) throws ConnectionCanceledException {
+        this(hub, vaultId, bucket,
+                UvfMetadataPayload.create()
+                        .withStorage(new VaultMetadataJWEBackendDto()
+                                .provider(location.getProfile())
+                                .defaultPath(bucket.getAbsolute())
+                                .region(location.getRegion())
+                                .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
+                        .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                                .enabled(true)
+                                .maxWotDepth(null)));
+    }
 
     /**
      * Open from existing metadata
      *
-     * @param vaultId     Vault ID Used to lookup profile
-     * @param bucket      Bucket name
-     * @param credentials Storage access credentials
+     * @param vaultId Vault ID Used to lookup profile
      */
-    public HubUVFVault(final UUID vaultId, final Path bucket, final Credentials credentials) {
-        super(bucket);
-        this.vaultId = vaultId;
-        this.home = bucket;
-        this.credentials = credentials;
+    public HubUVFVault(final HubSession hub, final UUID vaultId, final UvfMetadataPayload vaultMetadata) throws ConnectionCanceledException {
+        this(hub, vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata);
     }
 
+    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata) throws ConnectionCanceledException {
+        super(bucket);
+        this.vaultId = vaultId;
+        this.vaultMetadata = vaultMetadata;
+        this.home = bucket;
+
+        final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
+        final Protocol profile = ProtocolFactory.get().forName(vaultStorageMetadata.getProvider());
+        log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
+        final Credentials credentials =
+                hub.getFeature(CredentialsConfigurator.class).reload().configure(hub.getHost());
+        log.debug("Copy credentials {}", credentials);
+        if(vaultStorageMetadata.getUsername() != null) {
+            credentials.setUsername(vaultStorageMetadata.getUsername());
+        }
+        if(vaultStorageMetadata.getPassword() != null) {
+            credentials.setPassword(vaultStorageMetadata.getPassword());
+        }
+        final Host storageProvider = new Host(profile, credentials);
+        storageProvider.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
+        storageProvider.setRegion(vaultStorageMetadata.getRegion());
+        log.debug("Configured {} for vault {}", storageProvider, this);
+        this.storage = SessionFactory.create(storageProvider, hub.getFeature(X509TrustManager.class), hub.getFeature(X509KeyManager.class));
+    }
+
+    /**
+     *
+     * @return Storage provider configuration
+     */
     public Session<?> getStorage() {
         return storage;
     }
@@ -126,32 +156,21 @@ public class HubUVFVault extends UVFVault {
     @Override
     public Path create(final Session<?> session, final String region, final VaultCredentials noop) throws BackgroundException {
         try {
-            final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromIdentifier(region);
-            final String storageProfileId = location.getProfile();
-            final UvfMetadataPayload metadataPayload = UvfMetadataPayload.create()
-                    .withStorage(new VaultMetadataJWEBackendDto()
-                            .provider(storageProfileId)
-                            .defaultPath(home.getAbsolute())
-                            .region(location.getRegion())
-                            .nickname(null != home.attributes().getDisplayname() ? home.attributes().getDisplayname() : "Vault"))
-                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
-                            .enabled(true)
-                            .maxWotDepth(null));
-            log.debug("Created metadata JWE {}", metadataPayload);
+            final HubSession hub = HubSession.coerce(session);
+            log.debug("Created metadata JWE {}", vaultMetadata);
             final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
             final VaultDto vaultDto = new VaultDto()
                     .id(vaultId)
-                    .name(metadataPayload.storage().getNickname())
+                    .name(vaultMetadata.storage().getNickname())
                     .description(null)
                     .archived(false)
                     .creationTime(DateTime.now())
-                    .uvfMetadataFile(metadataPayload.encrypt(
+                    .uvfMetadataFile(vaultMetadata.encrypt(
                             String.format("%s/api", new HostUrlProvider(false, true).get(session.getHost())),
                             vaultId,
                             jwks.toJWKSet()
                     ))
                     .uvfKeySet(jwks.serializePublicRecoverykey());
-            final HubSession hub = (HubSession) session;
             // Create vault in Hub
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hub.getClient());
             log.debug("Create vault {}", vaultDto);
@@ -165,20 +184,19 @@ public class HubUVFVault extends UVFVault {
             vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(),
                     Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
             // Upload vault template to storage
-            final Protocol profile = ProtocolFactory.get().forName(storageProfileId);
-            log.debug("Loaded profile {} for vault {}", profile, this);
-            final Host bookmark = new Host(profile, credentials);
-            bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
-            bookmark.setRegion(location.getRegion());
-            bookmark.setDefaultPath(home.getAbsolute());
-            log.debug("Configured {} for vault {}", bookmark, this);
-            storage = SessionFactory.create(bookmark, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
             log.debug("Connect to {}", storage);
+            final Host configuration = storage.getHost();
+            // No token exchange with Katta Server
+            configuration.setProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, null);
+            // Assume role with policy attached to create vault
+            configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY,
+                    new ProxyPreferencesReader(storage.getHost()).getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET));
+            // No role chaining when creating vault
+            configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, null);
             storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
-            storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
-            log.debug("Upload vault template to {}", storage);
             final Path vault;
             if(false) {
+                log.debug("Upload vault template to {}", storage);
                 return super.create(storage,
                         HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion(), noop);
             }
@@ -188,7 +206,7 @@ public class HubUVFVault extends UVFVault {
                 final TransferStatus status = (new TransferStatus()).setRegion(HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion());
                 vault = directory.mkdir(storage._getFeature(Write.class), home, status);
 
-                final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
+                final String hashedRootDirId = vaultMetadata.computeRootDirIdHash();
                 final Path dataDir = new Path(vault, "d", EnumSet.of(Path.Type.directory));
                 final Path firstLevel = new Path(dataDir, hashedRootDirId.substring(0, 2), EnumSet.of(Path.Type.directory));
                 final Path secondLevel = new Path(firstLevel, hashedRootDirId.substring(2), EnumSet.of(Path.Type.directory));
@@ -202,11 +220,11 @@ public class HubUVFVault extends UVFVault {
                         EnumSet.of(Path.Type.file, Path.Type.vault)), vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII));
                 // dir.uvf
                 new ContentWriter(storage).write(new Path(secondLevel, "dir.uvf", EnumSet.of(Path.Type.file)),
-                        metadataPayload.computeRootDirUvf());
+                        vaultMetadata.computeRootDirUvf());
             }
             return vault;
         }
-        catch(JOSEException | JsonProcessingException | AccessException | SecurityFailure e) {
+        catch(JOSEException | JsonProcessingException e) {
             throw new InteroperabilityException(e.getMessage(), e);
         }
         catch(ApiException e) {
@@ -223,35 +241,9 @@ public class HubUVFVault extends UVFVault {
     @Override
     public HubUVFVault load(final Session<?> session, final PasswordCallback prompt) throws BackgroundException {
         try {
-            final HubSession hub = HubSession.coerce(session);
-            // Find storage configuration in vault metadata
-            final VaultServiceImpl vaultService = new VaultServiceImpl(hub);
-            final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultId, hub.getUserKeys());
-            final Protocol profile = ProtocolFactory.get().forName(vaultMetadata.storage().getProvider());
-            log.debug("Loaded profile {} for vault {}", profile, this);
-            final Credentials credentials =
-                    session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost());
-            log.debug("Copy credentials {}", credentials);
-            final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
-            if(vaultStorageMetadata.getUsername() != null) {
-                credentials.setUsername(vaultStorageMetadata.getUsername());
-            }
-            if(vaultStorageMetadata.getPassword() != null) {
-                credentials.setPassword(vaultStorageMetadata.getPassword());
-            }
-            final Host bookmark = new Host(profile, credentials);
-            log.debug("Configure bookmark for vault {}", vaultStorageMetadata);
-            bookmark.setNickname(vaultStorageMetadata.getNickname());
-            bookmark.setDefaultPath(vaultStorageMetadata.getDefaultPath());
-            bookmark.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
-            // region as chosen by user upon vault creation (STS) or as retrieved from bucket (permanent)
-            bookmark.setRegion(vaultStorageMetadata.getRegion());
-            log.debug("Configured {} for vault {}", bookmark, this);
-            storage = SessionFactory.create(bookmark, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
             log.debug("Connect to {}", storage);
             try {
                 storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
-                storage.login(new DisabledLoginCallback(), new DisabledCancelCallback());
             }
             catch(BackgroundException e) {
                 log.warn("Skip loading vault with failure {} connecting to storage", e.toString());
@@ -265,13 +257,7 @@ public class HubUVFVault extends UVFVault {
             super.load(storage, new UvfMetadataPayloadPasswordCallback(vaultMetadata.toJSON()));
             return this;
         }
-        catch(ApiException e) {
-            if(HttpStatus.SC_FORBIDDEN == e.getCode()) {
-                throw new VaultUnlockCancelException(this, e);
-            }
-            throw new HubExceptionMappingService().map(e);
-        }
-        catch(JsonProcessingException | SecurityFailure | AccessException e) {
+        catch(JsonProcessingException e) {
             throw new InteroperabilityException(e.getMessage(), e);
         }
     }
@@ -280,8 +266,8 @@ public class HubUVFVault extends UVFVault {
     public String toString() {
         final StringBuilder sb = new StringBuilder("HubUVFVault{");
         sb.append("vaultId=").append(vaultId);
+        sb.append(", vaultMetadata=").append(vaultMetadata);
         sb.append(", home=").append(home);
-        sb.append(", credentials=").append(credentials);
         sb.append('}');
         return sb.toString();
     }
