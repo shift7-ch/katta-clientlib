@@ -46,9 +46,9 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      */
     @Override
     public TemporaryAccessTokens assumeRoleWithWebIdentity(final Credentials credentials) throws BackgroundException {
-        final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(credentials
-                .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, bookmark.getProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY)));
         final PreferencesReader settings = new ProxyPreferencesReader(bookmark, credentials);
+        final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(credentials
+                .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN)));
         if(StringUtils.isNotBlank(settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
             log.debug("Assume role with temporary credentials {}", tokens);
             // Assume role with previously obtained temporary access token
