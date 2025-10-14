@@ -231,7 +231,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
 
-            final Path bucket = new Path(null == config.vault.bucketName ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+            final Path bucket = new Path(null == config.vault.bucketName ? null == storageProfileWrapper.getBucketPrefix() ? "katta-test-" + vaultId : storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
