@@ -46,7 +46,7 @@ public abstract class AbstractHubTest extends VaultTest {
     }
 
     private static final HubTestConfig.VaultSpec minioSTSVaultConfig = new HubTestConfig.VaultSpec("MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
-            null, null, null, "eu-west-1");
+            null, null, null, "eu-central-1");
     private static final HubTestConfig.VaultSpec minioStaticVaultConfig = new HubTestConfig.VaultSpec("MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
             "handmade", "minioadmin", "minioadmin", "us-east-1");
     private static final HubTestConfig.VaultSpec awsSTSVaultConfig = new HubTestConfig.VaultSpec("AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
