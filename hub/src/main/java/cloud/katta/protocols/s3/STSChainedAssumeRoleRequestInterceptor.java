@@ -43,17 +43,19 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * @return Temporary scoped access tokens
      * @throws ch.cyberduck.core.exception.ExpiredTokenException Expired identity
      * @throws ch.cyberduck.core.exception.LoginFailureException Authorization failure
+     * @see S3AssumeRoleProtocol#S3_ASSUMEROLE_ROLEARN_TAG
+     * @see S3AssumeRoleProtocol#S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET
      */
     @Override
     public TemporaryAccessTokens assumeRoleWithWebIdentity(final Credentials credentials) throws BackgroundException {
         final PreferencesReader settings = new ProxyPreferencesReader(bookmark, credentials);
         final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(credentials
-                .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN)));
-        if(StringUtils.isNotBlank(settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2))) {
+                .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY)));
+        if(StringUtils.isNotBlank(settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG))) {
             log.debug("Assume role with temporary credentials {}", tokens);
             // Assume role with previously obtained temporary access token
             return super.assumeRole(credentials.withTokens(tokens)
-                    .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2))
+                    .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG))
                     .withProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", "VaultRequested", settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT)))
             );
         }

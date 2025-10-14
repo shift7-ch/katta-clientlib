@@ -53,9 +53,12 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 if(dto.getProtocol() == Protocol.S3_STS) {
                     properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, true));
-                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN, dto.getStsRoleArn()));
+                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY, dto.getStsRoleArn()));
                     if(dto.getStsRoleArn2() != null) {
-                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_2, dto.getStsRoleArn2()));
+                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, dto.getStsRoleArn2()));
+                    }
+                    if(dto.getStsRoleArnClient() != null) {
+                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET, dto.getStsRoleArnClient()));
                     }
                     if(dto.getStsDurationSeconds() != null) {
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
