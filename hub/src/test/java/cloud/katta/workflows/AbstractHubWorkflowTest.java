@@ -24,7 +24,6 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
-import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.UserDto;
@@ -64,7 +63,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
-            final Path bucket = new Path(storageProfileWrapper.getProtocol() == Protocol.S3_STS ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+            final Path bucket = new Path(null == config.vault.bucketName ? storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
