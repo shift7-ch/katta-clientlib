@@ -57,10 +57,8 @@ import java.util.UUID;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.ConfigResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
-import cloud.katta.client.model.ConfigDto;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
@@ -337,8 +335,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         assertEquals(StringUtils.EMPTY, hubSession.getHost().getCredentials().getPassword());
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
-        final ConfigDto configDto = new ConfigResourceApi(hubSession.getClient()).apiConfigGet();
-        final int expectedNumberOfVaults = configDto.getKeycloakTokenEndpoint().contains("localhost") ? 2 : 4;
+        final int expectedNumberOfVaults = 4;
         assertEquals(expectedNumberOfVaults, vaults.size());
         assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));
         for(final Path vault : vaults) {
