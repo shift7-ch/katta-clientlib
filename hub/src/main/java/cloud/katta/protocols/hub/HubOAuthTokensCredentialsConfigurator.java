@@ -19,18 +19,11 @@ public class HubOAuthTokensCredentialsConfigurator implements CredentialsConfigu
     private final HostPasswordStore keychain;
     private final Host host;
 
-    private OAuthTokens tokens;
+    private OAuthTokens tokens = OAuthTokens.EMPTY;
 
     public HubOAuthTokensCredentialsConfigurator(final HostPasswordStore keychain, final Host host) {
         this.keychain = keychain;
         this.host = host;
-        final Credentials credentials = host.getCredentials();
-        // Copy prior reset of credentials after login
-        this.tokens = new OAuthTokens(credentials.getOauth().getAccessToken(),
-                credentials.getOauth().getRefreshToken(),
-                credentials.getOauth().getExpiryInMilliseconds(),
-                credentials.getOauth().getIdToken());
-        log.debug("Initialized tokens {}", tokens);
     }
 
     @Override
