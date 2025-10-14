@@ -19,11 +19,12 @@ public class S3AssumeRoleProtocol extends S3Protocol {
     public static final String OAUTH_TOKENEXCHANGE_VAULT = "oauth.tokenexchange.vault";
     public static final String OAUTH_TOKENEXCHANGE_BASEPATH = "oauth.tokenexchange.basepath";
 
-    // STS assume role with web identity from Cyberduck core (AWS + MinIO)
+    // STS assume role with web identity resource name
     public static final String S3_ASSUMEROLE_ROLEARN = Profile.STS_ROLE_ARN_PROPERTY_KEY;
     public static final String S3_ASSUMEROLE_DURATIONSECONDS = Profile.STS_DURATION_SECONDS_PROPERTY_KEY;
-    // STS role chaining (AWS only)
-    public static final String S3_ASSUMEROLE_ROLEARN_2 = "s3.assumerole.rolearn.2";
+    // STS assume role chaining (AWS only)
+    public static final String S3_ASSUMEROLE_ROLEARN_TAG = "s3.assumerole.rolearn.tag";
+    public static final String S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET = "s3.assumerole.rolearn.createbucket";
 
     private final String authorization;
 

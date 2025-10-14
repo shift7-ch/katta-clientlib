@@ -36,7 +36,7 @@ public class S3AssumeRoleSession extends S3Session {
      * token server (STS)
      *
      * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE
-     * @see S3AssumeRoleProtocol#S3_ASSUMEROLE_ROLEARN_2
+     * @see S3AssumeRoleProtocol#S3_ASSUMEROLE_ROLEARN_TAG
      */
     @Override
     protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) throws LoginCanceledException {
