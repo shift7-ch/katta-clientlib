@@ -112,6 +112,8 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                         return true;
                 }
                 break;
+            case ROLE_KEY_CONFIGURABLE_KEY:
+                return dto.getStsRoleArn() != null;
         }
         return super.booleanForKey(key);
     }
@@ -145,6 +147,9 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         }
         if(dto.getRegions() != null) {
             keys.add(REGIONS_KEY);
+        }
+        if(dto.getStsRoleArn() != null) {
+            keys.add(ROLE_KEY_CONFIGURABLE_KEY);
         }
         return keys;
     }
