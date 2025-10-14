@@ -179,12 +179,13 @@ public class HubUVFVault extends UVFVault {
             log.debug("Upload vault template to {}", storage);
             final Path vault;
             if(false) {
-                return super.create(storage, region, noop);
+                return super.create(storage,
+                        HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion(), noop);
             }
             else { // Obsolete when implemented in super
                 final Directory<?> directory = (Directory<?>) storage._getFeature(Directory.class);
                 log.debug("Create vault root directory at {}", home);
-                final TransferStatus status = (new TransferStatus()).setRegion(region);
+                final TransferStatus status = (new TransferStatus()).setRegion(HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion());
                 vault = directory.mkdir(storage._getFeature(Write.class), home, status);
 
                 final String hashedRootDirId = metadataPayload.computeRootDirIdHash();
