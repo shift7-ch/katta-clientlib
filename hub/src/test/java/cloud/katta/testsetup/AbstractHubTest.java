@@ -155,8 +155,6 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("connection.unsecure.warning.http", false);
         preferences.setProperty("cloud.katta.min_api_level", 4);
 
-        preferences.setProperty("s3.assumerole.tag", "VaultRequested");
-
         preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
     }
 
