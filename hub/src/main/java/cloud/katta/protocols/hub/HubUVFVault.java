@@ -156,7 +156,7 @@ public class HubUVFVault extends UVFVault {
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hub.getClient());
             log.debug("Create vault {}", vaultDto);
             vaultResourceApi.apiVaultsVaultIdPut(vaultDto.getId(), vaultDto,
-                    !S3Session.isAwsHostname(session.getHost().getHostname()), S3Session.isAwsHostname(session.getHost().getHostname()));
+                    !S3Session.isAwsHostname(storage.getHost().getHostname()), S3Session.isAwsHostname(storage.getHost().getHostname()));
             // Upload JWE
             log.debug("Grant access to vault {}", vaultDto);
             final UserDto userDto = hub.getMe();
