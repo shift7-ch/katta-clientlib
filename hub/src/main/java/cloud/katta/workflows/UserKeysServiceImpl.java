@@ -147,7 +147,7 @@ public class UserKeysServiceImpl implements UserKeysService {
         try {
             usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
-                    .privateKeys(userKeys.encryptWithSetupCode(setupCode))
+                    .privateKey(userKeys.encryptWithSetupCode(setupCode))
                     .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {
@@ -175,6 +175,6 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     private static boolean validate(final UserDto me) {
-        return me.getEcdhPublicKey() != null && me.getPrivateKeys() != null;
+        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 }
