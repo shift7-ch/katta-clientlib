@@ -23,7 +23,6 @@ public class S3AssumeRoleProtocol extends S3Protocol {
     public static final String S3_ASSUMEROLE_ROLEARN = Profile.STS_ROLE_ARN_PROPERTY_KEY;
     public static final String S3_ASSUMEROLE_ROLESESSIONNAME = Profile.STS_ROLE_SESSION_NAME_PROPERTY_KEY;
     public static final String S3_ASSUMEROLE_DURATIONSECONDS = Profile.STS_DURATION_SECONDS_PROPERTY_KEY;
-    public static final String S3_ASSUMEROLE_POLICY = "s3.assumerole.policy";
     // STS role chaining (AWS only)
     public static final String S3_ASSUMEROLE_ROLEARN_2 = "s3.assumerole.rolearn.2";
 
