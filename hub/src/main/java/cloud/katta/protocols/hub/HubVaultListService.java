@@ -14,6 +14,7 @@ import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.NotfoundException;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
@@ -45,6 +46,7 @@ public class HubVaultListService implements ListService {
 
     @Override
     public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
+        if(directory.isRoot()) {
         try {
             final VaultRegistry registry = session.getRegistry();
             final AttributedList<Path> vaults = new AttributedList<>();
@@ -89,6 +91,8 @@ public class HubVaultListService implements ListService {
         catch(ApiException e) {
             throw new HubExceptionMappingService().map("Listing directory {0} failed", e, directory);
         }
+        }
+        throw new NotfoundException(directory.getAbsolute());
     }
 
     @Override
