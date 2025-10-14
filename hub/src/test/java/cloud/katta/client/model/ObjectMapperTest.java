@@ -42,7 +42,7 @@ public class ObjectMapperTest {
 
 
         final StorageProfileS3STSDto awsSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/aws_sts/aws_sts_profile.json"), StorageProfileS3STSDto.class);
-        assertEquals("katta", awsSTSProfile.getBucketPrefix());
+        assertEquals("katta-test-", awsSTSProfile.getBucketPrefix());
         assertEquals("eu-west-1", awsSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), awsSTSProfile.getRegions());
         assertFalse(awsSTSProfile.getWithPathStyleAccessEnabled());
@@ -80,7 +80,7 @@ public class ObjectMapperTest {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class);
-        assertEquals("katta", minioSTSProfile.getBucketPrefix());
+        assertEquals("katta-test-", minioSTSProfile.getBucketPrefix());
         assertEquals("eu-central-1", minioSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), minioSTSProfile.getRegions());
         assertTrue(minioSTSProfile.getWithPathStyleAccessEnabled());
