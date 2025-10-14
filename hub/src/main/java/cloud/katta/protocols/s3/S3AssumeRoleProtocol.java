@@ -5,6 +5,7 @@
 package cloud.katta.protocols.s3;
 
 import ch.cyberduck.core.CredentialsConfigurator;
+import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.s3.S3Protocol;
 
@@ -19,9 +20,9 @@ public class S3AssumeRoleProtocol extends S3Protocol {
     public static final String OAUTH_TOKENEXCHANGE_BASEPATH = "oauth.tokenexchange.basepath";
 
     // STS assume role with web identity from Cyberduck core (AWS + MinIO)
-    public static final String S3_ASSUMEROLE_ROLEARN = "s3.assumerole.rolearn";
-    public static final String S3_ASSUMEROLE_ROLESESSIONNAME = "s3.assumerole.rolesessionname";
-    public static final String S3_ASSUMEROLE_DURATIONSECONDS = "s3.assumerole.durationseconds";
+    public static final String S3_ASSUMEROLE_ROLEARN = Profile.STS_ROLE_ARN_PROPERTY_KEY;
+    public static final String S3_ASSUMEROLE_ROLESESSIONNAME = Profile.STS_ROLE_SESSION_NAME_PROPERTY_KEY;
+    public static final String S3_ASSUMEROLE_DURATIONSECONDS = Profile.STS_DURATION_SECONDS_PROPERTY_KEY;
     public static final String S3_ASSUMEROLE_POLICY = "s3.assumerole.policy";
     // STS role chaining (AWS only)
     public static final String S3_ASSUMEROLE_ROLEARN_2 = "s3.assumerole.rolearn.2";
