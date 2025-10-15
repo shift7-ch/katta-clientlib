@@ -11,6 +11,7 @@ import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
 import ch.cyberduck.core.preferences.ProxyPreferencesReader;
 import ch.cyberduck.core.ssl.X509KeyManager;
@@ -56,7 +57,8 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             // Assume role with previously obtained temporary access token
             return super.assumeRole(credentials.withTokens(tokens)
                     .withProperty(Profile.STS_ROLE_ARN_PROPERTY_KEY, settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG))
-                    .withProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", "Vault", settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT)))
+                    .withProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key"),
+                            settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT)))
             );
         }
         return tokens;

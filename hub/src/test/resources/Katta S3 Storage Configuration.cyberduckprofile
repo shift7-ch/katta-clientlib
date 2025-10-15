@@ -34,5 +34,10 @@
         <false/>
         <key>Authorization</key>
         <string>AuthorizationCode</string>
+        <key>Properties</key>
+        <dict>
+            <key>s3.assumerole.rolearn.tag.vaultid.key</key>
+            <string>Vault</string>
+        </dict>
     </dict>
 </plist>
