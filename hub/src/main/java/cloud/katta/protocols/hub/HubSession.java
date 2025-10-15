@@ -253,7 +253,10 @@ public class HubSession extends HttpSession<HubApiClient> {
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
         if(type == ListService.class) {
-            return (T) (ListService) (directory, listener) -> vaults;
+            return (T) (ListService) (Path directory, ListProgressListener listener) -> {
+                listener.chunk(directory, vaults);
+                return vaults;
+            };
         }
         if(type == Scheduler.class) {
             return (T) access;
