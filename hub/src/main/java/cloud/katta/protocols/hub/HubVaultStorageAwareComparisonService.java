@@ -6,6 +6,7 @@ package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
+import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.synchronization.Comparison;
 import ch.cyberduck.core.synchronization.ComparisonService;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
@@ -44,7 +45,12 @@ public class HubVaultStorageAwareComparisonService implements ComparisonService 
         if(null == vault) {
             return ComparisonService.disabled;
         }
-        final HubUVFVault cryptomator = (HubUVFVault) session.getRegistry().find(session, vault);
-        return cryptomator.getStorage().getFeature(ComparisonService.class);
+        final Vault impl = session.getRegistry().find(session, vault);
+        if(impl instanceof HubUVFVault) {
+            final HubUVFVault cryptomator = (HubUVFVault) impl;
+            return cryptomator.getStorage().getFeature(ComparisonService.class);
+        }
+        // Disabled
+        return ComparisonService.disabled;
     }
 }
