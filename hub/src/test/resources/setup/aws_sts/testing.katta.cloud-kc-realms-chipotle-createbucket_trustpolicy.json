@@ -1,0 +1,13 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::430118840017:oidc-provider/testing.katta.cloud/kc/realms/chipotle"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {}
+        }
+    ]
+}
