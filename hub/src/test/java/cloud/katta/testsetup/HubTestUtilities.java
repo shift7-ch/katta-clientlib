@@ -29,7 +29,7 @@ public class HubTestUtilities {
     public static ApiClient getAdminApiClient(final HubTestConfig.Setup setup) throws IOException, ApiException {
         final ConfigDto config = new ConfigResourceApi(new ApiClient().setBasePath(setup.hubURL)).apiConfigGet();
         final PasswordTokenRequest request = new PasswordTokenRequest(new ApacheHttpTransport(), new GsonFactory(), new GenericUrl(config.getKeycloakTokenEndpoint()),
-                setup.adminConfig.username, setup.adminConfig.password)
+                setup.adminConfig.credentials.getUsername(), setup.adminConfig.credentials.getPassword())
                 .setClientAuthentication(new ClientParametersAuthentication(setup.clientId, null))
                 .setRequestInitializer(new UserAgentHttpRequestInitializer(new PreferencesUseragentProvider()));
         final String adminAccessToken = request.executeUnparsed().parseAs(OAuth2AuthorizationService.PermissiveTokenResponse.class).toTokenResponse().getAccessToken();

@@ -4,7 +4,16 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.PasswordStoreFactory;
+
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
+
 import cloud.katta.client.api.DeviceResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.DeviceDto;
@@ -17,15 +26,10 @@ import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
+
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
 
 @ExtendWith({HubTestSetupDockerExtension.Local.class})
 class UserKeysServiceImplIT extends AbstractHubTest {
@@ -60,7 +64,7 @@ class UserKeysServiceImplIT extends AbstractHubTest {
         final HubSession hubSession = setupConnection(config.setup);
 
         // Setting up new device w/ Account Key for existing user keys with erroneous setup code
-        final SecurityFailure securityException = assertThrows(SecurityFailure.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")))));
+        final SecurityFailure securityException = assertThrows(SecurityFailure.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig(new Credentials("alice", "wonderland"), "in")))));
         assertEquals(JOSEException.class, securityException.getCause().getClass());
         assertEquals("checksum failed", securityException.getCause().getCause().getMessage());
     }
@@ -111,7 +115,7 @@ class UserKeysServiceImplIT extends AbstractHubTest {
         new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
 
         // setting up new user keys and account key
-        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"))));
+        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig(new Credentials("alice", "wonderland"), "in"))));
 
         assertNotEquals(expecteduserKeys, userKeys);
 
