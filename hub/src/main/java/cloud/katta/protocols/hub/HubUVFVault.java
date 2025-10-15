@@ -10,6 +10,7 @@ import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
+import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Write;
@@ -63,9 +64,10 @@ public class HubUVFVault extends UVFVault {
     private final Session<?> storage;
 
     private final Path home;
+    private final LoginCallback prompt;
 
-    public HubUVFVault(final HubSession hub, final Path bucket, final HubStorageLocationService.StorageLocation location) throws ConnectionCanceledException {
-        this(hub, UUID.fromString(new UUIDRandomStringService().random()), bucket, location);
+    public HubUVFVault(final HubSession hub, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(hub, UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
     }
 
     /**
@@ -73,7 +75,7 @@ public class HubUVFVault extends UVFVault {
      *
      * @param bucket Bucket
      */
-    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location) throws ConnectionCanceledException {
+    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
         this(hub, vaultId, bucket,
                 UvfMetadataPayload.create()
                         .withStorage(new VaultMetadataJWEBackendDto()
@@ -83,7 +85,7 @@ public class HubUVFVault extends UVFVault {
                                 .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
                         .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                                 .enabled(true)
-                                .maxWotDepth(null)));
+                                .maxWotDepth(null)), prompt);
     }
 
     /**
@@ -91,17 +93,17 @@ public class HubUVFVault extends UVFVault {
      *
      * @param vaultId Vault ID Used to lookup profile
      */
-    public HubUVFVault(final HubSession hub, final UUID vaultId, final UvfMetadataPayload vaultMetadata) throws ConnectionCanceledException {
+    public HubUVFVault(final HubSession hub, final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
         this(hub, vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
-                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata);
+                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata, prompt);
     }
 
-    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata) throws ConnectionCanceledException {
+    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
         super(bucket);
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
         this.home = bucket;
-
+        this.prompt = prompt;
         final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
         final Protocol profile = ProtocolFactory.get().forName(vaultStorageMetadata.getProvider());
         log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
@@ -130,13 +132,13 @@ public class HubUVFVault extends UVFVault {
     }
 
     @Override
-    public <T> T getFeature(final Session<?> hub, final Class<T> type, final T delegate) {
+    public <T> T getFeature(final Session<?> hub, final Class<T> type, final T delegate) throws UnsupportedException {
         log.debug("Delegate to {} for feature {}", storage, type);
         // Ignore feature implementation but delegate to storage backend
         final T feature = storage._getFeature(type);
         if(null == feature) {
             log.warn("No feature {} available for {}", type, storage);
-            return null;
+            throw new UnsupportedException();
         }
         return super.getFeature(storage, type, feature);
     }
@@ -193,7 +195,7 @@ public class HubUVFVault extends UVFVault {
                     new ProxyPreferencesReader(storage.getHost()).getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET));
             // No role chaining when creating vault
             configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, null);
-            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
+            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), prompt, new DisabledCancelCallback());
             final Path vault;
             if(false) {
                 log.debug("Upload vault template to {}", storage);
@@ -243,7 +245,7 @@ public class HubUVFVault extends UVFVault {
         try {
             log.debug("Connect to {}", storage);
             try {
-                storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), new DisabledLoginCallback(), new DisabledCancelCallback());
+                storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), this.prompt, new DisabledCancelCallback());
             }
             catch(BackgroundException e) {
                 log.warn("Skip loading vault with failure {} connecting to storage", e.toString());

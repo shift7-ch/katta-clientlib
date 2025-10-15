@@ -5,10 +5,10 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
+import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -35,9 +35,11 @@ public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
     private final HubSession session;
+    private final LoginCallback prompt;
 
-    public HubVaultListService(final HubSession session) {
+    public HubVaultListService(final HubSession session, final LoginCallback prompt) {
         this.session = session;
+        this.prompt = prompt;
     }
 
     @Override
@@ -56,9 +58,9 @@ public class HubVaultListService implements ListService {
                         // Find storage configuration in vault metadata
                         final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys());
-                        final HubUVFVault vault = new HubUVFVault(session, vaultDto.getId(), vaultMetadata);
+                        final HubUVFVault vault = new HubUVFVault(session, vaultDto.getId(), vaultMetadata, prompt);
                         try {
-                            registry.add(vault.load(session, new DisabledPasswordCallback()));
+                            registry.add(vault.load(session, prompt));
                             vaults.add(vault.getHome());
                             listener.chunk(directory, vaults);
                         }

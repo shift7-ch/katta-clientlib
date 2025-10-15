@@ -8,6 +8,7 @@ import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
+import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
@@ -246,7 +247,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                             .enabled(true)
                             .maxWotDepth(null));
-            final HubUVFVault cryptomator = new HubUVFVault(hubSession, vaultId, bucket, vaultMetadata);
+            final HubUVFVault cryptomator = new HubUVFVault(hubSession, vaultId, bucket, vaultMetadata, new DisabledLoginCallback());
             cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
