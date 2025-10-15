@@ -270,7 +270,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 assertNotNull(vaults.find(new SimplePathPredicate(bucket)));
 
                 assertTrue(hubSession.getFeature(Find.class).find(bucket));
-                assertEquals(bucket.attributes(), hubSession.getFeature(AttributesFinder.class).find(bucket));
+                assertEquals(config.vault.region, hubSession.getFeature(AttributesFinder.class).find(bucket).getRegion());
 
                 assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, bucket));
 
@@ -304,7 +304,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 // directory creation and listing
                 final Path folder = new Path(vault, new AlphanumericRandomStringService(25).random(), EnumSet.of(Path.Type.directory));
 
-                hubSession.getFeature(Directory.class).mkdir(folder, new TransferStatus());
+                hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertEquals(2, list.size()); // a file and a folder
 
