@@ -57,7 +57,7 @@ public abstract class AbstractHubTest extends VaultTest {
             "handmade2",
             PROPERTIES.get("handmade2.s3.amazonaws.com.username"),
             PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
-            null
+            "eu-north-1"
     );
 
     /**
