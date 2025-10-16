@@ -185,14 +185,7 @@ public class HubSession extends HttpSession<HubApiClient> {
                 }
             }
             // Ensure vaults are registered
-            try {
-                vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());
-            }
-            finally {
-                log.debug("Destroyed user keys {}", userKeys);
-                // Short-lived
-                userKeys.destroy();
-            }
+            vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
