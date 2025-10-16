@@ -60,7 +60,7 @@ public class HubVaultListService implements ListService {
                         final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
-                        final HubUVFVault vault = new HubUVFVault(session, vaultDto.getId(), vaultMetadata, prompt);
+                        final HubUVFVault vault = new HubUVFVault(vaultDto.getId(), vaultMetadata, prompt);
                         try {
                             registry.add(vault.load(session, prompt));
                             vaults.add(vault.getHome());

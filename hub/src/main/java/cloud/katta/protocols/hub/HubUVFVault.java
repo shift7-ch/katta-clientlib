@@ -80,8 +80,8 @@ public class HubUVFVault extends UVFVault {
     private final Path home;
     private final LoginCallback login;
 
-    public HubUVFVault(final HubSession hub, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(hub, UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
+    public HubUVFVault(final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
     }
 
     /**
@@ -89,8 +89,8 @@ public class HubUVFVault extends UVFVault {
      *
      * @param bucket Bucket
      */
-    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(hub, vaultId, bucket,
+    public HubUVFVault(final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(vaultId, bucket,
                 UvfMetadataPayload.create()
                         .withStorage(new VaultMetadataJWEBackendDto()
                                 .provider(location.getProfile())
@@ -107,12 +107,12 @@ public class HubUVFVault extends UVFVault {
      *
      * @param vaultId Vault ID Used to lookup profile
      */
-    public HubUVFVault(final HubSession hub, final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(hub, vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+    public HubUVFVault(final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                 new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata, prompt);
     }
 
-    public HubUVFVault(final HubSession session, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
+    public HubUVFVault(final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
         super(bucket);
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
@@ -120,12 +120,13 @@ public class HubUVFVault extends UVFVault {
         this.login = prompt;
         final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
         final Protocol profile = ProtocolFactory.get().forName(vaultStorageMetadata.getProvider());
+        final HubSession hub = profile.getFeature(HubSession.class);
         log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
-        final Host storageProvider = new Host(profile, session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost())
+        final Host storageProvider = new Host(profile, hub.getFeature(CredentialsConfigurator.class).reload().configure(hub.getHost())
                 .withUsername(vaultStorageMetadata.getUsername()).withPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion());
         storageProvider.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
         log.debug("Configured {} for vault {}", storageProvider, this);
-        this.storage = SessionFactory.create(storageProvider, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
+        this.storage = SessionFactory.create(storageProvider, hub.getFeature(X509TrustManager.class), hub.getFeature(X509KeyManager.class));
     }
 
     /**

@@ -247,7 +247,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                             .enabled(true)
                             .maxWotDepth(null));
-            final HubUVFVault cryptomator = new HubUVFVault(hubSession, vaultId, bucket, vaultMetadata, new DisabledLoginCallback());
+            final HubUVFVault cryptomator = new HubUVFVault(vaultId, bucket, vaultMetadata, new DisabledLoginCallback());
             cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
