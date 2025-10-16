@@ -4,7 +4,20 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.*;
+import ch.cyberduck.core.CredentialsConfigurator;
+import ch.cyberduck.core.DisabledCancelCallback;
+import ch.cyberduck.core.DisabledHostKeyCallback;
+import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostUrlProvider;
+import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.PasswordCallback;
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
+import ch.cyberduck.core.Protocol;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
+import ch.cyberduck.core.SessionFactory;
+import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -99,7 +112,7 @@ public class HubUVFVault extends UVFVault {
                 new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata, prompt);
     }
 
-    public HubUVFVault(final HubSession hub, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
+    public HubUVFVault(final HubSession session, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
         super(bucket);
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
@@ -108,20 +121,12 @@ public class HubUVFVault extends UVFVault {
         final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
         final Protocol profile = ProtocolFactory.get().forName(vaultStorageMetadata.getProvider());
         log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
-        final Credentials credentials =
-                hub.getFeature(CredentialsConfigurator.class).reload().configure(hub.getHost());
-        log.debug("Copy credentials {}", credentials);
-        if(vaultStorageMetadata.getUsername() != null) {
-            credentials.setUsername(vaultStorageMetadata.getUsername());
-        }
-        if(vaultStorageMetadata.getPassword() != null) {
-            credentials.setPassword(vaultStorageMetadata.getPassword());
-        }
-        final Host storageProvider = new Host(profile, credentials);
+        final Host storageProvider = new Host(profile, session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost())
+                .withUsername(vaultStorageMetadata.getUsername()).withPassword(vaultStorageMetadata.getPassword()));
         storageProvider.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
         storageProvider.setRegion(vaultStorageMetadata.getRegion());
         log.debug("Configured {} for vault {}", storageProvider, this);
-        this.storage = SessionFactory.create(storageProvider, hub.getFeature(X509TrustManager.class), hub.getFeature(X509KeyManager.class));
+        this.storage = SessionFactory.create(storageProvider, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
     }
 
     /**
