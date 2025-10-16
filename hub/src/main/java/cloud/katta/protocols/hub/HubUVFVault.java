@@ -78,7 +78,7 @@ public class HubUVFVault extends UVFVault {
     private final Session<?> storage;
 
     private final Path home;
-    private final LoginCallback prompt;
+    private final LoginCallback login;
 
     public HubUVFVault(final HubSession hub, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
         this(hub, UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
@@ -117,14 +117,13 @@ public class HubUVFVault extends UVFVault {
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
         this.home = bucket;
-        this.prompt = prompt;
+        this.login = prompt;
         final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
         final Protocol profile = ProtocolFactory.get().forName(vaultStorageMetadata.getProvider());
         log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
         final Host storageProvider = new Host(profile, session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost())
-                .withUsername(vaultStorageMetadata.getUsername()).withPassword(vaultStorageMetadata.getPassword()));
+                .withUsername(vaultStorageMetadata.getUsername()).withPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion());
         storageProvider.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
-        storageProvider.setRegion(vaultStorageMetadata.getRegion());
         log.debug("Configured {} for vault {}", storageProvider, this);
         this.storage = SessionFactory.create(storageProvider, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
     }
@@ -188,7 +187,7 @@ public class HubUVFVault extends UVFVault {
             // Upload JWE
             log.debug("Grant access to vault {}", vaultDto);
             final UserDto userDto = hub.getMe();
-            final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+            final DeviceSetupCallback setup = login.getFeature(DeviceSetupCallback.class);
             final UserKeys userKeys = hub.getUserKeys(setup);
             vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(),
                     Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
@@ -202,7 +201,7 @@ public class HubUVFVault extends UVFVault {
                     new ProxyPreferencesReader(storage.getHost()).getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET));
             // No role chaining when creating vault
             configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, null);
-            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), prompt, new DisabledCancelCallback());
+            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), login, new DisabledCancelCallback());
             final Path vault;
             if(false) {
                 log.debug("Upload vault template to {}", storage);
@@ -252,15 +251,14 @@ public class HubUVFVault extends UVFVault {
         try {
             log.debug("Connect to {}", storage);
             try {
-                storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), this.prompt, new DisabledCancelCallback());
+                storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), login, new DisabledCancelCallback());
             }
             catch(BackgroundException e) {
                 log.warn("Skip loading vault with failure {} connecting to storage", e.toString());
                 throw new VaultUnlockCancelException(this, e);
             }
-            final PathAttributes attr = storage.getFeature(AttributesFinder.class).find(home);
-            attr.setDisplayname(vaultMetadata.storage().getNickname());
-            home.setAttributes(attr);
+            home.setAttributes(storage.getFeature(AttributesFinder.class).find(home)
+                    .setDisplayname(vaultMetadata.storage().getNickname()));
             log.debug("Initialize vault {} with metadata {}", this, vaultMetadata);
             // Initialize cryptors
             super.load(storage, new UvfMetadataPayloadPasswordCallback(vaultMetadata.toJSON()));
