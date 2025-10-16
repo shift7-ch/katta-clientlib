@@ -16,6 +16,7 @@ import ch.cyberduck.core.Session;
 import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -44,7 +45,7 @@ public class HubUVFVault extends UVFVault {
     }
 
     @Override
-    public <T> T getFeature(final Session<?> ignore, final Class<T> type, final T delegate) {
+    public <T> T getFeature(final Session<?> ignore, final Class<T> type, final T delegate) throws UnsupportedException {
         log.debug("Delegate to {} for feature {}", storage, type);
         // Ignore feature implementation but delegate to storage backend
         return super.getFeature(storage, type, storage._getFeature(type));
