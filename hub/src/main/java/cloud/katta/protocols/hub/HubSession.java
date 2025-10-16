@@ -235,14 +235,6 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     /**
      *
-     * @return Null when not connected
-     */
-    public ConfigDto getConfig() {
-        return config;
-    }
-
-    /**
-     *
      * @return Destroyed keys after login
      */
     public UserKeys getUserKeys() {
