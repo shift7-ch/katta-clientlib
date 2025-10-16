@@ -42,7 +42,9 @@
         <key>Properties</key>
         <dict>
             <key>katta.userkeys.ttl</key>
-            <string>3600</string>
+            <string>60000</string>
+            <key>katta.user.ttl</key>
+            <string>60000</string>
         </dict>
     </dict>
 </plist>

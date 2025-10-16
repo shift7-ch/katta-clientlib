@@ -87,11 +87,13 @@ public class HubSession extends HttpSession<HubApiClient> {
      */
     private OAuth2RequestInterceptor authorizationService;
 
-    private UserDto me;
     private ConfigDto config;
 
-    private final ExpiringObjectHolder<UserKeys> userKeys
-            = new ExpiringObjectHolder<>(preferences.getLong("katta.userkeys.ttl"));
+    private final ExpiringObjectHolder<UserDto> userDtoHolder
+            = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.user.ttl") ? 60000 : preferences.getLong("katta.user.ttl"));
+
+    private final ExpiringObjectHolder<UserKeys> userKeysHolder
+            = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
 
     private HubVaultListService vaults;
 
@@ -164,12 +166,13 @@ public class HubSession extends HttpSession<HubApiClient> {
             throw new LoginCanceledException(e);
         }
         try {
-            me = new UsersResourceApi(client).apiUsersMeGet(true, false);
+            final UserDto me = this.getMe();
             log.debug("Retrieved user {}", me);
             // Ensure device key is available
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             log.debug("Configured with setup prompt {}", setup);
-            userKeys.set(this.pair(setup));
+            final UserKeys userKeys = this.getUserKeys(setup);
+            log.debug("Retrieved user keys {}", userKeys);
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(client).apiStorageprofileGet(false);
             for(StorageProfileDto storageProfileDto : storageProfileDtos) {
                 final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
@@ -198,7 +201,8 @@ public class HubSession extends HttpSession<HubApiClient> {
         try {
             final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup);
             log.debug("Retrieved device keys {}", deviceKeys);
-            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host, me, deviceKeys, setup);
+            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host,
+                    this.getMe(), deviceKeys, setup);
             log.debug("Retrieved user keys {}", userKeys);
             return userKeys;
         }
@@ -224,8 +228,16 @@ public class HubSession extends HttpSession<HubApiClient> {
      *
      * @return Null prior login
      */
-    public UserDto getMe() {
-        return me;
+    public UserDto getMe() throws BackgroundException {
+        try {
+            if(userDtoHolder.get() == null) {
+                userDtoHolder.set(new UsersResourceApi(client).apiUsersMeGet(true, false));
+            }
+            return userDtoHolder.get();
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
+        }
     }
 
     /**
@@ -233,10 +245,10 @@ public class HubSession extends HttpSession<HubApiClient> {
      * @return Destroyed keys after login
      */
     public UserKeys getUserKeys(final DeviceSetupCallback setup) throws BackgroundException {
-        if(userKeys.get() == null) {
-            userKeys.set(this.pair(setup));
+        if(userKeysHolder.get() == null) {
+            userKeysHolder.set(this.pair(setup));
         }
-        return userKeys.get();
+        return userKeysHolder.get();
     }
 
     @Override
