@@ -37,6 +37,7 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
+import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayloadPasswordCallback;
@@ -182,7 +183,8 @@ public class HubUVFVault extends UVFVault {
             // Upload JWE
             log.debug("Grant access to vault {}", vaultDto);
             final UserDto userDto = hub.getMe();
-            final UserKeys userKeys = hub.getUserKeys();
+            final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+            final UserKeys userKeys = hub.getUserKeys(setup);
             vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(),
                     Collections.singletonMap(userDto.getId(), jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
             // Upload vault template to storage

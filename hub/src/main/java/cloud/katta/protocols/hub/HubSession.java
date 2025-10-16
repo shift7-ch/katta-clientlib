@@ -89,8 +89,11 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     private UserDto me;
     private ConfigDto config;
-    private UserKeys userKeys;
-    private AttributedList<Path> vaults;
+
+    private final ExpiringObjectHolder<UserKeys> userKeys
+            = new ExpiringObjectHolder<>(preferences.getLong("katta.userkeys.ttl"));
+
+    private HubVaultListService vaults;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
@@ -166,7 +169,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             // Ensure device key is available
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             log.debug("Configured with setup prompt {}", setup);
-            userKeys = this.pair(setup);
+            userKeys.set(this.pair(setup));
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(client).apiStorageprofileGet(false);
             for(StorageProfileDto storageProfileDto : storageProfileDtos) {
                 final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
@@ -184,8 +187,7 @@ public class HubSession extends HttpSession<HubApiClient> {
                         throw new InteroperabilityException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
                 }
             }
-            // Ensure vaults are registered
-            vaults = new HubVaultListService(this, prompt).list(Home.root(), new DisabledListProgressListener());
+            vaults = new HubVaultListService(this, prompt);
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
@@ -230,18 +232,18 @@ public class HubSession extends HttpSession<HubApiClient> {
      *
      * @return Destroyed keys after login
      */
-    public UserKeys getUserKeys() {
-        return userKeys;
+    public UserKeys getUserKeys(final DeviceSetupCallback setup) throws BackgroundException {
+        if(userKeys.get() == null) {
+            userKeys.set(this.pair(setup));
+        }
+        return userKeys.get();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
         if(type == ListService.class) {
-            return (T) (ListService) (Path directory, ListProgressListener listener) -> {
-                listener.chunk(directory, vaults);
-                return vaults;
-            };
+            return (T) vaults;
         }
         if(type == Scheduler.class) {
             return (T) access;

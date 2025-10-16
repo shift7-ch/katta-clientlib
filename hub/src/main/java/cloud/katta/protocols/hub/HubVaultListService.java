@@ -25,6 +25,7 @@ import java.text.MessageFormat;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
+import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
@@ -57,7 +58,8 @@ public class HubVaultListService implements ListService {
                     try {
                         // Find storage configuration in vault metadata
                         final VaultServiceImpl vaultService = new VaultServiceImpl(session);
-                        final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys());
+                        final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+                        final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
                         final HubUVFVault vault = new HubUVFVault(session, vaultDto.getId(), vaultMetadata, prompt);
                         try {
                             registry.add(vault.load(session, prompt));
