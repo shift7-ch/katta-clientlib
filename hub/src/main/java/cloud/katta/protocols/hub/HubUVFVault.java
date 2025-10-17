@@ -27,8 +27,8 @@ import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Write;
+import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesFactory;
-import ch.cyberduck.core.preferences.ProxyPreferencesReader;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
@@ -199,7 +199,7 @@ public class HubUVFVault extends UVFVault {
             configuration.setProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, null);
             // Assume role with policy attached to create vault
             configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY,
-                    new ProxyPreferencesReader(storage.getHost()).getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET));
+                    HostPreferencesFactory.get(storage.getHost()).getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET));
             // No role chaining when creating vault
             configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, null);
             storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), login, new DisabledCancelCallback());
