@@ -27,6 +27,7 @@
         <key>Scopes</key>
         <array>
             <string>openid</string>
+            <string>offline_access</string>
         </array>
         <key>OAuth Redirect Url</key>
         <string>${oauth.handler.scheme}:oauth</string>
