@@ -71,7 +71,7 @@ class HubGrantAccessSchedulerServiceTest {
                 .ecdhPublicKey(encodePublicKey(userKeys.ecdhKeyPair().getPublic()))
                 .ecdsaPublicKey(encodePublicKey(userKeys.ecdsaKeyPair().getPublic()))
         );
-        Mockito.when(hub.getCredentials()).thenReturn(new Credentials().withUsername("Fritzl"));
+        Mockito.when(hub.getCredentials()).thenReturn(new Credentials().setUsername("Fritzl"));
         Mockito.when(hub.getHostname()).thenReturn("Unterwittelsbach");
         Mockito.when(devices.apiDevicesDeviceIdGet(any())).thenReturn(new DeviceDto()
                 .name("Franzl")

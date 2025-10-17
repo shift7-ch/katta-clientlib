@@ -10,7 +10,6 @@ import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
@@ -20,8 +19,6 @@ import ch.cyberduck.core.sts.STSRequestInterceptor;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE;
 
 public class S3AssumeRoleSession extends S3Session {
     private static final Logger log = LogManager.getLogger(S3AssumeRoleSession.class);
@@ -41,13 +38,8 @@ public class S3AssumeRoleSession extends S3Session {
     @Override
     protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) throws LoginCanceledException {
         if(host.getProtocol().isOAuthConfigurable()) {
-            final OAuth2RequestInterceptor oauth;
-            if(HostPreferencesFactory.get(host).getBoolean(OAUTH_TOKENEXCHANGE)) {
-                oauth = new TokenExchangeRequestInterceptor(configuration.build(), host, prompt);
-            }
-            else {
-                oauth = new OAuth2RequestInterceptor(configuration.build(), host, prompt);
-            }
+            // Shared OAuth tokens
+            final OAuth2RequestInterceptor oauth = new OAuth2RequestInterceptor(configuration.build(), host, prompt);
             oauth.withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
             if(host.getProtocol().getAuthorization() != null) {
                 oauth.withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()));
