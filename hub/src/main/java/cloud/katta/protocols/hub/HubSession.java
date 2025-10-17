@@ -182,7 +182,8 @@ public class HubSession extends HttpSession<HubApiClient> {
                     case S3:
                     case S3_STS:
                         final ProtocolFactory protocols = ProtocolFactory.get();
-                        final Profile profile = new HubAwareProfile(this, protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
+                        final Profile profile = new HubAwareProfile(this, authorizationService,
+                                protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
                                 config, storageProfile);
                         log.debug("Register profile {}", profile);
                         protocols.register(profile);

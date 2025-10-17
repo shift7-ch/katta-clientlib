@@ -8,7 +8,6 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.exception.LoginCanceledException;
-import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Session;
@@ -39,11 +38,7 @@ public class S3AssumeRoleSession extends S3Session {
     protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) throws LoginCanceledException {
         if(host.getProtocol().isOAuthConfigurable()) {
             // Shared OAuth tokens
-            final OAuth2RequestInterceptor oauth = new OAuth2RequestInterceptor(configuration.build(), host, prompt);
-            oauth.withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
-            if(host.getProtocol().getAuthorization() != null) {
-                oauth.withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()));
-            }
+            final OAuth2RequestInterceptor oauth = host.getProtocol().getFeature(OAuth2RequestInterceptor.class);
             log.debug("Register interceptor {}", oauth);
             configuration.addInterceptorLast(oauth);
             final STSRequestInterceptor sts = new STSChainedAssumeRoleRequestInterceptor(oauth, host, trust, key, prompt) {
