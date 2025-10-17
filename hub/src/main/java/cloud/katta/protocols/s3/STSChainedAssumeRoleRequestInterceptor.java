@@ -47,12 +47,14 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     private static final String OIDC_AUTHORIZED_PARTY = "azp";
 
     private final Host bookmark;
+    private final String vaultId;
 
     public STSChainedAssumeRoleRequestInterceptor(final OAuth2RequestInterceptor oauth, final Host host,
                                                   final X509TrustManager trust, final X509KeyManager key,
                                                   final LoginCallback prompt) {
         super(oauth, host, trust, key, prompt);
         this.bookmark = host;
+        this.vaultId = HostPreferencesFactory.get(host).getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT);
     }
 
     /**
@@ -73,8 +75,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             log.debug("Assume role with temporary credentials {}", tokens);
             // Assume role with previously obtained temporary access token
             return super.assumeRole(credentials.setTokens(tokens)
-                            .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key"),
-                                    settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT))),
+                            .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key"), vaultId)),
                     settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG));
         }
         log.warn("No vault tag set. Skip assuming role with temporary credentials {} for {}", tokens, bookmark);
@@ -96,7 +97,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
                 log.debug("Exchange token with hub {}", hub);
                 final StorageResourceApi api = new StorageResourceApi(hub.getClient());
                 try {
-                    final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT));
+                    final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(vaultId);
                     // N.B. token exchange with Id token does not work!
                     final OAuthTokens exchanged = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                             tokenExchangeResponse.getRefreshToken(),
