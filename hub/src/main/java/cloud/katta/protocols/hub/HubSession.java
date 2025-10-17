@@ -156,7 +156,8 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        final Credentials credentials = authorizationService.validate();
+        final Credentials credentials = host.getCredentials();
+        credentials.setOauth(authorizationService.validate(credentials.getOauth()));
         try {
             // Set username from OAuth ID Token for saving in keychain
             credentials.setUsername(JWT.decode(credentials.getOauth().getIdToken()).getSubject());

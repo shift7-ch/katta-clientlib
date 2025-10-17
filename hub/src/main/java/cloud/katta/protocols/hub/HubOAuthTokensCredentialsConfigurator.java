@@ -28,7 +28,7 @@ public class HubOAuthTokensCredentialsConfigurator implements CredentialsConfigu
 
     @Override
     public Credentials configure(final Host host) {
-        return new Credentials(host.getCredentials()).withOauth(tokens);
+        return new Credentials(host.getCredentials()).setOauth(tokens);
     }
 
     @Override

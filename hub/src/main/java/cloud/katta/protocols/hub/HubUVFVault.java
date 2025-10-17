@@ -123,7 +123,7 @@ public class HubUVFVault extends UVFVault {
         final HubSession hub = profile.getFeature(HubSession.class);
         log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
         final Host storageProvider = new Host(profile, hub.getFeature(CredentialsConfigurator.class).reload().configure(hub.getHost())
-                .withUsername(vaultStorageMetadata.getUsername()).withPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion());
+                .setUsername(vaultStorageMetadata.getUsername()).setPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion());
         storageProvider.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
         log.debug("Configured {} for vault {}", storageProvider, this);
         this.storage = SessionFactory.create(storageProvider, hub.getFeature(X509TrustManager.class), hub.getFeature(X509KeyManager.class));
