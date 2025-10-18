@@ -10,6 +10,8 @@ import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.Protocol;
+import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
@@ -35,10 +37,15 @@ import cloud.katta.workflows.exceptions.SecurityFailure;
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
+    /**
+     * Storage profiles
+     */
+    private final ProtocolFactory storage;
     private final HubSession session;
     private final LoginCallback prompt;
 
-    public HubVaultListService(final HubSession session, final LoginCallback prompt) {
+    public HubVaultListService(final ProtocolFactory storage, final HubSession session, final LoginCallback prompt) {
+        this.storage = storage;
         this.session = session;
         this.prompt = prompt;
     }
@@ -60,7 +67,8 @@ public class HubVaultListService implements ListService {
                         final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
-                        final HubUVFVault vault = new HubUVFVault(vaultDto.getId(), vaultMetadata, prompt);
+                        final Protocol profile = storage.forName(vaultMetadata.storage().getProvider());
+                        final HubUVFVault vault = new HubUVFVault(profile, vaultDto.getId(), vaultMetadata, prompt);
                         try {
                             registry.add(vault.load(session, prompt));
                             vaults.add(vault.getHome());

@@ -83,6 +83,11 @@ public class HubSession extends HttpSession<HubApiClient> {
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
 
     /**
+     * Registered storage profiles
+     */
+    private final ProtocolFactory storage = new ProtocolFactory();
+
+    /**
      * Interceptor for OpenID connect flow
      */
     private OAuth2RequestInterceptor authorizationService;
@@ -181,18 +186,17 @@ public class HubSession extends HttpSession<HubApiClient> {
                 switch(storageProfile.getProtocol()) {
                     case S3:
                     case S3_STS:
-                        final ProtocolFactory protocols = ProtocolFactory.get();
                         final Profile profile = new HubAwareProfile(this, authorizationService,
-                                protocols.forType(protocols.find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
+                                ProtocolFactory.get().forType(ProtocolFactory.get().find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
                                 config, storageProfile);
                         log.debug("Register profile {}", profile);
-                        protocols.register(profile);
+                        storage.register(profile);
                         break;
                     default:
                         throw new InteroperabilityException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
                 }
             }
-            vaults = new HubVaultListService(this, prompt);
+            vaults = new HubVaultListService(storage, this, prompt);
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
@@ -382,6 +386,9 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == CredentialsConfigurator.class) {
             return (T) new HubOAuthTokensCredentialsConfigurator(keychain, host);
+        }
+        if(type == ProtocolFactory.class) {
+            return (T) storage;
         }
         return super._getFeature(type);
     }

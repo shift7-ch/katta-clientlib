@@ -14,7 +14,6 @@ import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SessionFactory;
 import ch.cyberduck.core.UUIDRandomStringService;
@@ -80,8 +79,8 @@ public class HubUVFVault extends UVFVault {
     private final Path home;
     private final LoginCallback login;
 
-    public HubUVFVault(final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
+    public HubUVFVault(final Protocol profile, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(profile, UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
     }
 
     /**
@@ -89,8 +88,8 @@ public class HubUVFVault extends UVFVault {
      *
      * @param bucket Bucket
      */
-    public HubUVFVault(final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(vaultId, bucket,
+    public HubUVFVault(final Protocol profile, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(profile, vaultId, bucket,
                 UvfMetadataPayload.create()
                         .withStorage(new VaultMetadataJWEBackendDto()
                                 .provider(location.getProfile())
@@ -107,19 +106,18 @@ public class HubUVFVault extends UVFVault {
      *
      * @param vaultId Vault ID Used to lookup profile
      */
-    public HubUVFVault(final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+    public HubUVFVault(final Protocol profile, final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
+        this(profile, vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                 new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata, prompt);
     }
 
-    public HubUVFVault(final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
+    public HubUVFVault(final Protocol profile, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
         super(bucket);
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
         this.home = bucket;
         this.login = prompt;
         final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
-        final Protocol profile = ProtocolFactory.get().forName(vaultStorageMetadata.getProvider());
         final HubSession hub = profile.getFeature(HubSession.class);
         log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
         final Host storageProvider = new Host(profile, hub.getFeature(CredentialsConfigurator.class).reload().configure(hub.getHost())
