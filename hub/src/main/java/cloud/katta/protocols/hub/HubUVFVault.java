@@ -16,7 +16,6 @@ import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SessionFactory;
-import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -77,19 +76,6 @@ public class HubUVFVault extends UVFVault {
 
     private final Path home;
     private final LoginCallback login;
-
-    public HubUVFVault(final Protocol profile, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(profile, UUID.fromString(new UUIDRandomStringService().random()), bucket, location, prompt);
-    }
-
-    /**
-     * Constructor for factory creating new vault
-     *
-     * @param bucket Bucket
-     */
-    public HubUVFVault(final Protocol profile, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(profile, vaultId, bucket, location.toUvfMetadataPayload(bucket), prompt);
-    }
 
     /**
      * Open from existing metadata
