@@ -73,8 +73,6 @@ public class HubUVFVault extends UVFVault {
      * Storage connection only available after loading vault
      */
     private final Session<?> storage;
-
-    private final Path home;
     private final LoginCallback login;
 
     /**
@@ -91,7 +89,6 @@ public class HubUVFVault extends UVFVault {
         super(bucket);
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
-        this.home = bucket;
         this.login = prompt;
         final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
         final HubSession hub = profile.getFeature(HubSession.class);
@@ -185,6 +182,7 @@ public class HubUVFVault extends UVFVault {
             }
             else { // Obsolete when implemented in super
                 final Directory<?> directory = (Directory<?>) storage._getFeature(Directory.class);
+                final Path home = this.getHome();
                 log.debug("Create vault root directory at {}", home);
                 final TransferStatus status = (new TransferStatus()).setRegion(HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion());
                 vault = directory.mkdir(storage._getFeature(Write.class), home, status);
@@ -232,6 +230,7 @@ public class HubUVFVault extends UVFVault {
                 log.warn("Skip loading vault with failure {} connecting to storage", e.toString());
                 throw new VaultUnlockCancelException(this, e);
             }
+            final Path home = this.getHome();
             home.setAttributes(storage.getFeature(AttributesFinder.class).find(home)
                     .setDisplayname(vaultMetadata.storage().getNickname()));
             log.debug("Initialize vault {} with metadata {}", this, vaultMetadata);
@@ -249,7 +248,7 @@ public class HubUVFVault extends UVFVault {
         final StringBuilder sb = new StringBuilder("HubUVFVault{");
         sb.append("vaultId=").append(vaultId);
         sb.append(", vaultMetadata=").append(vaultMetadata);
-        sb.append(", home=").append(home);
+        sb.append(", storage=").append(storage);
         sb.append('}');
         return sb.toString();
     }
