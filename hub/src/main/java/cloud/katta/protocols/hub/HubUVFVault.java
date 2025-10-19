@@ -76,17 +76,15 @@ public class HubUVFVault extends UVFVault {
     private final LoginCallback login;
 
     /**
-     * Open from existing metadata
      *
-     * @param vaultId Vault ID Used to lookup profile
+     * @param profile       Storage provider configuration
+     * @param vaultId       Vault Id
+     * @param vaultMetadata Vault UVF metadata
+     * @param prompt        Login prompt to access storage
      */
     public HubUVFVault(final Protocol profile, final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(profile, vaultId, new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
-                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())), vaultMetadata, prompt);
-    }
-
-    public HubUVFVault(final Protocol profile, final UUID vaultId, final Path bucket, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
-        super(bucket);
+        super(new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())));
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
         this.login = prompt;

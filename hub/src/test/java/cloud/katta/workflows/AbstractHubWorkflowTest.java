@@ -81,7 +81,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                             .enabled(true)
                             .maxWotDepth(3));
             final HubUVFVault cryptomator = new HubUVFVault(hubSession.getFeature(ProtocolFactory.class).forName(location.getProfile()),
-                    vaultId, bucket, vaultMetadata, new DisabledLoginCallback());
+                    vaultId, vaultMetadata, new DisabledLoginCallback());
             cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);

@@ -249,7 +249,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                             .enabled(true)
                             .maxWotDepth(null));
             final HubUVFVault cryptomator = new HubUVFVault(hubSession.getFeature(ProtocolFactory.class).forName(location.getProfile()),
-                    vaultId, bucket, vaultMetadata, new DisabledLoginCallback());
+                    vaultId, vaultMetadata, new DisabledLoginCallback());
             cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
