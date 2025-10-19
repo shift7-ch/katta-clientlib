@@ -19,6 +19,9 @@ import java.util.Set;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.StorageProfileDto;
+import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 
 public class HubStorageLocationService implements Location {
@@ -110,6 +113,18 @@ public class HubStorageLocationService implements Location {
                 return new StorageLocation(identifier, null, null);
             }
             return new StorageLocation(StringUtils.isBlank(parts[0]) ? null : parts[0], StringUtils.isBlank(parts[1]) ? null : parts[1], null);
+        }
+
+        public UvfMetadataPayload toUvfMetadataPayload(final Path bucket) {
+            return UvfMetadataPayload.create()
+                    .withStorage(new VaultMetadataJWEBackendDto()
+                            .provider(this.getProfile())
+                            .defaultPath(bucket.getAbsolute())
+                            .region(this.getRegion())
+                            .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
+                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                            .enabled(true)
+                            .maxWotDepth(null));
         }
     }
 }

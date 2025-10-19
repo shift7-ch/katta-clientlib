@@ -53,7 +53,6 @@ import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayloadPasswordCallback;
-import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
@@ -89,16 +88,7 @@ public class HubUVFVault extends UVFVault {
      * @param bucket Bucket
      */
     public HubUVFVault(final Protocol profile, final UUID vaultId, final Path bucket, final HubStorageLocationService.StorageLocation location, final LoginCallback prompt) throws ConnectionCanceledException {
-        this(profile, vaultId, bucket,
-                UvfMetadataPayload.create()
-                        .withStorage(new VaultMetadataJWEBackendDto()
-                                .provider(location.getProfile())
-                                .defaultPath(bucket.getAbsolute())
-                                .region(location.getRegion())
-                                .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
-                        .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
-                                .enabled(true)
-                                .maxWotDepth(null)), prompt);
+        this(profile, vaultId, bucket, location.toUvfMetadataPayload(bucket), prompt);
     }
 
     /**
