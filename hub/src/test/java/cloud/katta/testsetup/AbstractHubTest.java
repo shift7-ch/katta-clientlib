@@ -9,6 +9,7 @@ import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.profiles.LocalProfilesFinder;
+import ch.cyberduck.core.serviceloader.AnnotationAutoServiceLoader;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DefaultX509TrustManager;
 import ch.cyberduck.core.vault.VaultRegistryFactory;
@@ -28,11 +29,9 @@ import java.util.function.Function;
 
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.model.AccountKeyAndDeviceName;
-import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
-import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -165,17 +164,10 @@ public abstract class AbstractHubTest extends VaultTest {
 
     protected static HubSession setupConnection(final HubTestConfig.Setup setup) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
-        // ProtocolFactory.get() is static, the profiles contains OAuth token URL, leads to invalid grant exceptions when this changes during class loading lifetime (e.g. if the same storage profile ID is deployed to the LOCAL and the HYBRID hub).
-        for(final Protocol protocol : factory.find()) {
-            if(protocol instanceof Profile) {
-                factory.unregister((Profile) protocol);
-            }
-        }
         // Register parent protocol definitions
-        factory.register(
-                new HubProtocol(),
-                new S3AssumeRoleProtocol("PasswordGrant")
-        );
+        for(Protocol p : new AnnotationAutoServiceLoader<Protocol>().load(Protocol.class)) {
+            factory.register(p);
+        }
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
         assertNotNull(factory.forName("hub"));

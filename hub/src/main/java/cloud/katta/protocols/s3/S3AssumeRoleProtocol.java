@@ -16,7 +16,6 @@ public class S3AssumeRoleProtocol extends S3Protocol {
 
     // Token exchange
     public static final String OAUTH_TOKENEXCHANGE = "oauth.tokenexchange";
-    public static final String OAUTH_TOKENEXCHANGE_VAULT = "oauth.tokenexchange.vault";
 
     // STS assume role with web identity resource name
     public static final String S3_ASSUMEROLE_ROLEARN_WEBIDENTITY = Profile.STS_ROLE_ARN_PROPERTY_KEY;
@@ -24,16 +23,6 @@ public class S3AssumeRoleProtocol extends S3Protocol {
     // STS assume role chaining (AWS only)
     public static final String S3_ASSUMEROLE_ROLEARN_TAG = "s3.assumerole.rolearn.tag";
     public static final String S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET = "s3.assumerole.rolearn.createbucket";
-
-    private final String authorization;
-
-    public S3AssumeRoleProtocol() {
-        this("AuthorizationCode");
-    }
-
-    public S3AssumeRoleProtocol(final String authorization) {
-        this.authorization = authorization;
-    }
 
     @Override
     public String getIdentifier() {
@@ -48,11 +37,6 @@ public class S3AssumeRoleProtocol extends S3Protocol {
     @Override
     public String getPrefix() {
         return String.format("%s.%s", S3AssumeRoleProtocol.class.getPackage().getName(), "S3AssumeRole");
-    }
-
-    @Override
-    public String getAuthorization() {
-        return authorization;
     }
 
     @Override
