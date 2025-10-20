@@ -4,7 +4,6 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.CredentialsConfigurator;
 import ch.cyberduck.core.DisabledCancelCallback;
 import ch.cyberduck.core.DisabledHostKeyCallback;
 import ch.cyberduck.core.Host;
@@ -13,13 +12,10 @@ import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PathAttributes;
-import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.Session;
-import ch.cyberduck.core.SessionFactory;
 import ch.cyberduck.core.cryptomator.ContentWriter;
 import ch.cyberduck.core.cryptomator.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
-import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
@@ -29,8 +25,6 @@ import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.s3.S3Session;
-import ch.cyberduck.core.ssl.X509KeyManager;
-import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
@@ -52,13 +46,10 @@ import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayloadPasswordCallback;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
-
-import static cloud.katta.protocols.s3.S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT;
 
 /**
  * Unified vault format (UVF) implementation for Katta
@@ -77,25 +68,18 @@ public class HubUVFVault extends UVFVault {
 
     /**
      *
-     * @param profile       Storage provider configuration
+     * @param storage       Storage connection
      * @param vaultId       Vault Id
      * @param vaultMetadata Vault UVF metadata
      * @param prompt        Login prompt to access storage
      */
-    public HubUVFVault(final Protocol profile, final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) throws ConnectionCanceledException {
+    public HubUVFVault(final Session<?> storage, final UUID vaultId, final UvfMetadataPayload vaultMetadata, final LoginCallback prompt) {
         super(new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                 new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname())));
+        this.storage = storage;
         this.vaultId = vaultId;
         this.vaultMetadata = vaultMetadata;
         this.login = prompt;
-        final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
-        final HubSession hub = profile.getFeature(HubSession.class);
-        log.debug("Loaded profile {} for UVF metadata {}", profile, vaultMetadata);
-        final Host storageProvider = new Host(profile, hub.getFeature(CredentialsConfigurator.class).reload().configure(hub.getHost())
-                .setUsername(vaultStorageMetadata.getUsername()).setPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion());
-        storageProvider.setProperty(OAUTH_TOKENEXCHANGE_VAULT, vaultId.toString());
-        log.debug("Configured {} for vault {}", storageProvider, this);
-        this.storage = SessionFactory.create(storageProvider, hub.getFeature(X509TrustManager.class), hub.getFeature(X509KeyManager.class));
     }
 
     /**

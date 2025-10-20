@@ -6,7 +6,6 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.vault.VaultCredentials;
 
@@ -80,7 +79,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                             .enabled(true)
                             .maxWotDepth(3));
-            final HubUVFVault cryptomator = new HubUVFVault(hubSession.getFeature(ProtocolFactory.class).forName(location.getProfile()),
+            final HubUVFVault cryptomator = new HubUVFVault(new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata),
                     vaultId, vaultMetadata, new DisabledLoginCallback());
             cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 

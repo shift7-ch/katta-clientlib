@@ -10,7 +10,7 @@ import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.exception.BackgroundException;
-import ch.cyberduck.core.exception.LoginFailureException;
+import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
@@ -22,17 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.model.AccessTokenResponse;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 
 /**
  * Assume role with temporary credentials obtained using OIDC token from security token service (STS)
@@ -46,15 +42,17 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      */
     private static final String OIDC_AUTHORIZED_PARTY = "azp";
 
+    private final HubSession hub;
     private final Host bookmark;
-    private final String vaultId;
+    private final UUID vaultId;
 
-    public STSChainedAssumeRoleRequestInterceptor(final OAuth2RequestInterceptor oauth, final Host host,
+    public STSChainedAssumeRoleRequestInterceptor(final HubSession hub, final OAuth2RequestInterceptor oauth, final UUID vaultId, final Host host,
                                                   final X509TrustManager trust, final X509KeyManager key,
                                                   final LoginCallback prompt) {
         super(oauth, host, trust, key, prompt);
+        this.hub = hub;
         this.bookmark = host;
-        this.vaultId = HostPreferencesFactory.get(host).getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT);
+        this.vaultId = vaultId;
     }
 
     @Override
@@ -95,50 +93,25 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * Perform OAuth 2.0 Token Exchange
      *
      * @return New tokens
-     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_VAULT
      */
     private OAuthTokens tokenExchange(final OAuthTokens tokens) throws BackgroundException {
         final PreferencesReader settings = HostPreferencesFactory.get(bookmark);
         if(settings.getBoolean(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE)) {
-            if(this.isTokenExchangeRequired(tokens)) {
-                log.info("Exchange tokens for {}", bookmark);
-                final HubSession hub = bookmark.getProtocol().getFeature(HubSession.class);
-                log.debug("Exchange token with hub {}", hub);
-                final StorageResourceApi api = new StorageResourceApi(hub.getClient());
-                try {
-                    final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(vaultId);
-                    // N.B. token exchange with Id token does not work!
-                    final OAuthTokens exchanged = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
-                            tokenExchangeResponse.getRefreshToken(),
-                            tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
-                    log.debug("Received exchanged token {} for {}", exchanged, bookmark);
-                    return exchanged;
-                }
-                catch(ApiException e) {
-                    throw new HubExceptionMappingService().map(e);
-                }
+            log.info("Exchange tokens {} for vault {}", tokens, vaultId);
+            final StorageResourceApi api = new StorageResourceApi(hub.getClient());
+            try {
+                final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(vaultId.toString());
+                // N.B. token exchange with Id token does not work!
+                final OAuthTokens exchanged = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
+                        tokenExchangeResponse.getRefreshToken(),
+                        tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
+                log.debug("Received exchanged token {} for {}", exchanged, bookmark);
+                return exchanged;
+            }
+            catch(ApiException e) {
+                throw new HubExceptionMappingService().map(e);
             }
         }
         return tokens;
-    }
-
-    private boolean isTokenExchangeRequired(final OAuthTokens tokens) throws BackgroundException {
-        final String accessToken = tokens.getAccessToken();
-        try {
-            final DecodedJWT jwt = JWT.decode(accessToken);
-            final List<String> auds = jwt.getAudience();
-            final String azp = jwt.getClaim(OIDC_AUTHORIZED_PARTY).asString();
-            log.debug("Decoded JWT {} with audience {} and azp {}", jwt, Arrays.toString(auds.toArray()), azp);
-            final boolean audNotUnique = 1 != auds.size(); // either multiple audiences or none
-            // do exchange if aud is not unique or azp is not equal to aud
-            if(audNotUnique || !auds.get(0).equals(azp)) {
-                log.debug("None or multiple audiences found {} or audience differs from azp {}", Arrays.toString(auds.toArray()), azp);
-                return true;
-            }
-        }
-        catch(JWTDecodeException e) {
-            throw new LoginFailureException("Invalid JWT or JSON format in authentication token", e);
-        }
-        return false;
     }
 }

@@ -4,6 +4,8 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Session;
+
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
@@ -11,6 +13,7 @@ import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.model.StorageProfileDtoWrapper;
+import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
@@ -46,4 +49,15 @@ public interface VaultService {
      * @return Storage profile
      */
     StorageProfileDtoWrapper getVaultStorageProfile(UvfMetadataPayload metadataPayload) throws ApiException, AccessException, SecurityFailure;
+
+    /**
+     * Get storage session for vault
+     *
+     * @param session         Hub Connection
+     * @param vaultId         Vault ID
+     * @param metadataPayload Vault metadata including storage configuration
+     * @return Storage Session
+     * @throws AccessException Unsupported storage configuration found for vault
+     */
+    Session<?> getVaultStorageSession(HubSession session, UUID vaultId, UvfMetadataPayload metadataPayload) throws ApiException, AccessException;
 }

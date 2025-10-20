@@ -12,7 +12,6 @@ import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.UUIDRandomStringService;
@@ -77,6 +76,7 @@ import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
+import cloud.katta.workflows.VaultServiceImpl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -248,7 +248,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                             .enabled(true)
                             .maxWotDepth(null));
-            final HubUVFVault cryptomator = new HubUVFVault(hubSession.getFeature(ProtocolFactory.class).forName(location.getProfile()),
+            final HubUVFVault cryptomator = new HubUVFVault(new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata),
                     vaultId, vaultMetadata, new DisabledLoginCallback());
             cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 

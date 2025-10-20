@@ -44,22 +44,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.HubApiClient;
 import cloud.katta.client.api.ConfigResourceApi;
-import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.ConfigDto;
-import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
 import cloud.katta.workflows.DeviceKeysServiceImpl;
@@ -81,11 +77,6 @@ public class HubSession extends HttpSession<HubApiClient> {
      * Periodically grant vault access to users
      */
     private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
-
-    /**
-     * Registered storage profiles
-     */
-    private final ProtocolFactory storage = new ProtocolFactory();
 
     /**
      * Interceptor for OpenID connect flow
@@ -171,36 +162,14 @@ public class HubSession extends HttpSession<HubApiClient> {
             log.warn("Failure {} decoding JWT {}", e, credentials.getOauth().getIdToken());
             throw new LoginCanceledException(e);
         }
-        try {
-            final UserDto me = this.getMe();
-            log.debug("Retrieved user {}", me);
-            // Ensure device key is available
-            final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-            log.debug("Configured with setup prompt {}", setup);
-            final UserKeys userKeys = this.getUserKeys(setup);
-            log.debug("Retrieved user keys {}", userKeys);
-            final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(client).apiStorageprofileGet(false);
-            for(StorageProfileDto storageProfileDto : storageProfileDtos) {
-                final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(storageProfileDto);
-                log.debug("Read storage profile {}", storageProfile);
-                switch(storageProfile.getProtocol()) {
-                    case S3:
-                    case S3_STS:
-                        final Profile profile = new HubAwareProfile(this, authorizationService,
-                                ProtocolFactory.get().forType(ProtocolFactory.get().find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3),
-                                config, storageProfile);
-                        log.debug("Register profile {}", profile);
-                        storage.register(profile);
-                        break;
-                    default:
-                        throw new InteroperabilityException(String.format("Unsupported storage configuration %s", storageProfile.getProtocol().name()));
-                }
-            }
-            vaults = new HubVaultListService(storage, this, prompt);
-        }
-        catch(ApiException e) {
-            throw new HubExceptionMappingService().map(e);
-        }
+        final UserDto me = this.getMe();
+        log.debug("Retrieved user {}", me);
+        // Ensure device key is available
+        final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+        log.debug("Configured with setup prompt {}", setup);
+        final UserKeys userKeys = this.getUserKeys(setup);
+        log.debug("Retrieved user keys {}", userKeys);
+        vaults = new HubVaultListService(this, prompt);
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
@@ -244,6 +213,10 @@ public class HubSession extends HttpSession<HubApiClient> {
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
         }
+    }
+
+    public ConfigDto getConfig() {
+        return config;
     }
 
     /**
@@ -387,8 +360,8 @@ public class HubSession extends HttpSession<HubApiClient> {
         if(type == CredentialsConfigurator.class) {
             return (T) new HubOAuthTokensCredentialsConfigurator(keychain, host);
         }
-        if(type == ProtocolFactory.class) {
-            return (T) storage;
+        if(type == OAuth2RequestInterceptor.class) {
+            return (T) authorizationService;
         }
         return super._getFeature(type);
     }

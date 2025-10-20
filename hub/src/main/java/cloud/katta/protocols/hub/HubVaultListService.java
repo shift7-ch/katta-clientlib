@@ -10,8 +10,7 @@ import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
@@ -37,15 +36,10 @@ import cloud.katta.workflows.exceptions.SecurityFailure;
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
-    /**
-     * Storage profiles
-     */
-    private final ProtocolFactory storage;
     private final HubSession session;
     private final LoginCallback prompt;
 
-    public HubVaultListService(final ProtocolFactory storage, final HubSession session, final LoginCallback prompt) {
-        this.storage = storage;
+    public HubVaultListService(final HubSession session, final LoginCallback prompt) {
         this.session = session;
         this.prompt = prompt;
     }
@@ -54,6 +48,7 @@ public class HubVaultListService implements ListService {
     public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
         if(directory.isRoot()) {
             try {
+                final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                 final VaultRegistry registry = session.getRegistry();
                 final AttributedList<Path> vaults = new AttributedList<>();
                 for(final VaultDto vaultDto : new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null)) {
@@ -64,11 +59,10 @@ public class HubVaultListService implements ListService {
                     log.debug("Load vault {}", vaultDto);
                     try {
                         // Find storage configuration in vault metadata
-                        final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
-                        final Protocol profile = storage.forName(vaultMetadata.storage().getProvider());
-                        final HubUVFVault vault = new HubUVFVault(profile, vaultDto.getId(), vaultMetadata, prompt);
+                        final Session<?> storage = vaultService.getVaultStorageSession(session, vaultDto.getId(), vaultMetadata);
+                        final HubUVFVault vault = new HubUVFVault(storage, vaultDto.getId(), vaultMetadata, prompt);
                         try {
                             registry.add(vault.load(session, prompt));
                             vaults.add(vault.getHome());
@@ -76,7 +70,6 @@ public class HubVaultListService implements ListService {
                         }
                         catch(VaultUnlockCancelException e) {
                             log.warn("Skip vault {} with failure {} loading", vaultDto, e);
-                            continue;
                         }
                     }
                     catch(ApiException e) {
@@ -86,7 +79,10 @@ public class HubVaultListService implements ListService {
                         }
                         throw e;
                     }
-                    catch(AccessException | SecurityFailure e) {
+                    catch(AccessException e) {
+                        log.warn("Skip vault {} with access failure {}", vaultDto, e);
+                    }
+                    catch(SecurityFailure e) {
                         throw new AccessDeniedException(e.getMessage(), e);
                     }
                 }

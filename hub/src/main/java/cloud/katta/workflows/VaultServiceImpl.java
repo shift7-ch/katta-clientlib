@@ -4,6 +4,14 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.CredentialsConfigurator;
+import ch.cyberduck.core.Host;
+import ch.cyberduck.core.Protocol;
+import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
+import ch.cyberduck.core.exception.InteroperabilityException;
+import ch.cyberduck.core.exception.LoginCanceledException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,8 +26,11 @@ import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
+import cloud.katta.protocols.hub.HubAwareProfile;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.s3.S3AssumeRoleSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -76,5 +87,29 @@ public class VaultServiceImpl implements VaultService {
         log.debug("Load profile {}", metadataPayload.storage().getProvider());
         return StorageProfileDtoWrapper.coerce(storageProfileResourceApi
                 .apiStorageprofileProfileIdGet(UUID.fromString(metadataPayload.storage().getProvider())));
+    }
+
+    @Override
+    public Session<?> getVaultStorageSession(final HubSession session, final UUID vaultId, final UvfMetadataPayload vaultMetadata) throws ApiException, AccessException {
+        final StorageProfileDtoWrapper vaultStorageProfile = this.getVaultStorageProfile(vaultMetadata);
+        switch(vaultStorageProfile.getProtocol()) {
+            case S3:
+            case S3_STS:
+                final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
+                try {
+                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(session, vaultId, new Host(new HubAwareProfile(
+                            ProtocolFactory.get().forType(ProtocolFactory.get().find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3), session.getConfig(), vaultStorageProfile),
+                            session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost())
+                                    .setUsername(vaultStorageMetadata.getUsername()).setPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion()));
+                    log.debug("Configured {} for vault {}", storage, vaultId);
+                    return storage;
+                }
+                catch(LoginCanceledException e) {
+                    throw new AccessException(e);
+                }
+            default:
+                log.warn("Unsupported storage configuration {} for vault {}", vaultStorageProfile.getProtocol(), vaultId);
+                throw new AccessException(new InteroperabilityException());
+        }
     }
 }
