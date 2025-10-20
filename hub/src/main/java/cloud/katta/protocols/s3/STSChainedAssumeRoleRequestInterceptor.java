@@ -57,6 +57,11 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         this.vaultId = HostPreferencesFactory.get(host).getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT);
     }
 
+    @Override
+    protected String getWebIdentityToken(final OAuthTokens oauth) {
+        return oauth.getAccessToken();
+    }
+
     /**
      * Assume role with previously obtained temporary access token
      *
