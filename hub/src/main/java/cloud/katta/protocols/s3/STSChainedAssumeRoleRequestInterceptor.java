@@ -74,8 +74,12 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         if(StringUtils.isNotBlank(settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG))) {
             log.debug("Assume role with temporary credentials {}", tokens);
             // Assume role with previously obtained temporary access token
+            final String key = HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key");
+            if(null == key) {
+                throw new InteroperabilityException("No vault tag key set");
+            }
             return super.assumeRole(credentials.setTokens(tokens)
-                            .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key"), vaultId)),
+                            .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", key, vaultId)),
                     settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG));
         }
         log.warn("No vault tag set. Skip assuming role with temporary credentials {} for {}", tokens, bookmark);
