@@ -41,12 +41,7 @@ public class S3AssumeRoleSession extends S3Session {
             final OAuth2RequestInterceptor oauth = host.getProtocol().getFeature(OAuth2RequestInterceptor.class);
             log.debug("Register interceptor {}", oauth);
             configuration.addInterceptorLast(oauth);
-            final STSRequestInterceptor sts = new STSChainedAssumeRoleRequestInterceptor(oauth, host, trust, key, prompt) {
-                @Override
-                protected String getWebIdentityToken(final OAuthTokens oauth) {
-                    return oauth.getAccessToken();
-                }
-            };
+            final STSRequestInterceptor sts = new STSChainedAssumeRoleRequestInterceptor(hub, vaultId, host, trust, key, prompt);
             log.debug("Register interceptor {}", sts);
             configuration.addInterceptorLast(sts);
             return sts;
