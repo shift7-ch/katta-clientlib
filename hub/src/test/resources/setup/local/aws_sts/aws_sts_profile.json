@@ -13,5 +13,6 @@
     "protocol": "S3STS",
     "stsRoleArn": "arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-sts-chain-01",
     "stsRoleArn2": "arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-sts-chain-02",
-    "bucketEncryption": "NONE"
+    "bucketEncryption": "NONE",
+    "stsSessionTag": "Vault"
 }

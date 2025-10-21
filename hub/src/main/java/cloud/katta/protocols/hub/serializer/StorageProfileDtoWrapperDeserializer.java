@@ -63,8 +63,10 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                     if(dto.getStsDurationSeconds() != null) {
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
                     }
+                    if(dto.getStsSessionTag() != null) {
+                        properties.add(String.format("%s=%s", "s3.assumerole.rolearn.tag.vaultid.key", dto.getStsSessionTag()));
+                    }
                 }
-                properties.add("s3.assumerole.rolearn.tag.vaultid.key=Vault");
                 log.debug("Return properties {} from {}", properties, dto);
                 return (List<L>) properties;
             case REGIONS_KEY:

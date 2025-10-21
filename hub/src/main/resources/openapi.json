@@ -399,7 +399,14 @@
                     "name",
                     "protocol",
                     "archived",
-                    "storageClass"
+                    "storageClass",
+                    "region",
+                    "regions",
+                    "bucketPrefix",
+                    "stsRoleArnClient",
+                    "stsRoleArnHub",
+                    "bucketVersioning",
+                    "bucketEncryption"
                 ],
                 "properties": {
                     "id": {
@@ -456,6 +463,58 @@
                         "type": "string",
                         "description": "Storage class for upload. Defaults to STANDARD",
                         "example": "STANDARD"
+                    },
+                    "region": {
+                        "type": "string",
+                        "description": "Default region selected in the frontend/client to create bucket in.",
+                        "example": "443",
+                        "default": "us-east-1"
+                    },
+                    "regions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of selectable regions in the frontend/client to create bucket in. Defaults to full list from AWS SDK."
+                    },
+                    "bucketPrefix": {
+                        "type": "string",
+                        "description": "Buckets are create with name <bucket prefix><vault UUID>.",
+                        "example": "cipherduck"
+                    },
+                    "stsRoleArnClient": {
+                        "type": "string",
+                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleArnHub for AWS, different for MinIO.",
+                        "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                    },
+                    "stsRoleArnHub": {
+                        "type": "string",
+                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleArnClient for AWS, different for MinIO.",
+                        "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                    },
+                    "stsEndpoint": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "STS endpoint to use for AssumeRoleWithWebIdentity and AssumeRole for getting a temporary access token passed to the storage. Defaults to AWS SDK default."
+                    },
+                    "bucketVersioning": {
+                        "type": "boolean",
+                        "description": "Enable bucket versioning upon bucket creation",
+                        "default": true
+                    },
+                    "bucketAcceleration": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
+                    },
+                    "bucketEncryption": {
+                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
+                        "type": "string",
+                        "description": "Enable bucket versioning upon bucket creation"
                     }
                 }
             },
@@ -474,7 +533,8 @@
                     "stsRoleArnHub",
                     "bucketVersioning",
                     "bucketEncryption",
-                    "stsRoleArn"
+                    "stsRoleArn",
+                    "stsSessionTag"
                 ],
                 "properties": {
                     "id": {
@@ -604,6 +664,11 @@
                         ],
                         "format": "int32",
                         "description": "Token lifetime for STS tokens assumed. Defaults to AWS/MinIO defaults"
+                    },
+                    "stsSessionTag": {
+                        "type": "string",
+                        "description": "Session tag to use for role chaining (AWS only, not MinIO). Defaults to \"Vault\"",
+                        "default": "Vault"
                     }
                 }
             },
@@ -1625,7 +1690,7 @@
         "/api/storage/{vaultId}": {
             "put": {
                 "summary": "creates bucket and policy",
-                "description": "creates an S3 bucket and uploads policy for it.",
+                "description": "creates an S3 bucket and uploads policy for it for call from Web Client (CORS).",
                 "parameters": [
                     {
                         "name": "vaultId",
@@ -1654,7 +1719,7 @@
                         "description": "Could not create bucket"
                     },
                     "409": {
-                        "description": "Vault with this ID or bucket with this name already exists"
+                        "description": "Bucket with this name already exists"
                     },
                     "410": {
                         "description": "Storage profile is archived"
@@ -2480,7 +2545,7 @@
                 "description": "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.",
                 "parameters": [
                     {
-                        "description": "the role to grant to this user (defaults to False)",
+                        "description": "whether configuration for STS MinIO needs to be synched to Keycloak (defaults to false)",
                         "in": "query",
                         "name": "minio",
                         "schema": {
@@ -2489,7 +2554,7 @@
                         }
                     },
                     {
-                        "description": "the role to grant to this user (defaults to False)",
+                        "description": "whether configuration for STS MinIO needs to be synched to AWS (defaults to false)",
                         "in": "query",
                         "name": "aws",
                         "schema": {

@@ -7,8 +7,8 @@ package cloud.katta.model;
 import java.util.List;
 import java.util.UUID;
 
-import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.Protocol;
+import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
@@ -186,6 +186,17 @@ public class StorageProfileDtoWrapper {
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsDurationSeconds();
+        }
+        return null;
+    }
+
+    public String getStsSessionTag() {
+        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+            // only STS
+            return null;
+        }
+        else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
+            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsSessionTag();
         }
         return null;
     }
