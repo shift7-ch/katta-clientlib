@@ -53,12 +53,12 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 if(dto.getProtocol() == Protocol.S3_STS) {
                     properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, true));
-                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY, dto.getStsRoleArn()));
-                    if(dto.getStsRoleArn2() != null) {
-                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, dto.getStsRoleArn2()));
+                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY, dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity()));
+                    if(dto.getStsRoleAccessBucketAssumeRoleTaggedSession() != null) {
+                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, dto.getStsRoleAccessBucketAssumeRoleTaggedSession()));
                     }
-                    if(dto.getStsRoleArnClient() != null) {
-                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET, dto.getStsRoleArnClient()));
+                    if(dto.getStsRoleCreateBucketClient() != null) {
+                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET, dto.getStsRoleCreateBucketClient()));
                     }
                     if(dto.getStsDurationSeconds() != null) {
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
@@ -118,7 +118,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case ROLE_KEY_CONFIGURABLE_KEY:
                 // Indicates Role ARN is required for STS `AssumeRoleWithWebIdentity`.
                 // Determines usage of role grant flags when creating a new vault
-                return dto.getStsRoleArn() != null;
+                return dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity() != null;
         }
         return super.booleanForKey(key);
     }
@@ -153,7 +153,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         if(dto.getRegions() != null) {
             keys.add(REGIONS_KEY);
         }
-        if(dto.getStsRoleArn() != null) {
+        if(dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity() != null) {
             keys.add(ROLE_KEY_CONFIGURABLE_KEY);
         }
         return keys;

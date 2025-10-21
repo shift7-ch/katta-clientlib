@@ -14,13 +14,13 @@
         "eu-central-2"
     ],
     "withPathStyleAccessEnabled": "true",
-    "stsRoleArnHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
-    "stsRoleArnClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
+    "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
+    "stsRoleCreateBucketClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
     "stsEndpoint": "http://minio:9000",
     "protocol": "S3STS",
     "scheme": "http",
     "hostname": "minio",
     "port": "9000",
-    "stsRoleArn": "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94",
+    "stsRoleAccessBucketAssumeRoleWithWebIdentity": "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94",
     "bucketEncryption": "NONE"
 }

@@ -146,35 +146,35 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getStsRoleArn() {
+    public String getStsRoleAccessBucketAssumeRoleWithWebIdentity() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleArn();
+            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleAccessBucketAssumeRoleWithWebIdentity();
         }
         return null;
     }
 
-    public String getStsRoleArn2() {
+    public String getStsRoleAccessBucketAssumeRoleTaggedSession() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleArn2();
+            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleAccessBucketAssumeRoleTaggedSession();
         }
         return null;
     }
 
-    public String getStsRoleArnClient() {
+    public String getStsRoleCreateBucketClient() {
         if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
             // only STS
             return null;
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleArnClient();
+            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStsRoleCreateBucketClient();
         }
         return null;
     }

@@ -403,8 +403,8 @@
                     "region",
                     "regions",
                     "bucketPrefix",
-                    "stsRoleArnClient",
-                    "stsRoleArnHub",
+                    "stsRoleCreateBucketClient",
+                    "stsRoleCreateBucketHub",
                     "bucketVersioning",
                     "bucketEncryption"
                 ],
@@ -482,14 +482,14 @@
                         "description": "Buckets are create with name <bucket prefix><vault UUID>.",
                         "example": "cipherduck"
                     },
-                    "stsRoleArnClient": {
+                    "stsRoleCreateBucketClient": {
                         "type": "string",
-                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleArnHub for AWS, different for MinIO.",
+                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO.",
                         "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
                     },
-                    "stsRoleArnHub": {
+                    "stsRoleCreateBucketHub": {
                         "type": "string",
-                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleArnClient for AWS, different for MinIO.",
+                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO.",
                         "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
                     },
                     "stsEndpoint": {
@@ -529,11 +529,11 @@
                     "region",
                     "regions",
                     "bucketPrefix",
-                    "stsRoleArnClient",
-                    "stsRoleArnHub",
+                    "stsRoleCreateBucketClient",
+                    "stsRoleCreateBucketHub",
                     "bucketVersioning",
                     "bucketEncryption",
-                    "stsRoleArn",
+                    "stsRoleAccessBucketAssumeRoleWithWebIdentity",
                     "stsSessionTag"
                 ],
                 "properties": {
@@ -610,14 +610,14 @@
                         "description": "Buckets are create with name <bucket prefix><vault UUID>.",
                         "example": "cipherduck"
                     },
-                    "stsRoleArnClient": {
+                    "stsRoleCreateBucketClient": {
                         "type": "string",
-                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleArnHub for AWS, different for MinIO.",
+                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO.",
                         "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
                     },
-                    "stsRoleArnHub": {
+                    "stsRoleCreateBucketHub": {
                         "type": "string",
-                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleArnClient for AWS, different for MinIO.",
+                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO.",
                         "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
                     },
                     "stsEndpoint": {
@@ -644,12 +644,12 @@
                         "type": "string",
                         "description": "Enable bucket versioning upon bucket creation"
                     },
-                    "stsRoleArn": {
+                    "stsRoleAccessBucketAssumeRoleWithWebIdentity": {
                         "type": "string",
                         "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)",
                         "example": "arn:aws:iam::930717317329:role/cipherduck_chain_01"
                     },
-                    "stsRoleArn2": {
+                    "stsRoleAccessBucketAssumeRoleTaggedSession": {
                         "type": [
                             "string",
                             "null"
