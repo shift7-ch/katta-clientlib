@@ -49,7 +49,7 @@ public class FirstLoginController extends AlertController {
                 .append(LocaleFactory.localizedString("You can see a list of authorized apps on your profile page", "Hub")).toString());
         alert.addButtonWithTitle(LocaleFactory.localizedString("Finish Setup", "Hub"));
         alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
-        alert.setShowsSuppressionButton(true);
+        alert.setShowsSuppressionButton(false);
         alert.suppressionButton().setTitle(LocaleFactory.localizedString("Add to Keychain", "Login"));
         alert.suppressionButton().setState(PreferencesFactory.get().getBoolean("cryptomator.vault.keychain") ? NSCell.NSOnState : NSCell.NSOffState);
         return alert;
@@ -92,13 +92,6 @@ public class FirstLoginController extends AlertController {
             return StringUtils.isNotBlank(deviceNameField.stringValue());
         }
         return true;
-    }
-
-    @Override
-    public void callback(final int returncode) {
-        if(SheetCallback.DEFAULT_OPTION == returncode) {
-            accountKeyAndDeviceName.withAddToKeychain(this.isSuppressed());
-        }
     }
 
     @Action

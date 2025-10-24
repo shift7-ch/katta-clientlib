@@ -176,7 +176,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         try {
             final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup);
             log.debug("Retrieved device keys {}", deviceKeys);
-            final UserKeys userKeys = new UserKeysServiceImpl(this, keychain).getOrCreateUserKeys(host,
+            final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host,
                     this.getMe(), deviceKeys, setup);
             log.debug("Retrieved user keys {}", userKeys);
             return userKeys;
