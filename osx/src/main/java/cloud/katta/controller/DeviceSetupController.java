@@ -49,7 +49,7 @@ public class DeviceSetupController extends AlertController {
                 .append(LocaleFactory.localizedString("Your Account Key is required to link this browser to your account.", "Hub")).toString());
         alert.addButtonWithTitle(LocaleFactory.localizedString("Finish Setup", "Hub"));
         alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
-        alert.setShowsSuppressionButton(true);
+        alert.setShowsSuppressionButton(false);
         alert.suppressionButton().setTitle(LocaleFactory.localizedString("Add to Keychain", "Login"));
         alert.suppressionButton().setState(PreferencesFactory.get().getBoolean("cryptomator.vault.keychain") ? NSCell.NSOnState : NSCell.NSOffState);
         return alert;
@@ -92,13 +92,6 @@ public class DeviceSetupController extends AlertController {
             return StringUtils.isNotBlank(accountKeyField.stringValue());
         }
         return true;
-    }
-
-    @Override
-    public void callback(final int returncode) {
-        if(SheetCallback.DEFAULT_OPTION == returncode) {
-            accountKeyAndDeviceName.withAddToKeychain(this.isSuppressed());
-        }
     }
 
     @Action

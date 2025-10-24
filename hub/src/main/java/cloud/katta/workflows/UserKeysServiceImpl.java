@@ -4,11 +4,7 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.BookmarkNameProvider;
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.PasswordStore;
-import ch.cyberduck.core.PasswordStoreFactory;
-import ch.cyberduck.core.exception.LocalAccessDeniedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,24 +40,13 @@ public class UserKeysServiceImpl implements UserKeysService {
     private final UsersResourceApi usersResourceApi;
     private final DeviceResourceApi deviceResourceApi;
 
-    private final PasswordStore store;
-
     public UserKeysServiceImpl(final HubSession hubSession) {
-        this(hubSession, PasswordStoreFactory.get());
-    }
-
-    public UserKeysServiceImpl(final HubSession hubSession, PasswordStore store) {
-        this(new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()), store);
+        this(new UsersResourceApi(hubSession.getClient()), new DeviceResourceApi(hubSession.getClient()));
     }
 
     public UserKeysServiceImpl(final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi) {
-        this(usersResourceApi, deviceResourceApi, PasswordStoreFactory.get());
-    }
-
-    public UserKeysServiceImpl(final UsersResourceApi usersResourceApi, final DeviceResourceApi deviceResourceApi, PasswordStore store) {
         this.usersResourceApi = usersResourceApi;
         this.deviceResourceApi = deviceResourceApi;
-        this.store = store;
     }
 
     @Override
@@ -92,11 +77,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                     case 404:
                         log.warn("Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
                         // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
-                        final AccountKeyAndDeviceName input = prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME);
-                        if(input.addToKeychain()) {
-                            this.save(hub, me, input.accountKey());
-                        }
-                        return this.recover(me, deviceKeyPair, input);
+                        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
                     default:
                         throw e;
                 }
@@ -115,20 +96,8 @@ public class UserKeysServiceImpl implements UserKeysService {
             final String accountKey = prompt.generateAccountKey();
             final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
                     new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
-            if(input.addToKeychain()) {
-                this.save(hub, me, accountKey);
-            }
             return this.uploadDeviceKeys(input.deviceName(),
                     this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
-        }
-    }
-
-    private void save(final Host hub, final UserDto me, final String accountKey) {
-        try {
-            store.addPassword(BookmarkNameProvider.toString(hub), me.getEmail(), accountKey);
-        }
-        catch(LocalAccessDeniedException ex) {
-            log.warn("Failure saving account key", ex);
         }
     }
 

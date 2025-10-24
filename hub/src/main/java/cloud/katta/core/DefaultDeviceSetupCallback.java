@@ -39,10 +39,9 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .passwordPlaceholder(accountKeyAndDeviceName.deviceName())
                             // Input device name
                             .password(true)
-                            .keychain(true)
+                            .keychain(false)
             );
             return new AccountKeyAndDeviceName()
-                    .withAddToKeychain(input.isSaved())
                     .withDeviceName(input.getUsername())
                     .withAccountKey(input.getPassword());
         }
@@ -66,10 +65,9 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .passwordPlaceholder(LocaleFactory.localizedString("Account Key", "Hub"))
                             // Input account key
                             .password(true)
-                            .keychain(true)
+                            .keychain(false)
             );
             return new AccountKeyAndDeviceName()
-                    .withAddToKeychain(input.isSaved())
                     .withDeviceName(input.getUsername())
                     .withAccountKey(input.getPassword());
         }
