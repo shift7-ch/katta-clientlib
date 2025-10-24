@@ -114,6 +114,8 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 break;
             case ROLE_KEY_CONFIGURABLE_KEY:
+                // Indicates Role ARN is required for STS `AssumeRoleWithWebIdentity`.
+                // Determines usage of role grant flags when creating a new vault
                 return dto.getStsRoleArn() != null;
         }
         return super.booleanForKey(key);
