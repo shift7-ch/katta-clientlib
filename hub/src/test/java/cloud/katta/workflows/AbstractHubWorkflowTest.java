@@ -64,7 +64,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
-            final Path bucket = new Path(null == config.vault.bucketName ? null == storageProfileWrapper.getBucketPrefix() ? "katta-test-" + vaultId : storageProfileWrapper.getBucketPrefix() + vaultId : config.vault.bucketName,
+            final Path bucket = new Path(null == storageProfileWrapper.getBucketPrefix() ? "katta-test-" + vaultId : storageProfileWrapper.getBucketPrefix() + vaultId,
                     EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());

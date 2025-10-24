@@ -105,15 +105,13 @@ public class HubTestConfig {
     public static class VaultSpec {
         public final String storageProfileName;
         public final String storageProfileId;
-        public final String bucketName;
         public final String username;
         public final String password;
         public final String region;
 
-        public VaultSpec(final String storageProfileName, final String storageProfileId, final String bucketName, final String username, final String password, final String region) {
+        public VaultSpec(final String storageProfileName, final String storageProfileId, final String username, final String password, final String region) {
             this.storageProfileName = storageProfileName;
             this.storageProfileId = storageProfileId;
-            this.bucketName = bucketName;
             this.username = username;
             this.password = password;
             this.region = region;
