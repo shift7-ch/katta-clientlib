@@ -25,10 +25,14 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
 
     private final StorageProfileDtoWrapper dto;
 
+    public StorageProfileDtoWrapperDeserializer(final StorageProfileDtoWrapper dto) {
+        this(dto, ProxyDeserializer.empty());
+    }
+
     /**
      * @param dto Storage configuration
      */
-    public StorageProfileDtoWrapperDeserializer(final Deserializer<NSDictionary> parent, final StorageProfileDtoWrapper dto) {
+    public StorageProfileDtoWrapperDeserializer(final StorageProfileDtoWrapper dto, final Deserializer<NSDictionary> parent) {
         super(parent);
         this.dto = dto;
     }
@@ -49,7 +53,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 if(dto.getProtocol() == Protocol.S3_STS) {
                     properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, true));
-                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN, dto.getStsRoleArn()));
+                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY, dto.getStsRoleArn()));
                     if(dto.getStsRoleArn2() != null) {
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, dto.getStsRoleArn2()));
                     }
@@ -60,6 +64,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                         properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
                     }
                 }
+                properties.add("s3.assumerole.rolearn.tag.vaultid.key=Vault");
                 log.debug("Return properties {} from {}", properties, dto);
                 return (List<L>) properties;
             case REGIONS_KEY:
@@ -81,6 +86,8 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 break;
             case VENDOR_KEY:
                 return dto.getId().toString();
+            case DEFAULT_NICKNAME_KEY:
+                return dto.getName();
             case SCHEME_KEY:
                 return dto.getScheme();
             case DEFAULT_HOSTNAME_KEY:
@@ -106,6 +113,10 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                         return true;
                 }
                 break;
+            case ROLE_KEY_CONFIGURABLE_KEY:
+                // Indicates Role ARN is required for STS `AssumeRoleWithWebIdentity`.
+                // Determines usage of role grant flags when creating a new vault
+                return dto.getStsRoleArn() != null;
         }
         return super.booleanForKey(key);
     }
@@ -119,6 +130,9 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 PROPERTIES_KEY,
                 OAUTH_CONFIGURABLE_KEY)
         );
+        if(dto.getName() != null) {
+            keys.add(DEFAULT_NICKNAME_KEY);
+        }
         if(dto.getScheme() != null) {
             keys.add(SCHEME_KEY);
         }
@@ -136,6 +150,9 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         }
         if(dto.getRegions() != null) {
             keys.add(REGIONS_KEY);
+        }
+        if(dto.getStsRoleArn() != null) {
+            keys.add(ROLE_KEY_CONFIGURABLE_KEY);
         }
         return keys;
     }

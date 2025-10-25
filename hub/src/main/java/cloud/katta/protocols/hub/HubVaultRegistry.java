@@ -4,35 +4,28 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.DefaultPathContainerService;
 import ch.cyberduck.core.DisabledPasswordCallback;
-import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.vault.DefaultVaultRegistry;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class HubVaultRegistry extends DefaultVaultRegistry {
 
     public HubVaultRegistry() {
-        super(new DisabledPasswordCallback());
+        this(new DisabledPasswordCallback());
+    }
+
+    public HubVaultRegistry(final PasswordCallback prompt) {
+        super(prompt);
+    }
+
+    public HubVaultRegistry(final PasswordCallback prompt, final Vault... vaults) {
+        super(prompt, vaults);
     }
 
     @Override
-    public Vault find(final Session session, final Path file, final boolean unlock) {
-        for(final Vault vault : this) {
-            if(StringUtils.equals(new DefaultPathContainerService().getContainer(file).getName(),
-                    new DefaultPathContainerService().getContainer(vault.getHome()).getName())) {
-                // Return matching vault
-                return vault;
-            }
-        }
-        return Vault.DISABLED;
-    }
-
-    @Override
-    public <T> T getFeature(Session<?> session, Class<T> type, T proxy) {
+    public <T> T getFeature(final Session<?> session, final Class<T> type, final T proxy) {
         // Always forward to load feature from vault
         return this._getFeature(session, type, proxy);
     }

@@ -31,8 +31,8 @@
         <Logger name="testrunner" level="info"/>
         <Logger name="ch.cyberduck" level="warn"/>
         <Logger name="ch.cyberduck.core.cryptomator" level="debug"/>
+        <Logger name="ch.cyberduck.core.oauth" level="debug"/>
         <Logger name="ch.cyberduck.core.s3" level="debug"/>
-        <Logger name="ch.cyberduck.transcript" level="info"/>
         <Logger name="org.apache.http.wire" additivity="true" level="debug">
             <AppenderRef ref="rollingFile"/>
         </Logger>

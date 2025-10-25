@@ -10,6 +10,7 @@ import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
@@ -20,6 +21,8 @@ import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityRequestInterceptor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageResourceApi;
@@ -39,13 +42,22 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      */
     private static final String OIDC_AUTHORIZED_PARTY = "azp";
 
+    private final HubSession hub;
     private final Host bookmark;
+    private final UUID vaultId;
 
-    public STSChainedAssumeRoleRequestInterceptor(final OAuth2RequestInterceptor oauth, final Host host,
+    public STSChainedAssumeRoleRequestInterceptor(final HubSession hub, final OAuth2RequestInterceptor oauth, final UUID vaultId, final Host host,
                                                   final X509TrustManager trust, final X509KeyManager key,
                                                   final LoginCallback prompt) {
         super(oauth, host, trust, key, prompt);
+        this.hub = hub;
         this.bookmark = host;
+        this.vaultId = vaultId;
+    }
+
+    @Override
+    protected String getWebIdentityToken(final OAuthTokens oauth) {
+        return oauth.getAccessToken();
     }
 
     /**
@@ -61,13 +73,16 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     @Override
     public TemporaryAccessTokens assumeRoleWithWebIdentity(final OAuthTokens oauth, final String roleArn) throws BackgroundException {
         final PreferencesReader settings = HostPreferencesFactory.get(bookmark);
-        final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(this.tokenExchange(oauth), settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN));
+        final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(this.tokenExchange(oauth), settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY));
         if(StringUtils.isNotBlank(settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG))) {
             log.debug("Assume role with temporary credentials {}", tokens);
             // Assume role with previously obtained temporary access token
+            final String key = HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key");
+            if(null == key) {
+                throw new InteroperabilityException("No vault tag key set");
+            }
             return super.assumeRole(credentials.setTokens(tokens)
-                            .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key"),
-                                    settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT))),
+                            .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", key, vaultId)),
                     settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG));
         }
         log.warn("No vault tag set. Skip assuming role with temporary credentials {} for {}", tokens, bookmark);
@@ -78,17 +93,14 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * Perform OAuth 2.0 Token Exchange
      *
      * @return New tokens
-     * @see S3AssumeRoleProtocol#OAUTH_TOKENEXCHANGE_VAULT
      */
     private OAuthTokens tokenExchange(final OAuthTokens tokens) throws BackgroundException {
         final PreferencesReader settings = HostPreferencesFactory.get(bookmark);
         if(settings.getBoolean(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE)) {
-            log.info("Exchange tokens for {}", bookmark);
-            final HubSession hub = bookmark.getProtocol().getFeature(HubSession.class);
-            log.debug("Exchange token with hub {}", hub);
+            log.info("Exchange tokens {} for vault {}", tokens, vaultId);
             final StorageResourceApi api = new StorageResourceApi(hub.getClient());
             try {
-                final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(settings.getProperty(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE_VAULT));
+                final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(vaultId.toString());
                 // N.B. token exchange with Id token does not work!
                 final OAuthTokens exchanged = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                         tokenExchangeResponse.getRefreshToken(),

@@ -4,18 +4,15 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.OAuthTokens;
-import ch.cyberduck.core.ProtocolFactory;
+import ch.cyberduck.core.Session;
 
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.model.ConfigDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
+import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -32,7 +29,7 @@ public interface VaultService {
      * @param userKeys EC key pair
      * @return Vault metadata
      */
-    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, SecurityFailure, AccessException;
+    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get vault access token containing vault member key and recovery key (if owner)
@@ -46,16 +43,21 @@ public interface VaultService {
     UvfAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
-     * Prepares (virtual) bookmark for vault to access its configured storage backend.
+     * Get storage configuration for vault
      *
-     * @param protocols Registered protocol implementations to access backend storage
-     * @param hub       Hub API Connection
-     * @param configDto Hub configuration
-     * @param vaultId   Vault ID
-     * @param metadata  Storage Backend configuration
-     * @return Configuration
-     * @throws AccessException Unsupported backend storage protocol
-     * @throws ApiException    Server error accessing storage profile
+     * @param metadataPayload Vault metadata including storage configuration
+     * @return Storage profile
      */
-    Host getStorageBackend(final ProtocolFactory protocols, final HubSession hub, final ConfigDto configDto, UUID vaultId, VaultMetadataJWEBackendDto metadata, final OAuthTokens tokens) throws AccessException, ApiException;
+    StorageProfileDtoWrapper getVaultStorageProfile(UvfMetadataPayload metadataPayload) throws ApiException, AccessException, SecurityFailure;
+
+    /**
+     * Get storage session for vault
+     *
+     * @param session         Hub Connection
+     * @param vaultId         Vault ID
+     * @param metadataPayload Vault metadata including storage configuration
+     * @return Storage Session
+     * @throws AccessException Unsupported storage configuration found for vault
+     */
+    Session<?> getVaultStorageSession(HubSession session, UUID vaultId, UvfMetadataPayload metadataPayload) throws ApiException, AccessException;
 }

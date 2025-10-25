@@ -10,6 +10,7 @@ import ch.cyberduck.binding.Outlet;
 import ch.cyberduck.binding.application.NSAlert;
 import ch.cyberduck.binding.application.NSCell;
 import ch.cyberduck.binding.application.NSControl;
+import ch.cyberduck.binding.application.NSSecureTextField;
 import ch.cyberduck.binding.application.NSTextField;
 import ch.cyberduck.binding.application.NSView;
 import ch.cyberduck.binding.application.SheetCallback;
@@ -24,17 +25,17 @@ import org.rococoa.Foundation;
 
 import cloud.katta.model.AccountKeyAndDeviceName;
 
-public class FirstLoginController extends AlertController {
+public class DeviceSetupController extends AlertController {
 
     private final AccountKeyAndDeviceName accountKeyAndDeviceName;
 
     @Outlet
-    private final NSTextField accountKeyField = NSTextField.textFieldWithString(StringUtils.EMPTY);
+    private final NSTextField accountKeyField = NSSecureTextField.textFieldWithString(StringUtils.EMPTY);
 
     @Outlet
     private final NSTextField deviceNameField = NSTextField.textFieldWithString(StringUtils.EMPTY);
 
-    public FirstLoginController(final AccountKeyAndDeviceName accountKeyAndDeviceName) {
+    public DeviceSetupController(final AccountKeyAndDeviceName accountKeyAndDeviceName) {
         this.accountKeyAndDeviceName = accountKeyAndDeviceName;
     }
 
@@ -42,11 +43,10 @@ public class FirstLoginController extends AlertController {
     public NSAlert loadAlert() {
         final NSAlert alert = NSAlert.alert();
         alert.setAlertStyle(NSAlert.NSInformationalAlertStyle);
-        alert.setMessageText(LocaleFactory.localizedString("Account Key", "Hub"));
+        alert.setMessageText(LocaleFactory.localizedString("Authorization Required", "Hub"));
         alert.setInformativeText(new StringAppender()
-                .append(LocaleFactory.localizedString("On first login, every user gets a unique Account Key", "Hub"))
-                .append(LocaleFactory.localizedString("Your Account Key is required to login from other apps or browsers", "Hub"))
-                .append(LocaleFactory.localizedString("You can see a list of authorized apps on your profile page", "Hub")).toString());
+                .append(LocaleFactory.localizedString("This is your first login on this device.", "Hub"))
+                .append(LocaleFactory.localizedString("Your Account Key is required to link this browser to your account.", "Hub")).toString());
         alert.addButtonWithTitle(LocaleFactory.localizedString("Finish Setup", "Hub"));
         alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
         alert.setShowsSuppressionButton(false);
@@ -59,15 +59,16 @@ public class FirstLoginController extends AlertController {
     public NSView getAccessoryView(final NSAlert alert) {
         final NSView accessoryView = NSView.create();
         {
-            accountKeyField.setEditable(false);
-            accountKeyField.setSelectable(true);
-            accountKeyField.cell().setWraps(false);
-            this.updateField(accountKeyField, accountKeyAndDeviceName.accountKey(), TRUNCATE_MIDDLE_ATTRIBUTES);
+            accountKeyField.cell().setPlaceholderString(LocaleFactory.localizedString("Account Key", "Hub"));
+            accountKeyField.setToolTip(LocaleFactory.localizedString("Your Account Key is required to authorize this device.", "Hub"));
+            NSNotificationCenter.defaultCenter().addObserver(this.id(),
+                    Foundation.selector("accountKeyFieldTextDidChange:"),
+                    NSControl.NSControlTextDidChangeNotification,
+                    accountKeyField.id());
             this.addAccessorySubview(accessoryView, accountKeyField);
         }
-
         {
-            this.updateField(deviceNameField, accountKeyAndDeviceName.deviceName());
+            updateField(deviceNameField, accountKeyAndDeviceName.deviceName(), TRUNCATE_MIDDLE_ATTRIBUTES);
             deviceNameField.cell().setPlaceholderString(LocaleFactory.localizedString("Device Name", "Hub"));
             deviceNameField.setToolTip(LocaleFactory.localizedString("Name this device for easy identification in your authorized devices list.", "Hub"));
             NSNotificationCenter.defaultCenter().addObserver(this.id(),
@@ -76,22 +77,26 @@ public class FirstLoginController extends AlertController {
                     deviceNameField.id());
             this.addAccessorySubview(accessoryView, deviceNameField);
         }
-
         return accessoryView;
     }
 
     @Override
     protected void focus(final NSAlert alert) {
         super.focus(alert);
-        window.makeFirstResponder(deviceNameField);
+        window.makeFirstResponder(accountKeyField);
     }
 
     @Override
     public boolean validate(final int option) {
         if(SheetCallback.DEFAULT_OPTION == option) {
-            return StringUtils.isNotBlank(deviceNameField.stringValue());
+            return StringUtils.isNotBlank(accountKeyField.stringValue());
         }
         return true;
+    }
+
+    @Action
+    public void accountKeyFieldTextDidChange(final NSNotification sender) {
+        accountKeyAndDeviceName.withAccountKey(StringUtils.trim(accountKeyField.stringValue()));
     }
 
     @Action

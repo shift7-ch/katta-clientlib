@@ -94,10 +94,9 @@ public class UserKeysServiceImpl implements UserKeysService {
             // TODO https://github.com/shift7-ch/katta-server/issues/27
             // private key generated with P384KeyPair causes "Unexpected Error: Data provided to an operation does not meet requirements" in `UserKeys.recover`: `const privateKey = await crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, false, UserKeys.KEY_USAGES);`
             final String accountKey = prompt.generateAccountKey();
-            final String deviceName = prompt.displayAccountKeyAndAskDeviceName(hub,
+            final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
                     new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
-
-            return this.uploadDeviceKeys(deviceName,
+            return this.uploadDeviceKeys(input.deviceName(),
                     this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
         }
     }

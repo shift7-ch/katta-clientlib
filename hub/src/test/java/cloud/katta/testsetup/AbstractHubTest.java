@@ -9,12 +9,12 @@ import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
 import ch.cyberduck.core.profiles.LocalProfilesFinder;
+import ch.cyberduck.core.serviceloader.AnnotationAutoServiceLoader;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DefaultX509TrustManager;
 import ch.cyberduck.core.vault.VaultRegistryFactory;
 import ch.cyberduck.test.VaultTest;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,13 +28,10 @@ import java.time.format.FormatStyle;
 import java.util.function.Function;
 
 import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.core.util.MockableDeviceSetupCallback;
 import cloud.katta.model.AccountKeyAndDeviceName;
-import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
-import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,13 +45,13 @@ public abstract class AbstractHubTest extends VaultTest {
     }
 
     private static final HubTestConfig.VaultSpec minioSTSVaultConfig = new HubTestConfig.VaultSpec("MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
-            null, null, null, "eu-west-1");
+            null, null, "eu-central-1");
     private static final HubTestConfig.VaultSpec minioStaticVaultConfig = new HubTestConfig.VaultSpec("MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
-            "handmade", "minioadmin", "minioadmin", "us-east-1");
+            "minioadmin", "minioadmin", "us-east-1");
     private static final HubTestConfig.VaultSpec awsSTSVaultConfig = new HubTestConfig.VaultSpec("AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
-            null, null, null, "eu-west-1");
+            null, null, "eu-west-1");
     private static final HubTestConfig.VaultSpec awsStaticVaultConfig = new HubTestConfig.VaultSpec("AWS static", "72736C19-283C-49D3-80A5-AB74B5202543",
-            "handmade2", PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"), "eu-north-1"
+            PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"), "us-east-1"
     );
 
     /**
@@ -73,7 +70,7 @@ public abstract class AbstractHubTest extends VaultTest {
     }
 
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedLocalOnly = vs -> Arguments.of(Named.of(
-            String.format("%s %s (Bucket %s)", vs.storageProfileName, LOCAL.hubURL, vs.bucketName),
+            String.format("%s %s", vs.storageProfileName, LOCAL.hubURL),
             new HubTestConfig(LOCAL, vs)));
 
 
@@ -88,7 +85,7 @@ public abstract class AbstractHubTest extends VaultTest {
             .withAdminConfig(new HubTestConfig.Setup.UserConfig("admin", "admin", staticSetupCode()))
             .withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "asd", staticSetupCode()));
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentAttendedLocalOnly = vs -> Arguments.of(Named.of(
-            String.format("%s %s (Bucket %s)", vs.storageProfileName, LOCAL_ATTENDED.hubURL, vs.bucketName),
+            String.format("%s %s", vs.storageProfileName, LOCAL_ATTENDED.hubURL),
             new HubTestConfig(LOCAL_ATTENDED, vs)));
 
     /**
@@ -124,7 +121,7 @@ public abstract class AbstractHubTest extends VaultTest {
     }
 
     private static final Function<HubTestConfig.VaultSpec, Arguments> argumentUnattendedHybrid = vs -> Arguments.of(Named.of(
-            String.format("%s %s (Bucket %s)", vs.storageProfileName, HYBRID.hubURL, vs.bucketName),
+            String.format("%s %s", vs.storageProfileName, HYBRID.hubURL),
             new HubTestConfig(HYBRID, vs)));
 
 
@@ -149,7 +146,6 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
-        preferences.setProperty("factory.devicesetupcallback.class", MockableDeviceSetupCallback.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
@@ -168,17 +164,10 @@ public abstract class AbstractHubTest extends VaultTest {
 
     protected static HubSession setupConnection(final HubTestConfig.Setup setup) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
-        // ProtocolFactory.get() is static, the profiles contains OAuth token URL, leads to invalid grant exceptions when this changes during class loading lifetime (e.g. if the same storage profile ID is deployed to the LOCAL and the HYBRID hub).
-        for(final Protocol protocol : ProtocolFactory.get().find()) {
-            if(protocol instanceof Profile) {
-                factory.unregister((Profile) protocol);
-            }
-        }
         // Register parent protocol definitions
-        factory.register(
-                new HubProtocol(),
-                new S3AssumeRoleProtocol("PasswordGrant")
-        );
+        for(Protocol p : new AnnotationAutoServiceLoader<Protocol>().load(Protocol.class)) {
+            factory.register(p);
+        }
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
         assertNotNull(factory.forName("hub"));
@@ -186,29 +175,42 @@ public abstract class AbstractHubTest extends VaultTest {
         assertTrue(factory.forName("s3").isEnabled());
         assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
-        final DeviceSetupCallback proxy = deviceSetupCallback(setup);
-        MockableDeviceSetupCallback.setProxy(proxy);
-
         final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
-        final LoginConnectionService login = new LoginConnectionService(new DisabledLoginCallback(), new DisabledHostKeyCallback(),
+        final LoginConnectionService login = new LoginConnectionService(loginCallback(setup), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, new DisabledCancelCallback());
         return session;
     }
 
-    protected static @NotNull DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
-        final DeviceSetupCallback proxy = new DeviceSetupCallback() {
+    protected static LoginCallback loginCallback(HubTestConfig.Setup setup) {
+        return new DisabledLoginCallback() {
+            @SuppressWarnings("unchecked")
             @Override
-            public String displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
-                return "firstLoginMockSetup";
+            public <T> T getFeature(final Class<T> type) {
+                if(DeviceSetupCallback.class == type) {
+                    return (T) deviceSetupCallback(setup);
+                }
+                return null;
+            }
+        };
+    }
+
+    protected static DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
+        return new DeviceSetupCallback() {
+            @Override
+            public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
+                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(
+                        String.format("%s %s", accountKeyAndDeviceName.deviceName(), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                                .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
             public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) {
-                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(String.format("firstLoginMockSetup %s", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
-                        .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
+                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(
+                        String.format("%s %s", initialDeviceName, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                                .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
@@ -216,7 +218,6 @@ public abstract class AbstractHubTest extends VaultTest {
                 return staticSetupCode();
             }
         };
-        return proxy;
     }
 }
 

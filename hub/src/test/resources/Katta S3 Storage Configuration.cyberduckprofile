@@ -14,30 +14,5 @@
         <true/>
         <key>Description</key>
         <string>S3 Storage Configuration using OAuth Credentials from Katta Server</string>
-        <key>Scheme</key>
-        <string>http</string>
-        <key>Default Port</key>
-        <string>80</string>
-        <key>Scopes</key>
-        <array>
-            <string>openid</string>
-        </array>
-        <key>OAuth Redirect Url</key>
-        <string>${oauth.handler.scheme}:oauth</string>
-        <key>OAuth Configurable</key>
-        <true/>
-        <key>OAuth Client Secret</key>
-        <string/>
-        <key>Username Configurable</key>
-        <false/>
-        <key>Password Configurable</key>
-        <false/>
-        <key>Authorization</key>
-        <string>AuthorizationCode</string>
-        <key>Properties</key>
-        <dict>
-            <key>s3.assumerole.rolearn.tag.vaultid.key</key>
-            <string>Vault</string>
-        </dict>
     </dict>
 </plist>

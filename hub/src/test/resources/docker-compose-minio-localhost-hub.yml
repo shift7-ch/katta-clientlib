@@ -226,11 +226,10 @@ services:
         /mc idp openid ls myminio
         /mc idp openid info myminio
 
-        # if container is restarted, the bucket already exists...
-        /mc mb myminio/handmade --with-versioning || true
-        /mc rm --recursive --force myminio/handmade
+        # if container is restarted, the bucket already exists
+        /mc rb myminio/handmade || true
 
-        echo "createbuckets successful"
+        echo "Completed MinIO Setup"
 
   hub:
     build:

@@ -33,9 +33,18 @@
         <string>${oauth.handler.scheme}:oauth</string>
         <key>OAuth Client Secret</key>
         <string/>
+        <key>OAuth PKCE</key>
+        <true/>
         <key>Password Configurable</key>
         <false/>
         <key>Username Configurable</key>
         <false/>
+        <key>Properties</key>
+        <dict>
+            <key>katta.userkeys.ttl</key>
+            <string>60000</string>
+            <key>katta.user.ttl</key>
+            <string>60000</string>
+        </dict>
     </dict>
 </plist>

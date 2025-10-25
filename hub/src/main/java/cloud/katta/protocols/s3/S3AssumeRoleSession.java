@@ -6,9 +6,7 @@ package cloud.katta.protocols.s3;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LoginCallback;
-import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.exception.LoginCanceledException;
-import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Session;
@@ -20,11 +18,25 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.UUID;
+
+import cloud.katta.protocols.hub.HubSession;
+
 public class S3AssumeRoleSession extends S3Session {
     private static final Logger log = LogManager.getLogger(S3AssumeRoleSession.class);
 
-    public S3AssumeRoleSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
-        super(host, trust, key);
+    private final HubSession hub;
+    /**
+     * Shared OAuth tokens
+     */
+    private final OAuth2RequestInterceptor oauth;
+    private final UUID vaultId;
+
+    public S3AssumeRoleSession(final HubSession hub, final UUID vaultId, final Host host) {
+        super(host, hub.getFeature(X509TrustManager.class), hub.getFeature(X509KeyManager.class));
+        this.hub = hub;
+        this.oauth = hub.getFeature(OAuth2RequestInterceptor.class);
+        this.vaultId = vaultId;
     }
 
     /**
@@ -38,20 +50,9 @@ public class S3AssumeRoleSession extends S3Session {
     @Override
     protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) throws LoginCanceledException {
         if(host.getProtocol().isOAuthConfigurable()) {
-            // Shared OAuth tokens
-            final OAuth2RequestInterceptor oauth = new OAuth2RequestInterceptor(configuration.build(), host, prompt);
-            oauth.withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
-            if(host.getProtocol().getAuthorization() != null) {
-                oauth.withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()));
-            }
             log.debug("Register interceptor {}", oauth);
             configuration.addInterceptorLast(oauth);
-            final STSRequestInterceptor sts = new STSChainedAssumeRoleRequestInterceptor(oauth, host, trust, key, prompt) {
-                @Override
-                protected String getWebIdentityToken(final OAuthTokens oauth) {
-                    return oauth.getAccessToken();
-                }
-            };
+            final STSRequestInterceptor sts = new STSChainedAssumeRoleRequestInterceptor(hub, oauth, vaultId, host, trust, key, prompt);
             log.debug("Register interceptor {}", sts);
             configuration.addInterceptorLast(sts);
             return sts;

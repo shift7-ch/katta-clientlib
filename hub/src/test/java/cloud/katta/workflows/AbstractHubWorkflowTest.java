@@ -4,11 +4,18 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.DisabledLoginCallback;
+import ch.cyberduck.core.Path;
+import ch.cyberduck.core.UUIDRandomStringService;
+import ch.cyberduck.core.vault.VaultCredentials;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,9 +30,14 @@ import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
+import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.SetupCodeJWE;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.hub.HubStorageLocationService;
+import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
@@ -51,18 +63,26 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .map(StorageProfileDtoWrapper::coerce)
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
-            final UUID vaultId = UUID.randomUUID();
-            final boolean automaticAccessGrant = true;
-            // upload template (STS: create bucket first, static: existing bucket)
-            // TODO test with multiple wot levels?
+            final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
+            final Path bucket = new Path(null == storageProfileWrapper.getBucketPrefix() ? "katta-test-" + vaultId : storageProfileWrapper.getBucketPrefix() + vaultId,
+                    EnumSet.of(Path.Type.volume, Path.Type.directory));
+            final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
+                    storageProfileWrapper.getName());
+            final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()
+                    .withStorage(new VaultMetadataJWEBackendDto()
+                            .username(config.vault.username)
+                            .password(config.vault.password)
+                            .provider(location.getProfile())
+                            .defaultPath(bucket.getAbsolute())
+                            .region(location.getRegion())
+                            .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
+                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                            .enabled(true)
+                            .maxWotDepth(3));
+            final HubUVFVault cryptomator = new HubUVFVault(new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata),
+                    vaultId, vaultMetadata, new DisabledLoginCallback());
+            cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
 
-            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
-                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
-            new CreateVaultService(hubSession).createVault(userKeys, storageProfileWrapper,
-                    new CreateVaultService.CreateVaultModel(vaultId,
-                            "vault", null,
-                            config.vault.storageProfileId, config.vault.username, config.vault.password, config.vault.bucketName,
-                            config.vault.region, automaticAccessGrant, 3));
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 
             log.info("S02 {} alice shares vault with admin as owner", setup);
@@ -96,6 +116,8 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost())), admin);
 
             log.info("S04 {} alice grants access to admin", setup);
+            final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
         }
