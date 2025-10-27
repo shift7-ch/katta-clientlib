@@ -10,7 +10,7 @@
                 "s3:GetBucketVersioning",
                 "s3:ListBucketVersions"
             ],
-            "Resource": "arn:aws:s3:::cipherduck${aws:PrincipalTag/VaultRequested}"
+            "Resource": "arn:aws:s3:::cipherduck${aws:PrincipalTag/Vault}"
         },
         {
             "Effect": "Allow",
@@ -21,7 +21,7 @@
                 "s3:ListMultipartUploadParts",
                 "s3:AbortMultipartUpload"
             ],
-            "Resource": "arn:aws:s3:::cipherduck${aws:PrincipalTag/VaultRequested}/*"
+            "Resource": "arn:aws:s3:::cipherduck${aws:PrincipalTag/Vault}/*"
         }
     ]
 }
