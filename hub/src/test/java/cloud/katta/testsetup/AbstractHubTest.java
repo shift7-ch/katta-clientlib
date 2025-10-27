@@ -108,20 +108,20 @@ public abstract class AbstractHubTest extends VaultTest {
 
 
     public static final Arguments HYBRID_MINIO_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E", PROPERTIES.get("minio.testing.katta.cloud.handmade_access_user.name"), PROPERTIES.get("minio.testing.katta.cloud.handmade_access_user.password"), "us-east-1"
+            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB285496779", PROPERTIES.get("minio.testing.katta.cloud.handmade_access_user.name"), PROPERTIES.get("minio.testing.katta.cloud.handmade_access_user.password"), "us-east-1"
     ));
     public static final Arguments HYBRID_MINIO_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C", null, null, "eu-central-1"
+            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF19", null, null, "eu-central-1"
     ));
 
     public static final Arguments HYBRID_AWS_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "AWS static", "72736C19-283C-49D3-80A5-AB74B5202543", PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
+            "AWS static", "72736C19-283C-49D3-80A5-AB74B5202549", PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
             // TODO https://github.com/shift7-ch/katta-server/issues/87
             // "eu-north-1"
             "us-east-1"
     ));
     public static final Arguments HYBRID_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6", null, null, "eu-west-1"
+            "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F9", null, null, "eu-west-1"
     ));
 
     @BeforeEach

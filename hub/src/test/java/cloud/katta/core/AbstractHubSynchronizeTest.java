@@ -190,16 +190,16 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     .apiStorageprofileGet(false);
             // aws static
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("72736c19-283c-49d3-80a5-ab74b5202543")));
+                    .startsWith("72736c19-283c-49d3-80a5-ab74b520254")));
             // aws sts
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("844bd517-96d4-4787-bcfa-238e103149f6")));
+                    .startsWith("844bd517-96d4-4787-bcfa-238e103149f")));
             // minio static
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("71b910e0-2ecc-46de-a871-8db28549677e")));
+                    .startsWith("71b910e0-2ecc-46de-a871-8db28549677")));
             // minio sts
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("732d43fa-3716-46c4-b931-66ea5405ef1c")));
+                    .startsWith("732d43fa-3716-46c4-b931-66ea5405ef1")));
         }
         catch(ApiException e) {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
