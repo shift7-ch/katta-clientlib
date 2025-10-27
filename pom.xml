@@ -24,7 +24,7 @@
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
         <junit.platform.version>1.13.4</junit.platform.version>
         <cyberduck.version>9.3.0.uvfdraft-SNAPSHOT</cyberduck.version>
-        <testcontainers.version>1.21.3</testcontainers.version>
+        <testcontainers.version>2.0.1</testcontainers.version>
     </properties>
 
     <repositories>
