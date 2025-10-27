@@ -65,7 +65,7 @@ public abstract class AbstractHubTest extends VaultTest {
             new HubTestConfig(LOCAL, vs)));
 
     public static final Arguments LOCAL_MINIO_STATIC = prepareArgumentLocal.apply(new HubTestConfig.VaultSpec(
-            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E", "handmade_access", "top-secret", "us-east-1"));
+            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E", "testuser", "top-secret", "us-east-1"));
     public static final Arguments LOCAL_MINIO_STS = prepareArgumentLocal.apply(new HubTestConfig.VaultSpec(
             "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C", null, null, "eu-central-1"));
 

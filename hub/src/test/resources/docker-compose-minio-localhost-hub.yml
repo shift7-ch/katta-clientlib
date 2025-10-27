@@ -226,11 +226,11 @@ services:
         /mc idp openid ls myminio
         /mc idp openid info myminio
 
-        /mc admin user add myminio handmade_access top-secret
-        /mc admin policy create myminio handmade_accesspolicy /setup/local/minio_static/handmade_accessbucketpolicy.json
-        /mc admin policy create myminio handmade_createpolicy /setup/local/minio_static/handmade_createbucketpolicy.json
-        /mc admin policy attach myminio handmade_accesspolicy --user handmade_access
-        /mc admin policy attach myminio handmade_createpolicy --user handmade_access
+        /mc admin user add myminio testuser top-secret
+        /mc admin policy create myminio testuser_accesspolicy /setup/local/minio_static/accessbucketpolicy.json
+        /mc admin policy create myminio testuser_createpolicy /setup/local/minio_static/createbucketpolicy.json
+        /mc admin policy attach myminio testuser_accesspolicy --user testuser
+        /mc admin policy attach myminio testuser_createpolicy --user testuser
 
         echo "Completed MinIO Setup"
 
