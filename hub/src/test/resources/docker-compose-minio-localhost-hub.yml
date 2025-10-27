@@ -395,37 +395,4 @@ services:
         curl -v --fail http://localhost:${HUB_PORT}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 
-  wait-demo: # force `docker compose up -d` to wait for and check for the conditions below:
-    profiles: [ demo ]
-    image: busybox
-    depends_on:
-      minio_setup:
-        condition: service_completed_successfully
-      hub_setup_storage_profile:
-        condition: service_completed_successfully
-    entrypoint: [ "sh","-c" ]
-    command:
-      - |
-        set -euxo pipefail
-        exit 0
-    healthcheck:
-      test: [ "CMD-SHELL", "exit 0" ]
-      interval: 10s
-      timeout: 1s
-      retries: 30
 
-  wait: # force `docker compose up -d` to wait for and check for the conditions below:
-    image: busybox
-    depends_on:
-      minio_setup:
-        condition: service_completed_successfully
-    entrypoint: [ "sh","-c" ]
-    command:
-      - |
-        set -euxo pipefail
-        exit 0
-    healthcheck:
-      test: [ "CMD-SHELL", "exit 0" ]
-      interval: 10s
-      timeout: 1s
-      retries: 30

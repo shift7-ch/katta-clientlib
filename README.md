@@ -21,7 +21,7 @@ Features:
 ## One-Stop Shop Demo with Docker Compose
 
 ```bash
-docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local up -d
+docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local up --wait
 docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
 ```
 
