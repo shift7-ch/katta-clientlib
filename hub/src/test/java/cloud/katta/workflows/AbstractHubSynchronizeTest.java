@@ -9,33 +9,26 @@ import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.DisabledLoginCallback;
+import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.AccessDeniedException;
-import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
 import ch.cyberduck.core.features.AttributesFinder;
-import ch.cyberduck.core.features.Bulk;
 import ch.cyberduck.core.features.Delete;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Move;
-import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
-import ch.cyberduck.core.io.StatusOutputStream;
-import ch.cyberduck.core.transfer.Transfer;
-import ch.cyberduck.core.transfer.TransferItem;
 import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultRegistry;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -46,10 +39,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -61,7 +50,6 @@ import java.util.stream.Collectors;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
-import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
@@ -77,6 +65,7 @@ import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
+import cloud.katta.testsetup.HubTestUtilities;
 import cloud.katta.testsetup.MethodIgnorableSource;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -306,50 +295,34 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             {
                 // encrypted file upload
-                final Path file = new Path(vault, new AlphanumericRandomStringService(25).random(), EnumSet.of(Path.Type.file));
-                byte[] content = writeRandomFile(hubSession, file, 234);
+                final Path file = new Path(vault, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
+                final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(234));
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertEquals(1, list.size());
                 assertEquals(file.getName(), list.get(0).getName());
-
-                byte[] actual = new byte[300];
-                try (final InputStream inputStream = hubSession.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback())) {
-                    int l = inputStream.read(actual);
-                    assert l == 234;
-                    assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
-                }
+                assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
             }
             {
                 // directory creation and listing
-                final Path folder = new Path(vault, new AlphanumericRandomStringService(25).random(), EnumSet.of(Path.Type.directory));
-
+                final Path folder = new Path(vault, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
                 hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertEquals(2, list.size()); // a file and a folder
-
                 {
                     // file upload in subfolder
-                    final Path file = new Path(folder, new AlphanumericRandomStringService(25).random(), EnumSet.of(Path.Type.file));
-                    final byte[] content = writeRandomFile(hubSession, file, 555);
+                    final Path file = new Path(folder, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
+                    final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(555));
                     final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(folder, new DisabledListProgressListener());
                     assertEquals(1, sublist.size());
                     assertEquals(file.getName(), sublist.get(0).getName());
-
-                    byte[] actual = new byte[600];
-                    try (final InputStream inputStream = hubSession.getFeature(Read.class).read(file, new TransferStatus(), new DisabledConnectionCallback())) {
-                        int l = inputStream.read(actual);
-                        assert l == 555;
-                        assertArrayEquals(content, Arrays.copyOfRange(actual, 0, l));
-                    }
-
+                    assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
                     // move operation to root folder and read again
-                    hubSession.getFeature(Move.class).move(file, new Path(vault, file.getName(), EnumSet.of(Path.Type.file)), new TransferStatus(), new Delete.DisabledCallback(), new DisabledConnectionCallback());
-
+                    hubSession.getFeature(Move.class).move(file, new Path(vault, file.getName(), EnumSet.of(Path.Type.file)), new TransferStatus(),
+                            new Delete.DisabledCallback(), new DisabledConnectionCallback());
                     final AttributedList<Path> list2 = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                     assertEquals(3, list2.size()); // 1 subfolder and 2 files
-
-                    assertEquals(1, list2.toStream().map(Path::isDirectory).filter(Boolean::booleanValue).count());
-                    assertEquals(2, list2.toStream().map(Path::isFile).filter(Boolean::booleanValue).count());
+                    assertEquals(1, list2.filter(Path::isDirectory).size());
+                    assertEquals(2, list2.filter(Path::isFile).size());
                 }
             }
             vaultRegistry.close(vault);
@@ -374,18 +347,36 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));
         for(final Path vault : vaults) {
             assertTrue(hubSession.getFeature(Find.class).find(vault));
+            final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
+            assertEquals(3, list.size()); // 1 subfolder and 2 files
+            assertEquals(1, list.toStream().filter(Path::isDirectory).count());
+            assertEquals(2, list.toStream().filter(Path::isFile).count());
+            for(Path f : list.filter(Path::isFile)) {
+                final long length = f.attributes().getSize();
+                HubTestUtilities.read(hubSession, f, (int) length);
+            }
+            for(Path d : list.filter(Path::isDirectory)) {
+                {
+                    // New file
+                    final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
+                    final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
+                    assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
+                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), new DisabledPasswordCallback(), new Delete.DisabledCallback());
+                    assertFalse(hubSession.getFeature(Find.class).find(file));
+                }
+                {
+                    // New directory
+                    final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
+                    hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
+                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), new DisabledPasswordCallback(), new Delete.DisabledCallback());
+                    assertFalse(hubSession.getFeature(Find.class).find(folder));
+                }
+                final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(d, new DisabledListProgressListener());
+                for(Path f : sublist.filter(Path::isFile)) {
+                    final long length = f.attributes().getSize();
+                    HubTestUtilities.read(hubSession, f, (int) length);
+                }
+            }
         }
-        new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
-    }
-
-    private static byte[] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {
-        final byte[] content = RandomUtils.nextBytes(size);
-        final TransferStatus transferStatus = new TransferStatus().setLength(content.length);
-        transferStatus.setChecksum(session.getFeature(Write.class).checksum(file, transferStatus).compute(new ByteArrayInputStream(content), transferStatus));
-        session.getFeature(Bulk.class).pre(Transfer.Type.upload, Collections.singletonMap(new TransferItem(file), transferStatus), new DisabledConnectionCallback());
-        final StatusOutputStream<?> out = session.getFeature(Write.class).write(file, transferStatus, new DisabledConnectionCallback());
-        IOUtils.copyLarge(new ByteArrayInputStream(content), out);
-        out.close();
-        return content;
     }
 }
