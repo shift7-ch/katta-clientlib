@@ -122,16 +122,16 @@ public class UvfMetadataPayload extends JWEPayload {
         final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
         final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
-        final byte[] rootDirId = masterKey.rootDirId();
-        return cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(rootDirId);
+        final DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
+        return dirContentCryptor.dirPath(dirContentCryptor.newDirectoryMetadata(masterKey.rootDirId()));
     }
 
     public byte[] computeRootDirUvf() throws JsonProcessingException {
         final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
         final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
-        DirectoryMetadata rootDirMetadata = cryptor.directoryContentCryptor().rootDirectoryMetadata();
-        DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
+        final DirectoryMetadata rootDirMetadata = cryptor.directoryContentCryptor().rootDirectoryMetadata();
+        final DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
         return dirContentCryptor.encryptDirectoryMetadata(rootDirMetadata);
     }
 
@@ -310,6 +310,9 @@ public class UvfMetadataPayload extends JWEPayload {
      */
     public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
         final JWEObjectJSON builder = new JWEObjectJSON(
+                // TODO gemäss https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata
+                // wo ist uvf.spec.version?
+                // origin müsste prefixed werden -> cloud.katta.origin?
                 new JWEHeader.Builder(EncryptionMethod.A256GCM)
                         .customParam("origin", String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString()))
                         .jwkURL(URI.create("jwks.json"))
