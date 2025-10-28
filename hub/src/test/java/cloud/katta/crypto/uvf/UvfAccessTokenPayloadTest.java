@@ -41,14 +41,14 @@ class UvfAccessTokenPayloadTest {
 
 
     @Test
-    public void testDecryptAccessToken() throws InvalidKeySpecException, ParseException, JOSEException, JsonProcessingException {
+    void testDecryptAccessToken() throws InvalidKeySpecException, ParseException, JOSEException, JsonProcessingException {
         final UserKeys userKeys = new UserKeys(decodeKeyPair(DEVICE_PUB_KEY, DEVICE_PRIV_KEY), decodeKeyPair(DEVICE_PUB_KEY, DEVICE_PRIV_KEY));
         final UvfAccessTokenPayload accessToken = userKeys.decryptAccessToken("eyJhbGciOiJFQ0RILUVTIiwiZW5jIjoiQTI1NkdDTSIsImVwayI6eyJrZXlfb3BzIjpbXSwiZXh0Ijp0cnVlLCJrdHkiOiJFQyIsIngiOiJoeHpiSWh6SUJza3A5ZkZFUmJSQ2RfOU1fbWYxNElqaDZhcnNoVXNkcEEyWno5ejZZNUs4NHpZR2I4b2FHemNUIiwieSI6ImJrMGRaNWhpelZ0TF9hN2hNejBjTUduNjhIRjZFdWlyNHdlclNkTFV5QWd2NWUzVzNYSG5sdHJ2VlRyU3pzUWYiLCJjcnYiOiJQLTM4NCJ9LCJhcHUiOiIiLCJhcHYiOiIifQ..pu3Q1nR_yvgRAapG.4zW0xm0JPxbcvZ66R-Mn3k841lHelDQfaUvsZZAtWsL2w4FMi6H_uu6ArAWYLtNREa_zfcPuyuJsFferYPSNRUWt4OW6aWs-l_wfo7G1ceEVxztQXzQiwD30UTA8OOdPcUuFfEq2-d9217jezrcyO6m6FjyssEZIrnRArUPWKzGdghXccGkkf0LTZcGJoHeKal-RtyP8PfvEAWTjSOCpBlSdUJ-1JL3tyd97uVFNaVuH3i7vvcMoUP_bdr0XW3rvRgaeC6X4daPLUvR1hK5MsutQMtM2vpFghS_zZxIQRqz3B2ECxa9Bjxhmn8kLX5heZ8fq3lH-bmJp1DxzZ4V1RkWk.yVwXG9yARa5Ihq2koh2NbQ");
         assertEquals(USER_PRIV_KEY, accessToken.key());
     }
 
     @Test
-    public void decryptAccessToken() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void decryptAccessToken() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
         final ECKeyPair ecKeyPair = decodeKeyPair(Base64.encodeAsString(alice.toECPublicKey().getEncoded()), Base64.encodeAsString(alice.toECPrivateKey().getEncoded()));
         final UserKeys userKeys = new UserKeys(ecKeyPair, P384KeyPair.generate());
         final String accessToken = "eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoicFotVXExTjNOVElRcHNpZC11UGZMaW95bVVGVFJLM1dkTXVkLWxDcGh5MjQ4bUlJelpDc3RPRzZLTGloZnBkZyIsInkiOiJzMnl6eF9Ca2QweFhIcENnTlJFOWJiQUIyQkNNTF80cWZwcFEza1N2LXhqcEROVWZZdmlxQS1xRERCYnZkNDdYIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.I_rXJagNrrCa9zISf0DZJLQbIZDxEpGxCyjFbNE0iZs6yFeVayNOGQ.7rASe4SqyKJJLHZ4.l6T2N_ATytZUyh1IZTIJJDY4dXCyQVsRB19QIIPrAi0QQiS4gl4.fnOtAJhdvPFFHVi6L5Ma_R8iL3IXq1_xAq2PvdEfx0A";
@@ -58,7 +58,7 @@ class UvfAccessTokenPayloadTest {
     }
 
     @Test
-    public void encryptDecryptAccessToken() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void encryptDecryptAccessToken() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
         final ECKeyPair ecKeyPair = decodeKeyPair(USER_PUB_KEY, USER_PRIV_KEY);
         final UserKeys userKeys = new UserKeys(ecKeyPair, P384KeyPair.generate());
         final String accessToken = new UvfAccessTokenPayload().withKey("very secret").encryptForUser(userKeys.ecdhKeyPair().getPublic());

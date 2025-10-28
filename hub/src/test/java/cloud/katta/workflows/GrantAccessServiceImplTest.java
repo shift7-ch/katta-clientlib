@@ -4,8 +4,6 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.Host;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -36,7 +34,7 @@ class GrantAccessServiceImplTest {
             "true,2,2,1",   // maxWotDepth == bobTrustLevel -> 1 upload
             "true,1,2,0",   // maxWotDepth < bobTrustLevel -> no upload
     })
-    void grantAccessToUsersRequiringAccessGrant(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws ApiException, AccessException, SecurityFailure {
+    void testGrantAccess(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws ApiException, AccessException, SecurityFailure {
         final VaultResourceApi vaults = mock(VaultResourceApi.class);
         final VaultService vaultServiceMock = mock(VaultService.class);
         final WoTService wotServiceMock = mock(WoTService.class);

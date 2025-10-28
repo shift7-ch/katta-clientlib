@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Check the generated client code can deserialize `useOneOfDiscriminatorLookup` data.
  */
-public class ObjectMapperTest {
+class ObjectMapperTest {
 
     @Test
-    public void testAWSStatic() throws IOException {
+    void testAWSStatic() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
 
@@ -36,7 +36,7 @@ public class ObjectMapperTest {
     }
 
     @Test
-    public void testAWSSTS() throws IOException {
+    void testAWSSTS() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
 
@@ -60,7 +60,7 @@ public class ObjectMapperTest {
     }
 
     @Test
-    public void testMinioStatic() throws IOException {
+    void testMinioStatic() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
 
@@ -76,7 +76,7 @@ public class ObjectMapperTest {
     }
 
     @Test
-    public void testMinioSTS() throws IOException {
+    void testMinioSTS() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class);

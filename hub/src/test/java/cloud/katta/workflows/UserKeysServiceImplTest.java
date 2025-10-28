@@ -5,6 +5,14 @@
 package cloud.katta.workflows;
 
 import ch.cyberduck.core.PasswordStoreFactory;
+
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
+
 import cloud.katta.client.api.DeviceResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.DeviceDto;
@@ -17,18 +25,13 @@ import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
+
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
 
 @ExtendWith({HubTestSetupDockerExtension.Local.class})
-class UserKeysServiceImplIT extends AbstractHubTest {
+class UserKeysServiceImplTest extends AbstractHubTest {
 
     private static Stream<Arguments> arguments() {
         // static or STS does not matter
@@ -37,7 +40,7 @@ class UserKeysServiceImplIT extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void testSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
+    void testSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
 
         final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), deviceSetupCallback(config.setup));
@@ -56,7 +59,7 @@ class UserKeysServiceImplIT extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void testFailSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
+    void testFailSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
 
         // Setting up new device w/ Account Key for existing user keys with erroneous setup code
@@ -67,7 +70,7 @@ class UserKeysServiceImplIT extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void testSetupExistingDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
+    void testSetupExistingDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
 
         final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), deviceSetupCallback(config.setup));
@@ -89,7 +92,7 @@ class UserKeysServiceImplIT extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void testSetupNewUserKeysAndAccountKey(final HubTestConfig config) throws Exception {
+    void testSetupNewUserKeysAndAccountKey(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
         final UserDto me = hubSession.getMe();
 

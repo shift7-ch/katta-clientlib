@@ -4,8 +4,6 @@
 
 package cloud.katta.core;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,8 +39,7 @@ import static cloud.katta.crypto.KeyHelper.decodePublicKey;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith({HubTestSetupDockerExtension.Local.class})
-public class KeyRotationTest extends AbstractHubTest {
-    private static final Logger log = LogManager.getLogger(KeyRotationTest.class.getName());
+class KeyRotationTest extends AbstractHubTest {
 
     private Stream<Arguments> arguments() {
         return Stream.of(LOCAL_MINIO_STS);
@@ -50,13 +47,12 @@ public class KeyRotationTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void keyrotationTest(final HubTestConfig hubTestConfig) throws Exception {
+    void testKeyRotation(final HubTestConfig hubTestConfig) throws Exception {
         final HubSession hubSession = setupConnection(hubTestConfig.setup);
         try {
             final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
             final UserDto me = usersResourceApi.apiUsersMeGet(false, false);
-            log.info(me);
 
             final List<VaultDto> vaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
 
@@ -71,8 +67,8 @@ public class KeyRotationTest extends AbstractHubTest {
                 final HashMap<String, String> tokens = new HashMap<>();
                 final UserKeysService service = new UserKeysServiceImpl(hubSession);
                 final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
-            final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
-            final UvfMetadataPayload metadataJWE = vaultService.getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
+                final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
+                final UvfMetadataPayload metadataJWE = vaultService.getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
                 final UvfAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
 
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
