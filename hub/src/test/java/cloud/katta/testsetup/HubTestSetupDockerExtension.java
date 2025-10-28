@@ -61,9 +61,8 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(configuration.profile == null ? "" : String.format("--profile=%s", configuration.profile))
-                .waitingFor("wait-1", new LogMessageWaitStrategy().withRegEx(".*exit 0.*").withStartupTimeout(Duration.ofMinutes(2)));
+                .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
         compose.start();
-
         log.info("Done setup docker {}", configuration);
     }
 

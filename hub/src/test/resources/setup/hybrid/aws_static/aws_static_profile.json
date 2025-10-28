@@ -1,0 +1,10 @@
+{
+    "id": "72736C19-283C-49D3-80A5-AB74B5202549",
+    "name": "AWS S3 static",
+    "region": "eu-north-1",
+    "protocol": "S3",
+    "storageClass": "STANDARD",
+    "archived": "false",
+    "scheme": "https",
+    "port": 443
+}
