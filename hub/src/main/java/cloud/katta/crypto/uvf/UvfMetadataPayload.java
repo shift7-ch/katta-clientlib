@@ -123,7 +123,7 @@ public class UvfMetadataPayload extends JWEPayload {
         final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
         final DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
-        return dirContentCryptor.dirPath(dirContentCryptor.newDirectoryMetadata(masterKey.rootDirId()));
+        return dirContentCryptor.dirPath(cryptor.directoryContentCryptor().rootDirectoryMetadata());
     }
 
     public byte[] computeRootDirUvf() throws JsonProcessingException {
