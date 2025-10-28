@@ -84,7 +84,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                 if(minioHostname != null) {
                     storageProfile.setHostname(minioHostname);
                 }
-                adminStorageProfileApi.apiStorageprofileS3Put(storageProfile);
+                adminStorageProfileApi.apiStorageprofileS3Post(storageProfile);
             }
             {
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class)
@@ -100,7 +100,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("minio", minioHostname));
                     storageProfile.setHostname(minioHostname);
                 }
-                adminStorageProfileApi.apiStorageprofileS3stsPut(storageProfile);
+                adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
 
 

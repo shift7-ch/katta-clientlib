@@ -39,7 +39,6 @@
                 }
             },
             "AuthorityDto": {
-                "type": "object",
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/UserDto"
@@ -60,6 +59,7 @@
                         "MEMBER": "#/components/schemas/MemberDto"
                     }
                 },
+                "type": "object",
                 "properties": {
                     "id": {
                         "type": "string"
@@ -176,11 +176,6 @@
             },
             "DeviceDto": {
                 "type": "object",
-                "required": [
-                    "name",
-                    "publicKey",
-                    "userPrivateKey"
-                ],
                 "properties": {
                     "id": {
                         "type": "string",
@@ -217,7 +212,12 @@
                     "legacyDevice": {
                         "type": "boolean"
                     }
-                }
+                },
+                "required": [
+                    "name",
+                    "publicKey",
+                    "userPrivateKey"
+                ]
             },
             "GroupDto": {
                 "type": "object",
@@ -348,13 +348,6 @@
                 }
             },
             "StorageProfileDto": {
-                "type": "object",
-                "required": [
-                    "id",
-                    "name",
-                    "protocol",
-                    "archived"
-                ],
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/StorageProfileS3Dto"
@@ -371,20 +364,27 @@
                         "S3STS": "#/components/schemas/StorageProfileS3STSDto"
                     }
                 },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "protocol",
+                    "archived"
+                ],
                 "properties": {
                     "id": {
-                        "$ref": "#/components/schemas/UUID",
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
                         "type": "string",
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
+                        "$ref": "#/components/schemas/UUID"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "$ref": "#/components/schemas/Protocol",
+                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS).",
                         "type": "string",
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
+                        "$ref": "#/components/schemas/Protocol"
                     },
                     "archived": {
                         "type": "boolean",
@@ -393,6 +393,7 @@
                 }
             },
             "StorageProfileS3Dto": {
+                "title": "StorageProfileS3Dto",
                 "type": "object",
                 "required": [
                     "id",
@@ -410,18 +411,18 @@
                 ],
                 "properties": {
                     "id": {
-                        "$ref": "#/components/schemas/UUID",
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
                         "type": "string",
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
+                        "$ref": "#/components/schemas/UUID"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "$ref": "#/components/schemas/Protocol",
+                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS).",
                         "type": "string",
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
+                        "$ref": "#/components/schemas/Protocol"
                     },
                     "archived": {
                         "type": "boolean",
@@ -459,10 +460,10 @@
                         "default": false
                     },
                     "storageClass": {
-                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES",
-                        "type": "string",
                         "description": "Storage class for upload. Defaults to STANDARD",
-                        "example": "STANDARD"
+                        "type": "string",
+                        "example": "STANDARD",
+                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES"
                     },
                     "region": {
                         "type": "string",
@@ -512,13 +513,14 @@
                         "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
                     },
                     "bucketEncryption": {
-                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
+                        "description": "Enable bucket versioning upon bucket creation",
                         "type": "string",
-                        "description": "Enable bucket versioning upon bucket creation"
+                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION"
                     }
                 }
             },
             "StorageProfileS3STSDto": {
+                "title": "StorageProfileS3STSDto",
                 "type": "object",
                 "required": [
                     "id",
@@ -538,18 +540,18 @@
                 ],
                 "properties": {
                     "id": {
-                        "$ref": "#/components/schemas/UUID",
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
                         "type": "string",
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
+                        "$ref": "#/components/schemas/UUID"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "$ref": "#/components/schemas/Protocol",
+                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS).",
                         "type": "string",
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
+                        "$ref": "#/components/schemas/Protocol"
                     },
                     "archived": {
                         "type": "boolean",
@@ -587,10 +589,10 @@
                         "default": false
                     },
                     "storageClass": {
-                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES",
-                        "type": "string",
                         "description": "Storage class for upload. Defaults to STANDARD",
-                        "example": "STANDARD"
+                        "type": "string",
+                        "example": "STANDARD",
+                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES"
                     },
                     "region": {
                         "type": "string",
@@ -640,9 +642,9 @@
                         "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
                     },
                     "bucketEncryption": {
-                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
+                        "description": "Enable bucket versioning upon bucket creation",
                         "type": "string",
-                        "description": "Enable bucket versioning upon bucket creation"
+                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION"
                     },
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity": {
                         "type": "string",
@@ -1758,7 +1760,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "uploaded storage configuration",
+                        "description": "list of storage configuration",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1783,14 +1785,15 @@
                 "security": [
                     {
                         "SecurityScheme": [
-                            "user"
+                            "user",
+                            "admin"
                         ]
                     }
                 ]
             }
         },
         "/api/storageprofile/s3": {
-            "put": {
+            "post": {
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1802,7 +1805,7 @@
                     "required": true
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "uploaded storage configuration"
                     },
                     "400": {
@@ -1835,7 +1838,7 @@
                 "description": "get list of configs for storage backends",
                 "responses": {
                     "200": {
-                        "description": "uploaded storage configuration",
+                        "description": "list of storage configuration",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1860,14 +1863,15 @@
                 "security": [
                     {
                         "SecurityScheme": [
-                            "user"
+                            "user",
+                            "admin"
                         ]
                     }
                 ]
             }
         },
         "/api/storageprofile/s3sts": {
-            "put": {
+            "post": {
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1879,7 +1883,7 @@
                     "required": true
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "uploaded storage configuration"
                     },
                     "400": {
@@ -1945,7 +1949,8 @@
                 "security": [
                     {
                         "SecurityScheme": [
-                            "user"
+                            "user",
+                            "admin"
                         ]
                     }
                 ]
@@ -2696,10 +2701,10 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "minProperties": 1,
                                 "additionalProperties": {
                                     "type": "string"
-                                }
+                                },
+                                "minProperties": 1
                             }
                         }
                     },
@@ -3246,5 +3251,15 @@
     "info": {
         "title": "hub-backend API",
         "version": "1.5.0-SNAPSHOT"
-    }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Auto generated value"
+        },
+        {
+            "url": "http://0.0.0.0:8080",
+            "description": "Auto generated value"
+        }
+    ]
 }
