@@ -25,7 +25,7 @@ class HubWorkflowTest {
     @Nested
     @TestInstance(PER_CLASS)
     @ExtendWith({HubTestSetupDockerExtension.Local.class})
-    public class LocalStatic extends AbstractHubWorkflowTest {
+    class LocalStatic extends AbstractHubWorkflowTest {
         private Stream<Arguments> arguments() {
             // Needs to be run separately for every storage profile because of the hard-coded vault counts.
             return Stream.of(LOCAL_MINIO_STATIC);
@@ -35,7 +35,7 @@ class HubWorkflowTest {
     @Nested
     @TestInstance(PER_CLASS)
     @ExtendWith({HubTestSetupDockerExtension.Local.class})
-    public class LocalSTS extends AbstractHubWorkflowTest {
+    class LocalSTS extends AbstractHubWorkflowTest {
         private Stream<Arguments> arguments() {
             // Needs to be run separately for every storage profile because of the hard-coded vault counts.
             return Stream.of(LOCAL_MINIO_STS);

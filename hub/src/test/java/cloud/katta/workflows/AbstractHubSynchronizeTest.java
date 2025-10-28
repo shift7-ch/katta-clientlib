@@ -2,7 +2,7 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.core;
+package cloud.katta.workflows;
 
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.AttributedList;
@@ -40,7 +40,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -79,7 +78,6 @@ import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
-import cloud.katta.workflows.VaultServiceImpl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -87,7 +85,7 @@ import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.MethodName.class)
-public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
+abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubSynchronizeTest.class.getName());
 
     /**
@@ -95,7 +93,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    public void test01Bootstrapping(final HubTestConfig hubTestConfig) throws Exception {
+    void test01Bootstrapping(final HubTestConfig hubTestConfig) throws Exception {
         log.info("M01 {}", hubTestConfig);
         final String profile = hubTestConfig.setup.dockerConfig.profile;
         final Properties props = new Properties();
@@ -215,7 +213,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    public void test02AddStorageProfile(final HubTestConfig hubTestConfig) throws Exception {
+    void test02AddStorageProfile(final HubTestConfig hubTestConfig) throws Exception {
         log.info("M02 {}", hubTestConfig);
 
         final HubSession hubSession = setupConnection(hubTestConfig.setup);
@@ -253,7 +251,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    public void test03AddVault(final HubTestConfig config) throws Exception {
+    void test03AddVault(final HubTestConfig config) throws Exception {
         log.info("M03 {}", config);
 
         final HubSession hubSession = setupConnection(config.setup);
@@ -367,7 +365,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void test04SetupCode(final HubTestConfig config) throws Exception {
+    void test04SetupCode(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
         assertEquals(OAuthTokens.EMPTY, hubSession.getHost().getCredentials().getOauth());
         assertEquals(StringUtils.EMPTY, hubSession.getHost().getCredentials().getPassword());
@@ -380,7 +378,7 @@ public abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
     }
 
-    private static byte @NotNull [] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {
+    private static byte[] writeRandomFile(final Session<?> session, final Path file, int size) throws BackgroundException, IOException {
         final byte[] content = RandomUtils.nextBytes(size);
         final TransferStatus transferStatus = new TransferStatus().setLength(content.length);
         transferStatus.setChecksum(session.getFeature(Write.class).checksum(file, transferStatus).compute(new ByteArrayInputStream(content), transferStatus));

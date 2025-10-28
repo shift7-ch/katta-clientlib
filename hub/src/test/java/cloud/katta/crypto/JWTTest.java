@@ -45,37 +45,35 @@ class JWTTest {
             )
             .build();
 
-    final ECKeyPair signerKey = decodeKeyPair(Base64.getEncoder().encodeToString(signerPublicJwk.toECPublicKey().getEncoded()), (Base64.getEncoder().encodeToString(signerPublicJwk.toECPrivateKey().getEncoded())));
+    final ECKeyPair signerKey = decodeKeyPair(Base64.getEncoder().encodeToString(signerPublicJwk.toECPublicKey().getEncoded()),
+            Base64.getEncoder().encodeToString(signerPublicJwk.toECPrivateKey().getEncoded()));
 
     JWTTest() throws InvalidKeySpecException, JOSEException {
     }
 
     @Test
-    public void es384signVerify() throws JOSEException, ParseException {
+    void es384signVerify() throws JOSEException, ParseException {
         final String encodedHeader = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsImI2NCI6dHJ1ZX0";
         final String encodedPayload = "eyJmb28iOjQyLCJiYXIiOiJsb2wiLCJvYmoiOnsibmVzdGVkIjp0cnVlfX0";
-
         final String jwt = JWT.es384sign(JWSHeader.parse(Base64URL.from(encodedHeader)), Base64URL.from(encodedPayload), signerKey.getPrivate());
         assertNotNull(jwt);
         assertTrue(JWT.es384verify(jwt, signerKey.getPublic()));
     }
 
     @Test
-    public void es384verifyValidSignature() throws ParseException, JOSEException {
+    void es384verifyValidSignature() throws ParseException, JOSEException {
         final String jwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsImI2NCI6dHJ1ZX0.eyJmb28iOjQyLCJiYXIiOiJsb2wiLCJvYmoiOnsibmVzdGVkIjp0cnVlfX0.9jS7HDRkbwEbmJ_cpkFHcQuNHSsOzSO3ObkT_FBQIIJehYYk-1aAK0KVnOgeDg6hVELy5-XcRHOCETwuTuYG5eQ3jIbxpTviHttJ-r26BYynw6dlmJTuLSvsTjtpoTa_";
-
         assertTrue(JWT.es384verify(jwt, signerKey.getPublic()));
     }
 
     @Test
-    public void es384verifyInvalidSignature() throws ParseException, JOSEException {
+    void es384verifyInvalidSignature() throws ParseException, JOSEException {
         final String jwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsImI2NCI6dHJ1ZX0.eyJmb28iOjQyLCJiYXIiOiJsb2wiLCJvYmoiOnsibmVzdGVkIjp0cnVlfX0.9jS7HDRkbwEbmJ_cpkFHcQuNHSsOzSO3ObkT_FBQIIJehYYk-1aAK0KVnOgeDg6hVELy5-XcRHOCETwuTuYG5eQ3jIbxpTviHttJ-r26BYynw6dlmJTuLSvsTjtpoTaX";
-
         assertFalse(JWT.es384verify(jwt, signerKey.getPublic()));
     }
 
     @Test
-    public void buildES384SignedJWTAndParse() throws ParseException, JOSEException, JWTParseException, InvalidSignatureException {
+    void buildES384SignedJWTAndParse() throws ParseException, JOSEException, JWTParseException, InvalidSignatureException {
         final Map<String, Object> payloadExpected = ImmutableMap.<String, Object>builder()
                 .put("foo", 42L)
                 .put("bar", "lol")
@@ -93,9 +91,8 @@ class JWTTest {
     }
 
     @Test
-    public void parseES384SignedJWT() throws ParseException, JOSEException, JWTParseException, InvalidSignatureException {
+    void parseES384SignedJWT() throws ParseException, JOSEException, JWTParseException, InvalidSignatureException {
         final String jwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsImI2NCI6dHJ1ZX0.eyJmb28iOjQyLCJiYXIiOiJsb2wiLCJvYmoiOnsibmVzdGVkIjp0cnVlfX0.9jS7HDRkbwEbmJ_cpkFHcQuNHSsOzSO3ObkT_FBQIIJehYYk-1aAK0KVnOgeDg6hVELy5-XcRHOCETwuTuYG5eQ3jIbxpTviHttJ-r26BYynw6dlmJTuLSvsTjtpoTa_";
-
         final Map<String, Object> payload = JWT.parse(jwt, signerKey.getPublic()).toJSONObject();
         assertEquals(42L, payload.get("foo"));
         assertEquals("lol", payload.get("bar"));

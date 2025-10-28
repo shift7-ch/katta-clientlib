@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith({HubTestSetupDockerExtension.Local.class})
-public class UserKeysRecoveryTest extends AbstractHubTest {
+class UserKeysRecoveryTest extends AbstractHubTest {
 
     private Stream<Arguments> arguments() {
         return Stream.of(LOCAL_MINIO_STS);
@@ -36,7 +36,7 @@ public class UserKeysRecoveryTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void firstLoginAndUserKeyRecovery(final HubTestConfig hubTestConfig) throws Exception {
+    void testFirstLoginAndUserKeyRecovery(final HubTestConfig hubTestConfig) throws Exception {
         final HubSession hubSession = setupConnection(hubTestConfig.setup);
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true, false);

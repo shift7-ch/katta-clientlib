@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 class UserKeysTest {
 
     @Test
-    public void testEncryptWithSetupCodeAndRecover() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncryptWithSetupCodeAndRecover() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
         // PEM-encoded
         final String encodedPublicKey = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESA0oPUI0DrULBpIjTRckRduqaPqKz2f4zF6UvB+WHyOVZNsWZHHWIdjZ4LkoOygNenLgllv/iyzzVrH2ILR3Si6s03UOnicBbLy8jPY3MRvdgJPNz4C0kFa7HNXtQNKE";
         // pkcs8-encoded
@@ -36,7 +36,7 @@ class UserKeysTest {
     }
 
     @Test
-    public void testEncryptWithSetupCodeAndRecoverNew() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncryptWithSetupCodeAndRecoverNew() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
         final UserKeys userKeys = UserKeys.create();
 
         final String encryptedPrivateKey = userKeys.encryptWithSetupCode("top secret");
@@ -48,7 +48,7 @@ class UserKeysTest {
     }
 
     @Test
-    public void testEncrypForDeviceAndDecryptOnDevice() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncrypForDeviceAndDecryptOnDevice() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
         // PEM-encoded
         final String encodedPublicKey = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESA0oPUI0DrULBpIjTRckRduqaPqKz2f4zF6UvB+WHyOVZNsWZHHWIdjZ4LkoOygNenLgllv/iyzzVrH2ILR3Si6s03UOnicBbLy8jPY3MRvdgJPNz4C0kFa7HNXtQNKE";
         // pkcs8-encoded
@@ -68,7 +68,7 @@ class UserKeysTest {
     }
 
     @Test
-    public void testEncrypForDeviceAndDecryptOnDeviceNew() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncrypForDeviceAndDecryptOnDeviceNew() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
         final P384KeyPair deviceKeys = P384KeyPair.generate();
         final UserKeys userKeys = UserKeys.create();
 

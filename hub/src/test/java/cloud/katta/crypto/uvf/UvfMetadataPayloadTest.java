@@ -27,9 +27,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
-import static org.junit.jupiter.api.Assertions.*;
-
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
@@ -41,17 +38,20 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.util.Base64URL;
 
+import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
+import static org.junit.jupiter.api.Assertions.*;
+
 class UvfMetadataPayloadTest {
 
     @Test
-    public void serializePublicRecoverykey() throws JOSEException {
+    void serializePublicRecoverykey() throws JOSEException {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final ECKey recoveryKey = jwks.recoveryKey();
         assertEquals(String.format("{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-384\",\"kid\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"ECDH-ES+A256KW\"}]}", recoveryKey.getKeyID(), recoveryKey.getX(), recoveryKey.getY()), jwks.serializePublicRecoverykey());
     }
 
     @Test
-    public void memberKeyToAccessTokenAndBack() throws JOSEException {
+    void memberKeyToAccessTokenAndBack() throws JOSEException {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final UvfAccessTokenPayload accessToken = jwks.toAccessToken();
         assertNull(accessToken.recoveryKey());
@@ -59,7 +59,7 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    public void recoveryKeyToOwnerAccessTokenAndBack() throws JOSEException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException {
+    void recoveryKeyToOwnerAccessTokenAndBack() throws JOSEException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final UvfAccessTokenPayload accessToken = jwks.toOwnerAccessToken();
 
@@ -75,7 +75,7 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    public void encryptDecrypt() throws JOSEException, JsonProcessingException, ParseException {
+    void encryptDecrypt() throws JOSEException, JsonProcessingException, ParseException {
         final byte[] rawMasterKey = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawMasterKey);
         final HashMap<String, String> keys = new HashMap<String, String>() {{
@@ -126,7 +126,7 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    public void decryptWithRecoveryKey() throws ParseException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException, JsonProcessingException {
+    void decryptWithRecoveryKey() throws ParseException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException, JsonProcessingException {
         // https://datatracker.ietf.org/doc/html/rfc7516#section-7.2.1
         final String jwe = "{\"protected\":\"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9\",\"recipients\":[{\"header\":{\"kid\":\"org.cryptomator.hub.memberkey\",\"alg\":\"A256KW\"},\"encrypted_key\":\"XLoNIWvDKQqaDurrGt7VK9s2aggSMir7fS4ZdBUxdTxceCOHndo4kA\"},{\"header\":{\"kid\":\"org.cryptomator.hub.recoverykey.v2nb-mGX4POKMWCQKOogMWTlAn7DDqEOjjEGCsPEeco\",\"alg\":\"ECDH-ES+A256KW\",\"epk\":{\"key_ops\":[],\"ext\":true,\"kty\":\"EC\",\"x\":\"j6Retxx-L-rURQ4WNc8LvoqjbdPtGS6n9pCJgcm1U-NAWuWEvwJ_qi2tlrv_4w4p\",\"y\":\"wS-Emo-Q9qdtkHMJiDfVDAaxhF2-nSkDRn2Eg9CbG0pVwGEpaDybx_YYJwIaYooO\",\"crv\":\"P-384\"},\"apu\":\"\",\"apv\":\"\"},\"encrypted_key\":\"iNGgybMqmiXn_lbKLMMTpg38i1f00O6Zj65d5nzsLw3hyzuylGWpvA\"}],\"iv\":\"Pfy90C9SSq2gJr6B\",\"ciphertext\":\"ogYR1pZN9k97zEgO9Fj3ePQramtaUdHWq95geXD7FH1oB6T7fEOvdU2AEGWOcbIbQihn-eOqG2_5oTol16O_nQ4HcDOJ9w4R9EdpByuWG-kVNh_fpWeQjIuH4kO-Rtbf05JRVG2jexWopbIA8uHuoiOXSNpSYPTzTKirp2hU7w3sE01zycsu06HiasUX-tKZH_hbyiUEdTlFFLcvKpRwnYOQf6QMw0uY1IbUTX1cJY9LO5SpD8bZFZOd6hg_Qnsdcq52I8KkZyxocgqdW7P5OSUrv5z8DCLMPdByEpaz9cCOzQQvtZwHxJy82O4vDAh89QA_AzfK8J7TI5zJRlTGQgrNhiaVBC85fN3tMSv8sLfJs7rC_5LiVW5ZeqbQ52sAZQw0lfwgGpMmxsdMzPoVOLD8OxvX\",\"tag\":\"3Jiv6kI4Qoso60T0dRv9vIlca-P4UFyHqh-TEZvargM\"}";
         final ECKey key = new ECKey.Builder(
@@ -153,7 +153,7 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    public void testWorkaround() {
+    void testWorkaround() {
         // example of byte array -> UTF-8 -> byte array not working
         final byte[] rootDirId = Base64.getDecoder().decode("L3CoPPdXaaDgrM5YhBujn2t2LFTE5XjYUzC1htzk6tY=");
         assertFalse(Arrays.equals(rootDirId, new String(rootDirId, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)));
@@ -163,13 +163,13 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    public void testUVFMasterkeyFromUvfMetadataPayload() throws JsonProcessingException {
+    void testUVFMasterkeyFromUvfMetadataPayload() throws JsonProcessingException {
         final UvfMetadataPayload uvmetadataPayload = UvfMetadataPayload.create();
         UVFMasterkey.fromDecryptedPayload(uvmetadataPayload.toJSON());
     }
 
     @Test
-    public void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
+    void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
         final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
         final UVFVault uvfVault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
         uvfVault.load(new HubSession(new Host(new HubProtocol()), new DisabledX509TrustManager(), new DefaultX509KeyManager()),

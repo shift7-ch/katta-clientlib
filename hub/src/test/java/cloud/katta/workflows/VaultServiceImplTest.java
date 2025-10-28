@@ -4,14 +4,13 @@
 
 package cloud.katta.workflows;
 
-import cloud.katta.client.api.StorageProfileResourceApi;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
+import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
@@ -29,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 class VaultServiceImplTest {
+
     @Test
     void testGetVaultOwnerAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);

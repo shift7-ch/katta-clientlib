@@ -35,7 +35,6 @@ import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
-import cloud.katta.core.AbstractHubSynchronizeTest;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
@@ -54,12 +53,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
+abstract class AbstractHubWorkflowTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubWorkflowTest.class.getName());
 
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    public void testHubWorkflow(final HubTestConfig config) throws Exception {
+    void testHubWorkflow(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
         try {
             checkNumberOfVaults(hubSession, config, null, 0, 0, 0, 0, -1);
@@ -75,7 +74,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.registerModule(new JsonNullableModule());
             {
-                final StorageProfileS3Dto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3Dto.class)
+                final StorageProfileS3Dto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3Dto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
                 final String minioPort = props.getProperty("MINIO_PORT");
                 if(minioPort != null) {
@@ -88,7 +87,7 @@ public abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                 adminStorageProfileApi.apiStorageprofileS3Put(storageProfile);
             }
             {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class)
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
                 final String minioPort = props.getProperty("MINIO_PORT");

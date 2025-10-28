@@ -2,7 +2,7 @@
  * Copyright (c) 2025 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.core;
+package cloud.katta.workflows;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +25,7 @@ class HubSynchronizeTest {
     @Nested
     @ExtendWith({HubTestSetupDockerExtension.Local.class})
     @TestInstance(PER_CLASS)
-    public class Local extends AbstractHubSynchronizeTest {
+    class Local extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
@@ -35,7 +35,7 @@ class HubSynchronizeTest {
     @ExtendWith({HubTestSetupDockerExtension.LocalKeepRunning.class})
     @TestInstance(PER_CLASS)
     @Disabled
-    public class LocalKeepRunning extends AbstractHubSynchronizeTest {
+    class LocalKeepRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
@@ -45,7 +45,7 @@ class HubSynchronizeTest {
     @ExtendWith({HubTestSetupDockerExtension.LocalAlreadyRunning.class})
     @TestInstance(PER_CLASS)
     @Disabled
-    public class LocalAlreadyRunning extends AbstractHubSynchronizeTest {
+    class LocalAlreadyRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(LOCAL_MINIO_STATIC, LOCAL_MINIO_STS);
         }
@@ -54,7 +54,7 @@ class HubSynchronizeTest {
     @Nested
     @ExtendWith({HubTestSetupDockerExtension.HybridTesting.class})
     @TestInstance(PER_CLASS)
-    public class Hybrid extends AbstractHubSynchronizeTest {
+    class Hybrid extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS, HYBRID_AWS_STATIC, HYBRID_AWS_STS);
         }
@@ -64,7 +64,7 @@ class HubSynchronizeTest {
     @ExtendWith({HubTestSetupDockerExtension.HybridTestingKeepRunning.class})
     @TestInstance(PER_CLASS)
     @Disabled
-    public class HybridKeepRunning extends AbstractHubSynchronizeTest {
+    class HybridKeepRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS, HYBRID_AWS_STATIC, HYBRID_AWS_STS);
         }
@@ -74,7 +74,7 @@ class HubSynchronizeTest {
     @ExtendWith({HubTestSetupDockerExtension.HybridTestingAlreadyRunning.class})
     @TestInstance(PER_CLASS)
     @Disabled
-    public class HybridAlreadyRunning extends AbstractHubSynchronizeTest {
+    class HybridAlreadyRunning extends AbstractHubSynchronizeTest {
         private Stream<Arguments> arguments() {
             return Stream.of(HYBRID_MINIO_STATIC, HYBRID_MINIO_STS, HYBRID_AWS_STATIC, HYBRID_AWS_STS);
         }
