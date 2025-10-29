@@ -8,7 +8,6 @@ import ch.cyberduck.core.serializer.Deserializer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import cloud.katta.client.model.ConfigDto;
@@ -39,8 +38,6 @@ public class HubConfigDtoDeserializer extends ProxyDeserializer<NSDictionary> {
             case PROPERTIES_KEY:
                 final List<String> properties = new ArrayList<>(super.listForKey(key));
                 return (List<L>) properties;
-            case SCOPES_KEY:
-                return (List<L>) Collections.singletonList("openid");
         }
         return super.listForKey(key);
     }
@@ -65,8 +62,6 @@ public class HubConfigDtoDeserializer extends ProxyDeserializer<NSDictionary> {
                 OAUTH_CLIENT_ID_KEY,
                 OAUTH_AUTHORIZATION_URL_KEY,
                 OAUTH_TOKEN_URL_KEY,
-                // OAuth Scopes
-                SCOPES_KEY,
                 PROPERTIES_KEY
         );
     }
