@@ -8,7 +8,7 @@ import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.cryptomator.UVFVault;
+import ch.cyberduck.core.cryptomator.impl.uvf.CryptoVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
@@ -192,7 +192,7 @@ class UvfMetadataPayloadTest {
     @Test
     void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
         final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
-        final UVFVault uvfVault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
+        final CryptoVault uvfVault = new CryptoVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
         uvfVault.load(new HubSession(new Host(new HubProtocol()), new DisabledX509TrustManager(), new DefaultX509KeyManager()),
                 new UvfMetadataPayloadPasswordCallback(uvfMetadataPayload));
     }
