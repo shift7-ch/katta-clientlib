@@ -10,6 +10,7 @@ import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -22,16 +23,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
+import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.UvfMetadataPayloadPasswordCallback;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
@@ -62,14 +66,20 @@ public class HubVaultListService implements ListService {
                         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
                         final Session<?> storage = vaultService.getVaultStorageSession(session, vaultDto.getId(), vaultMetadata);
-                        final HubUVFVault vault = new HubUVFVault(storage, vaultDto.getId(), vaultMetadata, prompt);
+                        final Path bucket = new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+                                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
                         try {
-                            registry.add(vault.load(session, prompt));
+                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfMetadataPayloadPasswordCallback(vaultMetadata.toJSON()));
+                            log.info("Loaded vault {}", vault);
+                            registry.add(vault);
                             vaults.add(vault.getHome());
                             listener.chunk(directory, vaults);
                         }
                         catch(VaultUnlockCancelException e) {
                             log.warn("Skip vault {} with failure {} loading", vaultDto, e);
+                        }
+                        catch(JsonProcessingException e) {
+                            throw new SecurityFailure(e);
                         }
                     }
                     catch(ApiException e) {
