@@ -24,6 +24,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -296,7 +297,7 @@ public class UvfMetadataPayload extends JWEPayload {
      */
     public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException {
         final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
-        jweObject.decrypt(new MultiDecrypter(jwk));
+        jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton("uvf.spec.version")));
         final Payload payload = jweObject.getPayload();
         return UvfMetadataPayload.fromJWE(payload.toString());
     }
@@ -309,10 +310,16 @@ public class UvfMetadataPayload extends JWEPayload {
      * @param keys    recipient keys for whom to encrypt
      */
     public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
+        // spec: https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header
+        // web frontend implementation: https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts#L343-L346
         final JWEObjectJSON builder = new JWEObjectJSON(
                 new JWEHeader.Builder(EncryptionMethod.A256GCM)
+                        // kid goes into recipient-specific header
                         .customParam("origin", String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString()))
                         .jwkURL(URI.create("jwks.json"))
+                        .contentType("json")
+                        .criticalParams(Collections.singleton("uvf.spec.version"))
+                        .customParam("uvf.spec.version", "1")
                         .build(),
                 new Payload(new HashMap<String, Object>() {{
                     put("fileFormat", fileFormat);
