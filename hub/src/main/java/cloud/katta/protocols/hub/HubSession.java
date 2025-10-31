@@ -119,10 +119,6 @@ public class HubSession extends HttpSession<HubApiClient> {
                     log.error(detail);
                     throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), detail);
                 }
-
-                final String hubId = config.getUuid();
-                log.debug("Configure bookmark with id {}", hubId);
-                host.setUuid(hubId);
                 final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(config));
                 log.debug("Apply profile {} to bookmark {}", profile, host);
                 host.setProtocol(profile);
