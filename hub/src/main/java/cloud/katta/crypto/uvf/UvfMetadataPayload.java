@@ -314,7 +314,7 @@ public class UvfMetadataPayload extends JWEPayload {
         // web frontend implementation: https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts#L343-L346
         final JWEObjectJSON builder = new JWEObjectJSON(
                 new JWEHeader.Builder(EncryptionMethod.A256GCM)
-                        .keyID("cloud.katta.vaultmetadata")
+                        // kid goes into recipient-specific header
                         .customParam("origin", String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString()))
                         .jwkURL(URI.create("jwks.json"))
                         .contentType("json")
