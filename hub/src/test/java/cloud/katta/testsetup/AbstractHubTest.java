@@ -116,9 +116,7 @@ public abstract class AbstractHubTest extends VaultTest {
 
     public static final Arguments HYBRID_AWS_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
             "AWS static", "72736C19-283C-49D3-80A5-AB74B5202549", PROPERTIES.get("handmade2.s3.amazonaws.com.username"), PROPERTIES.get("handmade2.s3.amazonaws.com.password"),
-            // TODO https://github.com/shift7-ch/katta-server/issues/87
-            // "eu-north-1"
-            "us-east-1"
+            "eu-north-1"
     ));
     public static final Arguments HYBRID_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
             "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F9", null, null, "eu-west-1"

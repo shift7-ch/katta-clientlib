@@ -1,11 +1,16 @@
 {
-    "id": "71B910E0-2ECC-46DE-A871-8DB285496779",
-    "name": "MinIO S3 static",
-    "protocol": "S3",
-    "withPathStyleAccessEnabled": "true",
-    "hostname": "minio.testing.katta.cloud",
-    "port": 443,
-    "scheme": "https",
-    "storageClass": "STANDARD",
-    "archived": "false"
+  "id": "71B910E0-2ECC-46DE-A871-8DB285496779",
+  "name": "MinIO S3 static",
+  "protocol": "S3STATIC",
+  "withPathStyleAccessEnabled": "true",
+  "hostname": "minio.testing.katta.cloud",
+  "port": 443,
+  "scheme": "https",
+  "storageClass": "STANDARD",
+  "archived": "false",
+  "bucketPrefix": "katta-test-",
+  "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
+  "stsRoleCreateBucketClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
+  "stsEndpoint": "https://minio.testing.katta.cloud",
+  "bucketEncryption": "NONE"
 }
