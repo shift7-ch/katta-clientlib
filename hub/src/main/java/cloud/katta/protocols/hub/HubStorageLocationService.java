@@ -121,7 +121,7 @@ public class HubStorageLocationService implements Location {
                             .provider(this.getProfile())
                             .defaultPath(bucket.getAbsolute())
                             .region(this.getRegion())
-                            .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
+                            .nickname(bucket.attributes().getDisplayname()))
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                             .enabled(true)
                             .maxWotDepth(null));
