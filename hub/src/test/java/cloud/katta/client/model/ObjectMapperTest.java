@@ -24,8 +24,8 @@ class ObjectMapperTest {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
 
-        final StorageProfileS3Dto awsStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/hybrid/aws_static/aws_static_profile.json"), StorageProfileS3Dto.class);
-        assertEquals(Protocol.S3, awsStaticProfile.getProtocol());
+        final StorageProfileS3StaticDto awsStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/hybrid/aws_static/aws_static_profile.json"), StorageProfileS3StaticDto.class);
+        assertEquals(Protocol.S3_STATIC, awsStaticProfile.getProtocol());
         assertEquals("https", awsStaticProfile.getScheme());
         assertNull(awsStaticProfile.getHostname());
         assertEquals(443, awsStaticProfile.getPort());
@@ -64,8 +64,8 @@ class ObjectMapperTest {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
 
-        final StorageProfileS3Dto minioStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3Dto.class);
-        assertEquals(Protocol.S3, minioStaticProfile.getProtocol());
+        final StorageProfileS3StaticDto minioStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3StaticDto.class);
+        assertEquals(Protocol.S3_STATIC, minioStaticProfile.getProtocol());
         assertEquals("http", minioStaticProfile.getScheme());
         assertEquals("minio", minioStaticProfile.getHostname());
         assertEquals(9000, minioStaticProfile.getPort());

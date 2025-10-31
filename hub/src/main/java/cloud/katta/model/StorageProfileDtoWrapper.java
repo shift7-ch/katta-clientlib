@@ -10,8 +10,8 @@ import java.util.UUID;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
-import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
+import cloud.katta.client.model.StorageProfileS3StaticDto;
 
 /**
  * openapi-generator does not generate sub-classes
@@ -32,8 +32,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public Protocol getProtocol() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getProtocol();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getProtocol();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getProtocol();
@@ -42,8 +42,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public UUID getId() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getId();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getId();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getId();
@@ -52,8 +52,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getName() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getName();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getName();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getName();
@@ -62,8 +62,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getHostname() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getHostname();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getHostname();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getHostname();
@@ -72,8 +72,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getScheme() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getScheme();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getScheme();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getScheme();
@@ -82,8 +82,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public Integer getPort() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getPort();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getPort();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getPort();
@@ -92,7 +92,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getStsEndpoint() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -103,7 +103,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public Boolean getBucketAcceleration() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -114,7 +114,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getBucketPrefix() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -125,8 +125,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getRegion() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getRegion();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getRegion();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getRegion();
@@ -135,7 +135,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public List<String> getRegions() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -146,7 +146,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getStsRoleAccessBucketAssumeRoleWithWebIdentity() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -157,7 +157,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getStsRoleAccessBucketAssumeRoleTaggedSession() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -168,7 +168,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getStsRoleCreateBucketClient() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -179,7 +179,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public Integer getStsDurationSeconds() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -190,7 +190,7 @@ public class StorageProfileDtoWrapper {
     }
 
     public String getStsSessionTag() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             // only STS
             return null;
         }
@@ -201,8 +201,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public Boolean getWithPathStyleAccessEnabled() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
@@ -211,8 +211,8 @@ public class StorageProfileDtoWrapper {
     }
 
     public S3STORAGECLASSES getStorageClass() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3Dto) {
-            return ((StorageProfileS3Dto) proxy.getActualInstance()).getStorageClass();
+        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getStorageClass();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getStorageClass();

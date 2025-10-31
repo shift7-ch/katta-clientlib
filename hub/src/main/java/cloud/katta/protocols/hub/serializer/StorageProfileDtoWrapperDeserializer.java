@@ -81,7 +81,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         switch(key) {
             case PROTOCOL_KEY:
                 switch(dto.getProtocol()) {
-                    case S3:
+                    case S3_STATIC:
                     case S3_STS:
                         return new S3AssumeRoleProtocol().getIdentifier();
                 }
@@ -109,7 +109,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         switch(key) {
             case OAUTH_CONFIGURABLE_KEY:
                 switch(dto.getProtocol()) {
-                    case S3:
+                    case S3_STATIC:
                         return false;
                     case S3_STS:
                         return true;

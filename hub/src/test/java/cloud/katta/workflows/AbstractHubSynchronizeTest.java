@@ -4,57 +4,17 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.AlphanumericRandomStringService;
-import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.DisabledConnectionCallback;
-import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.DisabledLoginCallback;
-import ch.cyberduck.core.DisabledPasswordCallback;
-import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.OAuthTokens;
-import ch.cyberduck.core.Path;
-import ch.cyberduck.core.SimplePathPredicate;
-import ch.cyberduck.core.UUIDRandomStringService;
+import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.NotfoundException;
-import ch.cyberduck.core.features.AttributesFinder;
-import ch.cyberduck.core.features.Delete;
-import ch.cyberduck.core.features.Directory;
-import ch.cyberduck.core.features.Find;
-import ch.cyberduck.core.features.Home;
-import ch.cyberduck.core.features.Move;
-import ch.cyberduck.core.features.Vault;
-import ch.cyberduck.core.features.Write;
+import ch.cyberduck.core.features.*;
 import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultRegistry;
-
-import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.openapitools.jackson.nullable.JsonNullableModule;
-
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
-import cloud.katta.client.model.StorageProfileDto;
-import cloud.katta.client.model.StorageProfileS3Dto;
-import cloud.katta.client.model.StorageProfileS3STSDto;
+import cloud.katta.client.model.*;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
@@ -66,12 +26,23 @@ import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestUtilities;
+import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import cloud.katta.testsetup.MethodIgnorableSource;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
+import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.openapitools.jackson.nullable.JsonNullableModule;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @TestMethodOrder(MethodOrderer.MethodName.class)
 abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
@@ -104,7 +75,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.registerModule(new JsonNullableModule());
             try {
-                adminStorageProfileApi.apiStorageprofileS3Post(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/aws_static_profile.json", profile)), StorageProfileS3Dto.class)
+                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/aws_static_profile.json", profile)), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                 );
             }
@@ -129,7 +100,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 }
             }
             try {
-                final StorageProfileS3Dto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_static/minio_static_profile.json", profile)), StorageProfileS3Dto.class)
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_static/minio_static_profile.json", profile)), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
                 final String minioPort = props.getProperty("MINIO_PORT");
                 if(minioPort != null) {
@@ -139,7 +110,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 if(minioHostname != null) {
                     storageProfile.setHostname(minioHostname);
                 }
-                adminStorageProfileApi.apiStorageprofileS3Post(storageProfile);
+                adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -219,11 +190,10 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final StorageProfileS3STSDto profile = (StorageProfileS3STSDto) storageProfile.getActualInstance();
                 profile.setId(uuid);
                 adminStorageProfileApi.apiStorageprofileS3stsPost(profile);
-            }
-            else if(storageProfile.getActualInstance() instanceof StorageProfileS3Dto) {
-                final StorageProfileS3Dto profile = (StorageProfileS3Dto) storageProfile.getActualInstance();
+            } else if (storageProfile.getActualInstance() instanceof StorageProfileS3StaticDto) {
+                final StorageProfileS3StaticDto profile = (StorageProfileS3StaticDto) storageProfile.getActualInstance();
                 profile.setId(uuid);
-                adminStorageProfileApi.apiStorageprofileS3Post(profile);
+                adminStorageProfileApi.apiStorageprofileS3staticPost(profile);
             }
             else {
                 fail();

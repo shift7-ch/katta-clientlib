@@ -1,7 +1,7 @@
 {
   "id": "71B910E0-2ECC-46DE-A871-8DB285496779",
   "name": "MinIO S3 static",
-  "protocol": "S3",
+  "protocol": "S3STATIC",
   "withPathStyleAccessEnabled": "true",
   "hostname": "minio.testing.katta.cloud",
   "port": 443,
