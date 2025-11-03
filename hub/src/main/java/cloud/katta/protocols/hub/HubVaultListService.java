@@ -22,20 +22,26 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.Base64;
 import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
+import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
+import cloud.katta.crypto.uvf.UvfJWKCallback;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.UvfMetadataPayloadPasswordCallback;
+import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
@@ -69,7 +75,12 @@ public class HubVaultListService implements ListService {
                         final Path bucket = new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                                 new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
                         try {
-                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfMetadataPayloadPasswordCallback(vaultMetadata.toJSON()));
+                            final UvfAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
+                            final OctetSequenceKey rawMemberKey = UvfMetadataPayload.UniversalVaultFormatJWKS.memberKeyFromRawKey(Base64.getDecoder().decode(accessToken.key()));
+                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfJWKCallback(rawMemberKey), new VaultIdMetadataUVFProvider(
+                                    vaultDto.getId(), UvfMetadataPayload.createKeys(), vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
+                                    vaultMetadata.computeRootDirUvf(), vaultMetadata.computeRootDirIdHash()
+                            ));
                             log.info("Loaded vault {}", vault);
                             registry.add(vault);
                             vaults.add(vault.getHome());
@@ -78,7 +89,7 @@ public class HubVaultListService implements ListService {
                         catch(VaultUnlockCancelException e) {
                             log.warn("Skip vault {} with failure {} loading", vaultDto, e);
                         }
-                        catch(JsonProcessingException e) {
+                        catch(JsonProcessingException | JOSEException e) {
                             throw new SecurityFailure(e);
                         }
                     }

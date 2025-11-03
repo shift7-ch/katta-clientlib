@@ -8,6 +8,7 @@ import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.TestProtocol;
 import ch.cyberduck.core.cryptomator.impl.uvf.CryptoVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -190,10 +191,14 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
+    void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException, JOSEException {
         final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
+        final UvfMetadataPayload.UniversalVaultFormatJWKS keys = UvfMetadataPayload.createKeys();
+        final UUID vaultId = UUID.randomUUID();
+        final VaultIdMetadataUVFProvider provider = new VaultIdMetadataUVFProvider(new Host(new TestProtocol()), vaultId, keys, uvfMetadataPayload);
         final CryptoVault uvfVault = new CryptoVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
-        uvfVault.load(new HubSession(new Host(new HubProtocol()), new DisabledX509TrustManager(), new DefaultX509KeyManager()),
-                new UvfMetadataPayloadPasswordCallback(uvfMetadataPayload));
+        final Host host = new Host(new HubProtocol());
+        uvfVault.load(new HubSession(host, new DisabledX509TrustManager(), new DefaultX509KeyManager()),
+                new UvfJWKCallback(keys.memberKey()), provider);
     }
 }

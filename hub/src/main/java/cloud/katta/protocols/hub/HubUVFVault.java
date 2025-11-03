@@ -151,10 +151,11 @@ public class HubUVFVault extends CryptoVault {
      *
      * @param session Hub Connection
      * @param prompt  Return user keys
+     * @param metadata  metadata
      * @return Vault configuration with storage connection
      */
     @Override
-    public HubUVFVault load(final Session<?> session, final PasswordCallback prompt) throws BackgroundException {
+    public HubUVFVault load(final Session<?> session, final PasswordCallback prompt, final VaultMetadataProvider metadata) throws BackgroundException {
         log.debug("Connect to {}", storage);
         try {
             storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), login, new DisabledCancelCallback());
@@ -165,7 +166,7 @@ public class HubUVFVault extends CryptoVault {
         }
         log.debug("Initialize vault {}", this);
         // Initialize cryptors
-        super.load(storage, prompt);
+        super.load(storage, prompt, metadata);
         return this;
     }
 
