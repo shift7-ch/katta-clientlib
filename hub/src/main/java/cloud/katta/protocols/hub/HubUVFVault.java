@@ -111,7 +111,7 @@ public class HubUVFVault extends CryptoVault {
                     .archived(false)
                     .creationTime(DateTime.now())
                     .uvfMetadataFile(new String(VaultIdMetadataUVFProvider.cast(metadata).getMetadata(), StandardCharsets.US_ASCII))
-                    .uvfKeySet(VaultIdMetadataUVFProvider.cast(metadata).getJwks().serializePublicRecoverykey());
+                    .uvfKeySet(VaultIdMetadataUVFProvider.cast(metadata).getJwks().serializePublicRecoveryKey());
             // Create vault in Hub
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hub.getClient());
             log.debug("Create vault {}", vaultDto);

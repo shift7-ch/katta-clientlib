@@ -48,7 +48,7 @@ class UvfMetadataPayloadTest {
     void serializePublicRecoverykey() throws JOSEException {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final ECKey recoveryKey = jwks.recoveryKey();
-        assertEquals(String.format("{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-384\",\"kid\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"ECDH-ES+A256KW\"}]}", recoveryKey.getKeyID(), recoveryKey.getX(), recoveryKey.getY()), jwks.serializePublicRecoverykey());
+        assertEquals(String.format("{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-384\",\"kid\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"ECDH-ES+A256KW\"}]}", recoveryKey.getKeyID(), recoveryKey.getX(), recoveryKey.getY()), jwks.serializePublicRecoveryKey());
     }
 
     @Test
@@ -64,7 +64,7 @@ class UvfMetadataPayloadTest {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final UvfAccessTokenPayload accessToken = jwks.toOwnerAccessToken();
 
-        final JWKSet recoveredJwks = JWKSet.parse(jwks.serializePublicRecoverykey());
+        final JWKSet recoveredJwks = JWKSet.parse(jwks.serializePublicRecoveryKey());
         assertEquals(1, recoveredJwks.getKeys().size());
         final ECKey publicRecoveryKey = (ECKey) recoveredJwks.getKeys().get(0);
         assertFalse(publicRecoveryKey.isPrivate());
