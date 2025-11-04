@@ -11,7 +11,7 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3STORAGECLASSES;
-import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
 
 /**
@@ -33,10 +33,10 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
     }
 
     protected void call(UUID uuid, StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        storageProfileResourceApi.apiStorageprofileS3Put(new StorageProfileS3Dto()
+        storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
                 .id(uuid)
                 .name("AWS S3 static")
-                .protocol(Protocol.S3)
+                .protocol(Protocol.S3_STATIC)
                 .storageClass(S3STORAGECLASSES.STANDARD)
                 .archived(false)
                 .scheme("https")
