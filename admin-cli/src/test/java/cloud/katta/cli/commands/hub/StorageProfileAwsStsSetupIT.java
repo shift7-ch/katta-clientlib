@@ -4,8 +4,6 @@
 
 package cloud.katta.cli.commands.hub;
 
-import ch.cyberduck.core.PasswordStoreFactory;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -28,7 +26,6 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
 
     @Test
     public void testStorageProfileAwsStsSetup() throws Exception {
-        final String accessToken = PasswordStoreFactory.get().findOAuthTokens(hubSession.getHost()).getAccessToken();
         final UUID storageProfileId = UUID.randomUUID();
         int rc = new CommandLine(new KattaSetupCli()).execute(
                 "storageProfileAWSSTS",
@@ -39,7 +36,7 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
                 "--rolePrefix", "arn:aws:iam::linguine:role/farfalle"
         );
         assertEquals(0, rc);
-        final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(hubSession.getClient());
+        final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
         Optional<StorageProfileDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream()
                 .filter(p -> p.getActualInstance() instanceof StorageProfileS3STSDto)
                 .filter(p -> p.getStorageProfileS3STSDto().getId().equals(storageProfileId)).findFirst();
