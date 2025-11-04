@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.model.JWEPayload;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -317,9 +318,19 @@ public class UvfMetadataPayload extends JWEPayload {
      * @param jwe The jwe
      * @param jwk The jwk
      */
-    public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException {
+    public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
         final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
         jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM)));
+
+        // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.11
+        // Recipients MAY consider the JWS to be invalid if the critical
+        // list contains any Header Parameter names defined by this
+        // specification or [JWA] for use with JWS or if any other constraints on its use are violated.
+        final Object uvfSpecVersion = jweObject.getHeader().getCustomParams().get(UVF_SPEC_VERSION_KEY_PARAM);
+        if(!"1".equals(uvfSpecVersion)) {
+            throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
+        }
+
         final Payload payload = jweObject.getPayload();
         return UvfMetadataPayload.fromJWE(payload.toString());
     }
