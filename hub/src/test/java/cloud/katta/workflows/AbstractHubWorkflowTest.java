@@ -31,8 +31,8 @@ import cloud.katta.client.model.Role;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
-import cloud.katta.client.model.StorageProfileS3Dto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
+import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
@@ -74,7 +74,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.registerModule(new JsonNullableModule());
             {
-                final StorageProfileS3Dto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3Dto.class)
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
                 final String minioPort = props.getProperty("MINIO_PORT");
                 if(minioPort != null) {
@@ -84,7 +84,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                 if(minioHostname != null) {
                     storageProfile.setHostname(minioHostname);
                 }
-                adminStorageProfileApi.apiStorageprofileS3Put(storageProfile);
+                adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             {
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class)
@@ -100,7 +100,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("minio", minioHostname));
                     storageProfile.setHostname(minioHostname);
                 }
-                adminStorageProfileApi.apiStorageprofileS3stsPut(storageProfile);
+                adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
 
 
@@ -111,8 +111,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
-            final Path bucket = new Path(null == storageProfileWrapper.getBucketPrefix() ? "katta-test-" + vaultId : storageProfileWrapper.getBucketPrefix() + vaultId,
-                    EnumSet.of(Path.Type.volume, Path.Type.directory));
+            final Path bucket = new Path(storageProfileWrapper.getBucketPrefix() + vaultId, EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
             final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()

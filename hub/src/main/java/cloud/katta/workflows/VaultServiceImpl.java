@@ -93,7 +93,7 @@ public class VaultServiceImpl implements VaultService {
     public Session<?> getVaultStorageSession(final HubSession session, final UUID vaultId, final UvfMetadataPayload vaultMetadata) throws ApiException, AccessException {
         final StorageProfileDtoWrapper vaultStorageProfile = this.getVaultStorageProfile(vaultMetadata);
         switch(vaultStorageProfile.getProtocol()) {
-            case S3:
+            case S3_STATIC:
             case S3_STS:
                 final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
                 try {

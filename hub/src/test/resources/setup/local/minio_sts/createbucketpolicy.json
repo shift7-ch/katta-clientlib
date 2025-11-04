@@ -10,7 +10,7 @@
         "s3:GetBucketVersioning"
       ],
       "Resource": [
-          "arn:aws:s3:::katta-test-*"
+        "arn:aws:s3:::katta-test-*"
       ]
     },
     {
@@ -19,8 +19,8 @@
         "s3:PutObject"
       ],
       "Resource": [
-          "arn:aws:s3:::katta-test-*/*/",
-          "arn:aws:s3:::katta-test-*/*.uvf"
+        "arn:aws:s3:::katta-test-*/*/",
+        "arn:aws:s3:::katta-test-*/*.uvf"
       ]
     }
   ]
