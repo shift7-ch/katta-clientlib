@@ -5,8 +5,6 @@
 package cloud.katta.cli.commands.hub;
 
 
-import ch.cyberduck.core.PasswordStoreFactory;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -28,10 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class StorageProfileArchiveIT extends AbtractAdminCliIT {
     @Test
     public void testStorageProfileArchive() throws Exception {
-        final String accessToken = PasswordStoreFactory.get().findOAuthTokens(hubSession.getHost()).getAccessToken();
-
         final String storageProfileId = "732D43FA-3716-46C4-B931-66EA5405EF1C".toLowerCase();
-        final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(hubSession.getClient());
+        final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
         {
             storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
                     .id(UUID.fromString(storageProfileId))
