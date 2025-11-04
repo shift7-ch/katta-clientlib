@@ -40,7 +40,7 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
         {
             final JSONObject miniocreatebucketpolicy = new JSONObject(cannedPolicies.get("fusillicreatebucketpolicy"));
             final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
-            int count = 0;
+            long count = 0;
             for(int i = 0; i < statements.length(); i++) {
                 count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("fusilli")).count();
             }
@@ -49,7 +49,7 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
         {
             final JSONObject minioaccessbucket = new JSONObject(cannedPolicies.get("fusilliaccessbucketpolicy"));
             final JSONArray statements = minioaccessbucket.getJSONArray("Statement");
-            int count = 0;
+            long count = 0;
             for(int i = 0; i < statements.length(); i++) {
                 count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("fusilli")).count();
             }

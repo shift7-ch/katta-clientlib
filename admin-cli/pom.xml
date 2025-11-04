@@ -60,6 +60,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>iam-policy-builder</artifactId>
+            <version>2.31.27</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20250107</version>
