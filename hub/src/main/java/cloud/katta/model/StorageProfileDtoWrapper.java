@@ -115,8 +115,7 @@ public class StorageProfileDtoWrapper {
 
     public String getBucketPrefix() {
         if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
-            // only STS
-            return null;
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getBucketPrefix();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getBucketPrefix();
