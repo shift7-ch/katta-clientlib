@@ -27,7 +27,7 @@ public class AbstractAuthorizationCode {
     @CommandLine.Option(names = {"--clientId"}, description = "Keycloak realm URL with scheme. Example: \"cryptomator\"", required = false)
     String clientId;
 
-    @CommandLine.Option(names = {"--accessToken"}, description = "The access token. Requires admin role in the hub.", required = false)
+    @CommandLine.Option(names = {"--accessToken"}, description = "The access token. If not provided, --tokenUrl, --authUrl and --clientId need to be provided. Requires admin role in the hub.", required = false)
     String accessToken;
 
     protected String login() throws IOException, InterruptedException {
