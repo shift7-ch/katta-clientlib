@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.Base64;
 import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
@@ -41,7 +40,6 @@ import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
@@ -76,11 +74,13 @@ public class HubVaultListService implements ListService {
                                 new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
                         try {
                             final UvfAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
-                            final OctetSequenceKey rawMemberKey = UvfMetadataPayload.UniversalVaultFormatJWKS.memberKeyFromRawKey(Base64.getDecoder().decode(accessToken.key()));
-                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfJWKCallback(rawMemberKey), new VaultIdMetadataUVFProvider(
-                                    vaultDto.getId(), UvfMetadataPayload.createKeys(), vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
-                                    vaultMetadata.computeRootDirUvf(), vaultMetadata.computeRootDirIdHash()
-                            ));
+                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfJWKCallback(accessToken.memberKeyRecipient()),
+                                    new VaultIdMetadataUVFProvider(vaultDto.getId(),
+                                            UvfMetadataPayload.createKeys(),
+                                            vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
+                                            vaultMetadata.computeRootDirUvf(),
+                                            vaultMetadata.computeRootDirIdHash()
+                                    ));
                             log.info("Loaded vault {}", vault);
                             registry.add(vault);
                             vaults.add(vault.getHome());
