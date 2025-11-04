@@ -4,18 +4,19 @@
 
 package cloud.katta.cli.commands.storage;
 
-import cloud.katta.cli.KattaSetupCli;
-import io.minio.admin.MinioAdminClient;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import picocli.CommandLine;
 
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+
+import cloud.katta.cli.KattaSetupCli;
+import io.minio.admin.MinioAdminClient;
+import picocli.CommandLine;
 
 /**
  * Sets up MinIO for Katta in STS mode:
@@ -75,7 +76,7 @@ public class MinioStsSetup implements Callable<Void> {
 
         // /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
         {
-            final JSONObject miniocreatebucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/createbucketpolicy.json"), Charset.defaultCharset()));
+            final JSONObject miniocreatebucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/local/minio_sts/createbucketpolicy.json"), Charset.defaultCharset()));
             final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
             for (int i = 0; i < statements.length(); i++) {
                 final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
@@ -86,7 +87,7 @@ public class MinioStsSetup implements Callable<Void> {
         }
         // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
         {
-            final JSONObject minioaccessbucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/minio_sts/accessbucketpolicy.json"), Charset.defaultCharset()));
+            final JSONObject minioaccessbucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/local/minio_sts/accessbucketpolicy.json"), Charset.defaultCharset()));
             final JSONArray statements = minioaccessbucketpolicy.getJSONArray("Statement");
             for (int i = 0; i < statements.length(); i++) {
                 final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
