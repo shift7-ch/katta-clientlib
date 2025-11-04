@@ -26,16 +26,16 @@ import picocli.CommandLine;
 public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
 
     @Override
-    protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
+    protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
 
-        call(uuid, storageProfileResourceApi);
+        call(uuid, name, storageProfileResourceApi);
     }
 
-    protected void call(UUID uuid, StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    protected void call(final UUID uuid, final String name, final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
                 .id(uuid)
-                .name("AWS S3 static")
+                .name(name)
                 .protocol(Protocol.S3_STATIC)
                 .storageClass(S3STORAGECLASSES.STANDARD)
                 .archived(false)

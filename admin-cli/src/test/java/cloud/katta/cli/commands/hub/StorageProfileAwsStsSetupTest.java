@@ -28,7 +28,7 @@ class StorageProfileAwsStsSetupTest {
         final StorageProfileAwsStsSetup cli = new StorageProfileAwsStsSetup();
         cli.bucketPrefix = "fancy";
         cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper";
-        cli.call(vaultId, api);
+        cli.call(vaultId, "AWS S3 STS", api);
 
         final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
         dto.setId(vaultId);

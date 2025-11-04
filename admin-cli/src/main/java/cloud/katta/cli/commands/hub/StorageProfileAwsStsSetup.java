@@ -35,16 +35,16 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
     String bucketPrefix;
 
     @Override
-    protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
+    protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
 
-        call(uuid, storageProfileResourceApi);
+        call(uuid, name, storageProfileResourceApi);
     }
 
-    protected void call(UUID uuid, StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    protected void call(final UUID uuid, final String name, final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
                 .id(uuid)
-                .name("AWS S3 STS")
+                .name(name)
                 .bucketPrefix(bucketPrefix)
                 .protocol(Protocol.S3_STS)
                 .storageClass(S3STORAGECLASSES.STANDARD)

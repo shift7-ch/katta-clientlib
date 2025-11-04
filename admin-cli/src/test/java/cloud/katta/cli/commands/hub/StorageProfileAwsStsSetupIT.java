@@ -35,6 +35,7 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
                 "--hubUrl", "http://localhost:8280",
                 "--accessToken", accessToken,
                 "--uuid", storageProfileId.toString(),
+                "--name", "AWS S3 STS",
                 "--rolePrefix", "arn:aws:iam::linguine:role/farfalle"
         );
         assertEquals(0, rc);

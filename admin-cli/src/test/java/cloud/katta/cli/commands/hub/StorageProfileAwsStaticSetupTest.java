@@ -24,7 +24,7 @@ class StorageProfileAwsStaticSetupTest {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final StorageProfileAwsStaticSetup cli = new StorageProfileAwsStaticSetup();
-        cli.call(vaultId, api);
+        cli.call(vaultId, "AWS S3 static", api);
 
         final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto();
         dto.setId(vaultId);
