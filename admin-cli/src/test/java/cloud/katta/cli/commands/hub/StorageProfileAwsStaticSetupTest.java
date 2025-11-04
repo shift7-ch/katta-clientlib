@@ -13,7 +13,7 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3STORAGECLASSES;
-import cloud.katta.client.model.StorageProfileS3Dto;
+import cloud.katta.client.model.StorageProfileS3StaticDto;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -26,16 +26,16 @@ class StorageProfileAwsStaticSetupTest {
         final StorageProfileAwsStaticSetup cli = new StorageProfileAwsStaticSetup();
         cli.call(vaultId, api);
 
-        final StorageProfileS3Dto dto = new StorageProfileS3Dto();
+        final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto();
         dto.setId(vaultId);
         dto.setName("AWS S3 static");
-        dto.setProtocol(Protocol.S3);
+        dto.setProtocol(Protocol.S3_STATIC);
         dto.setArchived(false);
         dto.setScheme("https");
         dto.setPort(443);
         dto.setWithPathStyleAccessEnabled(false);
         dto.setStorageClass(S3STORAGECLASSES.STANDARD);
-        Mockito.verify(api, times(1)).apiStorageprofileS3Put(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3Put(any());
+        Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(dto);
+        Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(any());
     }
 }

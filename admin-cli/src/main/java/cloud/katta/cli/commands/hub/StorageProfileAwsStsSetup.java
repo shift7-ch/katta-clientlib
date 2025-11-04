@@ -42,7 +42,7 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
     }
 
     protected void call(UUID uuid, StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        storageProfileResourceApi.apiStorageprofileS3stsPut(new StorageProfileS3STSDto()
+        storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
                 .id(uuid)
                 .name("AWS S3 STS")
                 .bucketPrefix(bucketPrefix)
@@ -55,12 +55,12 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
                 .archived(false)
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-01
-                .stsRoleArn(String.format("%s-sts-chain-01", rolePrefix))
+                .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s-sts-chain-01", rolePrefix))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-02
-                .stsRoleArn2(String.format("%s-sts-chain-02", rolePrefix))
+                .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s-sts-chain-02", rolePrefix))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-createbucket
-                .stsRoleArnClient(String.format("%s-createbucket", rolePrefix))
-                .stsRoleArnHub(String.format("%s-createbucket", rolePrefix))
+                .stsRoleCreateBucketClient(String.format("%s-createbucket", rolePrefix))
+                .stsRoleCreateBucketHub(String.format("%s-createbucket", rolePrefix))
                 .scheme("https")
                 .port(443)
         );
