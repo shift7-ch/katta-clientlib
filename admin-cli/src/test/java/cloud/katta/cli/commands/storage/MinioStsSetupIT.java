@@ -4,17 +4,19 @@
 
 package cloud.katta.cli.commands.storage;
 
-import cloud.katta.cli.KattaSetupCli;
-import cloud.katta.testcontainers.AbtractAdminCliIT;
-import io.minio.admin.MinioAdminClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
 
 import java.util.Map;
 import java.util.Objects;
+
+import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.testcontainers.AbtractAdminCliIT;
+import io.minio.admin.MinioAdminClient;
+import picocli.CommandLine;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MinioStsSetupIT extends AbtractAdminCliIT {
 
@@ -39,8 +41,8 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
             final JSONObject miniocreatebucketpolicy = new JSONObject(cannedPolicies.get("fusillicreatebucketpolicy"));
             final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
             int count = 0;
-            for (int i = 0; i < statements.length(); i++) {
-                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.contains("fusilli")).count();
+            for(int i = 0; i < statements.length(); i++) {
+                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("fusilli")).count();
             }
             assertEquals(3, count);
         }
@@ -48,8 +50,8 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
             final JSONObject minioaccessbucket = new JSONObject(cannedPolicies.get("fusilliaccessbucketpolicy"));
             final JSONArray statements = minioaccessbucket.getJSONArray("Statement");
             int count = 0;
-            for (int i = 0; i < statements.length(); i++) {
-                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.contains("fusilli")).count();
+            for(int i = 0; i < statements.length(); i++) {
+                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("fusilli")).count();
             }
             assertEquals(2, count);
         }
