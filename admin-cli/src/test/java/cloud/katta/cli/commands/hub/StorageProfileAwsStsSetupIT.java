@@ -57,14 +57,14 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), dto.getRegions());
         assertEquals("katta", dto.getBucketPrefix());
         assertEquals("katta", dto.getBucketPrefix());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleArnClient());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleArnHub());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleCreateBucketClient());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleCreateBucketHub());
         assertNull(dto.getStsEndpoint());
         assertTrue(dto.getBucketVersioning());
         assertNull(dto.getBucketAcceleration());
         assertEquals(S3SERVERSIDEENCRYPTION.NONE, dto.getBucketEncryption());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-sts-chain-01", dto.getStsRoleArn());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-sts-chain-02", dto.getStsRoleArn2());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-sts-chain-01", dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-sts-chain-02", dto.getStsRoleAccessBucketAssumeRoleTaggedSession());
         assertNull(dto.getStsDurationSeconds());
     }
 }
