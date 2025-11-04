@@ -17,6 +17,9 @@ import java.util.concurrent.Callable;
 import cloud.katta.cli.KattaSetupCli;
 import io.minio.admin.MinioAdminClient;
 import picocli.CommandLine;
+import software.amazon.awssdk.policybuilder.iam.IamEffect;
+import software.amazon.awssdk.policybuilder.iam.IamPolicy;
+import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
 
 /**
  * Sets up MinIO for Katta in STS mode:
@@ -63,10 +66,10 @@ public class MinioStsSetup implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
-        if (createbucketPolicyName == null) {
+        if(createbucketPolicyName == null) {
             createbucketPolicyName = String.format("%screatebucketpolicy", bucketPrefix);
         }
-        if (accessbucketPolicyName == null) {
+        if(accessbucketPolicyName == null) {
             accessbucketPolicyName = String.format("%saccessbucketpolicy", bucketPrefix);
         }
 
@@ -76,20 +79,30 @@ public class MinioStsSetup implements Callable<Void> {
 
         // /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
         {
-            final JSONObject miniocreatebucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/local/minio_sts/createbucketpolicy.json"), Charset.defaultCharset()));
-            final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
-            for (int i = 0; i < statements.length(); i++) {
-                final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
-                statements.getJSONObject(i).put("Resource", list);
-            }
-            minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toString());
+            final IamPolicy miniocreatebucketpolicy = IamPolicy.builder()
+                    .addStatement(b -> b
+                            .effect(IamEffect.ALLOW)
+                            .addAction("s3:CreateBucket")
+                            .addAction("s3:GetBucketPolicy")
+                            .addAction("s3:PutBucketVersioning")
+                            .addAction("s3:GetBucketVersioning")
+                            .addResource(String.format("arn:aws:s3:::%s*", bucketPrefix)))
+                    .addStatement(b -> b
+                            .effect(IamEffect.ALLOW)
+                            .addAction("s3:PutObject")
+                            .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
+                            .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
+                    .build();
+            minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toJson(IamPolicyWriter.builder()
+                    .prettyPrint(true)
+                    .build()));
             System.out.println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
         }
         // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
         {
             final JSONObject minioaccessbucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/local/minio_sts/accessbucketpolicy.json"), Charset.defaultCharset()));
             final JSONArray statements = minioaccessbucketpolicy.getJSONArray("Statement");
-            for (int i = 0; i < statements.length(); i++) {
+            for(int i = 0; i < statements.length(); i++) {
                 final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
                 statements.getJSONObject(i).put("Resource", list);
             }
