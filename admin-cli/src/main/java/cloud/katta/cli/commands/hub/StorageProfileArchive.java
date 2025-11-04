@@ -24,7 +24,7 @@ import picocli.CommandLine;
 public class StorageProfileArchive extends AbstractStorageProfile {
 
     @Override
-    protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
+    protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
         call(uuid, storageProfileResourceApi);
     }

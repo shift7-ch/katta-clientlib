@@ -19,20 +19,22 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = true)
     String uuid;
 
+    @CommandLine.Option(names = {"--name"}, description = "The name.", required = true)
+    String name;
+
     @Override
     public Void call() throws Exception {
         final String accessToken = login();
-        call(hubUrl, accessToken, uuid);
+        call(hubUrl, accessToken, uuid, name);
         return null;
     }
 
-    protected void call(final String hubUrl, final String accessToken, final String uuid) throws ApiException {
+    protected void call(final String hubUrl, final String accessToken, final String uuid, final String name) throws ApiException {
         final ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(hubUrl);
         apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
-        call(UUID.fromString(uuid), apiClient);
+        call(UUID.fromString(uuid), name, apiClient);
     }
 
-
-    protected abstract void call(final UUID uuid, final ApiClient apiClient) throws ApiException;
+    protected abstract void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException;
 }
