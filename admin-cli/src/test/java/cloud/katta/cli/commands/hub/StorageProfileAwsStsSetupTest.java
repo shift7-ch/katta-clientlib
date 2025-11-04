@@ -42,12 +42,12 @@ class StorageProfileAwsStsSetupTest {
         dto.setRegion("eu-west-1");
         dto.setRegions(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"));
         dto.bucketPrefix("fancy");
-        dto.stsRoleArnClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
-        dto.stsRoleArnHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
+        dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
+        dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-        dto.stsRoleArn("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-sts-chain-01");
-        dto.stsRoleArn2("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-sts-chain-02");
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPut(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPut(any());
+        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-sts-chain-01");
+        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-sts-chain-02");
+        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
+        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
     }
 }
