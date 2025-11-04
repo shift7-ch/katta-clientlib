@@ -16,7 +16,7 @@ import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
-import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityRequestInterceptor;
+import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityCredentialsStrategy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -33,7 +33,7 @@ import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 /**
  * Assume role with temporary credentials obtained using OIDC token from security token service (STS)
  */
-public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWebIdentityRequestInterceptor {
+public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWebIdentityCredentialsStrategy {
     private static final Logger log = LogManager.getLogger(STSChainedAssumeRoleRequestInterceptor.class);
 
     /**
@@ -81,7 +81,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             if(null == key) {
                 throw new InteroperabilityException("No vault tag key set");
             }
-            return super.assumeRole(credentials.setTokens(tokens)
+            return super.assumeRole(bookmark.getCredentials().setTokens(tokens)
                             .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", key, vaultId)),
                     settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG));
         }

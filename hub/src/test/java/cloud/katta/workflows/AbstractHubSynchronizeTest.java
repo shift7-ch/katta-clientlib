@@ -11,7 +11,6 @@ import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.UUIDRandomStringService;
@@ -338,8 +337,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @MethodSource("arguments")
     void test04SetupCode(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
-        assertEquals(OAuthTokens.EMPTY, hubSession.getHost().getCredentials().getOauth());
-        assertEquals(StringUtils.EMPTY, hubSession.getHost().getCredentials().getPassword());
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
         assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));

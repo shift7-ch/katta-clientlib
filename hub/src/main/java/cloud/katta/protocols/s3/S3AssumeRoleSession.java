@@ -12,7 +12,6 @@ import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
-import ch.cyberduck.core.sts.STSRequestInterceptor;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -52,10 +51,7 @@ public class S3AssumeRoleSession extends S3Session {
         if(host.getProtocol().isOAuthConfigurable()) {
             log.debug("Register interceptor {}", oauth);
             configuration.addInterceptorLast(oauth);
-            final STSRequestInterceptor sts = new STSChainedAssumeRoleRequestInterceptor(hub, oauth, vaultId, host, trust, key, prompt);
-            log.debug("Register interceptor {}", sts);
-            configuration.addInterceptorLast(sts);
-            return sts;
+            return new STSChainedAssumeRoleRequestInterceptor(hub, oauth, vaultId, host, trust, key, prompt);
         }
         return super.configureCredentialsStrategy(configuration, prompt);
     }
