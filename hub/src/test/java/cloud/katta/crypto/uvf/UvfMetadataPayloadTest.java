@@ -32,6 +32,7 @@ import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEObjectJSON;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -103,17 +104,20 @@ class UvfMetadataPayloadTest {
         final OctetSequenceKey memberKey = jwks.memberKey();
         final ECKey recoveryKey = jwks.recoveryKey();
 
-        final String encrypted = orig.encrypt("https://example.com/api/", UUID.randomUUID(), jwks.toJWKSet());
+        final UUID vaultId = UUID.randomUUID();
+        final String encrypted = orig.encrypt("https://example.com/api/", vaultId, jwks.toJWKSet());
 
         // decrypt with memberKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, memberKey);
+            assertEquals(String.format("https://example.com/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("origin"));
             assertEquals(orig, decrypted);
         }
 
         // decrypt with recoveryKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, recoveryKey);
+            assertEquals(String.format("https://example.com/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("origin"));
             assertEquals(orig, decrypted);
         }
 

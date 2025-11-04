@@ -337,7 +337,7 @@ public class UvfMetadataPayload extends JWEPayload {
         final JWEObjectJSON builder = new JWEObjectJSON(
                 new JWEHeader.Builder(EncryptionMethod.A256GCM)
                         // kid goes into recipient-specific header
-                        .customParam("origin", String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString()))
+                        .customParam("origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
                         .jwkURL(URI.create("jwks.json"))
                         .contentType("json")
                         .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
