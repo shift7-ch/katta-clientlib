@@ -136,8 +136,7 @@ public class StorageProfileDtoWrapper {
 
     public List<String> getRegions() {
         if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
-            // only STS
-            return null;
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getRegions();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
             return ((StorageProfileS3STSDto) proxy.getActualInstance()).getRegions();
