@@ -4,10 +4,10 @@
 
 package cloud.katta.cli.commands.hub;
 
-import java.util.UUID;
-
 import cloud.katta.cli.KattaSetupCli;
 import picocli.CommandLine;
+
+import java.util.UUID;
 
 /**
  * Tamarind example.
@@ -38,7 +38,6 @@ public class Tamarind {
                     "--hubUrl", "https://testing.katta.cloud/tamarind/",
                     "--uuid", storageProfileId.toString(),
                     "--name", "AWS S3 STS",
-                    // TODO inconsistency w/ vs w/o hyphen
                     "--bucketPrefix", "katta-test-",
                     "--rolePrefix", "arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-tamarind"
             );

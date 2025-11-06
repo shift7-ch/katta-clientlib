@@ -4,23 +4,17 @@
 
 package cloud.katta.cli.commands.hub;
 
+import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.model.*;
+import cloud.katta.testcontainers.AbtractAdminCliIT;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
-
-import cloud.katta.cli.KattaSetupCli;
-import cloud.katta.client.api.StorageProfileResourceApi;
-import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
-import cloud.katta.client.model.StorageProfileDto;
-import cloud.katta.client.model.StorageProfileS3STSDto;
-import cloud.katta.testcontainers.AbtractAdminCliIT;
-import picocli.CommandLine;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
 
@@ -33,7 +27,11 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
                 "--accessToken", accessToken,
                 "--uuid", storageProfileId.toString(),
                 "--name", "AWS S3 STS",
-                "--rolePrefix", "arn:aws:iam::linguine:role/farfalle"
+                "--rolePrefix", "arn:aws:iam::linguine:role/farfalle",
+                "--region", "eu-west-1",
+                "--regions", "eu-west-1",
+                "--regions", "eu-west-2",
+                "--regions", "eu-west-3"
         );
         assertEquals(0, rc);
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);

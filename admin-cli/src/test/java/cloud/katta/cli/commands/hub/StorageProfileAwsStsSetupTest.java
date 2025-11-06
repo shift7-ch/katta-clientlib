@@ -28,6 +28,8 @@ class StorageProfileAwsStsSetupTest {
         final StorageProfileAwsStsSetup cli = new StorageProfileAwsStsSetup();
         cli.bucketPrefix = "fancy";
         cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper";
+        cli.region = "eu-west-1";
+        cli.regions = Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3");
         cli.call(vaultId, "AWS S3 STS", api);
 
         final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
