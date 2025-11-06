@@ -4,9 +4,6 @@
 
 package cloud.katta.cli.commands.hub;
 
-import java.util.Arrays;
-import java.util.UUID;
-
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -15,6 +12,9 @@ import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Uploads a storage profile to Katta Server for use with AWS STS. Requires AWS STS setup.
@@ -28,11 +28,17 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true)
 public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
 
-    @CommandLine.Option(names = {"--rolePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind\"", required = true)
+    @CommandLine.Option(names = {"--rolePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-\"", required = true)
     String rolePrefix;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta")
     String bucketPrefix;
+
+    @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
+    String region;
+
+    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. [\"eu-west-1\",\"eu-west-2\",\"eu-west-3\"].", required = true)
+    List<String> regions;
 
     @Override
     protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
@@ -48,12 +54,11 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
                 .bucketPrefix(bucketPrefix)
                 .protocol(Protocol.S3_STS)
                 .storageClass(S3STORAGECLASSES.STANDARD)
-                .region("eu-west-1")
-                .regions(Arrays.asList("eu-west-1",
-                        "eu-west-2",
-                        "eu-west-3"))
+                .region(region)
+                .regions(regions)
                 .archived(false)
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                // TODO https://github.com/shift7-ch/katta-clientlib/issues/190 naming
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-01
                 .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s-sts-chain-01", rolePrefix))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-02
