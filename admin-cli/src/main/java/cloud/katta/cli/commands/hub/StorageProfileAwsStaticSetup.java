@@ -4,15 +4,17 @@
 
 package cloud.katta.cli.commands.hub;
 
-import java.util.UUID;
-
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
+import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Uploads a storage profile to Katta Server for use with AWS static.
@@ -24,6 +26,12 @@ import picocli.CommandLine;
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
 public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
+
+    @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
+    String region;
+
+    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = true)
+    List<String> regions;
 
     @Override
     protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
@@ -37,10 +45,25 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
                 .id(uuid)
                 .name(name)
                 .protocol(Protocol.S3_STATIC)
-                .storageClass(S3STORAGECLASSES.STANDARD)
                 .archived(false)
+
+                // -- (1) bucket creation, template upload and client profile
                 .scheme("https")
                 .port(443)
+                .storageClass(S3STORAGECLASSES.STANDARD)
+                .withPathStyleAccessEnabled(false)
+
+                // -- (2) bucket creation only (only relevant for Desktop client)
+                // TODO extract option with default
+                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                .bucketVersioning(true)
+                .region(region)
+                .regions(regions)
+                // TODO extract option with default
+                .bucketPrefix("katta-")
+                // TODO bad design smell? not all S3 providers might have STS to create static bucket?
+                .stsRoleCreateBucketClient("")
+                .stsRoleCreateBucketHub("")
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
