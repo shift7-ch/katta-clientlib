@@ -52,7 +52,7 @@ public class MinioStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--secretKey"}, description = "Secret Key for administering MinIO if no profile is used.", required = false)
     String secretKey;
 
-    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", required = false, defaultValue = "katta")
+    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", required = false, defaultValue = "katta-")
     String bucketPrefix;
 
     @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)

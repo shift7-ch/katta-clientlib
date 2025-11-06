@@ -38,7 +38,6 @@ public class Tamarind {
                     "--hubUrl", "https://testing.katta.cloud/tamarind/",
                     "--uuid", storageProfileId.toString(),
                     "--name", "AWS S3 STS",
-                    // TODO harmonize
                     "--bucketPrefix", "katta-test-",
                     "--rolePrefix", "arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-tamarind"
             );
