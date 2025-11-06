@@ -51,23 +51,32 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
         storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
                 .id(uuid)
                 .name(name)
-                .bucketPrefix(bucketPrefix)
                 .protocol(Protocol.S3_STS)
+                .archived(false)
+
+                // -- (1) bucket creation, template upload and client profile
+                .scheme("https")
+                .port(443)
                 .storageClass(S3STORAGECLASSES.STANDARD)
+                .withPathStyleAccessEnabled(false)
+
+                // -- (2) bucket creation only (only relevant for Desktop client)
+                .bucketPrefix(bucketPrefix)
                 .region(region)
                 .regions(regions)
-                .archived(false)
+                // TODO extract option with default
+                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                .bucketVersioning(true)
+
+                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-createbucket
+                .stsRoleCreateBucketClient(String.format("%s-createbucket", rolePrefix))
+                .stsRoleCreateBucketHub(String.format("%s-createbucket", rolePrefix))
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 // TODO https://github.com/shift7-ch/katta-clientlib/issues/190 naming
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-01
                 .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s-sts-chain-01", rolePrefix))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-02
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s-sts-chain-02", rolePrefix))
-                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-createbucket
-                .stsRoleCreateBucketClient(String.format("%s-createbucket", rolePrefix))
-                .stsRoleCreateBucketHub(String.format("%s-createbucket", rolePrefix))
-                .scheme("https")
-                .port(443)
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
