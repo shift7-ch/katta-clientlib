@@ -13,7 +13,7 @@
         "s3:GetEncryptionConfiguration",
         "s3:PutEncryptionConfiguration"
       ],
-      "Resource": "arn:aws:s3:::cipherduck*"
+        "Resource": "arn:aws:s3:::katta-test-*"
     },
     {
       "Effect": "Allow",
@@ -21,8 +21,8 @@
         "s3:PutObject"
       ],
       "Resource": [
-        "arn:aws:s3:::cipherduck*/*.uvf",
-        "arn:aws:s3:::cipherduck*/*/"
+          "arn:aws:s3:::katta-test-*/*.uvf",
+          "arn:aws:s3:::katta-test-*/*/"
       ]
     }
   ]

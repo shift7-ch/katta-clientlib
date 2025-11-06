@@ -4,7 +4,7 @@
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::930717317329:role/cipherduck_chain_01"
+          "AWS": "arn:aws:iam::930717317329:role/katta-test-_chain_01"
       },
       "Action": [
         "sts:AssumeRole",

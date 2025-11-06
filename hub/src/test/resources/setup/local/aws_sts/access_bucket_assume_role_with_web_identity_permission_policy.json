@@ -7,7 +7,7 @@
                 "sts:AssumeRole",
                 "sts:TagSession"
             ],
-            "Resource": "arn:aws:iam::930717317329:role/cipherduck_chain_02"
+            "Resource": "arn:aws:iam::930717317329:role/katta-test-_chain_02"
         }
     ]
 }
