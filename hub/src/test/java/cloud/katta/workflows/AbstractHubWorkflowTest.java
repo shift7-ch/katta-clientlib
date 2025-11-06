@@ -74,7 +74,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.registerModule(new JsonNullableModule());
             {
-                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/minio_static_profile.json"), StorageProfileS3StaticDto.class)
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/storage_profile.json"), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
                 final String minioPort = props.getProperty("MINIO_PORT");
                 if(minioPort != null) {
@@ -87,7 +87,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/minio_sts_profile.json"), StorageProfileS3STSDto.class)
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/storage_profile.json"), StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
                 final String minioPort = props.getProperty("MINIO_PORT");

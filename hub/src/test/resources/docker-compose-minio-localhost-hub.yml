@@ -385,13 +385,13 @@ services:
 
         echo $$ACCESS_TOKEN
 
-        cat /setup/local/minio_sts/minio_sts_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_sts_profile.json
-        cat /setup/local/minio_static/minio_static_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_static_profile.json
+        cat /setup/local/minio_sts/storage_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/storage_profile.json
+        cat /setup/local/minio_static/storage_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/storage_profile.json
 
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/minio_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/minio_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/local/aws_sts/aws_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/local/aws_static/aws_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/local/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/local/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
         curl -v --fail http://localhost:${HUB_PORT}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 

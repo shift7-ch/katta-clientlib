@@ -103,7 +103,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.registerModule(new JsonNullableModule());
             try {
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/aws_static_profile.json", profile)), StorageProfileS3StaticDto.class)
+                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/storage_profile.json", profile)), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                 );
             }
@@ -116,7 +116,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 }
             }
             try {
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_sts/aws_sts_profile.json", profile)), StorageProfileS3STSDto.class)
+                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_sts/storage_profile.json", profile)), StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD).bucketEncryption(S3SERVERSIDEENCRYPTION.NONE));
             }
             catch(ApiException e) {
@@ -128,7 +128,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 }
             }
             try {
-                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_static/minio_static_profile.json", profile)), StorageProfileS3StaticDto.class)
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_static/storage_profile.json", profile)), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
                 final String minioPort = props.getProperty("MINIO_PORT");
                 if(minioPort != null) {
@@ -149,7 +149,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 }
             }
             try {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_sts/minio_sts_profile.json", profile)), StorageProfileS3STSDto.class)
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_sts/storage_profile.json", profile)), StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
                 final String minioPort = props.getProperty("MINIO_PORT");
