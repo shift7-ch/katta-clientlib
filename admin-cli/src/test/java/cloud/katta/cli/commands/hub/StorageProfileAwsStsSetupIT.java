@@ -50,8 +50,7 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
         assertEquals(S3STORAGECLASSES.STANDARD, dto.getStorageClass());
         assertEquals("eu-west-1", dto.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), dto.getRegions());
-        assertEquals("katta", dto.getBucketPrefix());
-        assertEquals("katta", dto.getBucketPrefix());
+        assertEquals("katta-", dto.getBucketPrefix());
         assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleCreateBucketClient());
         assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleCreateBucketHub());
         assertNull(dto.getStsEndpoint());
