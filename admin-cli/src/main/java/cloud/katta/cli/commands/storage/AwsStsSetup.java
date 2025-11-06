@@ -4,10 +4,16 @@
 
 package cloud.katta.cli.commands.storage;
 
+import cloud.katta.cli.KattaSetupCli;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import picocli.CommandLine;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.iam.IamClient;
+import software.amazon.awssdk.services.iam.model.*;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
@@ -21,23 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-
-import cloud.katta.cli.KattaSetupCli;
-import picocli.CommandLine;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.iam.IamClient;
-import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderRequest;
-import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderResponse;
-import software.amazon.awssdk.services.iam.model.CreateRoleRequest;
-import software.amazon.awssdk.services.iam.model.GetRoleRequest;
-import software.amazon.awssdk.services.iam.model.GetRoleResponse;
-import software.amazon.awssdk.services.iam.model.ListOpenIdConnectProvidersResponse;
-import software.amazon.awssdk.services.iam.model.NoSuchEntityException;
-import software.amazon.awssdk.services.iam.model.OpenIDConnectProviderListEntry;
-import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
-import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
-import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThumbprintRequest;
 
 /**
  * Sets up AWS for Katta in STS mode:
@@ -62,7 +51,7 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = true)
     String profileName;
 
-    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", required = false, defaultValue = "katta")
+    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", required = false, defaultValue = "katta-")
     String bucketPrefix;
 
     @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)

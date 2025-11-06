@@ -26,7 +26,7 @@ class StorageProfileAwsStsSetupTest {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final StorageProfileAwsStsSetup cli = new StorageProfileAwsStsSetup();
-        cli.bucketPrefix = "fancy";
+        cli.bucketPrefix = "fancy-";
         cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper";
         cli.region = "eu-west-1";
         cli.regions = Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3");
@@ -43,7 +43,7 @@ class StorageProfileAwsStsSetupTest {
         dto.setStorageClass(S3STORAGECLASSES.STANDARD);
         dto.setRegion("eu-west-1");
         dto.setRegions(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"));
-        dto.bucketPrefix("fancy");
+        dto.bucketPrefix("fancy-");
         dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
         dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
