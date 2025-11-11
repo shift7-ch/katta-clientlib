@@ -4,16 +4,10 @@
 
 package cloud.katta.cli.commands.storage;
 
-import cloud.katta.cli.KattaSetupCli;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import picocli.CommandLine;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.iam.IamClient;
-import software.amazon.awssdk.services.iam.model.*;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
@@ -27,6 +21,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import cloud.katta.cli.KattaSetupCli;
+import picocli.CommandLine;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.iam.IamClient;
+import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderRequest;
+import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderResponse;
+import software.amazon.awssdk.services.iam.model.CreateRoleRequest;
+import software.amazon.awssdk.services.iam.model.GetRoleRequest;
+import software.amazon.awssdk.services.iam.model.GetRoleResponse;
+import software.amazon.awssdk.services.iam.model.ListOpenIdConnectProvidersResponse;
+import software.amazon.awssdk.services.iam.model.NoSuchEntityException;
+import software.amazon.awssdk.services.iam.model.OpenIDConnectProviderListEntry;
+import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
+import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
+import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThumbprintRequest;
 
 /**
  * Sets up AWS for Katta in STS mode:
@@ -48,6 +59,9 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\"", required = true)
     String realmUrl;
 
+    @CommandLine.Option(names = {"--roleNameInfix"}, description = "If not provided, will be derived from realm URL. E.g. testing.katta.cloud-chiptole", required = false)
+    String roleNamePrefix;
+
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = true)
     String profileName;
 
@@ -60,13 +74,21 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
     List<String> clientId;
 
+    // role names restricted to 64 characters
+    final String createBucketRoleNameInfix = "-create-bucket";
+    final String accessBucketRoleNameInfix = "-access-bucket";
+
+    final String assumeRoleWithWebIdentityRoleSuffix = "-a-role-web-identity";
+    final String assumeRoleTaggedSessionRoleSuffix = "-a-role-tagged-session";
+
     @Override
     public Void call() throws Exception {
         // remove trailing slash
         realmUrl = realmUrl.replaceAll("/$", "");
-
         final String arnPostfix = realmUrl.replace("https://", "");
-        final String arnPostfixSanitized = arnPostfix.replace("/", "-");
+        if(roleNamePrefix == null) {
+            roleNamePrefix = arnPostfix.replace("/", "-");
+        }
 
         final URL url = new URI(realmUrl).toURL();
 
@@ -109,9 +131,10 @@ public class AwsStsSetup implements Callable<Void> {
             //		aws iam create-role --role-name cipherduck-createbucket --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebuckettrustpolicy.json
             //		aws iam put-role-policy --role-name cipherduck-createbucket --policy-name cipherduck-createbucket --policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebucketpermissionpolicy.json
             //
-            final String awsSTSCreateBucketRoleName = String.format("%s-createbucket", arnPostfixSanitized);
-            final JSONObject awsSTSCreateBuckeTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/aws_sts/createbuckettrustpolicy.json"), Charset.defaultCharset()));
-            final JSONObject awsSTSCreateBuckePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/aws_sts/createbucketpermissionpolicy.json"), Charset.defaultCharset()));
+
+            final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, createBucketRoleNameInfix);
+            final JSONObject awsSTSCreateBuckeTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/createbuckettrustpolicy.json"), Charset.defaultCharset()));
+            final JSONObject awsSTSCreateBuckePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/createbucketpermissionpolicy.json"), Charset.defaultCharset()));
             injectFederated(awsSTSCreateBuckeTrustPolicyTemplate, oidcProviderArn);
             injectBucketPrefixIntoResources(awsSTSCreateBuckePermissionPolicyTemplate, bucketPrefix);
             uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSCreateBucketRoleName, awsSTSCreateBuckeTrustPolicyTemplate, awsSTSCreateBuckePermissionPolicyTemplate, maxSessionDuration);
@@ -120,13 +143,13 @@ public class AwsStsSetup implements Callable<Void> {
             //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
             //		aws iam put-role-policy --role-name cipherduck_chain_01 --policy-name cipherduck_chain_01 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_permissionpolicy.json
             //
-            final String awsSTSChain01RoleName = String.format("%s-sts-chain-01", arnPostfixSanitized);
-            final String awsSTSChain02RoleName = String.format("%s-sts-chain-02", arnPostfixSanitized);
-            final JSONObject awsSTSChain01RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/aws_sts/cipherduck_chain_01_trustpolicy.json"), Charset.defaultCharset()));
-            final JSONObject awsSTSChain01RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/aws_sts/cipherduck_chain_01_permissionpolicy.json"), Charset.defaultCharset()));
+            final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleWithWebIdentityRoleSuffix);
+            final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleTaggedSessionRoleSuffix);
+            final JSONObject awsSTSChain01RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_trustpolicy.json"), Charset.defaultCharset()));
+            final JSONObject awsSTSChain01RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_permissionpolicy.json"), Charset.defaultCharset()));
             injectFederated(awsSTSChain01RoleNameTrustPolicyTemplate, oidcProviderArn);
-            awsSTSChain01RoleNamePermissionPolicyTemplate.getJSONArray("Statement").getJSONObject(0).put("Resource", arnPrefix + ":role/" + awsSTSChain02RoleName);
-            uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSChain01RoleName, awsSTSChain01RoleNameTrustPolicyTemplate, awsSTSChain01RoleNamePermissionPolicyTemplate, maxSessionDuration);
+            awsSTSChain01RoleNamePermissionPolicyTemplate.getJSONArray("Statement").getJSONObject(0).put("Resource", arnPrefix + ":role/" + assumeRoleTaggedSessionRoleName);
+            uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleWithWebIdentityRoleName, awsSTSChain01RoleNameTrustPolicyTemplate, awsSTSChain01RoleNamePermissionPolicyTemplate, maxSessionDuration);
 
             //
             //		sleep 10;
@@ -137,12 +160,12 @@ public class AwsStsSetup implements Callable<Void> {
             //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
             //		aws iam put-role-policy --role-name cipherduck_chain_02 --policy-name cipherduck_chain_02 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_permissionpolicy.json
             //
-            final JSONObject awsSTSChain02RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/aws_sts/cipherduck_chain_02_trustpolicy.json"), Charset.defaultCharset()));
-            final JSONObject awsSTSChain02RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/aws_sts/cipherduck_chain_02_permissionpolicy.json"), Charset.defaultCharset()));
-            final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(awsSTSChain01RoleName).build());
+            final JSONObject awsSTSChain02RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_trustpolicy.json"), Charset.defaultCharset()));
+            final JSONObject awsSTSChain02RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_permissionpolicy.json"), Charset.defaultCharset()));
+            final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(assumeRoleWithWebIdentityRoleName).build());
             awsSTSChain02RoleNameTrustPolicyTemplate.getJSONArray("Statement").getJSONObject(0).getJSONObject("Principal").put("AWS", Collections.singletonList(role.role().arn()));
             injectBucketPrefixIntoResources(awsSTSChain02RoleNamePermissionPolicyTemplate, bucketPrefix);
-            uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSChain02RoleName, awsSTSChain02RoleNameTrustPolicyTemplate, awsSTSChain02RoleNamePermissionPolicyTemplate, maxSessionDuration);
+            uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleTaggedSessionRoleName, awsSTSChain02RoleNameTrustPolicyTemplate, awsSTSChain02RoleNamePermissionPolicyTemplate, maxSessionDuration);
         }
         return null;
     }
@@ -162,25 +185,28 @@ public class AwsStsSetup implements Callable<Void> {
     }
 
     private static void uploadAssumeRolePolicyAndPermissionPolicy(final IamClient iam, final String roleName, final JSONObject trustPolicyDocument, final JSONObject permissionPolicyDocument, final Integer maxSessionDuration) {
-        System.out.println(trustPolicyDocument);
-        System.out.println(permissionPolicyDocument);
         try {
-            final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(roleName).build());
-            System.out.println(role);
+            iam.getRole(GetRoleRequest.builder().roleName(roleName).build());
+            System.out.println(String.format("aws iam update-role --role-name %s --assume-role-policy-document file://...", roleName));
+            System.out.println(trustPolicyDocument);
             iam.updateAssumeRolePolicy(UpdateAssumeRolePolicyRequest.builder()
                     .roleName(roleName)
                     .policyDocument(trustPolicyDocument.toString())
                     .build());
-
         }
         catch(NoSuchEntityException e) {
+            System.out.println(String.format("aws iam create-role --role-name %s --assume-role-policy-document file://...", roleName));
+            System.out.println(trustPolicyDocument);
             iam.createRole(CreateRoleRequest.builder()
                     .roleName(roleName)
                     .assumeRolePolicyDocument(trustPolicyDocument.toString())
                     .maxSessionDuration(maxSessionDuration)
                     .build()
             );
+
         }
+        System.out.println(String.format("aws iam put-role-policy --role-name %s --policy-name %s --policy-document file://...", roleName, roleName));
+        System.out.println(permissionPolicyDocument);
         iam.putRolePolicy(PutRolePolicyRequest.builder()
                 .roleName(roleName)
                 .policyName(roleName)
@@ -276,3 +302,5 @@ public class AwsStsSetup implements Callable<Void> {
         return c.getServerCertificates();
     }
 }
+
+
