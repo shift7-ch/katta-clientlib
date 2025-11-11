@@ -191,25 +191,25 @@ services:
         ls /setup
         /mc config host add myminio http://minio:${MINIO_PORT} minioadmin minioadmin
 
-        /mc admin policy create myminio cipherduckcreatebucket /setup/local/minio_sts/createbucketpolicy.json
-        /mc admin policy create myminio cipherduckaccessbucket /setup/local/minio_sts/accessbucketpolicy.json
+        /mc admin policy create myminio katta_create_bucket_policy /setup/local/minio_sts/create_bucket_policy.json
+        /mc admin policy create myminio katta_access_bucket_policy /setup/local/minio_sts/access_bucket_policy.json
 
 
         /mc idp openid add myminio cryptomator \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomator" \
           client_secret="ignore-me" \
-          role_policy="cipherduckcreatebucket"
+          role_policy="katta_create_bucket_policy"
         /mc idp openid add myminio cryptomatorhub \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomatorhub" \
           client_secret="ignore-me" \
-          role_policy="cipherduckcreatebucket"
+          role_policy="katta_create_bucket_policy"
         /mc idp openid add myminio cryptomatorvaults \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomatorvaults" \
           client_secret="ignore-me" \
-          role_policy="cipherduckaccessbucket"
+          role_policy="katta_access_bucket_policy"
 
         # see https://github.com/bitnami/charts/pull/28118
         /mc admin service restart myminio --wait --json
@@ -227,8 +227,8 @@ services:
         /mc idp openid info myminio
 
         /mc admin user add myminio testuser top-secret
-        /mc admin policy create myminio testuser_accesspolicy /setup/local/minio_static/accessbucketpolicy.json
-        /mc admin policy create myminio testuser_createpolicy /setup/local/minio_static/createbucketpolicy.json
+        /mc admin policy create myminio testuser_accesspolicy /setup/local/minio_static/access_bucket_policy.json
+        /mc admin policy create myminio testuser_createpolicy /setup/local/minio_static/create_bucket_policy.json
         /mc admin policy attach myminio testuser_accesspolicy --user testuser
         /mc admin policy attach myminio testuser_createpolicy --user testuser
 
@@ -385,13 +385,13 @@ services:
 
         echo $$ACCESS_TOKEN
 
-        cat /setup/local/minio_sts/minio_sts_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_sts_profile.json
-        cat /setup/local/minio_static/minio_static_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/minio_static_profile.json
+        cat /setup/local/minio_sts/storage_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/storage_profile.json
+        cat /setup/local/minio_static/storage_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/storage_profile.json
 
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/minio_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/minio_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/local/aws_sts/aws_sts_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/local/aws_static/aws_static_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/local/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/local/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
         curl -v --fail http://localhost:${HUB_PORT}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 
