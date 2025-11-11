@@ -14,7 +14,7 @@ public class Chipotle {
                 "awsSetup",
                 "--profileName", "430118840017_AdministratorAccess",
                 "--realmUrl", "https://testing.katta.cloud/kc/realms/chipotle",
-                "--roleNameInfix", "testing.katta.cloud-chipotle",
+                "--roleNamePrefix", "testing.katta.cloud-chipotle-",
                 "--clientId", "cryptomator",
                 "--clientId", "cryptomatorhub",
                 "--clientId", "cryptomatorvaults",
