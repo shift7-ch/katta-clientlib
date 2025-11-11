@@ -60,16 +60,16 @@ import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThum
 @CommandLine.Command(name = "awsSetup", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
 public class AwsStsSetup implements Callable<Void> {
 
-    @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\"", required = true)
+    @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\".", required = true)
     String realmUrl;
 
-    @CommandLine.Option(names = {"--roleNameInfix"}, description = "If not provided, will be derived from realm URL. E.g. testing.katta.cloud-chiptole", required = false)
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "If not provided, will be derived from realm URL. E.g. \"testing.katta.cloud-chipotle-\".", required = false)
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = true)
     String profileName;
 
-    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", required = false, defaultValue = "katta-")
+    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults. E.g. \"katta-\".", required = false, defaultValue = "katta-")
     String bucketPrefix;
 
     @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)
@@ -79,8 +79,8 @@ public class AwsStsSetup implements Callable<Void> {
     List<String> clientId;
 
     // role names restricted to 64 characters
-    final String createBucketRoleNameInfix = "-create-bucket";
-    final String accessBucketRoleNameInfix = "-access-bucket";
+    final String createBucketRoleNameInfix = "create-bucket";
+    final String accessBucketRoleNameInfix = "access-bucket";
 
     final String assumeRoleWithWebIdentityRoleSuffix = "-a-role-web-identity";
     final String assumeRoleTaggedSessionRoleSuffix = "-a-role-tagged-session";
@@ -103,95 +103,98 @@ public class AwsStsSetup implements Callable<Void> {
                 .region(Region.AWS_GLOBAL)
                 .credentialsProvider(ProfileCredentialsProvider.create(profileName))
                 .build()) {
-            final ListOpenIdConnectProvidersResponse existingOpenIdConnectProviders = iam.listOpenIDConnectProviders();
-            System.out.println(existingOpenIdConnectProviders);
-
-
-            final Optional<OpenIDConnectProviderListEntry> existingOIDCProvider = existingOpenIdConnectProviders.openIDConnectProviderList().stream().filter(idp -> idp.arn().endsWith(arnPostfix)).findFirst();
-            //
-            //		aws iam create-open-id-connect-provider --url https://testing.hub.cryptomator.org/kc/realms/cipherduck --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
-            //
-            final String oidcProviderArn;
-            if(existingOIDCProvider.isEmpty()) {
-                final CreateOpenIdConnectProviderResponse openIDConnectProvider = iam.createOpenIDConnectProvider(CreateOpenIdConnectProviderRequest.builder()
-                        .url(realmUrl)
-                        .clientIDList(clientId)
-                        .thumbprintList(sha)
-                        .build());
-                oidcProviderArn = openIDConnectProvider.openIDConnectProviderArn();
-                System.out.println(oidcProviderArn);
-            }
-            else {
-                oidcProviderArn = existingOIDCProvider.get().arn();
-                iam.updateOpenIDConnectProviderThumbprint(UpdateOpenIdConnectProviderThumbprintRequest.builder()
-                        .openIDConnectProviderArn(oidcProviderArn)
-                        .thumbprintList(sha).build());
-
-            }
-            System.out.println(oidcProviderArn);
-            final String arnPrefix = oidcProviderArn.replace(":oidc-provider" + "/" + arnPostfix, "");
-
-            //
-            //		aws iam create-role --role-name cipherduck-createbucket --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebuckettrustpolicy.json
-            //		aws iam put-role-policy --role-name cipherduck-createbucket --policy-name cipherduck-createbucket --policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebucketpermissionpolicy.json
-            //
-            final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, createBucketRoleNameInfix);
-            final IamPolicy awsSTSCreateBucketTrustPolicy = IamPolicy.builder()
-                    .addStatement(b -> b
-                            .effect(IamEffect.ALLOW)
-                            .addAction("sts:AssumeRoleWithWebIdentity")
-                            .addPrincipal(IamPrincipalType.FEDERATED, oidcProviderArn)
-                    )
-                    .build();
-            final IamPolicy awsSTSCreateBucketPermissionPolicy = IamPolicy.builder()
-                    .addStatement(b -> b
-                            .effect(IamEffect.ALLOW)
-                            .addAction("s3:CreateBucket")
-                            .addAction("s3:GetBucketPolicy")
-                            .addAction("s3:PutBucketVersioning")
-                            .addAction("s3:GetBucketVersioning")
-                            .addAction("s3:GetAccelerateConfiguration")
-                            .addAction("s3:PutAccelerateConfiguration")
-                            .addAction("s3:GetEncryptionConfiguration")
-                            .addAction("s3:PutEncryptionConfiguration")
-                            .addResource(String.format("arn:aws:s3:::%s*", bucketPrefix)))
-                    .addStatement(b -> b
-                            .effect(IamEffect.ALLOW)
-                            .addAction("s3:PutObject")
-                            .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
-                            .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
-                    .build();
-            uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSCreateBucketRoleName, awsSTSCreateBucketTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSCreateBucketPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), maxSessionDuration);
-
-            //
-            //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
-            //		aws iam put-role-policy --role-name cipherduck_chain_01 --policy-name cipherduck_chain_01 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_permissionpolicy.json
-            //
-            final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleWithWebIdentityRoleSuffix);
-            final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleTaggedSessionRoleSuffix);
-            final JSONObject awsSTSChain01RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_trustpolicy.json"), Charset.defaultCharset()));
-            final JSONObject awsSTSChain01RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_permissionpolicy.json"), Charset.defaultCharset()));
-            injectFederated(awsSTSChain01RoleNameTrustPolicyTemplate, oidcProviderArn);
-            awsSTSChain01RoleNamePermissionPolicyTemplate.getJSONArray("Statement").getJSONObject(0).put("Resource", arnPrefix + ":role/" + assumeRoleTaggedSessionRoleName);
-            uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleWithWebIdentityRoleName, awsSTSChain01RoleNameTrustPolicyTemplate.toString(), awsSTSChain01RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
-
-            //
-            //		sleep 10;
-            //
-            Thread.sleep(10000);
-
-            //
-            //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
-            //		aws iam put-role-policy --role-name cipherduck_chain_02 --policy-name cipherduck_chain_02 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_permissionpolicy.json
-            //
-            final JSONObject awsSTSChain02RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_trustpolicy.json"), Charset.defaultCharset()));
-            final JSONObject awsSTSChain02RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_permissionpolicy.json"), Charset.defaultCharset()));
-            final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(assumeRoleWithWebIdentityRoleName).build());
-            awsSTSChain02RoleNameTrustPolicyTemplate.getJSONArray("Statement").getJSONObject(0).getJSONObject("Principal").put("AWS", Collections.singletonList(role.role().arn()));
-            injectBucketPrefixIntoResources(awsSTSChain02RoleNamePermissionPolicyTemplate, bucketPrefix);
-            uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleTaggedSessionRoleName, awsSTSChain02RoleNameTrustPolicyTemplate.toString(), awsSTSChain02RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
+            call(iam, arnPostfix, sha);
         }
         return null;
+    }
+
+    protected void call(final IamClient iam, final String arnPostfix, final String thumbprint) throws IOException, InterruptedException {
+        final ListOpenIdConnectProvidersResponse existingOpenIdConnectProviders = iam.listOpenIDConnectProviders();
+        System.out.println(existingOpenIdConnectProviders);
+
+        final Optional<OpenIDConnectProviderListEntry> existingOIDCProvider = existingOpenIdConnectProviders.openIDConnectProviderList().stream().filter(idp -> idp.arn().endsWith(arnPostfix)).findFirst();
+        //
+        //		aws iam create-open-id-connect-provider --url https://testing.hub.cryptomator.org/kc/realms/cipherduck --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
+        //
+        final String oidcProviderArn;
+        if(existingOIDCProvider.isEmpty()) {
+            final CreateOpenIdConnectProviderResponse openIDConnectProvider = iam.createOpenIDConnectProvider(CreateOpenIdConnectProviderRequest.builder()
+                    .url(realmUrl)
+                    .clientIDList(clientId)
+                    .thumbprintList(thumbprint)
+                    .build());
+            oidcProviderArn = openIDConnectProvider.openIDConnectProviderArn();
+            System.out.println(oidcProviderArn);
+        }
+        else {
+            oidcProviderArn = existingOIDCProvider.get().arn();
+            iam.updateOpenIDConnectProviderThumbprint(UpdateOpenIdConnectProviderThumbprintRequest.builder()
+                    .openIDConnectProviderArn(oidcProviderArn)
+                    .thumbprintList(thumbprint).build());
+
+        }
+        System.out.println(oidcProviderArn);
+        final String arnPrefix = oidcProviderArn.replace(":oidc-provider" + "/" + arnPostfix, "");
+
+        //
+        //		aws iam create-role --role-name cipherduck-createbucket --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebuckettrustpolicy.json
+        //		aws iam put-role-policy --role-name cipherduck-createbucket --policy-name cipherduck-createbucket --policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebucketpermissionpolicy.json
+        //
+        final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, createBucketRoleNameInfix);
+        final IamPolicy awsSTSCreateBucketTrustPolicy = IamPolicy.builder()
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("sts:AssumeRoleWithWebIdentity")
+                        .addPrincipal(IamPrincipalType.FEDERATED, oidcProviderArn)
+                )
+                .build();
+        final IamPolicy awsSTSCreateBucketPermissionPolicy = IamPolicy.builder()
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("s3:CreateBucket")
+                        .addAction("s3:GetBucketPolicy")
+                        .addAction("s3:PutBucketVersioning")
+                        .addAction("s3:GetBucketVersioning")
+                        .addAction("s3:GetAccelerateConfiguration")
+                        .addAction("s3:PutAccelerateConfiguration")
+                        .addAction("s3:GetEncryptionConfiguration")
+                        .addAction("s3:PutEncryptionConfiguration")
+                        .addResource(String.format("arn:aws:s3:::%s*", bucketPrefix)))
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("s3:PutObject")
+                        .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
+                        .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
+                .build();
+        uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSCreateBucketRoleName, awsSTSCreateBucketTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSCreateBucketPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), maxSessionDuration);
+
+        //
+        //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
+        //		aws iam put-role-policy --role-name cipherduck_chain_01 --policy-name cipherduck_chain_01 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_permissionpolicy.json
+        //
+        final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleWithWebIdentityRoleSuffix);
+        final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleTaggedSessionRoleSuffix);
+        final JSONObject awsSTSChain01RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_trustpolicy.json"), Charset.defaultCharset()));
+        final JSONObject awsSTSChain01RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_permissionpolicy.json"), Charset.defaultCharset()));
+        injectFederated(awsSTSChain01RoleNameTrustPolicyTemplate, oidcProviderArn);
+        awsSTSChain01RoleNamePermissionPolicyTemplate.getJSONArray("Statement").getJSONObject(0).put("Resource", arnPrefix + ":role/" + assumeRoleTaggedSessionRoleName);
+        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleWithWebIdentityRoleName, awsSTSChain01RoleNameTrustPolicyTemplate.toString(), awsSTSChain01RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
+
+        //
+        //		sleep 10;
+        //
+        Thread.sleep(10000);
+
+        //
+        //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
+        //		aws iam put-role-policy --role-name cipherduck_chain_02 --policy-name cipherduck_chain_02 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_permissionpolicy.json
+        //
+        final JSONObject awsSTSChain02RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_trustpolicy.json"), Charset.defaultCharset()));
+        final JSONObject awsSTSChain02RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_permissionpolicy.json"), Charset.defaultCharset()));
+        final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(assumeRoleWithWebIdentityRoleName).build());
+        awsSTSChain02RoleNameTrustPolicyTemplate.getJSONArray("Statement").getJSONObject(0).getJSONObject("Principal").put("AWS", Collections.singletonList(role.role().arn()));
+        injectBucketPrefixIntoResources(awsSTSChain02RoleNamePermissionPolicyTemplate, bucketPrefix);
+        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleTaggedSessionRoleName, awsSTSChain02RoleNameTrustPolicyTemplate.toString(), awsSTSChain02RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
     }
 
     private static void injectBucketPrefixIntoResources(final JSONObject policy, final String bucketPrefix) {
