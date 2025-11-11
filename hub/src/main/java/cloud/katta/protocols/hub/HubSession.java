@@ -122,6 +122,8 @@ public class HubSession extends HttpSession<HubApiClient> {
                 final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(config));
                 log.debug("Apply profile {} to bookmark {}", profile, host);
                 host.setProtocol(profile);
+                // Save for lookup in keychain on reconnect
+                host.setProperty(Profile.OAUTH_CLIENT_ID_KEY, profile.getOAuthClientId());
             }
             catch(ApiException e) {
                 throw new HubExceptionMappingService().map(e);
