@@ -1,14 +1,14 @@
 {
-  "id": "72736C19-283C-49D3-80A5-AB74B5202549",
-  "name": "AWS S3 static",
-  "protocol": "S3STATIC",
-  "storageClass": "STANDARD",
-  "archived": "false",
-  "scheme": "https",
-  "port": 443,
-  "bucketPrefix": "katta-test-",
-  "region": "eu-north-1",
+    "id": "72736C19-283C-49D3-80A5-AB74B5202549",
+    "name": "AWS S3 static",
+    "protocol": "S3STATIC",
+    "storageClass": "STANDARD",
+    "archived": "false",
+    "scheme": "https",
+    "port": 443,
+    "bucketPrefix": "katta-test-",
+    "region": "eu-north-1",
     "stsRoleCreateBucketHub": "arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket",
     "stsRoleCreateBucketClient": "arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket",
-  "bucketEncryption": "NONE"
+    "bucketEncryption": "NONE"
 }
