@@ -46,10 +46,10 @@ class ObjectMapperTest {
         assertEquals("eu-west-1", awsSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), awsSTSProfile.getRegions());
         assertFalse(awsSTSProfile.getWithPathStyleAccessEnabled());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-createbucket", awsSTSProfile.getStsRoleCreateBucketHub());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-createbucket", awsSTSProfile.getStsRoleCreateBucketClient());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-sts-chain-01", awsSTSProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-sts-chain-02", awsSTSProfile.getStsRoleAccessBucketAssumeRoleTaggedSession());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", awsSTSProfile.getStsRoleCreateBucketHub());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", awsSTSProfile.getStsRoleCreateBucketClient());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-web-identity", awsSTSProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-tagged-session", awsSTSProfile.getStsRoleAccessBucketAssumeRoleTaggedSession());
         assertEquals(Protocol.S3_STS, awsSTSProfile.getProtocol());
         assertNull(awsSTSProfile.getScheme());
         assertNull(awsSTSProfile.getHostname());
