@@ -8,7 +8,7 @@
   "port": 443,
   "region": "eu-central-1",
   "bucketPrefix": "katta-test-",
-  "stsRoleCreateBucketHub": "arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-createbucket",
-  "stsRoleCreateBucketClient": "arn:aws:iam::430118840017:role/testing.katta.cloud-kc-realms-chipotle-createbucket",
+    "stsRoleCreateBucketHub": "arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket",
+    "stsRoleCreateBucketClient": "arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket",
   "bucketEncryption": "NONE"
 }
