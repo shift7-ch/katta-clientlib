@@ -187,7 +187,7 @@ public class UvfMetadataPayload extends JWEPayload {
             recoveryKeyJWK = new ECKey.Builder(Curve.P_384,
                     recoveryKey.getPublic())
                     .algorithm(JWEAlgorithm.ECDH_ES_A256KW)
-                    .keyID(String.format("%s%s", KID_RECOVERYKEY_PREFIX, recoveryKeyJWKWithoutThumbprint.computeThumbprint()))
+                    .keyID(String.format(KID_RECOVERYKEY_PREFIX, recoveryKeyJWKWithoutThumbprint.computeThumbprint()))
                     .privateKey(recoveryKey.getPrivate())
                     .build();
         }
@@ -345,27 +345,26 @@ public class UvfMetadataPayload extends JWEPayload {
     public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
         // spec: https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header
         // web frontend implementation: https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts#L343-L346
-        final JWEObjectJSON builder = new JWEObjectJSON(
-                new JWEHeader.Builder(EncryptionMethod.A256GCM)
-                        // kid goes into recipient-specific header
-                        .customParam("origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
-                        .jwkURL(URI.create("jwks.json"))
-                        .contentType("json")
-                        .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
-                        .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
-                        .build(),
-                new Payload(new HashMap<String, Object>() {{
-                    put("fileFormat", fileFormat);
-                    put("nameFormat", nameFormat);
-                    put("seeds", seeds);
-                    put("initialSeed", initialSeed);
-                    put("latestSeed", latestSeed);
-                    put("kdf", kdf);
-                    put("kdfSalt", kdfSalt);
-                    put("org.cryptomator.automaticAccessGrant", automaticAccessGrant);
-                    put("cloud.katta.storage", storage);
-                }})
-        );
+        final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
+                // kid goes into recipient-specific header
+                .customParam("origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
+                .jwkURL(URI.create("jwks.json"))
+                .contentType("json")
+                .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
+                .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
+                .build();
+        final Payload payload = new Payload(new HashMap<String, Object>() {{
+            put("fileFormat", fileFormat);
+            put("nameFormat", nameFormat);
+            put("seeds", seeds);
+            put("initialSeed", initialSeed);
+            put("latestSeed", latestSeed);
+            put("kdf", kdf);
+            put("kdfSalt", kdfSalt);
+            put("org.cryptomator.automaticAccessGrant", automaticAccessGrant);
+            put("cloud.katta.storage", storage);
+        }});
+        final JWEObjectJSON builder = new JWEObjectJSON(header, payload);
         builder.encrypt(new MultiEncrypter(keys));
         return builder.serializeGeneral();
     }
