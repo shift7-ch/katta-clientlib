@@ -24,10 +24,11 @@ public class AwsStsSetupTest {
     public void testAwsSetup() throws IOException, InterruptedException {
         final IamClient iam = Mockito.mock(IamClient.class);
         Mockito.when(iam.listOpenIDConnectProviders()).thenReturn(ListOpenIdConnectProvidersResponse.builder().openIDConnectProviderList(OpenIDConnectProviderListEntry.builder().arn("arnP").build()).build());
-        Mockito.when(iam.getRole(GetRoleRequest.builder().roleName("prae-access-bucket-a-role-web-identity").build())).thenReturn(GetRoleResponse.builder().role(Role.builder().build()).build());
+        Mockito.when(iam.getRole(GetRoleRequest.builder().roleName("prae-access-bucket-a-role-web-identity").build())).thenReturn(GetRoleResponse.builder().role(Role.builder().arn("arn").build()).build());
         final AwsStsSetup cli = new AwsStsSetup();
         cli.bucketPrefix = "prefix-";
         cli.roleNamePrefix = "prae-";
+        cli.millis = 1;
         cli.call(iam, "arnP", "alskdjfkl");
         // 3 = 1 x create-bucket and 2 x access-bucket
         Mockito.verify(iam, Mockito.times(3)).putRolePolicy(Mockito.any(PutRolePolicyRequest.class));

@@ -5,7 +5,6 @@
 package cloud.katta.cli.commands.storage;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,19 +13,15 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
-import cloud.katta.cli.KattaSetupCli;
 import picocli.CommandLine;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.policybuilder.iam.IamCondition;
-import software.amazon.awssdk.policybuilder.iam.IamConditionOperator;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
 import software.amazon.awssdk.policybuilder.iam.IamPolicy;
 import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
@@ -81,6 +76,7 @@ public class AwsStsSetup implements Callable<Void> {
     List<String> clientId;
 
     final String requestTag = "Vault";
+    int millis = 10000;
 
     // role names restricted to 64 characters
     final String createBucketRoleNameInfix = "create-bucket";
@@ -171,7 +167,12 @@ public class AwsStsSetup implements Callable<Void> {
                         .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
                         .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
                 .build();
-        uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSCreateBucketRoleName, awsSTSCreateBucketTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSCreateBucketPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), maxSessionDuration);
+        uploadAssumeRolePolicyAndPermissionPolicy(iam,
+                awsSTSCreateBucketRoleName,
+                awsSTSCreateBucketTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
+                awsSTSCreateBucketPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
+                maxSessionDuration
+        );
 
         //
         //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
@@ -179,8 +180,6 @@ public class AwsStsSetup implements Callable<Void> {
         //
         final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleWithWebIdentityRoleSuffix);
         final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleTaggedSessionRoleSuffix);
-        final JSONObject awsSTSChain01RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_permissionpolicy.json"), Charset.defaultCharset()));
-        awsSTSChain01RoleNamePermissionPolicyTemplate.getJSONArray("Statement").getJSONObject(0).put("Resource", arnPrefix + ":role/" + assumeRoleTaggedSessionRoleName);
 
         final IamPolicy accessBucketAssumeRoleWithWebIdentityTrustPolicy = IamPolicy.builder()
                 .addStatement(b -> b
@@ -190,34 +189,68 @@ public class AwsStsSetup implements Callable<Void> {
                         .addPrincipal(IamPrincipalType.FEDERATED, oidcProviderArn)
                 )
                 .build();
-        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleWithWebIdentityRoleName, accessBucketAssumeRoleWithWebIdentityTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSChain01RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
+        final IamPolicy accessBucketAssumeRoleWithWebIdentityPermissionPolicy = IamPolicy.builder()
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("sts:AssumeRole")
+                        .addAction("sts:TagSession")
+                        .addResource(String.format("%s:role/%s", arnPrefix, assumeRoleTaggedSessionRoleName)))
+                .build();
+        uploadAssumeRolePolicyAndPermissionPolicy(iam,
+                assumeRoleWithWebIdentityRoleName,
+                accessBucketAssumeRoleWithWebIdentityTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
+                accessBucketAssumeRoleWithWebIdentityPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
+                maxSessionDuration
+        );
 
         //
         //		sleep 10;
         //
-        Thread.sleep(10000);
+
+        Thread.sleep(millis);
 
         //
         //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
         //		aws iam put-role-policy --role-name cipherduck_chain_02 --policy-name cipherduck_chain_02 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_permissionpolicy.json
         //
-        final JSONObject awsSTSChain02RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_permissionpolicy.json"), Charset.defaultCharset()));
         final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(assumeRoleWithWebIdentityRoleName).build());
-        injectBucketPrefixIntoResources(awsSTSChain02RoleNamePermissionPolicyTemplate, bucketPrefix);
-        final IamPolicy accessBucketTaggedSessionRolTrustPolicy = IamPolicy.builder()
+        final IamPolicy accessBucketTaggedSessionRoleTrustPolicy = IamPolicy.builder()
                 .addStatement(b -> b
                         .effect(IamEffect.ALLOW)
                         .addAction("sts:AssumeRole")
                         .addAction("sts:TagSession")
                         .addPrincipal(IamPrincipalType.AWS, role.role().arn())
                         .addCondition(IamCondition.builder()
-                                .operator(IamConditionOperator.STRING_EQUALS)
+                                .operator("ForAnyValue:StringEquals")
                                 .key("sts:TransitiveTagKeys")
                                 .value("${aws:RequestTag/" + requestTag + "}")
                                 .build())
                 )
                 .build();
-        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleTaggedSessionRoleName, accessBucketTaggedSessionRolTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSChain02RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
+        final IamPolicy accessBucketTaggedSessionRolePermissionPolicy = IamPolicy.builder()
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("s3:GetBucketLocation")
+                        .addAction("s3:ListBucket")
+                        .addAction("s3:ListBucketMultipartUploads")
+                        .addAction("s3:GetBucketVersioning")
+                        .addAction("s3:ListBucketVersions")
+                        .addResource(String.format("arn:aws:s3:::%s${aws:PrincipalTag/Vault}", bucketPrefix)))
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("s3:GetObject")
+                        .addAction("s3:PutObject")
+                        .addAction("s3:DeleteObject")
+                        .addAction("s3:ListMultipartUploadParts")
+                        .addAction("s3:AbortMultipartUpload")
+                        .addResource(String.format("arn:aws:s3:::%s${aws:PrincipalTag/Vault}/*", bucketPrefix)))
+                .build();
+        uploadAssumeRolePolicyAndPermissionPolicy(iam,
+                assumeRoleTaggedSessionRoleName,
+                accessBucketTaggedSessionRoleTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
+                accessBucketTaggedSessionRolePermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
+                maxSessionDuration
+        );
     }
 
     private static void injectBucketPrefixIntoResources(final JSONObject policy, final String bucketPrefix) {
@@ -230,9 +263,6 @@ public class AwsStsSetup implements Callable<Void> {
         }
     }
 
-    private static void injectFederated(final JSONObject policy, final String oidcProviderArn) {
-        policy.getJSONArray("Statement").getJSONObject(0).getJSONObject("Principal").put("Federated", Collections.singletonList(oidcProviderArn));
-    }
 
     private static void uploadAssumeRolePolicyAndPermissionPolicy(final IamClient iam, final String roleName, final String trustPolicy, final String permissionPolicy, final Integer maxSessionDuration) {
         try {
