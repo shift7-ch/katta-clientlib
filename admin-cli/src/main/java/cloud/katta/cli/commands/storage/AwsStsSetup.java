@@ -25,6 +25,8 @@ import java.util.concurrent.Callable;
 import cloud.katta.cli.KattaSetupCli;
 import picocli.CommandLine;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.policybuilder.iam.IamCondition;
+import software.amazon.awssdk.policybuilder.iam.IamConditionOperator;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
 import software.amazon.awssdk.policybuilder.iam.IamPolicy;
 import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
@@ -78,12 +80,15 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
     List<String> clientId;
 
+    final String requestTag = "Vault";
+
     // role names restricted to 64 characters
     final String createBucketRoleNameInfix = "create-bucket";
     final String accessBucketRoleNameInfix = "access-bucket";
 
     final String assumeRoleWithWebIdentityRoleSuffix = "-a-role-web-identity";
     final String assumeRoleTaggedSessionRoleSuffix = "-a-role-tagged-session";
+
 
     @Override
     public Void call() throws Exception {
@@ -174,11 +179,18 @@ public class AwsStsSetup implements Callable<Void> {
         //
         final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleWithWebIdentityRoleSuffix);
         final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleTaggedSessionRoleSuffix);
-        final JSONObject awsSTSChain01RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_trustpolicy.json"), Charset.defaultCharset()));
         final JSONObject awsSTSChain01RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_01_permissionpolicy.json"), Charset.defaultCharset()));
-        injectFederated(awsSTSChain01RoleNameTrustPolicyTemplate, oidcProviderArn);
         awsSTSChain01RoleNamePermissionPolicyTemplate.getJSONArray("Statement").getJSONObject(0).put("Resource", arnPrefix + ":role/" + assumeRoleTaggedSessionRoleName);
-        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleWithWebIdentityRoleName, awsSTSChain01RoleNameTrustPolicyTemplate.toString(), awsSTSChain01RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
+
+        final IamPolicy accessBucketAssumeRoleWithWebIdentityTrustPolicy = IamPolicy.builder()
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("sts:AssumeRoleWithWebIdentity")
+                        .addAction("sts:TagSession")
+                        .addPrincipal(IamPrincipalType.FEDERATED, oidcProviderArn)
+                )
+                .build();
+        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleWithWebIdentityRoleName, accessBucketAssumeRoleWithWebIdentityTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSChain01RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
 
         //
         //		sleep 10;
@@ -189,12 +201,23 @@ public class AwsStsSetup implements Callable<Void> {
         //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
         //		aws iam put-role-policy --role-name cipherduck_chain_02 --policy-name cipherduck_chain_02 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_permissionpolicy.json
         //
-        final JSONObject awsSTSChain02RoleNameTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_trustpolicy.json"), Charset.defaultCharset()));
         final JSONObject awsSTSChain02RoleNamePermissionPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/cipherduck_chain_02_permissionpolicy.json"), Charset.defaultCharset()));
         final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(assumeRoleWithWebIdentityRoleName).build());
-        awsSTSChain02RoleNameTrustPolicyTemplate.getJSONArray("Statement").getJSONObject(0).getJSONObject("Principal").put("AWS", Collections.singletonList(role.role().arn()));
         injectBucketPrefixIntoResources(awsSTSChain02RoleNamePermissionPolicyTemplate, bucketPrefix);
-        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleTaggedSessionRoleName, awsSTSChain02RoleNameTrustPolicyTemplate.toString(), awsSTSChain02RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
+        final IamPolicy accessBucketTaggedSessionRolTrustPolicy = IamPolicy.builder()
+                .addStatement(b -> b
+                        .effect(IamEffect.ALLOW)
+                        .addAction("sts:AssumeRole")
+                        .addAction("sts:TagSession")
+                        .addPrincipal(IamPrincipalType.AWS, role.role().arn())
+                        .addCondition(IamCondition.builder()
+                                .operator(IamConditionOperator.STRING_EQUALS)
+                                .key("sts:TransitiveTagKeys")
+                                .value("${aws:RequestTag/" + requestTag + "}")
+                                .build())
+                )
+                .build();
+        uploadAssumeRolePolicyAndPermissionPolicy(iam, assumeRoleTaggedSessionRoleName, accessBucketTaggedSessionRolTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSChain02RoleNamePermissionPolicyTemplate.toString(), maxSessionDuration);
     }
 
     private static void injectBucketPrefixIntoResources(final JSONObject policy, final String bucketPrefix) {
