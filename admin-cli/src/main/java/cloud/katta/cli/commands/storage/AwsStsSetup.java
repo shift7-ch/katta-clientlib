@@ -28,6 +28,7 @@ import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
 import software.amazon.awssdk.policybuilder.iam.IamPolicy;
 import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
+import software.amazon.awssdk.policybuilder.iam.IamPrincipalType;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderRequest;
@@ -135,10 +136,14 @@ public class AwsStsSetup implements Callable<Void> {
             //		aws iam put-role-policy --role-name cipherduck-createbucket --policy-name cipherduck-createbucket --policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebucketpermissionpolicy.json
             //
             final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, createBucketRoleNameInfix);
-            final JSONObject awsSTSCreateBucketTrustPolicyTemplate = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/hybrid/aws_sts/createbuckettrustpolicy.json"), Charset.defaultCharset()));
-            injectFederated(awsSTSCreateBucketTrustPolicyTemplate, oidcProviderArn);
-
-            final IamPolicy createbucketpolicy = IamPolicy.builder()
+            final IamPolicy awsSTSCreateBucketTrustPolicy = IamPolicy.builder()
+                    .addStatement(b -> b
+                            .effect(IamEffect.ALLOW)
+                            .addAction("sts:AssumeRoleWithWebIdentity")
+                            .addPrincipal(IamPrincipalType.FEDERATED, oidcProviderArn)
+                    )
+                    .build();
+            final IamPolicy awsSTSCreateBucketPermissionPolicy = IamPolicy.builder()
                     .addStatement(b -> b
                             .effect(IamEffect.ALLOW)
                             .addAction("s3:CreateBucket")
@@ -156,7 +161,7 @@ public class AwsStsSetup implements Callable<Void> {
                             .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
                             .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
                     .build();
-            uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSCreateBucketRoleName, awsSTSCreateBucketTrustPolicyTemplate.toString(), createbucketpolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), maxSessionDuration);
+            uploadAssumeRolePolicyAndPermissionPolicy(iam, awsSTSCreateBucketRoleName, awsSTSCreateBucketTrustPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), awsSTSCreateBucketPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()), maxSessionDuration);
 
             //
             //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
