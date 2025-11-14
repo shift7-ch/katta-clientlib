@@ -30,15 +30,15 @@ import java.util.UUID;
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.JWEObjectJSON;
 import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
-import com.nimbusds.jose.util.Base64URL;
 
-import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UvfMetadataPayloadTest {
@@ -75,12 +75,12 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    void encryptDecrypt() throws JOSEException, JsonProcessingException, ParseException {
+    void encryptDecrypt() throws JOSEException, JsonProcessingException, ParseException, SecurityFailure {
         final byte[] rawMasterKey = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawMasterKey);
         final HashMap<String, String> keys = new HashMap<String, String>() {{
-            put("key01", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
-            put("key02", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)).toString());
+            put("key01", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
+            put("key02", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
         }};
         final UvfMetadataPayload orig = new UvfMetadataPayload()
                 .withFileFormat("AES-256-GCM-32k")
@@ -103,17 +103,20 @@ class UvfMetadataPayloadTest {
         final OctetSequenceKey memberKey = jwks.memberKey();
         final ECKey recoveryKey = jwks.recoveryKey();
 
-        final String encrypted = orig.encrypt("https://example.com/api/", UUID.randomUUID(), jwks.toJWKSet());
+        final UUID vaultId = UUID.randomUUID();
+        final String encrypted = orig.encrypt("https://example.com/api/", vaultId, jwks.toJWKSet());
 
         // decrypt with memberKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, memberKey);
+            assertEquals(String.format("https://example.com/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("origin"));
             assertEquals(orig, decrypted);
         }
 
         // decrypt with recoveryKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, recoveryKey);
+            assertEquals(String.format("https://example.com/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("origin"));
             assertEquals(orig, decrypted);
         }
 
@@ -126,30 +129,48 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    void decryptWithRecoveryKey() throws ParseException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException, JsonProcessingException {
+    void testDecrypt() throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
+        final boolean regenerate = false;
+        if(regenerate) {
+            final JWKSet jwks = UvfMetadataPayload.createKeys().toJWKSet();
+            System.out.println(jwks.getKeys());
+            final HashMap<String, String> keys = new HashMap<String, String>() {{
+                put("ZO3G9w", "p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20");
+            }};
+            final UvfMetadataPayload orig = new UvfMetadataPayload()
+                    .withFileFormat("AES-256-GCM-32k")
+                    .withNameFormat("AES-SIV-512-B64URL")
+                    .withSeeds(keys)
+                    .withLatestSeed("ZO3G9w")
+                    .withinitialSeed("ZO3G9w")
+                    .withKdf("1STEP-HMAC-SHA512")
+                    .withKdfSalt("pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh_SK73Q0KvfKMY")
+                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                            .enabled(true)
+                            .maxWotDepth(-1)
+                    );
+            final String jwe = orig.encrypt("https://example.com/api/", UUID.randomUUID(), jwks);
+            System.out.println(jwe);
+        }
         // https://datatracker.ietf.org/doc/html/rfc7516#section-7.2.1
-        final String jwe = "{\"protected\":\"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9\",\"recipients\":[{\"header\":{\"kid\":\"org.cryptomator.hub.memberkey\",\"alg\":\"A256KW\"},\"encrypted_key\":\"XLoNIWvDKQqaDurrGt7VK9s2aggSMir7fS4ZdBUxdTxceCOHndo4kA\"},{\"header\":{\"kid\":\"org.cryptomator.hub.recoverykey.v2nb-mGX4POKMWCQKOogMWTlAn7DDqEOjjEGCsPEeco\",\"alg\":\"ECDH-ES+A256KW\",\"epk\":{\"key_ops\":[],\"ext\":true,\"kty\":\"EC\",\"x\":\"j6Retxx-L-rURQ4WNc8LvoqjbdPtGS6n9pCJgcm1U-NAWuWEvwJ_qi2tlrv_4w4p\",\"y\":\"wS-Emo-Q9qdtkHMJiDfVDAaxhF2-nSkDRn2Eg9CbG0pVwGEpaDybx_YYJwIaYooO\",\"crv\":\"P-384\"},\"apu\":\"\",\"apv\":\"\"},\"encrypted_key\":\"iNGgybMqmiXn_lbKLMMTpg38i1f00O6Zj65d5nzsLw3hyzuylGWpvA\"}],\"iv\":\"Pfy90C9SSq2gJr6B\",\"ciphertext\":\"ogYR1pZN9k97zEgO9Fj3ePQramtaUdHWq95geXD7FH1oB6T7fEOvdU2AEGWOcbIbQihn-eOqG2_5oTol16O_nQ4HcDOJ9w4R9EdpByuWG-kVNh_fpWeQjIuH4kO-Rtbf05JRVG2jexWopbIA8uHuoiOXSNpSYPTzTKirp2hU7w3sE01zycsu06HiasUX-tKZH_hbyiUEdTlFFLcvKpRwnYOQf6QMw0uY1IbUTX1cJY9LO5SpD8bZFZOd6hg_Qnsdcq52I8KkZyxocgqdW7P5OSUrv5z8DCLMPdByEpaz9cCOzQQvtZwHxJy82O4vDAh89QA_AzfK8J7TI5zJRlTGQgrNhiaVBC85fN3tMSv8sLfJs7rC_5LiVW5ZeqbQ52sAZQw0lfwgGpMmxsdMzPoVOLD8OxvX\",\"tag\":\"3Jiv6kI4Qoso60T0dRv9vIlca-P4UFyHqh-TEZvargM\"}";
-        final ECKey key = new ECKey.Builder(
-                Curve.P_384,
-                new Base64URL("j6Retxx-L-rURQ4WNc8LvoqjbdPtGS6n9pCJgcm1U-NAWuWEvwJ_qi2tlrv_4w4p"),
-                new Base64URL("wS-Emo-Q9qdtkHMJiDfVDAaxhF2-nSkDRn2Eg9CbG0pVwGEpaDybx_YYJwIaYooO")
-        )
-                .privateKey(decodePrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDBFsqkCaynpvLJzQYw/PCF9UQSkkCfbv7gsfQs/qacqG7Wwbv12SSzXFe7RDOXtdFGhZANiAAR6mjT6C2nooxSNvhoqs158dCwx+YoeafzQlmBCg7MzNsUOCay5YjxWNQ68SlxPegHuaHMLWvxACrupggowBGyQi9HLWSFuPcQtJDtU5g4YWME9MrRUHgb3DdcWDrN/ylc="))
-                .keyID("org.cryptomator.hub.recoverykey.v2nb-mGX4POKMWCQKOogMWTlAn7DDqEOjjEGCsPEeco")
-                .build();
-
-        final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(jwe, key);
-        assertEquals("AES-256-GCM-32k", meta.fileFormat());
-        assertEquals("AES-SIV-512-B64URL", meta.nameFormat());
-        assertEquals(1, meta.seeds().size());
-        assertEquals("p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20", meta.seeds().get("ZO3G9w"));
-        assertEquals("ZO3G9w", meta.initialSeed());
-        assertEquals("ZO3G9w", meta.latestSeed());
-        assertEquals("HKDF-SHA512", meta.kdf());
-        assertEquals("pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh_SK73Q0KvfKMY", meta.kdfSalt());
-        assertEquals(true, meta.automaticAccessGrant().getEnabled());
-        assertEquals(-1, meta.automaticAccessGrant().getMaxWotDepth());
-        assertNull(meta.storage());
+        final JWKSet jwks = JWKSet.parse("{\"keys\":[{\"kty\":\"oct\",\"kid\":\"org.cryptomator.hub.memberkey\",\"k\":\"4WJi6f_9KaZJyIJy4HYyMUGfYjehtaqi_ak_gpIj5XY\",\"alg\":\"A256KW\"}, {\"kty\":\"EC\",\"d\":\"1bGYxmHaw7oXv6Nc63FNvHn6FOyygMtQcIK81UmMIWraUg9AYYgAuPpIRpacPeV5\",\"crv\":\"P-384\",\"kid\":\"org.cryptomator.hub.recoverykey.6K50z0nLy9DZU9Cv-NsFfI7HaIGaj5maHRP9EKAMDDs\",\"x\":\"YY-auvFsCGBE5N6_34E2pM9AaX2CYNJNCCvUUSfZFjQ4wVh6BNKIZMBYF1aJ3U3y\",\"y\":\"805pQYnmWllxBLchD4cfBad0CcCu7NeIBbW_T-u8movgbsPeDieJhWIkDtu0E9vl\",\"alg\":\"ECDH-ES+A256KW\"}]\n}\n");
+        final String jwe = "{\"ciphertext\":\"-hKvmtaa_lM-MLpDcs9jo_Iz2YMix9zOcvRvlPrLwmeU9C8v3qzNINlP3vxbDBq_NHNeQOqXXmv9GUxuGI89Kvqnw1HXoN1NxaDMpr867srI4dTt0UtOPvUEn-iBtRT1C7OawX0MSGdRQBVQIQl1zP1NNJYzJAp0Q9gl_37g7zRf3PBtXGcw2jzXhvh3Om9P_EP7PQjSOlnXCNmsdwoOLbR68OPO56U_YxVvjmhU16xcH9bEpRC_Pw532UbNF9w-g0NOX_AvMY4ZxiecQ9METzVygHkheSzR6H21MEeoRzd_XUpwVeJUytwAs4iU4kzUhhnyw1aq-kb4_GPNUHjZgs7PbMTKwqSaNMF1Xr5CXZ6dTP6H3ivEl4l7P8ulOvple9Fu3MSBU2X0QxGfpw2AtkO4x4-rNSmppJ_4AshHFOh3akf4n32R9LiFrXaLghw1-rTv3GbeAJXOqBrUZm40dGvDXvJfBw\",\"protected\":\"eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvYjU3NjRkMWItMzI2MS00ODkzLTkyMDQtYmFhNjEwNGVmMTZjL3V2Zi92YXVsdC51dmYifQ\",\"recipients\":[{\"encrypted_key\":\"_vzpGTPsvcladSI9ZcqT-7oa76pzUIGE078J6ZyZjLhtPpQG0AKELQ\",\"header\":{\"alg\":\"A256KW\",\"kid\":\"org.cryptomator.hub.memberkey\"}},{\"encrypted_key\":\"vq-gLpElx2kzfHO2fw8p7xXPzjbanuYK1YH8j71TemUHdKZK2yWtjw\",\"header\":{\"epk\":{\"kty\":\"EC\",\"crv\":\"P-384\",\"x\":\"gH8Qtn-p6PLDPqnLZa4jXp9Lq-Dn58UN0rjXoyTmUgW-eYQN4z6TyOYhBU5kW6Jv\",\"y\":\"XLxmLfpNNeqRnMFfP18XVP6QGzHNx-f0FvYeSmb2miWMpTxWZU9GBL31UGSJYdN3\"},\"alg\":\"ECDH-ES+A256KW\",\"kid\":\"org.cryptomator.hub.recoverykey.6K50z0nLy9DZU9Cv-NsFfI7HaIGaj5maHRP9EKAMDDs\"}}],\"tag\":\"2AcyWwCk0JeDdJr_gwu95w\",\"iv\":\"KBFeW9-gmou_impc\"}\n";
+        final String protectedDecode = new String(Base64.getDecoder().decode("eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvYjU3NjRkMWItMzI2MS00ODkzLTkyMDQtYmFhNjEwNGVmMTZjL3V2Zi92YXVsdC51dmYifQ"), StandardCharsets.UTF_8);
+        assertEquals("{\"uvf.spec.version\":1,\"cty\":\"json\",\"enc\":\"A256GCM\",\"crit\":[\"uvf.spec.version\"],\"jku\":\"jwks.json\",\"origin\":\"https://example.com/api/vaults/b5764d1b-3261-4893-9204-baa6104ef16c/uvf/vault.uvf\"}", protectedDecode);
+        for(JWK key : jwks.getKeys()) {
+            final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(jwe, key);
+            assertEquals("AES-256-GCM-32k", meta.fileFormat());
+            assertEquals("AES-SIV-512-B64URL", meta.nameFormat());
+            assertEquals(1, meta.seeds().size());
+            assertEquals("p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20", meta.seeds().get("ZO3G9w"));
+            assertEquals("ZO3G9w", meta.initialSeed());
+            assertEquals("ZO3G9w", meta.latestSeed());
+            assertEquals("1STEP-HMAC-SHA512", meta.kdf());
+            assertEquals("pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh_SK73Q0KvfKMY", meta.kdfSalt());
+            assertEquals(true, meta.automaticAccessGrant().getEnabled());
+            assertEquals(-1, meta.automaticAccessGrant().getMaxWotDepth());
+            assertNull(meta.storage());
+        }
     }
 
     @Test

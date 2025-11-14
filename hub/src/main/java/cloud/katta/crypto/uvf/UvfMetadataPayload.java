@@ -24,6 +24,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.model.JWEPayload;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -56,9 +58,27 @@ import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
 /**
  * Represents payload of <a href="https://github.com/encryption-alliance/unified-vault-format/blob/develop/vault%20metadata/README.md"><code>vault.uvf</code> metadata</a>.
  * Counterpart of <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts"><code>MetadataPayload</code></a>.
+ * <p>
+ * It has two custom fields:
+ * <ul>
+ *  <li>org.cryptomator.automaticAccessGrant (upstream)</li>
+ *  <li>cloud.katta.storage</li>
+ * </ul>
+ * It has at two recipients:
+ * <ul>
+ *    <li>org.cryptomator.hub.memberkey shared with vault members (having access to the member key)</li>
+ *    <li>org.cryptomator.hub.recoverykey. shared with vault owners (having access to the recovery key)</li>
+ * </ul>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UvfMetadataPayload extends JWEPayload {
+    private static final String UVF_SPEC_VERSION_KEY_PARAM = "uvf.spec.version";
+
+    private static final String KID_MEMBERKEY = "org.cryptomator.hub.memberkey";
+    private static final String KID_RECOVERYKEY_PREFIX = "org.cryptomator.hub.recoverykey.%s";
+
+    private static final String UVF_FILEFORMAT = "AES-256-GCM-32k";
+    private static final String UVF_NAME_FORMAT = "AES-SIV-512-B64URL";
 
     @JsonProperty(value = "fileFormat", required = true)
     String fileFormat;
@@ -106,9 +126,11 @@ public class UvfMetadataPayload extends JWEPayload {
         FastSecureRandomProvider.get().provide().nextBytes(rawSeed);
         final byte[] kdfSalt = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(kdfSalt);
+
+
         return new UvfMetadataPayload()
-                .withFileFormat("AES-256-GCM-32k")
-                .withNameFormat("AES-SIV-512-B64URL")
+                .withFileFormat(UVF_FILEFORMAT)
+                .withNameFormat(UVF_NAME_FORMAT)
                 .withSeeds(new HashMap<String, String>() {{
                     put(kid, Base64.getUrlEncoder().encodeToString(rawSeed));
                 }})
@@ -151,7 +173,7 @@ public class UvfMetadataPayload extends JWEPayload {
 
         private UniversalVaultFormatJWKS() throws JOSEException {
             memberKey = new OctetSequenceKeyGenerator(256)
-                    .keyID("org.cryptomator.hub.memberkey")
+                    .keyID(KID_MEMBERKEY)
                     .algorithm(JWEAlgorithm.A256KW)
                     .generate();
 
@@ -161,10 +183,11 @@ public class UvfMetadataPayload extends JWEPayload {
                     recoveryKey.getPublic())
                     .build();
 
+
             recoveryKeyJWK = new ECKey.Builder(Curve.P_384,
                     recoveryKey.getPublic())
                     .algorithm(JWEAlgorithm.ECDH_ES_A256KW)
-                    .keyID(String.format("org.cryptomator.hub.recoverykey.%s", recoveryKeyJWKWithoutThumbprint.computeThumbprint()))
+                    .keyID(String.format(KID_RECOVERYKEY_PREFIX, recoveryKeyJWKWithoutThumbprint.computeThumbprint()))
                     .privateKey(recoveryKey.getPrivate())
                     .build();
         }
@@ -188,8 +211,9 @@ public class UvfMetadataPayload extends JWEPayload {
         }
 
         public static OctetSequenceKey memberKeyFromRawKey(final byte[] raw) {
+
             return new OctetSequenceKey.Builder(raw)
-                    .keyID("org.cryptomator.hub.memberkey")
+                    .keyID(KID_MEMBERKEY)
                     .algorithm(JWEAlgorithm.A256KW)
                     .build();
         }
@@ -294,9 +318,19 @@ public class UvfMetadataPayload extends JWEPayload {
      * @param jwe The jwe
      * @param jwk The jwk
      */
-    public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException {
+    public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
         final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
-        jweObject.decrypt(new MultiDecrypter(jwk));
+        jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM)));
+
+        // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.11
+        // Recipients MAY consider the JWS to be invalid if the critical
+        // list contains any Header Parameter names defined by this
+        // specification or [JWA] for use with JWS or if any other constraints on its use are violated.
+        final Object uvfSpecVersion = jweObject.getHeader().getCustomParams().get(UVF_SPEC_VERSION_KEY_PARAM);
+        if(uvfSpecVersion.equals(1)) {
+            throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
+        }
+
         final Payload payload = jweObject.getPayload();
         return UvfMetadataPayload.fromJWE(payload.toString());
     }
@@ -309,23 +343,28 @@ public class UvfMetadataPayload extends JWEPayload {
      * @param keys    recipient keys for whom to encrypt
      */
     public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
-        final JWEObjectJSON builder = new JWEObjectJSON(
-                new JWEHeader.Builder(EncryptionMethod.A256GCM)
-                        .customParam("origin", String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString()))
-                        .jwkURL(URI.create("jwks.json"))
-                        .build(),
-                new Payload(new HashMap<String, Object>() {{
-                    put("fileFormat", fileFormat);
-                    put("nameFormat", nameFormat);
-                    put("seeds", seeds);
-                    put("initialSeed", initialSeed);
-                    put("latestSeed", latestSeed);
-                    put("kdf", kdf);
-                    put("kdfSalt", kdfSalt);
-                    put("org.cryptomator.automaticAccessGrant", automaticAccessGrant);
-                    put("cloud.katta.storage", storage);
-                }})
-        );
+        // spec: https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header
+        // web frontend implementation: https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts#L343-L346
+        final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
+                // kid goes into recipient-specific header
+                .customParam("origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
+                .jwkURL(URI.create("jwks.json"))
+                .contentType("json")
+                .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
+                .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
+                .build();
+        final Payload payload = new Payload(new HashMap<String, Object>() {{
+            put("fileFormat", fileFormat);
+            put("nameFormat", nameFormat);
+            put("seeds", seeds);
+            put("initialSeed", initialSeed);
+            put("latestSeed", latestSeed);
+            put("kdf", kdf);
+            put("kdfSalt", kdfSalt);
+            put("org.cryptomator.automaticAccessGrant", automaticAccessGrant);
+            put("cloud.katta.storage", storage);
+        }});
+        final JWEObjectJSON builder = new JWEObjectJSON(header, payload);
         builder.encrypt(new MultiEncrypter(keys));
         return builder.serializeGeneral();
     }
