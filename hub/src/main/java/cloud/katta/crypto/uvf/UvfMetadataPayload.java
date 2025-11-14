@@ -158,6 +158,7 @@ public class UvfMetadataPayload extends JWEPayload {
     }
 
     public static final class UniversalVaultFormatJWKS {
+        private final OctetSequenceKey memberKey;
         private final ECKey recoveryKeyJWK;
         private final P384KeyPair recoveryKey;
 
@@ -168,8 +169,6 @@ public class UvfMetadataPayload extends JWEPayload {
         public OctetSequenceKey memberKey() {
             return memberKey;
         }
-
-        private final OctetSequenceKey memberKey;
 
         private UniversalVaultFormatJWKS() throws JOSEException {
             memberKey = new OctetSequenceKeyGenerator(256)
@@ -196,8 +195,13 @@ public class UvfMetadataPayload extends JWEPayload {
             return new JWKSet(Arrays.asList(memberKey, recoveryKeyJWK));
         }
 
-        public String serializePublicRecoverykey() {
-            return new JWKSet(recoveryKeyJWK).toPublicJWKSet().toString();
+        /**
+         * Retrieve Recovery Key as JSON Web Key
+         *
+         * @return The JSON object string representation. Only public keys will be included
+         */
+        public String serializePublicRecoveryKey() {
+            return new JWKSet(recoveryKeyJWK).toString();
         }
 
         public UvfAccessTokenPayload toAccessToken() {

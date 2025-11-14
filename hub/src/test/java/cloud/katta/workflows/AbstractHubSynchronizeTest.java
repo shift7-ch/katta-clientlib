@@ -12,6 +12,8 @@ import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
+import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.AccessDeniedException;
@@ -25,7 +27,6 @@ import ch.cyberduck.core.features.Move;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.transfer.TransferStatus;
-import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.commons.lang3.RandomUtils;
@@ -55,6 +56,7 @@ import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
@@ -253,7 +255,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.info("Creating vault in {}", hubSession);
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
 
-            final Path bucket = new Path(storageProfileWrapper.getBucketPrefix() + vaultId, EnumSet.of(Path.Type.volume, Path.Type.directory));
+            final String name = storageProfileWrapper.getBucketPrefix() + vaultId;
+            final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new PathAttributes().setDisplayname(String.format("Vault %s", name)));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
             final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()
@@ -263,13 +266,14 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                             .provider(location.getProfile())
                             .defaultPath(bucket.getAbsolute())
                             .region(location.getRegion())
-                            .nickname(null != bucket.attributes().getDisplayname() ? bucket.attributes().getDisplayname() : "Vault"))
+                            .nickname(bucket.attributes().getDisplayname()))
                     .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
                             .enabled(true)
                             .maxWotDepth(null));
-            final HubUVFVault cryptomator = new HubUVFVault(new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata),
-                    vaultId, vaultMetadata, new DisabledLoginCallback());
-            cryptomator.create(hubSession, location.getIdentifier(), new VaultCredentials(StringUtils.EMPTY));
+            final Session<?> storage = new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata);
+            final HubUVFVault cryptomator = new HubUVFVault(storage, bucket, new DisabledLoginCallback());
+            cryptomator.create(hubSession, location.getIdentifier(), new VaultIdMetadataUVFProvider(storage.getHost(), vaultId,
+                    UvfMetadataPayload.createKeys(), vaultMetadata));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());

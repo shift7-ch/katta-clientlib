@@ -10,6 +10,7 @@ import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
+import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -21,17 +22,24 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
+import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
+import cloud.katta.crypto.uvf.UvfJWKCallback;
 import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.nimbusds.jose.JOSEException;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
@@ -62,14 +70,27 @@ public class HubVaultListService implements ListService {
                         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
                         final Session<?> storage = vaultService.getVaultStorageSession(session, vaultDto.getId(), vaultMetadata);
-                        final HubUVFVault vault = new HubUVFVault(storage, vaultDto.getId(), vaultMetadata, prompt);
+                        final Path bucket = new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
+                                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
                         try {
-                            registry.add(vault.load(session, prompt));
+                            final UvfAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
+                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfJWKCallback(accessToken.memberKeyRecipient()),
+                                    new VaultIdMetadataUVFProvider(vaultDto.getId(),
+                                            UvfMetadataPayload.createKeys(),
+                                            vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
+                                            vaultMetadata.computeRootDirUvf(),
+                                            vaultMetadata.computeRootDirIdHash()
+                                    ));
+                            log.info("Loaded vault {}", vault);
+                            registry.add(vault);
                             vaults.add(vault.getHome());
                             listener.chunk(directory, vaults);
                         }
                         catch(VaultUnlockCancelException e) {
                             log.warn("Skip vault {} with failure {} loading", vaultDto, e);
+                        }
+                        catch(JsonProcessingException | JOSEException e) {
+                            throw new SecurityFailure(e);
                         }
                     }
                     catch(ApiException e) {
