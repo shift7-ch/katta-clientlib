@@ -72,6 +72,7 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)
     Integer maxSessionDuration;
 
+    // TODO can we from /api/config for awssetup as well? Harden to separate the cases (cryptomatorhub/cryptomator for create and cryptomatorvaults for access)?
     @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
     List<String> clientId;
 
