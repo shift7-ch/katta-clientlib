@@ -8,7 +8,6 @@ import ch.cyberduck.core.*;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
-import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Copy;
@@ -62,8 +61,6 @@ import cloud.katta.workflows.DeviceKeysServiceImpl;
 import cloud.katta.workflows.UserKeysServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
 
 /**
  * Providing Katta Server client for accessing its REST API
@@ -152,16 +149,6 @@ public class HubSession extends HttpSession<HubApiClient> {
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final Credentials credentials = host.getCredentials();
         credentials.setOauth(authorizationService.validate(credentials.getOauth()));
-        try {
-            // Set username from OAuth ID Token for saving in keychain
-            credentials.setUsername(JWT.decode(credentials.getOauth().getIdToken()).getSubject());
-        }
-        catch(JWTDecodeException e) {
-            log.warn("Failure {} decoding JWT {}", e, credentials.getOauth().getIdToken());
-            throw new LoginCanceledException(e);
-        }
-        final UserDto me = this.getMe();
-        log.debug("Retrieved user {}", me);
         // Ensure device key is available
         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
         log.debug("Configured with setup prompt {}", setup);
