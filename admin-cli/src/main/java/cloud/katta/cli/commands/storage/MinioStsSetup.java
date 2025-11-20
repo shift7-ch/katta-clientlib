@@ -5,16 +5,12 @@
 package cloud.katta.cli.commands.storage;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 
-import cloud.katta.cli.KattaSetupCli;
 import io.minio.admin.MinioAdminClient;
 import picocli.CommandLine;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
@@ -43,20 +39,21 @@ public class MinioStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
     String hubUrl;
 
-    @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = false)
-    String profileName;
+    @CommandLine.Option(names = {"--minioAlias"}, description = "MinIO alias to use.", defaultValue = "myminio")
+    String minioAlias;
 
-    @CommandLine.Option(names = {"--accessKey"}, description = "Access Key for administering MinIO if no profile is used.", required = false)
+    // TODO offer to use predefined minio alias only?
+    @CommandLine.Option(names = {"--accessKey"}, description = "Access Key for administering MinIO if no profile is used.", required = true)
     String accessKey;
 
-    @CommandLine.Option(names = {"--secretKey"}, description = "Secret Key for administering MinIO if no profile is used.", required = false)
+    @CommandLine.Option(names = {"--secretKey"}, description = "Secret Key for administering MinIO if no profile is used.", required = true)
     String secretKey;
 
-    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", required = false, defaultValue = "katta-")
-    String bucketPrefix;
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "If not provided, will be derived from realm URL. E.g. \"testing.katta.cloud-chipotle-\".", defaultValue = "katta-")
+    String roleNamePrefix;
 
-    @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)
-    Integer maxSessionDuration;
+    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", defaultValue = "katta-")
+    String bucketPrefix;
 
     @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {bucketPrefix}createbucketPolicy.")
     String createbucketPolicyName;
@@ -67,10 +64,10 @@ public class MinioStsSetup implements Callable<Void> {
     @Override
     public Void call() throws Exception {
         if(createbucketPolicyName == null) {
-            createbucketPolicyName = String.format("%screatebucketpolicy", bucketPrefix);
+            createbucketPolicyName = String.format("%screatebucketpolicy", roleNamePrefix);
         }
         if(accessbucketPolicyName == null) {
-            accessbucketPolicyName = String.format("%saccessbucketpolicy", bucketPrefix);
+            accessbucketPolicyName = String.format("%saccessbucketpolicy", roleNamePrefix);
         }
 
         final MinioAdminClient minioAdminClient = new MinioAdminClient.Builder()
@@ -100,13 +97,25 @@ public class MinioStsSetup implements Callable<Void> {
         }
         // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
         {
-            final JSONObject minioaccessbucketpolicy = new JSONObject(IOUtils.toString(KattaSetupCli.class.getResourceAsStream("/setup/local/minio_sts/accessbucketpolicy.json"), Charset.defaultCharset()));
-            final JSONArray statements = minioaccessbucketpolicy.getJSONArray("Statement");
-            for(int i = 0; i < statements.length(); i++) {
-                final List<String> list = statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).map(s -> s.replace("katta", bucketPrefix)).toList();
-                statements.getJSONObject(i).put("Resource", list);
-            }
-            minioAdminClient.addCannedPolicy(accessbucketPolicyName, minioaccessbucketpolicy.toString());
+            final IamPolicy minioAccessBucketPolicy = IamPolicy.builder()
+                    .addStatement(b -> b
+                            .effect(IamEffect.ALLOW)
+                            .addAction("s3:GetBucketLocation")
+                            .addAction("s3:ListBucket")
+                            .addAction("s3:ListBucketMultipartUploads")
+                            .addAction("s3:GetBucketVersioning")
+                            .addAction("s3:ListBucketVersions")
+                            .addResource(String.format("arn:aws:s3:::%s${jwt:client_id}", bucketPrefix)))
+                    .addStatement(b -> b
+                            .effect(IamEffect.ALLOW)
+                            .addAction("s3:GetObject")
+                            .addAction("s3:PutObject")
+                            .addAction("s3:DeleteObject")
+                            .addAction("s3:ListMultipartUploadParts")
+                            .addAction("s3:AbortMultipartUpload")
+                            .addResource(String.format("arn:aws:s3:::%s${jwt:client_id}/*", bucketPrefix)))
+                    .build();
+            minioAdminClient.addCannedPolicy(accessbucketPolicyName, minioAccessBucketPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()));
             System.out.println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
         }
 
@@ -114,36 +123,42 @@ public class MinioStsSetup implements Callable<Void> {
         final JSONObject apiConfig = new JSONObject(json);
         final String wellKnown = String.format("%s/realms/%s/.well-known/openid-configuration", apiConfig.getString("keycloakUrl"), apiConfig.getString("keycloakRealm"));
 
-        String keycloakClientIdCryptomator = apiConfig.getString("keycloakClientIdCryptomator");
-        String keycloakClientIdHub = apiConfig.getString("keycloakClientIdHub");
-        String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
+        final String keycloakClientIdCryptomator = apiConfig.getString("keycloakClientIdCryptomator");
+        final String keycloakClientIdHub = apiConfig.getString("keycloakClientIdHub");
+        final String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
+
+        // TODO should we run mc cli tool instead of prompting command?
         System.out.println(String.format("""
                         # The MinIO Client API is incomplete (https://github.com/minio/minio/issues/16151).
                         # Please execute the following commands on the command line.
                         # Further info: https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio
 
-                        mc alias set myminio %s %s %s
+                        mc alias set %s %s %s %s
 
-                        mc idp openid add myminio %s \\
+                        mc idp openid add %s %s \\
                             config_url="%s" \\
                             client_id="%s" \\
                             client_secret="ignore-me" \\
                             role_policy="%s"
-                        mc idp openid add myminio %s \\
+                        mc idp openid add %s %s \\
                             config_url="%s" \\
                             client_id="%s" \\
                             client_secret="ignore-me" \\
                             role_policy="%s"   \s
-                        mc idp openid add myminio %s \\
+                        mc idp openid add %s %s \\
                             config_url="%s" \\
                             client_id="%s" \\
                             client_secret="ignore-me" \\
                             role_policy="%s"   \s
-                        mc admin service restart myminio
-                        """, endpointUrl, accessKey, secretKey,
-                keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createbucketPolicyName,
-                keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
-                keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName));
+                        mc admin service restart %s
+                        """,
+                minioAlias, endpointUrl, accessKey, secretKey,
+                minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createbucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName,
+                minioAlias
+        ));
+
         return null;
     }
 }
