@@ -8,7 +8,8 @@ import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.cryptomator.UVFVault;
+import ch.cyberduck.core.TestProtocol;
+import ch.cyberduck.core.cryptomator.impl.uvf.CryptoVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
@@ -47,7 +48,7 @@ class UvfMetadataPayloadTest {
     void serializePublicRecoverykey() throws JOSEException {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final ECKey recoveryKey = jwks.recoveryKey();
-        assertEquals(String.format("{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-384\",\"kid\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"ECDH-ES+A256KW\"}]}", recoveryKey.getKeyID(), recoveryKey.getX(), recoveryKey.getY()), jwks.serializePublicRecoverykey());
+        assertEquals(String.format("{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-384\",\"kid\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"ECDH-ES+A256KW\"}]}", recoveryKey.getKeyID(), recoveryKey.getX(), recoveryKey.getY()), jwks.serializePublicRecoveryKey());
     }
 
     @Test
@@ -63,7 +64,7 @@ class UvfMetadataPayloadTest {
         final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
         final UvfAccessTokenPayload accessToken = jwks.toOwnerAccessToken();
 
-        final JWKSet recoveredJwks = JWKSet.parse(jwks.serializePublicRecoverykey());
+        final JWKSet recoveredJwks = JWKSet.parse(jwks.serializePublicRecoveryKey());
         assertEquals(1, recoveredJwks.getKeys().size());
         final ECKey publicRecoveryKey = (ECKey) recoveredJwks.getKeys().get(0);
         assertFalse(publicRecoveryKey.isPrivate());
@@ -190,10 +191,14 @@ class UvfMetadataPayloadTest {
     }
 
     @Test
-    void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException {
+    void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException, JOSEException {
         final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
-        final UVFVault uvfVault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
-        uvfVault.load(new HubSession(new Host(new HubProtocol()), new DisabledX509TrustManager(), new DefaultX509KeyManager()),
-                new UvfMetadataPayloadPasswordCallback(uvfMetadataPayload));
+        final UvfMetadataPayload.UniversalVaultFormatJWKS keys = UvfMetadataPayload.createKeys();
+        final UUID vaultId = UUID.randomUUID();
+        final VaultIdMetadataUVFProvider provider = new VaultIdMetadataUVFProvider(new Host(new TestProtocol()), vaultId, keys, uvfMetadataPayload);
+        final CryptoVault uvfVault = new CryptoVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
+        final Host host = new Host(new HubProtocol());
+        uvfVault.load(new HubSession(host, new DisabledX509TrustManager(), new DefaultX509KeyManager()),
+                new UvfJWKCallback(keys.memberKey()), provider);
     }
 }

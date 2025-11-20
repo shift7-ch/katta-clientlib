@@ -5,6 +5,7 @@
 package cloud.katta.testsetup;
 
 import ch.cyberduck.core.*;
+import ch.cyberduck.core.cryptomator.CryptoVaultProvider;
 import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -139,6 +140,7 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
+        preferences.setProperty("factory.vaultprovider.class", CryptoVaultProvider.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
         preferences.setProperty("hub.protocol.scheduler.period", 30);
