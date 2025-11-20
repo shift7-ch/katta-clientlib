@@ -204,7 +204,9 @@ public class HubSession extends HttpSession<HubApiClient> {
     public UserDto getMe() throws BackgroundException {
         try {
             if(userDtoHolder.get() == null) {
-                userDtoHolder.set(new UsersResourceApi(client).apiUsersMeGet(true, false));
+                final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
+                log.debug("Retrieved user {}", me);
+                userDtoHolder.set(me);
             }
             return userDtoHolder.get();
         }
@@ -223,7 +225,9 @@ public class HubSession extends HttpSession<HubApiClient> {
      */
     public UserKeys getUserKeys(final DeviceSetupCallback setup) throws BackgroundException {
         if(userKeysHolder.get() == null) {
-            userKeysHolder.set(this.pair(setup));
+            final UserKeys keys = this.pair(setup);
+            log.debug("Retrieved keys {}", keys);
+            userKeysHolder.set(keys);
         }
         return userKeysHolder.get();
     }
