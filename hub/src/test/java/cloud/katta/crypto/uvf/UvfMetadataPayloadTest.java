@@ -18,6 +18,7 @@ import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -33,8 +34,12 @@ import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEHeader;
 import com.nimbusds.jose.JWEObjectJSON;
+import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.crypto.MultiEncrypter;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -172,6 +177,23 @@ class UvfMetadataPayloadTest {
             assertEquals(-1, meta.automaticAccessGrant().getMaxWotDepth());
             assertNull(meta.storage());
         }
+    }
+
+    @Test
+    void testMissingSpecVersion() throws JOSEException, JsonProcessingException, SecurityFailure, ParseException {
+        final JWKSet jwks = UvfMetadataPayload.createKeys().toJWKSet();
+        // header without additional critical param
+        final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
+                .jwkURL(URI.create("jwks.json"))
+                .contentType("json")
+                .build();
+        final Payload payload = new Payload(new HashMap<String, Object>() {
+        });
+        final JWEObjectJSON builder = new JWEObjectJSON(header, payload);
+        builder.encrypt(new MultiEncrypter(jwks));
+        String jwe = builder.serializeGeneral();
+        final SecurityFailure exc = assertThrows(SecurityFailure.class, () -> UvfMetadataPayload.decryptWithJWK(jwe, jwks.getKeyByKeyId("org.cryptomator.hub.memberkey")));
+        assertEquals("Unexpected value for critical header uvf.spec.version: found null, expected \"1\"", exc.getMessage());
     }
 
     @Test
