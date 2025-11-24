@@ -331,7 +331,7 @@ public class UvfMetadataPayload extends JWEPayload {
         // list contains any Header Parameter names defined by this
         // specification or [JWA] for use with JWS or if any other constraints on its use are violated.
         final Object uvfSpecVersion = jweObject.getHeader().getCustomParams().get(UVF_SPEC_VERSION_KEY_PARAM);
-        if(null == uvfSpecVersion || uvfSpecVersion.equals(1)) {
+        if(null == uvfSpecVersion || !uvfSpecVersion.equals(1L)) {
             throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
         }
 
