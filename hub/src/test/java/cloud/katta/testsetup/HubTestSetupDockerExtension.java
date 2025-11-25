@@ -57,7 +57,6 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
         this.compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
-                .withLocalCompose(true)
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(configuration.profile == null ? "" : String.format("--profile=%s", configuration.profile))
