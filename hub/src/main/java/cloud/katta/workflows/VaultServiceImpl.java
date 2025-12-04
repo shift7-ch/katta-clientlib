@@ -100,7 +100,7 @@ public class VaultServiceImpl implements VaultService {
                     final S3AssumeRoleSession storage = new S3AssumeRoleSession(session, vaultId, new Host(new HubAwareProfile(
                             ProtocolFactory.get().forType(ProtocolFactory.get().find(ProtocolFactory.BUNDLED_PROFILE_PREDICATE), Protocol.Type.s3), session.getConfig(), vaultStorageProfile),
                             session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost())
-                                    .setUsername(vaultStorageMetadata.getUsername()).setPassword(vaultStorageMetadata.getPassword())).withRegion(vaultStorageMetadata.getRegion()));
+                                    .setUsername(vaultStorageMetadata.getUsername()).setPassword(vaultStorageMetadata.getPassword())).setRegion(vaultStorageMetadata.getRegion()));
                     log.debug("Configured {} for vault {}", storage, vaultId);
                     return storage;
                 }

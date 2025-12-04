@@ -6,13 +6,13 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.UUIDRandomStringService;
@@ -30,7 +30,6 @@ import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultRegistry;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.MethodOrderer;
@@ -256,7 +255,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
 
             final String name = storageProfileWrapper.getBucketPrefix() + vaultId;
-            final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new PathAttributes().setDisplayname(String.format("Vault %s", name)));
+            final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new DefaultPathAttributes().setDisplayname(String.format("Vault %s", name)));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
             final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()

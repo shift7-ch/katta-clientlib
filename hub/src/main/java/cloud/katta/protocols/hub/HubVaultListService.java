@@ -5,12 +5,12 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
+import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -71,7 +71,7 @@ public class HubVaultListService implements ListService {
                         final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
                         final Session<?> storage = vaultService.getVaultStorageSession(session, vaultDto.getId(), vaultMetadata);
                         final Path bucket = new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
-                                new PathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
+                                new DefaultPathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
                         try {
                             final UvfAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
                             final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfJWKCallback(accessToken.memberKeyRecipient()),

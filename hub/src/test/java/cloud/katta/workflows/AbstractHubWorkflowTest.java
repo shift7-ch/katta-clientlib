@@ -4,9 +4,9 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.PathAttributes;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.UUIDRandomStringService;
 
@@ -113,7 +113,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
             final String name = storageProfileWrapper.getBucketPrefix() + vaultId;
-            final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new PathAttributes().setDisplayname(String.format("Vault %s", name)));
+            final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new DefaultPathAttributes().setDisplayname(String.format("Vault %s", name)));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
             final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()

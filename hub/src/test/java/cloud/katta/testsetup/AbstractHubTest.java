@@ -169,7 +169,7 @@ public abstract class AbstractHubTest extends VaultTest {
         assertTrue(factory.forName("s3").isEnabled());
         assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
-        final Host hub = new HostParser(factory).get(setup.hubURL).withCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
+        final Host hub = new HostParser(factory).get(setup.hubURL).setCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
         final LoginConnectionService login = new LoginConnectionService(loginCallback(setup), new DisabledHostKeyCallback(),
