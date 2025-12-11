@@ -344,8 +344,8 @@ public class UvfMetadataPayload extends JWEPayload {
     /**
      * Encrypt for recipients.
      *
-     * @param apiURL  api URL that goes into custom header param "origin"
-     * @param vaultId the vault ID that goes into custom header param "origin"
+     * @param apiURL  api URL that goes into custom header param "cloud.katta.origin"
+     * @param vaultId the vault ID that goes into custom header param "cloud.katta.origin"
      * @param keys    recipient keys for whom to encrypt
      */
     public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
