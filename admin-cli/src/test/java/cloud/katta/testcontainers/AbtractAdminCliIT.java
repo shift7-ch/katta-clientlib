@@ -58,7 +58,6 @@ public class AbtractAdminCliIT {
         env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", hubKeycloakSystemClientSecret);
         compose = new ComposeContainer(
                 new File(AbtractAdminCliIT.class.getResource(composeFile).toURI()))
-                .withLocalCompose(true)
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(profile == null ? "" : String.format("--profile=%s", profile))
