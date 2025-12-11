@@ -110,19 +110,19 @@ class UvfMetadataPayloadTest {
         final ECKey recoveryKey = jwks.recoveryKey();
 
         final UUID vaultId = UUID.randomUUID();
-        final String encrypted = orig.encrypt("https://example.com/api/", vaultId, jwks.toJWKSet());
+        final String encrypted = orig.encrypt("https://example.com/gateway/api/", vaultId, jwks.toJWKSet());
 
         // decrypt with memberKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, memberKey);
-            assertEquals(String.format("https://example.com/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("origin"));
+            assertEquals(String.format("https://example.com/gateway/api/vaults/%s", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
         // decrypt with recoveryKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, recoveryKey);
-            assertEquals(String.format("https://example.com/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("origin"));
+            assertEquals(String.format("https://example.com/gateway/api/vaults/%s", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
@@ -155,14 +155,14 @@ class UvfMetadataPayloadTest {
                             .enabled(true)
                             .maxWotDepth(-1)
                     );
-            final String jwe = orig.encrypt("https://example.com/api/", UUID.randomUUID(), jwks);
+            final String jwe = orig.encrypt("https://example.com/gateway/api/", UUID.randomUUID(), jwks);
             System.out.println(jwe);
         }
         // https://datatracker.ietf.org/doc/html/rfc7516#section-7.2.1
-        final JWKSet jwks = JWKSet.parse("{\"keys\":[{\"kty\":\"oct\",\"kid\":\"org.cryptomator.hub.memberkey\",\"k\":\"4WJi6f_9KaZJyIJy4HYyMUGfYjehtaqi_ak_gpIj5XY\",\"alg\":\"A256KW\"}, {\"kty\":\"EC\",\"d\":\"1bGYxmHaw7oXv6Nc63FNvHn6FOyygMtQcIK81UmMIWraUg9AYYgAuPpIRpacPeV5\",\"crv\":\"P-384\",\"kid\":\"org.cryptomator.hub.recoverykey.6K50z0nLy9DZU9Cv-NsFfI7HaIGaj5maHRP9EKAMDDs\",\"x\":\"YY-auvFsCGBE5N6_34E2pM9AaX2CYNJNCCvUUSfZFjQ4wVh6BNKIZMBYF1aJ3U3y\",\"y\":\"805pQYnmWllxBLchD4cfBad0CcCu7NeIBbW_T-u8movgbsPeDieJhWIkDtu0E9vl\",\"alg\":\"ECDH-ES+A256KW\"}]\n}\n");
-        final String jwe = "{\"ciphertext\":\"-hKvmtaa_lM-MLpDcs9jo_Iz2YMix9zOcvRvlPrLwmeU9C8v3qzNINlP3vxbDBq_NHNeQOqXXmv9GUxuGI89Kvqnw1HXoN1NxaDMpr867srI4dTt0UtOPvUEn-iBtRT1C7OawX0MSGdRQBVQIQl1zP1NNJYzJAp0Q9gl_37g7zRf3PBtXGcw2jzXhvh3Om9P_EP7PQjSOlnXCNmsdwoOLbR68OPO56U_YxVvjmhU16xcH9bEpRC_Pw532UbNF9w-g0NOX_AvMY4ZxiecQ9METzVygHkheSzR6H21MEeoRzd_XUpwVeJUytwAs4iU4kzUhhnyw1aq-kb4_GPNUHjZgs7PbMTKwqSaNMF1Xr5CXZ6dTP6H3ivEl4l7P8ulOvple9Fu3MSBU2X0QxGfpw2AtkO4x4-rNSmppJ_4AshHFOh3akf4n32R9LiFrXaLghw1-rTv3GbeAJXOqBrUZm40dGvDXvJfBw\",\"protected\":\"eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvYjU3NjRkMWItMzI2MS00ODkzLTkyMDQtYmFhNjEwNGVmMTZjL3V2Zi92YXVsdC51dmYifQ\",\"recipients\":[{\"encrypted_key\":\"_vzpGTPsvcladSI9ZcqT-7oa76pzUIGE078J6ZyZjLhtPpQG0AKELQ\",\"header\":{\"alg\":\"A256KW\",\"kid\":\"org.cryptomator.hub.memberkey\"}},{\"encrypted_key\":\"vq-gLpElx2kzfHO2fw8p7xXPzjbanuYK1YH8j71TemUHdKZK2yWtjw\",\"header\":{\"epk\":{\"kty\":\"EC\",\"crv\":\"P-384\",\"x\":\"gH8Qtn-p6PLDPqnLZa4jXp9Lq-Dn58UN0rjXoyTmUgW-eYQN4z6TyOYhBU5kW6Jv\",\"y\":\"XLxmLfpNNeqRnMFfP18XVP6QGzHNx-f0FvYeSmb2miWMpTxWZU9GBL31UGSJYdN3\"},\"alg\":\"ECDH-ES+A256KW\",\"kid\":\"org.cryptomator.hub.recoverykey.6K50z0nLy9DZU9Cv-NsFfI7HaIGaj5maHRP9EKAMDDs\"}}],\"tag\":\"2AcyWwCk0JeDdJr_gwu95w\",\"iv\":\"KBFeW9-gmou_impc\"}\n";
-        final String protectedDecode = new String(Base64.getDecoder().decode("eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvYjU3NjRkMWItMzI2MS00ODkzLTkyMDQtYmFhNjEwNGVmMTZjL3V2Zi92YXVsdC51dmYifQ"), StandardCharsets.UTF_8);
-        assertEquals("{\"uvf.spec.version\":1,\"cty\":\"json\",\"enc\":\"A256GCM\",\"crit\":[\"uvf.spec.version\"],\"jku\":\"jwks.json\",\"origin\":\"https://example.com/api/vaults/b5764d1b-3261-4893-9204-baa6104ef16c/uvf/vault.uvf\"}", protectedDecode);
+        final JWKSet jwks = JWKSet.parse("{\"keys\":[{\"kty\":\"oct\",\"kid\":\"org.cryptomator.hub.memberkey\",\"k\":\"S-0XJTj-1jjDo3_AzQeHzdQChbnf45Hq5LVjlNo83_0\",\"alg\":\"A256KW\"}, {\"kty\":\"EC\",\"d\":\"tkZalZZF_QI_9dJTrEvubpuFvTGMf-T5C7vLPygcLE2i6IvH7fPkopcWg3GGfBBP\",\"crv\":\"P-384\",\"kid\":\"org.cryptomator.hub.recoverykey.sE1E3aQQSBocn4oOJkB1UGgdETAys_Tqc7EaAXzsaYE\",\"x\":\"1vkEQ5cYoKrwniiEynSWuvtLiOOXika3b11KvkOTNZ2GQX8bdkoHcLYHMKv80Aan\",\"y\":\"bYITWQU6y5-_zSuMBxWRjNg0-rRtZG_dxtkeCXv39lKzTn5M08yWovJCf5pq1PPA\",\"alg\":\"ECDH-ES+A256KW\"}]}");
+        final String jwe = "{\"ciphertext\":\"9z4eT9Hlmr2xQ71vkk2pAsDCytLXbOowsVV8ElKMmF3Gu4GIN9w5CeHFbykCvzF3gKtnOxeab0dQjs8pQR0EBHUS0DDuYMd9mSm86b3laR8Ol3spqFHFM1lwDZIeXDW2QcCgc9OopRmVdd23EwizkWCqymTl6u26C4NImwnpmjEjLZE71GebHkNDL6fkRVVjoUpQLbyWxnOksJZrl3vk8hFAJ315T5GwW6Sch3oJ7n0XJ31buyqurH7PfFLucKnUXNjPaKIpC5PclwTY3ITmcijjB9JiKBVemn8v1qB4s9YnFzu5hE8LWgH5ULYfoB_W2K-f_WRLVRGxmyKJiHtZLlG61zSrTM68Y31rYwmU2dyhwxV2vW3ejVjIe3576jbs_2-LQYSaMK8dDf1UN_1AC2ZqK3JZPJ7czieSARi34UzJRJv_mm8O6jiOVbNnPItQqfvbYqBZ_7Pg2SAreQLbW0s8TjIBiQ\",\"protected\":\"eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJjbG91ZC5rYXR0YS5vcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2dhdGV3YXkvYXBpL3ZhdWx0cy9iZWFkMGE5YS05OTExLTRhYjMtYTg1NS1jMWVmOWE2MDZiN2YifQ\",\"recipients\":[{\"encrypted_key\":\"K9e--5JvL_aHe2ah6YlseppMj3sVmYf7Bs_c6B5_msJtcPoYNWoIig\",\"header\":{\"alg\":\"A256KW\",\"kid\":\"org.cryptomator.hub.memberkey\"}},{\"encrypted_key\":\"4Wqu8rlteh43_l7Srn3NeT0hmUxhrnQ3ZCvOHADwTuE8BGNxgSE23A\",\"header\":{\"epk\":{\"kty\":\"EC\",\"crv\":\"P-384\",\"x\":\"_FWuKlyNa-LEizdA2brRuJ07YuBVciQ9x-ppGnCfKWjx-8_RNlvKxU5S5nHBbgdl\",\"y\":\"mQa_oSkYkKsXEIaiVSi-pZz4b9K-UZIF7kb3is5QEGJxXx9yRNA5p6a6unTT2B7G\"},\"alg\":\"ECDH-ES+A256KW\",\"kid\":\"org.cryptomator.hub.recoverykey.sE1E3aQQSBocn4oOJkB1UGgdETAys_Tqc7EaAXzsaYE\"}}],\"tag\":\"oFTc9Jn_amxoquVIlQ3pYg\",\"iv\":\"qN0j4ybzp-hUJIvW\"}";
+        final String protectedDecode = new String(Base64.getDecoder().decode("eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJjbG91ZC5rYXR0YS5vcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2dhdGV3YXkvYXBpL3ZhdWx0cy9iZWFkMGE5YS05OTExLTRhYjMtYTg1NS1jMWVmOWE2MDZiN2YifQ"), StandardCharsets.UTF_8);
+        assertEquals("{\"uvf.spec.version\":1,\"cty\":\"json\",\"enc\":\"A256GCM\",\"crit\":[\"uvf.spec.version\"],\"jku\":\"jwks.json\",\"cloud.katta.origin\":\"https://example.com/gateway/api/vaults/bead0a9a-9911-4ab3-a855-c1ef9a606b7f\"}", protectedDecode);
         for(JWK key : jwks.getKeys()) {
             final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(jwe, key);
             assertEquals("AES-256-GCM-32k", meta.fileFormat());
