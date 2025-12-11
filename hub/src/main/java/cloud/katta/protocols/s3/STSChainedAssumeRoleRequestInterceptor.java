@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -138,12 +139,20 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         }
     }
 
-    private void validate(final Claim value, final String key) throws AccessDeniedException {
-        if(!value.asMap().containsKey(key)) {
+    private void validate(final Claim claim, final String key) throws AccessDeniedException {
+        if(!claim.asMap().containsKey(key)) {
             throw new AccessDeniedException(String.format("Missing %s in claim", key));
         }
-        if(!((Map) value.asMap().get(key)).containsKey(vaultId.toString())) {
-            throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+        final Object values = claim.asMap().get(key);
+        if(values instanceof Map) {
+            if(!((Map) values).containsKey(vaultId.toString())) {
+                throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+            }
+        }
+        if(values instanceof List) {
+            if(!((List<String>) values).contains(vaultId.toString())) {
+                throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+            }
         }
     }
 }
