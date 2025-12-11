@@ -9,6 +9,7 @@ import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.TemporaryAccessTokens;
+import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
@@ -22,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
@@ -29,6 +32,9 @@ import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.model.AccessTokenResponse;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 
 /**
  * Assume role with temporary credentials obtained using OIDC token from security token service (STS)
@@ -106,6 +112,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
                         tokenExchangeResponse.getRefreshToken(),
                         tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
                 log.debug("Received exchanged token {} for {}", exchanged, bookmark);
+                this.validate(JWT.decode(exchanged.getAccessToken()));
                 return exchanged;
             }
             catch(ApiException e) {
@@ -113,5 +120,39 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             }
         }
         return tokens;
+    }
+
+    /**
+     * Validate claim <code>https://aws.amazon.com/tags</code>
+     *
+     * @param jwt Exchangd access token
+     * @throws AccessDeniedException No matching vault id found
+     */
+    protected void validate(final DecodedJWT jwt) throws AccessDeniedException {
+        for(String claim : new String[]{"https://aws.amazon.com/tags"}) {
+            final Claim value = jwt.getClaim(claim);
+            if(value.isMissing()) {
+                throw new AccessDeniedException(String.format("Claim %s not found in access token", claim));
+            }
+            this.validate(value, "principal_tags");
+            this.validate(value, "transitive_tag_keys");
+        }
+    }
+
+    private void validate(final Claim claim, final String key) throws AccessDeniedException {
+        if(!claim.asMap().containsKey(key)) {
+            throw new AccessDeniedException(String.format("Missing %s in claim", key));
+        }
+        final Object values = claim.asMap().get(key);
+        if(values instanceof Map) {
+            if(!((Map) values).containsKey(vaultId.toString())) {
+                throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+            }
+        }
+        if(values instanceof List) {
+            if(!((List<String>) values).contains(vaultId.toString())) {
+                throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+            }
+        }
     }
 }
