@@ -353,7 +353,7 @@ public class UvfMetadataPayload extends JWEPayload {
         // web frontend implementation: https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts#L343-L346
         final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
                 // kid goes into recipient-specific header
-                .customParam("origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
+                .customParam("cloud.katta.origin", URI.create(String.format("%s/vaults/%s", apiURL, vaultId.toString())).normalize().toString())
                 .jwkURL(URI.create("jwks.json"))
                 .contentType("json")
                 .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
