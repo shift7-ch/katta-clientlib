@@ -15,6 +15,7 @@ import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
+import ch.cyberduck.core.s3.S3Protocol;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityCredentialsStrategy;
@@ -123,10 +124,11 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * @throws AccessDeniedException No matching vault id found
      */
     protected void validate(final DecodedJWT jwt) throws AccessDeniedException {
-        for(String claim : new String[]{"https://aws.amazon.com/tags"}) {
-            final Claim value = jwt.getClaim(claim);
+        if(StringUtils.equals(new S3Protocol().getSTSEndpoint(), bookmark.getProtocol().getSTSEndpoint())) {
+            final String name = "https://aws.amazon.com/tags";
+            final Claim value = jwt.getClaim(name);
             if(value.isMissing()) {
-                throw new AccessDeniedException(String.format("Claim %s not found in access token", claim));
+                throw new AccessDeniedException(String.format("Claim %s not found in access token", name));
             }
             this.validate(value, "principal_tags");
             this.validate(value, "transitive_tag_keys");
