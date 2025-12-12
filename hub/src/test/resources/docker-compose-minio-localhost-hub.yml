@@ -123,6 +123,10 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
       KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      # Restrict global CORS instead of using wildcard '*' default, see https://docs.min.io/enterprise/aistor-object-store/reference/aistor-server/settings/core/?tab=cors-allow-origin-configuration-setting
+      # CORS relevant when using Web frontend local for development, not when using Java client.
+      # Note: per bucket CORS not supported in MinIO Community Edition: https://github.com/minio/minio/discussions/20841
+      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:${HUB_PORT}"
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${MINIO_PORT}/minio/health/ready" ]
       interval: 5s
