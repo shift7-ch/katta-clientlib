@@ -139,7 +139,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         }
         final Object values = claim.asMap().get(key);
         if(values instanceof Map) {
-            if(!((Map) values).containsKey(vaultId.toString())) {
+            if(!((Map<String, ?>) values).containsKey(vaultId.toString())) {
                 throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
             }
             return;
