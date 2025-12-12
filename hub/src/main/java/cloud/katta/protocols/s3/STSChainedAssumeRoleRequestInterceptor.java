@@ -142,11 +142,14 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             if(!((Map) values).containsKey(vaultId.toString())) {
                 throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
             }
+            return;
         }
         if(values instanceof List) {
             if(!((List<String>) values).contains(vaultId.toString())) {
                 throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
             }
+            return;
         }
+        throw new AccessDeniedException(String.format("Invalid value type for %s in claim", key));
     }
 }
