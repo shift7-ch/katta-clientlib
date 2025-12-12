@@ -93,7 +93,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     /**
      * Perform OAuth 2.0 Token Exchange
      *
-     * @return New tokens
+     * @return New tokens scoped to single vault
      */
     private OAuthTokens tokenExchange(final OAuthTokens tokens) throws BackgroundException {
         final PreferencesReader settings = HostPreferencesFactory.get(bookmark);
@@ -107,7 +107,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
                         tokenExchangeResponse.getRefreshToken(),
                         tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
                 log.debug("Received exchanged token {} for {}", exchanged, bookmark);
-                this.validate(JWT.decode(exchanged.getAccessToken()));
+                this.validateVaultClaims(JWT.decode(exchanged.getAccessToken()));
                 return exchanged;
             }
             catch(ApiException e) {
@@ -123,19 +123,20 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * @param jwt Exchanged access token
      * @throws AccessDeniedException No matching vault id found
      */
-    protected void validate(final DecodedJWT jwt) throws AccessDeniedException {
+    protected void validateVaultClaims(final DecodedJWT jwt) throws AccessDeniedException {
+        // Are we AWS?
         if(StringUtils.equals(new S3Protocol().getSTSEndpoint(), bookmark.getProtocol().getSTSEndpoint())) {
             final String name = "https://aws.amazon.com/tags";
             final Claim value = jwt.getClaim(name);
             if(value.isMissing()) {
                 throw new AccessDeniedException(String.format("Claim %s not found in access token", name));
             }
-            this.validate(value, "principal_tags");
-            this.validate(value, "transitive_tag_keys");
+            this.validateVaultClaim(value, "principal_tags");
+            this.validateVaultClaim(value, "transitive_tag_keys");
         }
     }
 
-    private void validate(final Claim claim, final String key) throws AccessDeniedException {
+    private void validateVaultClaim(final Claim claim, final String key) throws AccessDeniedException {
         if(!claim.asMap().containsKey(key)) {
             throw new AccessDeniedException(String.format("Missing %s in claim", key));
         }
