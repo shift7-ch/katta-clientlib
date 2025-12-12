@@ -115,14 +115,14 @@ class UvfMetadataPayloadTest {
         // decrypt with memberKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, memberKey);
-            assertEquals(String.format("https://example.com/gateway/api/vaults/%s", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
+            assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
         // decrypt with recoveryKey
         {
             final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, recoveryKey);
-            assertEquals(String.format("https://example.com/gateway/api/vaults/%s", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
+            assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
