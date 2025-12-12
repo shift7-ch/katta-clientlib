@@ -42,12 +42,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWebIdentityCredentialsStrategy {
     private static final Logger log = LogManager.getLogger(STSChainedAssumeRoleRequestInterceptor.class);
 
-    /**
-     * The party to which the ID Token was issued
-     * <a href="https://openid.net/specs/openid-connect-core-1_0.html">...</a>
-     */
-    private static final String OIDC_AUTHORIZED_PARTY = "azp";
-
     private final HubSession hub;
     private final Host bookmark;
     private final UUID vaultId;
