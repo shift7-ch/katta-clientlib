@@ -119,7 +119,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     /**
      * Validate claim <code>https://aws.amazon.com/tags</code>
      *
-     * @param jwt Exchangd access token
+     * @param jwt Exchanged access token
      * @throws AccessDeniedException No matching vault id found
      */
     protected void validate(final DecodedJWT jwt) throws AccessDeniedException {
