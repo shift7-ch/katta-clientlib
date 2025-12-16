@@ -9,11 +9,13 @@ import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.TemporaryAccessTokens;
+import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.preferences.PreferencesReader;
+import ch.cyberduck.core.s3.S3Protocol;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityCredentialsStrategy;
@@ -22,6 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
@@ -29,18 +33,15 @@ import cloud.katta.client.api.StorageResourceApi;
 import cloud.katta.client.model.AccessTokenResponse;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 
 /**
  * Assume role with temporary credentials obtained using OIDC token from security token service (STS)
  */
 public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWebIdentityCredentialsStrategy {
     private static final Logger log = LogManager.getLogger(STSChainedAssumeRoleRequestInterceptor.class);
-
-    /**
-     * The party to which the ID Token was issued
-     * <a href="https://openid.net/specs/openid-connect-core-1_0.html">...</a>
-     */
-    private static final String OIDC_AUTHORIZED_PARTY = "azp";
 
     private final HubSession hub;
     private final Host bookmark;
@@ -92,7 +93,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     /**
      * Perform OAuth 2.0 Token Exchange
      *
-     * @return New tokens
+     * @return New tokens scoped to single vault
      */
     private OAuthTokens tokenExchange(final OAuthTokens tokens) throws BackgroundException {
         final PreferencesReader settings = HostPreferencesFactory.get(bookmark);
@@ -106,6 +107,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
                         tokenExchangeResponse.getRefreshToken(),
                         tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
                 log.debug("Received exchanged token {} for {}", exchanged, bookmark);
+                this.validateVaultClaims(JWT.decode(exchanged.getAccessToken()));
                 return exchanged;
             }
             catch(ApiException e) {
@@ -113,5 +115,44 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             }
         }
         return tokens;
+    }
+
+    /**
+     * Validate claim <code>https://aws.amazon.com/tags</code>
+     *
+     * @param jwt Exchanged access token
+     * @throws AccessDeniedException No matching vault id found
+     */
+    protected void validateVaultClaims(final DecodedJWT jwt) throws AccessDeniedException {
+        // Are we AWS?
+        if(StringUtils.equals(new S3Protocol().getSTSEndpoint(), bookmark.getProtocol().getSTSEndpoint())) {
+            final String name = "https://aws.amazon.com/tags";
+            final Claim value = jwt.getClaim(name);
+            if(value.isMissing()) {
+                throw new AccessDeniedException(String.format("Claim %s not found in access token", name));
+            }
+            this.validateVaultClaim(value, "principal_tags");
+            this.validateVaultClaim(value, "transitive_tag_keys");
+        }
+    }
+
+    private void validateVaultClaim(final Claim claim, final String key) throws AccessDeniedException {
+        if(!claim.asMap().containsKey(key)) {
+            throw new AccessDeniedException(String.format("Missing %s in claim", key));
+        }
+        final Object values = claim.asMap().get(key);
+        if(values instanceof Map) {
+            if(!((Map<String, ?>) values).containsKey(vaultId.toString())) {
+                throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+            }
+            return;
+        }
+        if(values instanceof List) {
+            if(!((List<String>) values).contains(vaultId.toString())) {
+                throw new AccessDeniedException(String.format("Missing vault %s in %s", vaultId, key));
+            }
+            return;
+        }
+        throw new AccessDeniedException(String.format("Invalid value type for %s in claim", key));
     }
 }
