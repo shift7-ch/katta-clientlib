@@ -164,7 +164,7 @@ public abstract class AbstractHubTest extends VaultTest {
         }
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
-        assertNotNull(factory.forName("hub"));
+        assertNotNull(factory.forName("hub:katta"));
         assertNotNull(factory.forName("s3"));
         assertTrue(factory.forName("s3").isEnabled());
         assertTrue(factory.forType(Protocol.Type.s3).isEnabled());

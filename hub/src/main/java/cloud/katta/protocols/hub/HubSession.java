@@ -103,31 +103,29 @@ public class HubSession extends HttpSession<HubApiClient> {
                                    final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final HttpClientBuilder configuration = builder.build(proxy, this, prompt);
         final Protocol bundled = host.getProtocol();
-        if(bundled.isBundled()) {
-            // Use REST API for bootstrapping via /api/config
-            final HubApiClient client = new HubApiClient(host, configuration.build());
-            try {
-                // Obtain OAuth configuration
-                config = new ConfigResourceApi(client).apiConfigGet();
-                final int minHubApiLevel = HostPreferencesFactory.get(host).getInteger("cloud.katta.min_api_level");
-                final Integer apiLevel = config.getApiLevel();
-                if(apiLevel == null || apiLevel < minHubApiLevel) {
-                    final String detail = String.format("Client requires API level at least %s, found %s, for hub %s", minHubApiLevel, apiLevel, host);
-                    log.error(detail);
-                    throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), detail);
-                }
-                final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(config));
-                log.debug("Apply profile {} to bookmark {}", profile, host);
-                host.setProtocol(profile);
-                // Save for lookup in keychain on reconnect
-                host.setProperty(Profile.OAUTH_CLIENT_ID_KEY, profile.getOAuthClientId());
+        // Use REST API for bootstrapping via /api/config
+        final HubApiClient client = new HubApiClient(host, configuration.build());
+        try {
+            // Obtain OAuth configuration
+            config = new ConfigResourceApi(client).apiConfigGet();
+            final int minHubApiLevel = HostPreferencesFactory.get(host).getInteger("cloud.katta.min_api_level");
+            final Integer apiLevel = config.getApiLevel();
+            if(apiLevel == null || apiLevel < minHubApiLevel) {
+                final String detail = String.format("Client requires API level at least %s, found %s, for hub %s", minHubApiLevel, apiLevel, host);
+                log.error(detail);
+                throw new InteroperabilityException(LocaleFactory.localizedString("Login failed", "Credentials"), detail);
             }
-            catch(ApiException e) {
-                throw new HubExceptionMappingService().map(e);
-            }
-            finally {
-                client.getHttpClient().close();
-            }
+            final Profile profile = new Profile(bundled, new HubConfigDtoDeserializer(config));
+            log.debug("Apply profile {} to bookmark {}", profile, host);
+            host.setProtocol(profile);
+            // Save for lookup in keychain on reconnect
+            host.setProperty(Profile.OAUTH_CLIENT_ID_KEY, profile.getOAuthClientId());
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
+        }
+        finally {
+            client.getHttpClient().close();
         }
         // Setup authorization endpoint from configuration
         authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
