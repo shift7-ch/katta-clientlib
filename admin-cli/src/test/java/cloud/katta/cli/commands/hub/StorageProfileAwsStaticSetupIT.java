@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.commands.CLIIntegrationTest;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
@@ -22,6 +23,7 @@ import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@CLIIntegrationTest
 class StorageProfileAwsStaticSetupIT extends AbtractAdminCliIT {
 
     @Test

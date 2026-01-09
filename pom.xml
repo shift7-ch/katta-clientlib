@@ -177,7 +177,7 @@
                         </goals>
                         <phase>integration-test</phase>
                         <configuration>
-                            <groups>hub</groups>
+                            <groups>hub,cli</groups>
                         </configuration>
                     </execution>
                 </executions>
