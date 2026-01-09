@@ -4,6 +4,7 @@
 
 package cloud.katta.cli.commands.storage;
 
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -12,12 +13,14 @@ import java.util.Map;
 import java.util.Objects;
 
 import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.commands.CLIIntegrationTest;
 import cloud.katta.testcontainers.AbtractAdminCliIT;
 import io.minio.admin.MinioAdminClient;
 import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@CLIIntegrationTest
 class MinioStsSetupIT extends AbtractAdminCliIT {
 
     @Test

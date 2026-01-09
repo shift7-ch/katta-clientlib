@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
+import cloud.katta.cli.commands.CLIIntegrationTest;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
@@ -23,6 +24,7 @@ import cloud.katta.testcontainers.AbtractAdminCliIT;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@CLIIntegrationTest
 class StorageProfileArchiveIT extends AbtractAdminCliIT {
     @Test
     public void testStorageProfileArchive() throws Exception {
