@@ -31,7 +31,8 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
                 "--hubUrl", "http://localhost:8280",
                 "--accessKey", "minioadmin",
                 "--secretKey", "minioadmin",
-                "--bucketPrefix", "fusilli"
+                "--bucketPrefix", "macaraoni",
+                "--roleNamePrefix", "fusilli"
         );
         assertEquals(0, rc);
 
@@ -45,7 +46,7 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
             final JSONArray statements = miniocreatebucketpolicy.getJSONArray("Statement");
             long count = 0;
             for(int i = 0; i < statements.length(); i++) {
-                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("fusilli")).count();
+                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("macaraoni")).count();
             }
             assertEquals(3, count);
         }
@@ -54,7 +55,7 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
             final JSONArray statements = minioaccessbucket.getJSONArray("Statement");
             long count = 0;
             for(int i = 0; i < statements.length(); i++) {
-                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("fusilli")).count();
+                count += statements.getJSONObject(i).getJSONArray("Resource").toList().stream().map(Objects::toString).filter(s -> s.contains("macaraoni")).count();
             }
             assertEquals(2, count);
         }
