@@ -7,6 +7,7 @@ package cloud.katta.protocols.hub;
 import ch.cyberduck.core.AbstractProtocol;
 import ch.cyberduck.core.Protocol;
 import ch.cyberduck.core.Scheme;
+import ch.cyberduck.core.synchronization.ComparisonService;
 
 import com.google.auto.service.AutoService;
 
@@ -66,5 +67,13 @@ public class HubProtocol extends AbstractProtocol {
     @Override
     public VersioningMode getVersioningMode() {
         return VersioningMode.storage;
+    }
+
+    @Override
+    public <T> T getFeature(final Class<T> type) {
+        if(type == ComparisonService.class) {
+            return null;
+        }
+        return super.getFeature(type);
     }
 }
