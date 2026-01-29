@@ -16,9 +16,13 @@ import ch.cyberduck.core.cryptomator.impl.uvf.CryptoVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.UnsupportedException;
+import ch.cyberduck.core.features.AttributesFinder;
+import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.s3.S3Session;
+import ch.cyberduck.core.shared.DefaultAttributesFinderFeature;
+import ch.cyberduck.core.shared.DefaultFindFeature;
 import ch.cyberduck.core.vault.VaultMetadataProvider;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
@@ -78,7 +82,20 @@ public class HubUVFVault extends CryptoVault {
     public <T> T getFeature(final Session<?> hub, final Class<T> type, final T delegate) throws UnsupportedException {
         log.debug("Delegate to {} for feature {}", storage, type);
         // Ignore feature implementation but delegate to storage backend
-        final T feature = storage._getFeature(type);
+        T feature = null;
+        if(type == AttributesFinder.class) {
+            if(delegate instanceof DefaultAttributesFinderFeature) {
+                feature = (T) new DefaultAttributesFinderFeature(storage);
+            }
+        }
+        if(type == Find.class) {
+            if(delegate instanceof DefaultFindFeature) {
+                feature = (T) new DefaultFindFeature(storage);
+            }
+        }
+        if(null == feature) {
+            feature = storage._getFeature(type);
+        }
         if(null == feature) {
             log.warn("No feature {} available for {}", type, storage);
             throw new UnsupportedException();
@@ -149,9 +166,9 @@ public class HubUVFVault extends CryptoVault {
 
     /**
      *
-     * @param session Hub Connection
-     * @param prompt  Return user keys
-     * @param metadata  metadata
+     * @param session  Hub Connection
+     * @param prompt   Return user keys
+     * @param metadata metadata
      * @return Vault configuration with storage connection
      */
     @Override
