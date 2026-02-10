@@ -66,7 +66,6 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
                 .bucketPrefix(bucketPrefix)
                 .region(region)
                 .regions(regions)
-                // TODO extract option with default
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(true)
 

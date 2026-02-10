@@ -59,6 +59,7 @@ import static cloud.katta.cli.commands.common.Defaults.*;
 @CommandLine.Command(name = "awsSetup", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
 public class AwsStsSetup implements Callable<Void> {
 
+    // TODO get from /api/config instead/optionally?
     @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\".", required = true)
     String realmUrl;
 
@@ -74,7 +75,7 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)
     Integer maxSessionDuration;
 
-    // TODO can we from /api/config for awssetup as well? Harden to separate the cases (cryptomatorhub/cryptomator for create and cryptomatorvaults for access)?
+    // TODO can from /api/config instead/optionally?
     @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
     List<String> clientId;
 

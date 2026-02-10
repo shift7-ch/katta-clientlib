@@ -33,6 +33,9 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = true)
     List<String> regions;
 
+    @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
+    String bucketPrefix;
+
     @Override
     protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
@@ -54,13 +57,11 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
                 .withPathStyleAccessEnabled(false)
 
                 // -- (2) bucket creation only (only relevant for Desktop client)
-                // TODO extract option with default
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(true)
                 .region(region)
                 .regions(regions)
-                // TODO extract option with default
-                .bucketPrefix("katta-")
+                .bucketPrefix(bucketPrefix)
                 // TODO bad design smell? not all S3 providers might have STS to create static bucket?
                 .stsRoleCreateBucketClient("")
                 .stsRoleCreateBucketHub("")
