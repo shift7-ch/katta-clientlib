@@ -35,7 +35,7 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
                 "--accessToken", accessToken,
                 "--uuid", storageProfileId.toString(),
                 "--name", "AWS S3 STS",
-                "--rolePrefix", "arn:aws:iam::linguine:role/farfalle",
+                "--rolePrefix", "arn:aws:iam::linguine:role/farfalle-",
                 "--region", "eu-west-1",
                 "--regions", "eu-west-1",
                 "--regions", "eu-west-2",
@@ -59,14 +59,14 @@ class StorageProfileAwsStsSetupIT extends AbtractAdminCliIT {
         assertEquals("eu-west-1", dto.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), dto.getRegions());
         assertEquals("katta-", dto.getBucketPrefix());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleCreateBucketClient());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-createbucket", dto.getStsRoleCreateBucketHub());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-create-bucket", dto.getStsRoleCreateBucketClient());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-create-bucket", dto.getStsRoleCreateBucketHub());
         assertNull(dto.getStsEndpoint());
         assertTrue(dto.getBucketVersioning());
         assertNull(dto.getBucketAcceleration());
         assertEquals(S3SERVERSIDEENCRYPTION.NONE, dto.getBucketEncryption());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-sts-chain-01", dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
-        assertEquals("arn:aws:iam::linguine:role/farfalle-sts-chain-02", dto.getStsRoleAccessBucketAssumeRoleTaggedSession());
+        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::linguine:role/farfalle-access-bucket-a-role-web-identity");
+        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::linguine:role/farfalle-access-bucket-a-role-tagged-session");
         assertNull(dto.getStsDurationSeconds());
     }
 }

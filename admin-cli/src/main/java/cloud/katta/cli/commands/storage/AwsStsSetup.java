@@ -40,6 +40,8 @@ import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
 import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
 import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThumbprintRequest;
 
+import static cloud.katta.cli.commands.common.Defaults.*;
+
 /**
  * Sets up AWS for Katta in STS mode:
  * <ul>
@@ -76,15 +78,8 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
     List<String> clientId;
 
-    final String requestTag = "Vault";
+
     int millis = 10000;
-
-    // role names restricted to 64 characters
-    final String createBucketRoleNameInfix = "create-bucket";
-    final String accessBucketRoleNameInfix = "access-bucket";
-
-    final String assumeRoleWithWebIdentityRoleSuffix = "-a-role-web-identity";
-    final String assumeRoleTaggedSessionRoleSuffix = "-a-role-tagged-session";
 
 
     @Override
@@ -142,7 +137,7 @@ public class AwsStsSetup implements Callable<Void> {
         //		aws iam create-role --role-name cipherduck-createbucket --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebuckettrustpolicy.json
         //		aws iam put-role-policy --role-name cipherduck-createbucket --policy-name cipherduck-createbucket --policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebucketpermissionpolicy.json
         //
-        final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, createBucketRoleNameInfix);
+        final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX);
         final IamPolicy awsSTSCreateBucketTrustPolicy = IamPolicy.builder()
                 .addStatement(b -> b
                         .effect(IamEffect.ALLOW)
@@ -179,8 +174,8 @@ public class AwsStsSetup implements Callable<Void> {
         //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
         //		aws iam put-role-policy --role-name cipherduck_chain_01 --policy-name cipherduck_chain_01 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_permissionpolicy.json
         //
-        final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleWithWebIdentityRoleSuffix);
-        final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, accessBucketRoleNameInfix, assumeRoleTaggedSessionRoleSuffix);
+        final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX);
+        final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX);
 
         final IamPolicy accessBucketAssumeRoleWithWebIdentityTrustPolicy = IamPolicy.builder()
                 .addStatement(b -> b
@@ -224,7 +219,7 @@ public class AwsStsSetup implements Callable<Void> {
                         .addCondition(IamCondition.builder()
                                 .operator("ForAnyValue:StringEquals")
                                 .key("sts:TransitiveTagKeys")
-                                .value("${aws:RequestTag/" + requestTag + "}")
+                                .value("${aws:RequestTag/" + REQUEST_TAG + "}")
                                 .build())
                 )
                 .build();

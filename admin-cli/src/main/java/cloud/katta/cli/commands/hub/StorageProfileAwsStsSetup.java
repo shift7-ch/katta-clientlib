@@ -4,6 +4,9 @@
 
 package cloud.katta.cli.commands.hub;
 
+import java.util.List;
+import java.util.UUID;
+
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -13,8 +16,7 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
 
-import java.util.List;
-import java.util.UUID;
+import static cloud.katta.cli.commands.common.Defaults.*;
 
 /**
  * Uploads a storage profile to Katta Server for use with AWS STS. Requires AWS STS setup.
@@ -34,10 +36,10 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
+    @CommandLine.Option(names = {"--region"}, description = "Default Bucket region, e.g. \"eu-west-1\".", required = true)
     String region;
 
-    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. [\"eu-west-1\",\"eu-west-2\",\"eu-west-3\"].", required = true)
+    @CommandLine.Option(names = {"--regions"}, description = "Available Bucket regions, e.g. [\"eu-west-1\",\"eu-west-2\",\"eu-west-3\"].", required = true)
     List<String> regions;
 
     @Override
@@ -68,16 +70,17 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(true)
 
-                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-createbucket
-                .stsRoleCreateBucketClient(String.format("%s-createbucket", rolePrefix))
-                .stsRoleCreateBucketHub(String.format("%s-createbucket", rolePrefix))
+                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-create-bucket
+                .stsRoleCreateBucketClient(String.format("%s%s", rolePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
+                .stsRoleCreateBucketHub(String.format("%s%s", rolePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
-                // TODO https://github.com/shift7-ch/katta-clientlib/issues/190 naming
-                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-01
-                .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s-sts-chain-01", rolePrefix))
-                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-sts-chain-02
-                .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s-sts-chain-02", rolePrefix))
+                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-a-role-web-identity
+                .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX))
+                // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-a-role-tagged-session
+                .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
 }
+
+

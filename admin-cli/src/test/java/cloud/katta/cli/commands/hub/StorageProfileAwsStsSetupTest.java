@@ -27,7 +27,7 @@ class StorageProfileAwsStsSetupTest {
         final UUID vaultId = UUID.randomUUID();
         final StorageProfileAwsStsSetup cli = new StorageProfileAwsStsSetup();
         cli.bucketPrefix = "fancy-";
-        cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper";
+        cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-";
         cli.region = "eu-west-1";
         cli.regions = Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3");
         cli.call(vaultId, "AWS S3 STS", api);
@@ -44,11 +44,11 @@ class StorageProfileAwsStsSetupTest {
         dto.setRegion("eu-west-1");
         dto.setRegions(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"));
         dto.bucketPrefix("fancy-");
-        dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
-        dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-createbucket");
+        dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
+        dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-sts-chain-01");
-        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-sts-chain-02");
+        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-a-role-web-identity");
+        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-a-role-tagged-session");
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
     }
