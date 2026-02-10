@@ -52,7 +52,7 @@ class StorageProfileArchiveIT extends AbtractAdminCliIT {
             assertTrue(profile.isPresent());
             assertFalse(profile.get().getArchived());
         }
-        new StorageProfileArchive().call("http://localhost:8280", accessToken, storageProfileId, "S3 static");
+        new StorageProfileArchive().call("http://localhost:8280", accessToken, storageProfileId);
         {
             final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p -> StorageProfileDtoWrapper.coerce(p).getId().toString().toLowerCase().equals(storageProfileId)).map(StorageProfileDto::getActualInstance).map(StorageProfileS3StaticDto.class::cast).findFirst();
             assertTrue(profile.isPresent());

@@ -22,9 +22,7 @@ public class Tamarind {
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
                     "--clientId", "cryptomator",
                     "--hubUrl", "https://testing.katta.cloud/tamarind/",
-                    "--uuid", "d7f8aa61-7b07-423c-89e5-fff8b8c2a56e",
-                    // TODO --name should not be required
-                    "--name", "ignore-me"
+                    "--uuid", "d7f8aa61-7b07-423c-89e5-fff8b8c2a56e"
             );
         }
 

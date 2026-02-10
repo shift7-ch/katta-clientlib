@@ -42,9 +42,7 @@ public class Terraform {
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
                     "--hubUrl", hubUrl,
-                    "--uuid", "929976d0-d359-450a-96c5-9ba3cd581cea",
-                    // TODO --name should not be required
-                    "--name", "ignore-me"
+                    "--uuid", "929976d0-d359-450a-96c5-9ba3cd581cea"
             );
         }
         if (true) {
