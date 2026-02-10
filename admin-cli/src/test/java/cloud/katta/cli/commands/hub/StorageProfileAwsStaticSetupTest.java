@@ -29,6 +29,7 @@ class StorageProfileAwsStaticSetupTest {
 
         cli.region = "us-east-1";
         cli.regions = List.of();
+        cli.bucketPrefix = "katta-";
         cli.call(vaultId, "AWS S3 static", api);
 
 
