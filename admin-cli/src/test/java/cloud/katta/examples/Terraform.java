@@ -7,6 +7,9 @@ package cloud.katta.examples;
 import java.util.UUID;
 
 import cloud.katta.cli.KattaSetupCli;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import picocli.CommandLine;
 
 /**
@@ -24,7 +27,7 @@ public class Terraform {
         final String tokenUrl = String.format("%s/protocol/openid-connect/token", realmUrl);
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
         if(true) {
-            new CommandLine(new KattaSetupCli()).execute(
+            int rc = new CommandLine(new KattaSetupCli()).execute(
                     "awsSetup",
                     "--profileName", "430118840017_AdministratorAccess",
                     "--realmUrl", realmUrl,
@@ -34,9 +37,10 @@ public class Terraform {
                     "--clientId", "cryptomatorvaults",
                     "--bucketPrefix", bucketPrefix
             );
+            assertEquals(0, rc);
         }
-        if(true) {
-            new CommandLine(new KattaSetupCli()).execute(
+        if(false) {
+            int rc = new CommandLine(new KattaSetupCli()).execute(
                     "storageProfileArchive",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -44,11 +48,11 @@ public class Terraform {
                     "--hubUrl", hubUrl,
                     "--uuid", "929976d0-d359-450a-96c5-9ba3cd581cea"
             );
+            assertEquals(0, rc);
         }
         if (true) {
-
             final UUID storageProfileId = UUID.randomUUID();
-            new CommandLine(new KattaSetupCli()).execute(
+            int rc = new CommandLine(new KattaSetupCli()).execute(
                     "storageProfileAWSSTS",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -61,6 +65,24 @@ public class Terraform {
                     "--region", region,
                     "--regions", region
             );
+            assertEquals(0, rc);
+        }
+        if (true){
+            final UUID storageProfileId = UUID.randomUUID();
+            int rc = new CommandLine(new KattaSetupCli()).execute(
+                    "storageProfileAWSStatic",
+                    "--tokenUrl", tokenUrl,
+                    "--authUrl", authUrl,
+                    "--clientId", "cryptomator",
+                    "--hubUrl", hubUrl,
+                    "--uuid", storageProfileId.toString(),
+                    "--name", "AWS S3 Static",
+                    "--region", "eu-west-1",
+                    "--regions", "eu-west-1",
+                    "--regions", "eu-west-2",
+                    "--regions", "eu-west-3"
+            );
+            assertEquals(0, rc);
         }
     }
 }
