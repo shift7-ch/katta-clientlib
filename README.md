@@ -222,3 +222,65 @@ sequenceDiagram
     deactivate vault
     deactivate session
 ```
+
+## Design
+
+### Building Block View Integration Tests
+
+```mermaid
+
+classDiagram
+    direction LR
+    namespace jupiter {
+        class BeforeAllCallback
+        class AfterAllCallback
+    }
+    namespace cyberduck {
+        class VaultTest {
+            @BeforeClass credentials()
+        }
+    }
+
+    namespace katta {
+        class AbstractHubTest {
+            @BeforeEach preferences()
+            #setupConnection()
+            LOCAL_MINIO_STATIC: Arguments
+            LOCAL_MINIO_STS: Arguments
+            HYBRID_TESTING: Arguments
+        }
+
+        class AbstractHubSynchronizeTest {
+            @ParameterizedTest @MethodIgnorableSource(value = "arguments") test01Bootstrapping()
+        }
+
+        class HubSynchronizeTestLocal["@Nested HubSynchronizeTest.Local"] {
+            arguments()
+        }
+        class HubSynchronizeTestLocalKeepRunning["@Nested HubSynchronizeTest.LocalKeepRunning"] {
+            arguments()
+        }
+        class HubSynchronizeTestLocalAlreadyRunning["@Nested HubSynchronizeTest.LocalAlreadyRunning"] {
+            arguments()
+        }
+
+        class HubTestSetupDockerExtensionLocal["HubTestSetupDockerExtension.Local.class"]
+        class HubTestSetupDockerExtensionLocalKeepRunning["HubTestSetupDockerExtension.LocalKeepRunning.class"]
+        class HubTestSetupDockerExtensionLocalAlreadyRunning["HubTestSetupDockerExtension.LocalAlreadyRunning.class"]
+    }
+
+    AbstractHubTest --|> VaultTest
+    AbstractHubSynchronizeTest --|> AbstractHubTest
+    HubSynchronizeTestLocal --|> AbstractHubSynchronizeTest
+    HubSynchronizeTestLocalKeepRunning --|> AbstractHubSynchronizeTest
+    HubSynchronizeTestLocalAlreadyRunning --|> AbstractHubSynchronizeTest
+    HubSynchronizeTestLocal ..> HubTestSetupDockerExtensionLocal: @ExtendWith
+    HubSynchronizeTestLocalAlreadyRunning ..> HubTestSetupDockerExtensionLocalAlreadyRunning: @ExtendWith
+    HubSynchronizeTestLocal ..> HubTestSetupDockerExtensionLocalKeepRunning: @ExtendWith
+    HubTestSetupDockerExtensionLocal --|> AfterAllCallback
+    HubTestSetupDockerExtensionLocal --|> BeforeAllCallback
+    HubTestSetupDockerExtensionLocalKeepRunning --|> AfterAllCallback
+    HubTestSetupDockerExtensionLocalKeepRunning --|> BeforeAllCallback
+    HubTestSetupDockerExtensionLocalAlreadyRunning --|> AfterAllCallback
+    HubTestSetupDockerExtensionLocalAlreadyRunning --|> BeforeAllCallback
+```
