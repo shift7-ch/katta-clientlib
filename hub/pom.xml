@@ -16,7 +16,7 @@
 
     <properties>
         <jwt.version>4.5.1</jwt.version>
-        <nimbus-jose.version>10.7</nimbus-jose.version>
+        <nimbus-jose.version>10.8</nimbus-jose.version>
         <swagger-annotations.version>1.6.16</swagger-annotations.version>
 
         <jersey-version>2.37</jersey-version>
