@@ -13,8 +13,10 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <modules>
+        <module>test</module>
         <module>hub</module>
         <module>osx</module>
+        <module>admin-cli</module>
     </modules>
 
     <properties>
@@ -176,7 +178,7 @@
                         </goals>
                         <phase>integration-test</phase>
                         <configuration>
-                            <groups>hub</groups>
+                            <groups>hub,cli</groups>
                         </configuration>
                     </execution>
                 </executions>
