@@ -15,6 +15,9 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <picocli.version>4.7.6</picocli.version>
+
+        <mvn-native.version>0.10.0</mvn-native.version>
+        <mvn-gpg.version>3.1.0</mvn-gpg.version>
     </properties>
 
     <dependencies>
@@ -161,4 +164,78 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <properties>
+                <native.optimization>-O3</native.optimization>
+            </properties>
+            <build>
+            </build>
+        </profile>
+
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${mvn-native.version}</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                            <execution>
+                                <id>test-native</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>test</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <buildArgs>
+                                <arg>${native.optimization}</arg>
+                                <arg>--initialize-at-build-time=org.cryptomator.hubcli.util.LoggerInitializer</arg>
+                                <!--                                <arg>&#45;&#45;native-compiler-path="C:\graal-native-compiler\Tools\MSVC\14.37.32822\bin\Hostx64\x64\cl.exe"</arg>-->
+                            </buildArgs>
+                            <fallback>false</fallback>
+                            <mainClass>${mainClass}</mainClass>
+                            <imageName>hub</imageName>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <skipNativeTests>true</skipNativeTests>
+                            <resourcesConfigDirectory>${basedir}/src/main/resources/META-INF/native-image/org.cryptomator.hubcli/resource-config.json
+                            </resourcesConfigDirectory>
+                            <agent>
+                                <enabled>true</enabled>
+                                <defaultMode>Direct</defaultMode>
+                                <modes>
+                                    <direct>config-output-dir=${basedir}/src/main/resources/META-INF/native-image/org.cryptomator.hubcli</direct>
+                                </modes>
+                                <options>
+                                    <callerFilterFiles>
+                                        <filterFile>${basedir}/src/main/resources/META-INF/native-image/caller-filter.json</filterFile>
+                                    </callerFilterFiles>
+                                    <accessFilterFiles>
+                                        <filterFile>${basedir}/src/main/resources/META-INF/native-image/access-filter.json</filterFile>
+                                    </accessFilterFiles>
+                                    <builtinCallerFilter>true</builtinCallerFilter>
+                                    <builtinHeuristicFilter>true</builtinHeuristicFilter>
+                                    <enableExperimentalPredefinedClasses>true</enableExperimentalPredefinedClasses>
+                                    <enableExperimentalUnsafeAllocationTracing>true</enableExperimentalUnsafeAllocationTracing>
+                                    <trackReflectionMetadata>true</trackReflectionMetadata>
+                                </options>
+                            </agent>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
