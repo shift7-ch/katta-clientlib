@@ -72,7 +72,7 @@ public class AwsStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults. E.g. \"katta-\".", required = false, defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Bucket Prefix for STS vaults.", required = false)
+    @CommandLine.Option(names = {"--maxSessionDuration"}, description = "Session duration for STS tokens in seconds.", required = false)
     Integer maxSessionDuration;
 
     // TODO can from /api/config instead/optionally?
