@@ -18,16 +18,16 @@ import picocli.CommandLine;
 /**
  * Based on <a href="https://github.com/cryptomator/hub-cli/commit/bffcf2805530976c4a758990958ff75f9df68c0e#diff-c349f933a7698e31cfe25bd0a638ae487a02ac6fcb429bcce3e315aa8832be8b">hub-cli</a>.
  */
-@CommandLine.Command(name = "authorizationCode", description = "Get token using authorization code flow.", mixinStandardHelpOptions = true)
-public class AuthorizationCode implements Callable<Void> {
+@CommandLine.Command(name = "accesstoken", description = "Get access token using authorization code flow.", mixinStandardHelpOptions = true)
+public class AuthorizationCodeFlow implements Callable<Void> {
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token\"", required = true)
+    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token\"", required = true)
     String tokenUrl;
 
-    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth\"", required = true)
+    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth\"", required = true)
     String authUrl;
 
     @CommandLine.Option(names = {"--clientId"}, description = "Keycloak realm URL with scheme. Example: \"cryptomator\"", required = true)
