@@ -23,6 +23,7 @@ import cloud.katta.testcontainers.AbtractAdminCliIT;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 @CLIIntegrationTest
 class StorageProfileArchiveIT extends AbtractAdminCliIT {
@@ -52,7 +53,9 @@ class StorageProfileArchiveIT extends AbtractAdminCliIT {
             assertTrue(profile.isPresent());
             assertFalse(profile.get().getArchived());
         }
-        new StorageProfileArchive().call("http://localhost:8280", accessToken, storageProfileId);
+        final StorageProfileArchive cli = new StorageProfileArchive();
+        cli.spec = mock();
+        cli.call("http://localhost:8280", accessToken, storageProfileId);
         {
             final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p -> StorageProfileDtoWrapper.coerce(p).getId().toString().toLowerCase().equals(storageProfileId)).map(StorageProfileDto::getActualInstance).map(StorageProfileS3StaticDto.class::cast).findFirst();
             assertTrue(profile.isPresent());

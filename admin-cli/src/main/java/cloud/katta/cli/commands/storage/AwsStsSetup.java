@@ -59,6 +59,9 @@ import static cloud.katta.cli.commands.common.Defaults.*;
 @CommandLine.Command(name = "awsSetup", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
 public class AwsStsSetup implements Callable<Void> {
 
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
     // TODO get from /api/config instead/optionally?
     @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\".", required = true)
     String realmUrl;
@@ -95,7 +98,7 @@ public class AwsStsSetup implements Callable<Void> {
         final URL url = new URI(realmUrl).toURL();
 
         final String sha = getThumbprint(url);
-        System.out.println(sha);
+        spec.commandLine().getOut().println(sha);
 
         try (final IamClient iam = IamClient.builder()
                 .region(Region.AWS_GLOBAL)
@@ -108,7 +111,7 @@ public class AwsStsSetup implements Callable<Void> {
 
     protected void call(final IamClient iam, final String arnPostfix, final String thumbprint) throws IOException, InterruptedException {
         final ListOpenIdConnectProvidersResponse existingOpenIdConnectProviders = iam.listOpenIDConnectProviders();
-        System.out.println(existingOpenIdConnectProviders);
+        spec.commandLine().getOut().println(existingOpenIdConnectProviders);
 
         final Optional<OpenIDConnectProviderListEntry> existingOIDCProvider = existingOpenIdConnectProviders.openIDConnectProviderList().stream().filter(idp -> idp.arn().endsWith(arnPostfix)).findFirst();
         //
@@ -122,7 +125,7 @@ public class AwsStsSetup implements Callable<Void> {
                     .thumbprintList(thumbprint)
                     .build());
             oidcProviderArn = openIDConnectProvider.openIDConnectProviderArn();
-            System.out.println(oidcProviderArn);
+            spec.commandLine().getOut().println(oidcProviderArn);
         }
         else {
             oidcProviderArn = existingOIDCProvider.get().arn();
@@ -131,7 +134,7 @@ public class AwsStsSetup implements Callable<Void> {
                     .thumbprintList(thumbprint).build());
 
         }
-        System.out.println(oidcProviderArn);
+        spec.commandLine().getOut().println(oidcProviderArn);
         final String arnPrefix = oidcProviderArn.replace(":oidc-provider" + "/" + arnPostfix, "");
 
         //
@@ -261,19 +264,19 @@ public class AwsStsSetup implements Callable<Void> {
     }
 
 
-    private static void uploadAssumeRolePolicyAndPermissionPolicy(final IamClient iam, final String roleName, final String trustPolicy, final String permissionPolicy, final Integer maxSessionDuration) {
+    private void uploadAssumeRolePolicyAndPermissionPolicy(final IamClient iam, final String roleName, final String trustPolicy, final String permissionPolicy, final Integer maxSessionDuration) {
         try {
             iam.getRole(GetRoleRequest.builder().roleName(roleName).build());
-            System.out.println(String.format("aws iam update-role --role-name %s --assume-role-policy-document file://...", roleName));
-            System.out.println(trustPolicy);
+            spec.commandLine().getOut().println(String.format("aws iam update-role --role-name %s --assume-role-policy-document file://...", roleName));
+            spec.commandLine().getOut().println(trustPolicy);
             iam.updateAssumeRolePolicy(UpdateAssumeRolePolicyRequest.builder()
                     .roleName(roleName)
                     .policyDocument(trustPolicy)
                     .build());
         }
         catch(NoSuchEntityException e) {
-            System.out.println(String.format("aws iam create-role --role-name %s --assume-role-policy-document file://...", roleName));
-            System.out.println(trustPolicy);
+            spec.commandLine().getOut().println(String.format("aws iam create-role --role-name %s --assume-role-policy-document file://...", roleName));
+            spec.commandLine().getOut().println(trustPolicy);
             iam.createRole(CreateRoleRequest.builder()
                     .roleName(roleName)
                     .assumeRolePolicyDocument(trustPolicy)
@@ -282,8 +285,8 @@ public class AwsStsSetup implements Callable<Void> {
             );
 
         }
-        System.out.println(String.format("aws iam put-role-policy --role-name %s --policy-name %s --policy-document file://...", roleName, roleName));
-        System.out.println(permissionPolicy);
+        spec.commandLine().getOut().println(String.format("aws iam put-role-policy --role-name %s --policy-name %s --policy-document file://...", roleName, roleName));
+        spec.commandLine().getOut().println(permissionPolicy);
         iam.putRolePolicy(PutRolePolicyRequest.builder()
                 .roleName(roleName)
                 .policyName(roleName)

@@ -21,6 +21,9 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "authorizationCode", description = "Get token using authorization code flow.", mixinStandardHelpOptions = true)
 public class AuthorizationCode implements Callable<Void> {
 
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
     @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token\"", required = true)
     String tokenUrl;
 
@@ -37,22 +40,22 @@ public class AuthorizationCode implements Callable<Void> {
                 .withTokenEndpoint(URI.create(tokenUrl))
                 .authorizationCodeGrant(URI.create(authUrl))
                 .authorize(HttpClient.newHttpClient(), uri -> {
-                    System.out.println("Please login on " + uri);
+                    spec.commandLine().getOut().println("Please login on " + uri);
                 });
-        System.out.println(authResponse);
+        spec.commandLine().getOut().println(authResponse);
         printAccessToken(authResponse);
         return null;
     }
 
-    private static int printAccessToken(HttpResponse<String> response) throws JsonProcessingException {
+    private int printAccessToken(HttpResponse<String> response) throws JsonProcessingException {
         var statusCode = response.statusCode();
         if(statusCode != 200) {
-            System.err.println("""
+            spec.commandLine().getErr().println("""
                     Request was responded with code %d and body:\n%s\n""".formatted(statusCode, response.body()));
             return statusCode;
         }
         var token = new ObjectMapper().reader().readTree(response.body()).get("access_token").asText();
-        System.out.println(token);
+        spec.commandLine().getOut().println(token);
         return 0;
     }
 }

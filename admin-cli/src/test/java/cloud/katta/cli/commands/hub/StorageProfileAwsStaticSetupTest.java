@@ -18,6 +18,7 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 class StorageProfileAwsStaticSetupTest {
@@ -26,7 +27,7 @@ class StorageProfileAwsStaticSetupTest {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final StorageProfileAwsStaticSetup cli = new StorageProfileAwsStaticSetup();
-
+        cli.spec = mock();
         cli.region = "us-east-1";
         cli.regions = List.of();
         cli.bucketPrefix = "katta-";

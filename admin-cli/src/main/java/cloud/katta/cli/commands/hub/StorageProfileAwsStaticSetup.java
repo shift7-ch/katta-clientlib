@@ -4,6 +4,9 @@
 
 package cloud.katta.cli.commands.hub;
 
+import java.util.List;
+import java.util.UUID;
+
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -12,9 +15,6 @@ import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Uploads a storage profile to Katta Server for use with AWS static.
@@ -26,6 +26,9 @@ import java.util.UUID;
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
 public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
+
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
 
     @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
     String region;
@@ -66,6 +69,6 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
                 .stsRoleCreateBucketClient("")
                 .stsRoleCreateBucketHub("")
         );
-        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        spec.commandLine().getOut().println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
 }

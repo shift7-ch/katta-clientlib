@@ -19,6 +19,8 @@ import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
 import software.amazon.awssdk.services.iam.model.Role;
 import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
 
+import static org.mockito.Mockito.mock;
+
 public class AwsStsSetupTest {
     @Test
     public void testAwsSetup() throws IOException, InterruptedException {
@@ -26,6 +28,7 @@ public class AwsStsSetupTest {
         Mockito.when(iam.listOpenIDConnectProviders()).thenReturn(ListOpenIdConnectProvidersResponse.builder().openIDConnectProviderList(OpenIDConnectProviderListEntry.builder().arn("arnP").build()).build());
         Mockito.when(iam.getRole(GetRoleRequest.builder().roleName("prae-access-bucket-a-role-web-identity").build())).thenReturn(GetRoleResponse.builder().role(Role.builder().arn("arn").build()).build());
         final AwsStsSetup cli = new AwsStsSetup();
+        cli.spec = mock();
         cli.bucketPrefix = "prefix-";
         cli.roleNamePrefix = "prae-";
         cli.millis = 1;
