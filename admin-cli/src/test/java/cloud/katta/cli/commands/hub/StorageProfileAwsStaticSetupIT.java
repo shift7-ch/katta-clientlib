@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
-import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.Katta;
 import cloud.katta.cli.commands.CLIIntegrationTest;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
@@ -29,7 +29,7 @@ class StorageProfileAwsStaticSetupIT extends AbtractAdminCliIT {
     @Test
     public void testStorageProfileAwsStaticSetup() throws Exception {
         final UUID storageProfileId = UUID.randomUUID();
-        int rc = new CommandLine(new KattaSetupCli()).execute(
+        int rc = new CommandLine(new Katta()).execute(
                 "storageProfileAWSStatic",
                 "--hubUrl", "http://localhost:8280",
                 "--accessToken", accessToken,
