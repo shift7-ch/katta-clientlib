@@ -33,7 +33,7 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
     String region;
 
-    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = true)
+    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
     List<String> regions;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
@@ -63,7 +63,7 @@ public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(true)
                 .region(region)
-                .regions(regions)
+                .regions(null == regions ? List.of(region) : regions)
                 .bucketPrefix(bucketPrefix)
                 // TODO bad design smell? not all S3 providers might have STS to create static bucket?
                 .stsRoleCreateBucketClient("")

@@ -42,7 +42,7 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--region"}, description = "Default Bucket region, e.g. \"eu-west-1\".", required = true)
     String region;
 
-    @CommandLine.Option(names = {"--regions"}, description = "Available Bucket regions, e.g. [\"eu-west-1\",\"eu-west-2\",\"eu-west-3\"].", required = true)
+    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
     List<String> regions;
 
     @Override
