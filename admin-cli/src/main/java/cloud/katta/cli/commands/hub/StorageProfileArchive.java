@@ -20,7 +20,7 @@ import picocli.CommandLine;
  * <p>
  * See also <a href="https://github.com/shift7-ch/katta-clientlib/blob/main/hub/src/main/resources/openapi.json>OpenAPI Specification</a>.
  */
-@CommandLine.Command(name = "storageProfileArchive",
+@CommandLine.Command(name = "archive",
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
 public class StorageProfileArchive extends AbstractAuthorizationCode implements Callable<Void> {

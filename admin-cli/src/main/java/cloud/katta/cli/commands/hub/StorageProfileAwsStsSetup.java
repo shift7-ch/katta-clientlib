@@ -25,7 +25,7 @@ import static cloud.katta.cli.commands.common.Defaults.*;
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#storage-profiles">katta docs</a>.
  */
-@CommandLine.Command(name = "storageProfileAWSSTS",
+@CommandLine.Command(name = "sts",
         description = "Upload storage profile for AWS STS.",
         mixinStandardHelpOptions = true)
 public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
@@ -33,7 +33,7 @@ public class StorageProfileAwsStsSetup extends AbstractStorageProfile {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    @CommandLine.Option(names = {"--rolePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-\"", required = true)
+    @CommandLine.Option(names = {"--rolePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::<ACCOUNTID>:role/katta-\"", required = true)
     String rolePrefix;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")

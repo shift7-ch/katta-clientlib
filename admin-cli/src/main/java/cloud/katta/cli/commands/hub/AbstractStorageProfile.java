@@ -13,7 +13,7 @@ import cloud.katta.client.ApiException;
 import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
+    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.default.katta.cloud/\"", required = true)
     String hubUrl;
 
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)

@@ -22,8 +22,8 @@ import picocli.CommandLine;
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#storage-profiles">katta docs</a>.
  */
-@CommandLine.Command(name = "storageProfileAWSStatic",
-        description = "Upload storage profile for AWS Static.",
+@CommandLine.Command(name = "static",
+        description = "Archive storage profile.",
         mixinStandardHelpOptions = true)
 public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
 
