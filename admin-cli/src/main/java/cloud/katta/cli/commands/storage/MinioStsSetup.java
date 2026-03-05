@@ -31,7 +31,7 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
-@CommandLine.Command(name = "minioStsSetup", description = "Setup/update OIDC provider and roles for STS in MinIO.", mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "minio", description = "Setup/update OIDC provider and roles for STS in MinIO.", mixinStandardHelpOptions = true)
 @Deprecated
 public class MinioStsSetup implements Callable<Void> {
 
