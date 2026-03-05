@@ -6,7 +6,7 @@ package cloud.katta.examples;
 
 import java.util.UUID;
 
-import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.Katta;
 import picocli.CommandLine;
 
 /**
@@ -16,8 +16,8 @@ public class Tamarind {
 
     public static void main(String[] args) {
         if(false) {
-            new CommandLine(new KattaSetupCli()).execute(
-                    "storageProfileArchive",
+            new CommandLine(new Katta()).execute(
+                    "storage archive",
                     "--tokenUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token",
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
                     "--clientId", "cryptomator",
@@ -28,7 +28,7 @@ public class Tamarind {
 
         if(false) {
             final UUID storageProfileId = UUID.randomUUID();
-            new CommandLine(new KattaSetupCli()).execute(
+            new CommandLine(new Katta()).execute(
                     "storageProfileAWSSTS",
                     "--tokenUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token",
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
@@ -42,7 +42,7 @@ public class Tamarind {
         }
 
         if(true) {
-            new CommandLine(new KattaSetupCli()).execute(
+            new CommandLine(new Katta()).execute(
                     "minioStsSetup",
                     "--endpointUrl", "https://minio.testing.katta.cloud",
                     "--hubUrl", "https://testing.katta.cloud/tamarind",

@@ -6,28 +6,25 @@ package cloud.katta.examples;
 
 import java.util.UUID;
 
-import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.Katta;
+import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import picocli.CommandLine;
 
 /**
  * Terraform example.
  */
 public class Terraform {
-    private static final String workspace = "che";
-
     public static void main(String[] args) {
-        final String bucketPrefix = String.format("hub-%s-catta-cloud-", workspace);
-        final String roleNamePrefix = String.format("hub.%s.catta.cloud-", workspace);
-        final String realmUrl = String.format("https://keycloak.%s.catta.cloud/realms/cryptomator", workspace);
-        final String hubUrl = String.format("https://hub.%s.catta.cloud", workspace);
+        final String bucketPrefix = "katta";
+        final String roleNamePrefix = "katta";
+        final String realmUrl = "https://keycloak.default.katta.cloud/realms/cryptomator";
+        final String hubUrl = "https://hub.default.katta.cloud";
         final String region = "eu-central-1";
         final String tokenUrl = String.format("%s/protocol/openid-connect/token", realmUrl);
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
         if(true) {
-            int rc = new CommandLine(new KattaSetupCli()).execute(
+            int rc = new CommandLine(new Katta()).execute(
                     "awsSetup",
                     "--profileName", "430118840017_AdministratorAccess",
                     "--realmUrl", realmUrl,
@@ -40,7 +37,7 @@ public class Terraform {
             assertEquals(0, rc);
         }
         if(false) {
-            int rc = new CommandLine(new KattaSetupCli()).execute(
+            int rc = new CommandLine(new Katta()).execute(
                     "storageProfileArchive",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -52,7 +49,7 @@ public class Terraform {
         }
         if (true) {
             final UUID storageProfileId = UUID.randomUUID();
-            int rc = new CommandLine(new KattaSetupCli()).execute(
+            int rc = new CommandLine(new Katta()).execute(
                     "storageProfileAWSSTS",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -69,7 +66,7 @@ public class Terraform {
         }
         if (true){
             final UUID storageProfileId = UUID.randomUUID();
-            int rc = new CommandLine(new KattaSetupCli()).execute(
+            int rc = new CommandLine(new Katta()).execute(
                     "storageProfileAWSStatic",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,

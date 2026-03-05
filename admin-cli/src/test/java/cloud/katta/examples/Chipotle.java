@@ -4,13 +4,13 @@
 
 package cloud.katta.examples;
 
-import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.Katta;
 import picocli.CommandLine;
 
 public class Chipotle {
 
     public static void main(String[] args) {
-        new CommandLine(new KattaSetupCli()).execute(
+        new CommandLine(new Katta()).execute(
                 "awsSetup",
                 "--profileName", "430118840017_AdministratorAccess",
                 "--realmUrl", "https://testing.katta.cloud/kc/realms/chipotle",
