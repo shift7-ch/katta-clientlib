@@ -19,7 +19,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
     String uuid;
 
-    @CommandLine.Option(names = {"--name"}, description = "The name.", required = true)
+    @CommandLine.Option(names = {"--name"}, description = "The name.", required = false, defaultValue = "Storage Profile")
     String name;
 
     @Override
