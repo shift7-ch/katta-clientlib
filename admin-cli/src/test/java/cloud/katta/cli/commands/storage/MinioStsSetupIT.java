@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.Objects;
 
-import cloud.katta.cli.KattaSetupCli;
+import cloud.katta.cli.Katta;
 import cloud.katta.cli.commands.CLIIntegrationTest;
 import cloud.katta.testcontainers.AbtractAdminCliIT;
 import io.minio.admin.MinioAdminClient;
@@ -25,7 +25,7 @@ class MinioStsSetupIT extends AbtractAdminCliIT {
 
     @Test
     public void testMinioSetup() throws Exception {
-        int rc = new CommandLine(new KattaSetupCli()).execute(
+        int rc = new CommandLine(new Katta()).execute(
                 "minioStsSetup",
                 "--endpointUrl", "http://localhost:9100",
                 "--hubUrl", "http://localhost:8280",
