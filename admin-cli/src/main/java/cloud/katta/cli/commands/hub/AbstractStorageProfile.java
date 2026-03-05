@@ -16,7 +16,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
     String hubUrl;
 
-    @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = true)
+    @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
     String uuid;
 
     @CommandLine.Option(names = {"--name"}, description = "The name.", required = true)
@@ -25,7 +25,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @Override
     public Void call() throws Exception {
         final String accessToken = login();
-        call(hubUrl, accessToken, uuid, name);
+        call(hubUrl, accessToken, null == uuid ? UUID.randomUUID().toString() : uuid, name);
         return null;
     }
 
