@@ -29,7 +29,7 @@ public class Tamarind {
         if(false) {
             final UUID storageProfileId = UUID.randomUUID();
             new CommandLine(new Katta()).execute(
-                    "storageProfileAWSSTS",
+                    "storageprofile aws sts",
                     "--tokenUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token",
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
                     "--clientId", "cryptomator",
@@ -43,7 +43,7 @@ public class Tamarind {
 
         if(true) {
             new CommandLine(new Katta()).execute(
-                    "minioStsSetup",
+                    "minio",
                     "--endpointUrl", "https://minio.testing.katta.cloud",
                     "--hubUrl", "https://testing.katta.cloud/tamarind",
                     "--roleNamePrefix", "testing.katta.cloud-tamarind-",

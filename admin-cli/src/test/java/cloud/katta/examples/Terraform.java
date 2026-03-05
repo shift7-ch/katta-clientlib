@@ -25,7 +25,7 @@ public class Terraform {
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
         if(true) {
             int rc = new CommandLine(new Katta()).execute(
-                    "awsSetup",
+                    "setup aws",
                     "--profileName", "430118840017_AdministratorAccess",
                     "--realmUrl", realmUrl,
                     "--roleNamePrefix", roleNamePrefix,
@@ -38,7 +38,7 @@ public class Terraform {
         }
         if(false) {
             int rc = new CommandLine(new Katta()).execute(
-                    "storageProfileArchive",
+                    "storageprofile archive",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
@@ -50,7 +50,7 @@ public class Terraform {
         if (true) {
             final UUID storageProfileId = UUID.randomUUID();
             int rc = new CommandLine(new Katta()).execute(
-                    "storageProfileAWSSTS",
+                    "storageprofile aws sts",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
@@ -67,7 +67,7 @@ public class Terraform {
         if (true){
             final UUID storageProfileId = UUID.randomUUID();
             int rc = new CommandLine(new Katta()).execute(
-                    "storageProfileAWSStatic",
+                    "storageprofile aws static",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
