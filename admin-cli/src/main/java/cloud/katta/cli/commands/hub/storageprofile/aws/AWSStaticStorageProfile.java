@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
-import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
@@ -31,17 +30,20 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
     String bucketPrefix;
 
-    @Override
-    protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {
-        final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
-
-        call(uuid, name, storageProfileResourceApi);
+    public AWSStaticStorageProfile() {
     }
 
-    protected void call(final UUID uuid, final String name, final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    public AWSStaticStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions, final String bucketPrefix) {
+        super(hubUrl, uuid, name, region, regions);
+        this.bucketPrefix = bucketPrefix;
+    }
+
+    @Override
+    protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+        final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
         storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
                 .id(uuid)
-                .name(name)
+                .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STATIC)
                 .archived(false)
 

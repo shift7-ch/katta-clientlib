@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @CLIIntegrationTest
 class ArchiveStorageProfileIT extends AbtractAdminCLIIT {
+
     @Test
     public void testStorageProfileArchive() throws Exception {
         final String storageProfileId = "732D43FA-3716-46C4-B931-66EA5405EF1C".toLowerCase();
@@ -52,8 +53,8 @@ class ArchiveStorageProfileIT extends AbtractAdminCLIIT {
             assertTrue(profile.isPresent());
             assertFalse(profile.get().getArchived());
         }
-        final ArchiveStorageProfile cli = new ArchiveStorageProfile();
-        cli.call("http://localhost:8280", accessToken, storageProfileId);
+        final ArchiveStorageProfile cli = new ArchiveStorageProfile(null, null, null, accessToken, "http://localhost:8280", storageProfileId);
+        cli.call();
         {
             final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p -> StorageProfileDtoWrapper.coerce(p).getId().toString().toLowerCase().equals(storageProfileId)).map(StorageProfileDto::getActualInstance).map(StorageProfileS3StaticDto.class::cast).findFirst();
             assertTrue(profile.isPresent());

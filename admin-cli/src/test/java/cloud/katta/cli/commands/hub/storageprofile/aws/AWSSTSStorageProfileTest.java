@@ -21,16 +21,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 
 class AWSSTSStorageProfileTest {
+
     @Test
     public void testCall() throws ApiException {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
-        final AWSSTSStorageProfile cli = new AWSSTSStorageProfile();
-        cli.bucketPrefix = "fancy-";
-        cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-";
-        cli.region = "eu-west-1";
-        cli.regions = Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3");
-        cli.call(vaultId, "AWS S3 STS", api);
+        final AWSSTSStorageProfile cli = new AWSSTSStorageProfile(null, vaultId.toString(), "AWS S3 STS", "eu-west-1", Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"),
+                "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-", "fancy-");
+        cli.call(api);
 
         final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
         dto.setId(vaultId);

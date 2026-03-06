@@ -21,8 +21,8 @@ class ArchiveStorageProfileTest {
     public void testCall() throws ApiException {
         final StorageProfileResourceApi proxyMock = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
-        final ArchiveStorageProfile cli = new ArchiveStorageProfile();
-        cli.call(vaultId, proxyMock);
+        final ArchiveStorageProfile cli = new ArchiveStorageProfile(null, null, null, null, null, vaultId.toString());
+        cli.call(proxyMock);
         Mockito.verify(proxyMock, times(1)).apiStorageprofileProfileIdPut(vaultId, true);
         Mockito.verify(proxyMock, times(1)).apiStorageprofileProfileIdPut(any(), any());
     }

@@ -17,7 +17,7 @@ import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
 import software.amazon.awssdk.services.iam.model.Role;
 import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
 
-public class AWSSTSStorageTest {
+class AWSSTSStorageTest {
 
     @Test
     public void testAwsSetup() throws Exception {

@@ -30,30 +30,29 @@ public class ArchiveStorageProfile extends AbstractAuthorizationCode implements 
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = true)
     String uuid;
 
+    public ArchiveStorageProfile() {
+    }
+
+    public ArchiveStorageProfile(final String tokenUrl, final String authUrl, final String clientId, final String accessToken, final String hubUrl, final String uuid) {
+        super(tokenUrl, authUrl, clientId, accessToken);
+        this.hubUrl = hubUrl;
+        this.uuid = uuid;
+    }
+
     @Override
     public Void call() throws Exception {
-        final String accessToken = login();
-        call(hubUrl, accessToken, uuid);
+        final ApiClient apiClient = new ApiClient();
+        apiClient.setBasePath(hubUrl);
+        apiClient.addDefaultHeader("Authorization", "Bearer %s".formatted(this.login()));
+        this.call(new StorageProfileResourceApi(apiClient));
         return null;
     }
 
-    protected void call(final String hubUrl, final String accessToken, final String uuid) throws ApiException {
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setBasePath(hubUrl);
-        apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
-        call(UUID.fromString(uuid), apiClient);
-    }
-
-    protected void call(final UUID uuid, final ApiClient apiClient) throws ApiException {
-        final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
-        call(uuid, storageProfileResourceApi);
-    }
-
-    protected void call(final UUID uuid, final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         System.out.println("storage profiles:");
         System.out.println(storageProfileResourceApi.apiStorageprofileGet(null));
-        storageProfileResourceApi.apiStorageprofileProfileIdPut(uuid, true);
+        storageProfileResourceApi.apiStorageprofileProfileIdPut(UUID.fromString(uuid), true);
         System.out.println("updated:");
-        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(UUID.fromString(uuid)));
     }
 }

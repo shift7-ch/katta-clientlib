@@ -21,21 +21,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 
 class AWSStaticStorageProfileTest {
+
     @Test
     public void testCall() throws ApiException {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
-        final AWSStaticStorageProfile cli = new AWSStaticStorageProfile();
-        cli.region = "us-east-1";
-        cli.regions = List.of();
-        cli.bucketPrefix = "katta-";
-        cli.call(vaultId, "AWS S3 static", api);
-
+        final AWSStaticStorageProfile cli = new AWSStaticStorageProfile(vaultId.toString(), vaultId.toString(), "AWS S3 static", "us-east-1", null, "katta-");
+        cli.call(api);
 
         final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto();
         dto.setId(vaultId);
         dto.setName("AWS S3 static");
         dto.setRegion("us-east-1");
+        dto.setRegions(List.of("us-east-1"));
         dto.setProtocol(Protocol.S3_STATIC);
         dto.setArchived(false);
         dto.setScheme("https");

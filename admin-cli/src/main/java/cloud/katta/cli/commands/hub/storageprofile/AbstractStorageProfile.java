@@ -5,12 +5,12 @@
 package cloud.katta.cli.commands.hub.storageprofile;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import cloud.katta.cli.commands.AbstractAuthorizationCode;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.api.StorageProfileResourceApi;
 import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
@@ -29,19 +29,25 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
     protected List<String> regions;
 
+    public AbstractStorageProfile() {
+    }
+
+    public AbstractStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions) {
+        this.hubUrl = hubUrl;
+        this.uuid = uuid;
+        this.name = name;
+        this.region = region;
+        this.regions = regions;
+    }
+
     @Override
     public Void call() throws Exception {
-        final String accessToken = login();
-        call(hubUrl, accessToken, null == uuid ? UUID.randomUUID().toString() : uuid, null == name ? this.toString() : name);
+        final ApiClient apiClient = new ApiClient();
+        apiClient.setBasePath(hubUrl);
+        apiClient.addDefaultHeader("Authorization", "Bearer %s".formatted(this.login()));
+        this.call(new StorageProfileResourceApi(apiClient));
         return null;
     }
 
-    protected void call(final String hubUrl, final String accessToken, final String uuid, final String name) throws ApiException {
-        final ApiClient apiClient = new ApiClient();
-        apiClient.setBasePath(hubUrl);
-        apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
-        call(UUID.fromString(uuid), name, apiClient);
-    }
-
-    protected abstract void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException;
+    protected abstract void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException;
 }

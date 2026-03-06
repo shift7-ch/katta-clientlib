@@ -30,6 +30,16 @@ public class AbstractAuthorizationCode {
     @CommandLine.Option(names = {"--accessToken"}, description = "The access token. If not provided, --tokenUrl, --authUrl and --clientId need to be provided. Requires admin role in the hub.", required = false)
     protected String accessToken;
 
+    public AbstractAuthorizationCode() {
+    }
+
+    public AbstractAuthorizationCode(final String tokenUrl, final String authUrl, final String clientId, final String accessToken) {
+        this.tokenUrl = tokenUrl;
+        this.authUrl = authUrl;
+        this.clientId = clientId;
+        this.accessToken = accessToken;
+    }
+
     protected String login() throws IOException, InterruptedException {
         if(null == accessToken) {
             if(StringUtils.isEmpty(tokenUrl) || StringUtils.isEmpty(authUrl) || StringUtils.isEmpty(clientId)) {
