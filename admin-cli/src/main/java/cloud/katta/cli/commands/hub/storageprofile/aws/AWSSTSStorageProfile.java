@@ -63,7 +63,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 // -- (2) bucket creation only (only relevant for Desktop client)
                 .bucketPrefix(bucketPrefix)
                 .region(region)
-                .regions(regions)
+                .regions(null == regions ? List.of(region) : regions)
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(true)
 
