@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 
 import java.net.URI;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 import io.minio.admin.MinioAdminClient;
@@ -124,7 +124,7 @@ public class MinioStsSetup implements Callable<Void> {
             spec.commandLine().getOut().println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
         }
 
-        final String json = IOUtils.toString(URI.create(hubUrl + "/api/config"), Charset.forName("UTF-8"));
+        final String json = IOUtils.toString(URI.create(hubUrl + "/api/config"), StandardCharsets.UTF_8);
         final JSONObject apiConfig = new JSONObject(json);
         final String wellKnown = String.format("%s/realms/%s/.well-known/openid-configuration", apiConfig.getString("keycloakUrl"), apiConfig.getString("keycloakRealm"));
 
