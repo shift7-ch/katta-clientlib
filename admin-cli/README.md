@@ -33,7 +33,7 @@ Uploads a storage profile to Katta Server for use with AWS S3.
 Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup-aws-using-oidc-provider-and-security-token-service-sts-with-setup-command).
 
 ```bash
-katta setup storageprofile aws sts \
+katta storageprofile aws sts \
   --hubUrl <hub-url> \
   --rolePrefix <arn-role-prefix> \
   --region <aws-region>
@@ -54,7 +54,7 @@ katta setup storageprofile aws sts \
 #### Update thumbprints of TLS certificates
 
 Thumbprints from the TLS certificates of the Keycloak endpoint need to be in place at AWS in the IAM identity provider endpoint verification and updated when
-TLS certificates are renewed. Use `katta setup aws sts` to update thumbprints of renewed certificates.
+TLS certificates are renewed. Use `katta setup aws` to update thumbprints of renewed certificates.
 
 > AWS secures communication with OIDC identity providers (IdPs) using our library of trusted Certificate Authorities (CAs). If your IdP relies on a certificate
 > that isn't signed by one of these trusted CAs, then we secure communication using the thumbprints you specify.
