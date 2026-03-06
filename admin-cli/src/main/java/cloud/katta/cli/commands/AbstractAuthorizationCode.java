@@ -34,8 +34,8 @@ public class AbstractAuthorizationCode {
     String accessToken;
 
     protected String login() throws IOException, InterruptedException {
-        if(StringUtils.isEmpty(accessToken)) {
-            if(StringUtils.isEmpty(tokenUrl) || StringUtils.isEmpty(authUrl) || StringUtils.isEmpty(clientId)){
+        if(null == accessToken) {
+            if(StringUtils.isEmpty(tokenUrl) || StringUtils.isEmpty(authUrl) || StringUtils.isEmpty(clientId)) {
                 throw new IllegalArgumentException("If --access-token is not provided, you must specify --tokenUrl, --authUrl and --clientId.");
             }
             var authResponse = TinyOAuth2.client(clientId)
