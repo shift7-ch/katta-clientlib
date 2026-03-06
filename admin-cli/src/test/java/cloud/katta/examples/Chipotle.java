@@ -11,7 +11,7 @@ public class Chipotle {
 
     public static void main(String[] args) {
         new CommandLine(new Katta()).execute(
-                "setup aws",
+                "setup", "aws",
                 "--profileName", "430118840017_AdministratorAccess",
                 "--realmUrl", "https://testing.katta.cloud/kc/realms/chipotle",
                 "--roleNamePrefix", "testing.katta.cloud-chipotle-",

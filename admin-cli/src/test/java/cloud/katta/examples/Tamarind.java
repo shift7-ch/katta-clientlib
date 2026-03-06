@@ -16,8 +16,8 @@ public class Tamarind {
 
     public static void main(String[] args) {
         if(false) {
-            new CommandLine(new Katta()).execute(
-                    "storage archive",
+            new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
+                    "storageprofile", "archive",
                     "--tokenUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token",
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
                     "--clientId", "cryptomator",
@@ -28,8 +28,8 @@ public class Tamarind {
 
         if(false) {
             final UUID storageProfileId = UUID.randomUUID();
-            new CommandLine(new Katta()).execute(
-                    "storageprofile aws sts",
+            new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
+                    "storageprofile", "aws", "sts",
                     "--tokenUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token",
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
                     "--clientId", "cryptomator",
@@ -42,15 +42,15 @@ public class Tamarind {
         }
 
         if(true) {
-            new CommandLine(new Katta()).execute(
-                    "minio",
+            new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
+                    "setup", "minio",
                     "--endpointUrl", "https://minio.testing.katta.cloud",
                     "--hubUrl", "https://testing.katta.cloud/tamarind",
                     "--roleNamePrefix", "testing.katta.cloud-tamarind-",
                     "--bucketPrefix", "katta-test-tamarind-",
                     "--minioAlias", "minio_testing_katta_cloud",
-                    "--accessKey", System.getenv("minio_testing_katta_cloud.access_key"),
-                    "--secretKey", System.getenv("minio_testing_katta_cloud.secret_key")
+                    "--accessKey", "key",
+                    "--secretKey", "secret"
             );
         }
     }

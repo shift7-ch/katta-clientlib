@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Terraform example.
  */
 public class Terraform {
+
     public static void main(String[] args) {
         final String bucketPrefix = "katta";
         final String roleNamePrefix = "katta";
@@ -25,7 +26,7 @@ public class Terraform {
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
         if(true) {
             int rc = new CommandLine(new Katta()).execute(
-                    "setup aws",
+                    "setup", "aws",
                     "--profileName", "430118840017_AdministratorAccess",
                     "--realmUrl", realmUrl,
                     "--roleNamePrefix", roleNamePrefix,
@@ -38,7 +39,7 @@ public class Terraform {
         }
         if(false) {
             int rc = new CommandLine(new Katta()).execute(
-                    "storageprofile archive",
+                    "storageprofile", "archive",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
@@ -50,7 +51,7 @@ public class Terraform {
         if (true) {
             final UUID storageProfileId = UUID.randomUUID();
             int rc = new CommandLine(new Katta()).execute(
-                    "storageprofile aws sts",
+                    "storageprofile", "aws", "sts",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
@@ -67,7 +68,7 @@ public class Terraform {
         if (true){
             final UUID storageProfileId = UUID.randomUUID();
             int rc = new CommandLine(new Katta()).execute(
-                    "storageprofile aws static",
+                    "storageprofile", "aws", "static",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
