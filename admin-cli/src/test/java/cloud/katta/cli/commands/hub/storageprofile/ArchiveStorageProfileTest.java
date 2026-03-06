@@ -13,7 +13,6 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 class ArchiveStorageProfileTest {
@@ -23,7 +22,6 @@ class ArchiveStorageProfileTest {
         final StorageProfileResourceApi proxyMock = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final ArchiveStorageProfile cli = new ArchiveStorageProfile();
-        cli.spec = mock();
         cli.call(vaultId, proxyMock);
         Mockito.verify(proxyMock, times(1)).apiStorageprofileProfileIdPut(vaultId, true);
         Mockito.verify(proxyMock, times(1)).apiStorageprofileProfileIdPut(any(), any());

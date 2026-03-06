@@ -30,9 +30,6 @@ public class ArchiveStorageProfile extends AbstractAuthorizationCode implements 
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = true)
     String uuid;
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @Override
     public Void call() throws Exception {
         final String accessToken = login();
@@ -53,10 +50,10 @@ public class ArchiveStorageProfile extends AbstractAuthorizationCode implements 
     }
 
     protected void call(final UUID uuid, final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        spec.commandLine().getOut().println("storage profiles:");
-        spec.commandLine().getOut().println(storageProfileResourceApi.apiStorageprofileGet(null));
+        System.out.println("storage profiles:");
+        System.out.println(storageProfileResourceApi.apiStorageprofileGet(null));
         storageProfileResourceApi.apiStorageprofileProfileIdPut(uuid, true);
-        spec.commandLine().getOut().println("updated:");
-        spec.commandLine().getOut().println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        System.out.println("updated:");
+        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
 }

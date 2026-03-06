@@ -28,9 +28,6 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true)
 public class AWSStaticStorageProfile extends AbstractStorageProfile {
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
     String region;
 
@@ -70,6 +67,6 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
                 .stsRoleCreateBucketClient("")
                 .stsRoleCreateBucketHub("")
         );
-        spec.commandLine().getOut().println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
 }

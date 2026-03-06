@@ -21,9 +21,6 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "accesstoken", description = "Get access token using authorization code flow.", mixinStandardHelpOptions = true)
 public class AuthorizationCodeFlow implements Callable<Integer> {
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud//realms/cryptomator/protocol/openid-connect/token\"", required = true)
     String tokenUrl;
 
@@ -39,20 +36,20 @@ public class AuthorizationCodeFlow implements Callable<Integer> {
         var authResponse = TinyOAuth2.client(clientId)
                 .withTokenEndpoint(URI.create(tokenUrl))
                 .authorizationCodeGrant(URI.create(authUrl))
-                .authorize(HttpClient.newHttpClient(), uri -> spec.commandLine().getOut().println("Please login on " + uri));
-        spec.commandLine().getOut().println(authResponse);
+                .authorize(HttpClient.newHttpClient(), uri -> System.out.println("Please login on " + uri));
+        System.out.println(authResponse);
         return printAccessToken(authResponse);
     }
 
     private int printAccessToken(HttpResponse<String> response) throws JsonProcessingException {
         var statusCode = response.statusCode();
         if(statusCode != 200) {
-            spec.commandLine().getErr().println("""
+            System.err.println("""
                     Request was responded with code %d and body:\n%s\n""".formatted(statusCode, response.body()));
             return statusCode;
         }
         var token = new ObjectMapper().reader().readTree(response.body()).get("access_token").asText();
-        spec.commandLine().getOut().println(token);
+        System.out.println(token);
         return 0;
     }
 }

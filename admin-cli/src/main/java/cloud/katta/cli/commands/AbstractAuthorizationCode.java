@@ -18,9 +18,6 @@ import picocli.CommandLine;
 
 public class AbstractAuthorizationCode {
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud//realms/cryptomator/protocol/openid-connect/token\"", required = false)
     String tokenUrl;
 
@@ -41,7 +38,7 @@ public class AbstractAuthorizationCode {
             var authResponse = TinyOAuth2.client(clientId)
                     .withTokenEndpoint(URI.create(tokenUrl))
                     .authorizationCodeGrant(URI.create(authUrl))
-                    .authorize(HttpClient.newHttpClient(), uri -> spec.commandLine().getOut().println("Please login on " + uri));
+                    .authorize(HttpClient.newHttpClient(), uri -> System.out.println("Please login on " + uri));
             return extractAccessToken(authResponse);
         }
         else {
@@ -52,7 +49,7 @@ public class AbstractAuthorizationCode {
     private String extractAccessToken(HttpResponse<String> response) throws JsonProcessingException {
         var statusCode = response.statusCode();
         if(statusCode != 200) {
-            spec.commandLine().getErr().println("""
+            System.err.println("""
                     Request was responded with code %d and body:\n%s\n""".formatted(statusCode, response.body()));
             return null;
         }

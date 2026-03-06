@@ -35,9 +35,6 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
 @Deprecated
 public class MinioSTSStorage implements Callable<Void> {
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO URL. Example: \"http://localhost:9000\"", required = true)
     String endpointUrl;
 
@@ -98,7 +95,7 @@ public class MinioSTSStorage implements Callable<Void> {
             minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toJson(IamPolicyWriter.builder()
                     .prettyPrint(true)
                     .build()));
-            spec.commandLine().getOut().println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
+            System.out.println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
         }
         // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
         {
@@ -121,7 +118,7 @@ public class MinioSTSStorage implements Callable<Void> {
                             .addResource(String.format("arn:aws:s3:::%s${jwt:client_id}/*", bucketPrefix)))
                     .build();
             minioAdminClient.addCannedPolicy(accessbucketPolicyName, minioAccessBucketPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()));
-            spec.commandLine().getOut().println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
+            System.out.println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
         }
 
         final String json = IOUtils.toString(URI.create(hubUrl + "/api/config"), StandardCharsets.UTF_8);
@@ -133,7 +130,7 @@ public class MinioSTSStorage implements Callable<Void> {
         final String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
 
         // TODO should we run mc cli tool instead of prompting command?
-        spec.commandLine().getOut().println(String.format("""
+        System.out.println(String.format("""
                         # The MinIO Client API is incomplete (https://github.com/minio/minio/issues/16151).
                         # Please execute the following commands on the command line.
                         # Further info: https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio

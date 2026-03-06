@@ -31,9 +31,6 @@ import static cloud.katta.cli.commands.common.Defaults.*;
         mixinStandardHelpOptions = true)
 public class AWSSTSStorageProfile extends AbstractStorageProfile {
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {"--rolePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::<ACCOUNTID>:role/katta-\"", required = true)
     String rolePrefix;
 
@@ -82,7 +79,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-a-role-tagged-session
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
         );
-        spec.commandLine().getOut().println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
 }
 

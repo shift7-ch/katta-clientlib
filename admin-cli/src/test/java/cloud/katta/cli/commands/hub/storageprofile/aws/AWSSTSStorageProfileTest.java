@@ -18,7 +18,6 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 class AWSSTSStorageProfileTest {
@@ -27,7 +26,6 @@ class AWSSTSStorageProfileTest {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final AWSSTSStorageProfile cli = new AWSSTSStorageProfile();
-        cli.spec = mock();
         cli.bucketPrefix = "fancy-";
         cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-";
         cli.region = "eu-west-1";
