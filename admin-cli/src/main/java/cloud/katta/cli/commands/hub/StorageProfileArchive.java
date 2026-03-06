@@ -24,7 +24,7 @@ import picocli.CommandLine;
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
 public class StorageProfileArchive extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
+    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.testing.katta.cloud\"", required = true)
     String hubUrl;
 
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = true)

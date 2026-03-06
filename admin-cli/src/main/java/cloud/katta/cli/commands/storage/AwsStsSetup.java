@@ -63,10 +63,10 @@ public class AwsStsSetup implements Callable<Void> {
     CommandLine.Model.CommandSpec spec;
 
     // TODO get from /api/config instead/optionally?
-    @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/kc/realms/tamarind\".", required = true)
+    @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.testing.katta.cloud/realms/cryptomator\".", required = true)
     String realmUrl;
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "If not provided, will be derived from realm URL. E.g. \"testing.katta.cloud-chipotle-\".", required = false, defaultValue = "katta-")
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "Role name prefix.", required = false, defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = true)

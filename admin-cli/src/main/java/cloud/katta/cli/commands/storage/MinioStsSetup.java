@@ -41,7 +41,7 @@ public class MinioStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO URL. Example: \"http://localhost:9000\"", required = true)
     String endpointUrl;
 
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://testing.katta.cloud/tamarind\"", required = true)
+    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.testing.katta.cloud\"", required = true)
     String hubUrl;
 
     @CommandLine.Option(names = {"--minioAlias"}, description = "MinIO alias to use.", defaultValue = "myminio")
@@ -54,16 +54,16 @@ public class MinioStsSetup implements Callable<Void> {
     @CommandLine.Option(names = {"--secretKey"}, description = "Secret Key for administering MinIO if no profile is used.", required = true)
     String secretKey;
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "If not provided, will be derived from realm URL. E.g. \"testing.katta.cloud-chipotle-\".", defaultValue = "katta-")
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "Role name prefix.", defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {bucketPrefix}createbucketPolicy.")
+    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}-{bucketPrefix}.")
     String createbucketPolicyName;
 
-    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {bucketPrefix}accessbucketpolicy.")
+    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}-{bucketPrefix}.")
     String accessbucketPolicyName;
 
     @Override
