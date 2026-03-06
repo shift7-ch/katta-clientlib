@@ -65,8 +65,10 @@ class AWSSTSStorageProfileIT extends AbstractAdminCLIIT {
         assertTrue(dto.getBucketVersioning());
         assertNull(dto.getBucketAcceleration());
         assertEquals(S3SERVERSIDEENCRYPTION.NONE, dto.getBucketEncryption());
-        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::linguine:role/farfalle-access-bucket-role-web-identity");
-        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::linguine:role/farfalle-access-bucket-a-role-tagged-session");
+        assertEquals("arn:aws:iam::linguine:role/farfalle-access-bucket-web-identity-role",
+                dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
+        assertEquals("arn:aws:iam::linguine:role/farfalle-access-bucket-tagged-session-role",
+                dto.getStsRoleAccessBucketAssumeRoleTaggedSession());
         assertNull(dto.getStsDurationSeconds());
     }
 }
