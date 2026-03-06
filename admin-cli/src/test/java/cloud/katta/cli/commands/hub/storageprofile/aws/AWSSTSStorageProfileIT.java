@@ -65,7 +65,7 @@ class AWSSTSStorageProfileIT extends AbtractAdminCLIIT {
         assertTrue(dto.getBucketVersioning());
         assertNull(dto.getBucketAcceleration());
         assertEquals(S3SERVERSIDEENCRYPTION.NONE, dto.getBucketEncryption());
-        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::linguine:role/farfalle-access-bucket-a-role-web-identity");
+        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::linguine:role/farfalle-access-bucket-role-web-identity");
         dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::linguine:role/farfalle-access-bucket-a-role-tagged-session");
         assertNull(dto.getStsDurationSeconds());
     }
