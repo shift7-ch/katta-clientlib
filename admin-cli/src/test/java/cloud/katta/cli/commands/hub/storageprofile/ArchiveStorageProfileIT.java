@@ -18,14 +18,14 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
-import cloud.katta.testsetup.AbtractAdminCLIIT;
+import cloud.katta.testsetup.AbstractAdminCLIIT;
 import cloud.katta.testsetup.CLIIntegrationTest;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @CLIIntegrationTest
-class ArchiveStorageProfileIT extends AbtractAdminCLIIT {
+class ArchiveStorageProfileIT extends AbstractAdminCLIIT {
 
     @Test
     public void testStorageProfileArchive() throws Exception {

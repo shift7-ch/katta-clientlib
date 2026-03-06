@@ -17,14 +17,14 @@ import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
-import cloud.katta.testsetup.AbtractAdminCLIIT;
+import cloud.katta.testsetup.AbstractAdminCLIIT;
 import cloud.katta.testsetup.CLIIntegrationTest;
 import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @CLIIntegrationTest
-class AWSStaticStorageProfileIT extends AbtractAdminCLIIT {
+class AWSStaticStorageProfileIT extends AbstractAdminCLIIT {
 
     @Test
     public void testStorageProfileAwsStaticSetup() throws Exception {

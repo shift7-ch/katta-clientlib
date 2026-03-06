@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import cloud.katta.cli.Katta;
-import cloud.katta.testsetup.AbtractAdminCLIIT;
+import cloud.katta.testsetup.AbstractAdminCLIIT;
 import cloud.katta.testsetup.CLIIntegrationTest;
 import io.minio.admin.MinioAdminClient;
 import picocli.CommandLine;
@@ -21,7 +21,7 @@ import picocli.CommandLine;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @CLIIntegrationTest
-class MinioSTSStorageIT extends AbtractAdminCLIIT {
+class MinioSTSStorageIT extends AbstractAdminCLIIT {
 
     @Test
     public void testMinioSetup() throws Exception {

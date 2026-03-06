@@ -30,8 +30,8 @@ import cloud.katta.client.auth.HttpBearerAuth;
 
 import static io.restassured.RestAssured.given;
 
-public class AbtractAdminCLIIT {
-    private static final Logger log = LogManager.getLogger(AbtractAdminCLIIT.class.getName());
+public class AbstractAdminCLIIT {
+    private static final Logger log = LogManager.getLogger(AbstractAdminCLIIT.class.getName());
     public static ComposeContainer compose;
 
     protected String accessToken;
@@ -46,7 +46,7 @@ public class AbtractAdminCLIIT {
         final String hubAdminPassword = "admin";
         final String hubKeycloakSystemClientSecret = "top-secret";
         final Properties props = new Properties();
-        props.load(AbtractAdminCLIIT.class.getResourceAsStream(envFile));
+        props.load(AbstractAdminCLIIT.class.getResourceAsStream(envFile));
         final HashMap<String, String> env = props.entrySet().stream().collect(
                 Collectors.toMap(
                         e -> String.valueOf(e.getKey()),
@@ -57,7 +57,7 @@ public class AbtractAdminCLIIT {
         env.put("HUB_ADMIN_PASSWORD", hubAdminPassword);
         env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", hubKeycloakSystemClientSecret);
         compose = new ComposeContainer(
-                new File(AbtractAdminCLIIT.class.getResource(composeFile).toURI()))
+                new File(AbstractAdminCLIIT.class.getResource(composeFile).toURI()))
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(profile == null ? "" : String.format("--profile=%s", profile))
