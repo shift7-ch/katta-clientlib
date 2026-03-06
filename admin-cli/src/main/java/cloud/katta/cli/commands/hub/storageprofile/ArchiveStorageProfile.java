@@ -21,7 +21,7 @@ import picocli.CommandLine;
  * See also <a href="https://github.com/shift7-ch/katta-clientlib/blob/main/hub/src/main/resources/openapi.json">OpenAPI Specification</a>.
  */
 @CommandLine.Command(name = "archive",
-        description = "Upload storage profile for AWS Static.",
+        description = "Archive (deactivate) an existing storage profile.",
         mixinStandardHelpOptions = true)
 public class ArchiveStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
     @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.testing.katta.cloud\"", required = true)
