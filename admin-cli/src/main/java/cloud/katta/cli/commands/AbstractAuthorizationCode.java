@@ -19,16 +19,16 @@ import picocli.CommandLine;
 public class AbstractAuthorizationCode {
 
     @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud//realms/cryptomator/protocol/openid-connect/token\"", required = false)
-    String tokenUrl;
+    protected String tokenUrl;
 
     @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud//realms/cryptomator/protocol/openid-connect/auth\"", required = false)
-    String authUrl;
+    protected String authUrl;
 
     @CommandLine.Option(names = {"--clientId"}, description = "Keycloak realm URL with scheme. Example: \"cryptomator\"", required = false)
-    String clientId;
+    protected String clientId;
 
     @CommandLine.Option(names = {"--accessToken"}, description = "The access token. If not provided, --tokenUrl, --authUrl and --clientId need to be provided. Requires admin role in the hub.", required = false)
-    String accessToken;
+    protected String accessToken;
 
     protected String login() throws IOException, InterruptedException {
         if(null == accessToken) {
