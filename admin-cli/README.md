@@ -1,32 +1,55 @@
-# Katta Admin CLI
+# Katta: the secure and easy way to work in teams
 
-## AWS Static Setup
+Katta bring zero-config storage management and zero-knowledge key management for teams and organizations.
 
-````mermaid
-flowchart TD
-    A[New Katta Server] --> B("Hub Deployment: CSP settings Hub (&dagger;)")
-    B --> C(Katta CLI: StorageProfileAwsStaticSetup)
-    C --> D{Create Vault?}
-    D --> E[AWS CLI/AdminConsole: Create Bucket]
-    E --> F(Katta Desktop/Web Client: Create Vault)
-    F --> D
-````
+## Katta Admin CLI
 
-(&dagger;) For standard AWS URLs, this is already part of the default setup.
+This CLI program is used to configure a Katta Server including its S3 storage backend. Supported storage backend configurations are:
 
-## AWS STS Setup
+- AWS S3 accessed using static access keys
+- AWS S3 accessed using AWS Security Token Service (STS) issueing temporary access keys from OIDC access token obtained by user from Keycloak identity provider.
 
-````mermaid
-flowchart TD
-    A[New Katta Server] --> B(Katta CLI: AwsStsSetup)
-    B --> C(Katta CLI: StorageProfileAwsStsSetup)
-    C --> D{Create Vault?}
-    D --> E[AWS CLI/AdminConsole: Create Bucket]
-    E --> F("Katta Web Client: Create Vault (&Dagger;)")
-    F --> D
-````
+### Setup AWS using OIDC Provider and Security Token Service (STS) with `setup` command
 
-(&Dagger;) Katta Desktop Client does not
+Set up AWS as storage backend for Katta Server. Configures identity provider and roles in IAM to restrict access to S3 buckets to users authenticated by
+Keycloak.
+
+```bash
+katta setup aws \
+  --realmUrl <realm-url> \
+  --profileName <aws-profile> \
+  --clientId cryptomator
+```
+
+**Required Options:**
+
+- `--realmUrl`: Keycloak realm URL with scheme. Example: `https://keycloak.default.domain/realms/cryptomator`
+- `--profileName`: AWS profile to load AWS credentials from (see `~/.aws/credentials`)
+- `--clientId`: Client Ids for the OIDC provider
+
+### Configure storage profile in AWS Setup using `storageprofile` command
+
+Uploads a storage profile to Katta Server for use with AWS S3.
+Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup-aws-using-oidc-provider-and-security-token-service-sts-with-setup-command).
+
+```bash
+katta setup storageprofile aws sts \
+  --hubUrl <hub-url> \
+  --rolePrefix <arn-role-prefix> \
+  --region <aws-region>
+  --authUrl <auth-url> \
+  --tokenUrl <token-url> \
+  --clientId cryptomator
+```
+
+**Required Options:**
+
+- `--hubUrl`: Hub URL
+- `--rolePrefix`: ARN Role Prefix. Example: `arn:aws:iam::930717317329:role/katta-`
+- `--region`: Bucket region. Example: `eu-west-1`
+- `--authUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth`
+- `--tokenUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token`
+- `--clientId`: Client Ids for the OIDC provider
 
 #### Update thumbprints of TLS certificates
 
