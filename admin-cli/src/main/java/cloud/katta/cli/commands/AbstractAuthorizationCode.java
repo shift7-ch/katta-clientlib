@@ -41,9 +41,7 @@ public class AbstractAuthorizationCode {
             var authResponse = TinyOAuth2.client(clientId)
                     .withTokenEndpoint(URI.create(tokenUrl))
                     .authorizationCodeGrant(URI.create(authUrl))
-                    .authorize(HttpClient.newHttpClient(), uri -> {
-                        spec.commandLine().getOut().println("Please login on " + uri);
-                    });
+                    .authorize(HttpClient.newHttpClient(), uri -> spec.commandLine().getOut().println("Please login on " + uri));
             return extractAccessToken(authResponse);
         }
         else {
