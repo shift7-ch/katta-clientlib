@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.storage;
+package cloud.katta.cli.commands.storage.aws;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONArray;
@@ -57,7 +57,7 @@ import static cloud.katta.cli.commands.common.Defaults.*;
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
 @CommandLine.Command(name = "aws", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
-public class AwsStsSetup implements Callable<Void> {
+public class AWSSTSStorage implements Callable<Void> {
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -109,7 +109,7 @@ public class AwsStsSetup implements Callable<Void> {
         return null;
     }
 
-    protected void call(final IamClient iam, final String arnPostfix, final String thumbprint) throws IOException, InterruptedException {
+    protected void call(final IamClient iam, final String arnPostfix, final String thumbprint) throws InterruptedException {
         final ListOpenIdConnectProvidersResponse existingOpenIdConnectProviders = iam.listOpenIDConnectProviders();
         spec.commandLine().getOut().println(existingOpenIdConnectProviders);
 

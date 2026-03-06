@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.hub;
+package cloud.katta.cli.commands.hub.storageprofile;
 
 
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
-import cloud.katta.cli.commands.CLIIntegrationTest;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
@@ -19,14 +18,15 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
-import cloud.katta.testcontainers.AbtractAdminCliIT;
+import cloud.katta.testsetup.AbtractAdminCLIIT;
+import cloud.katta.testsetup.CLIIntegrationTest;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @CLIIntegrationTest
-class StorageProfileArchiveIT extends AbtractAdminCliIT {
+class ArchiveStorageProfileIT extends AbtractAdminCLIIT {
     @Test
     public void testStorageProfileArchive() throws Exception {
         final String storageProfileId = "732D43FA-3716-46C4-B931-66EA5405EF1C".toLowerCase();
@@ -53,7 +53,7 @@ class StorageProfileArchiveIT extends AbtractAdminCliIT {
             assertTrue(profile.isPresent());
             assertFalse(profile.get().getArchived());
         }
-        final StorageProfileArchive cli = new StorageProfileArchive();
+        final ArchiveStorageProfile cli = new ArchiveStorageProfile();
         cli.spec = mock();
         cli.call("http://localhost:8280", accessToken, storageProfileId);
         {

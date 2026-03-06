@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.storage;
+package cloud.katta.cli.commands.storage.minio;
 
 
 import org.json.JSONArray;
@@ -13,15 +13,15 @@ import java.util.Map;
 import java.util.Objects;
 
 import cloud.katta.cli.Katta;
-import cloud.katta.cli.commands.CLIIntegrationTest;
-import cloud.katta.testcontainers.AbtractAdminCliIT;
+import cloud.katta.testsetup.AbtractAdminCLIIT;
+import cloud.katta.testsetup.CLIIntegrationTest;
 import io.minio.admin.MinioAdminClient;
 import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @CLIIntegrationTest
-class MinioStsSetupIT extends AbtractAdminCliIT {
+class MinioSTSStorageIT extends AbtractAdminCLIIT {
 
     @Test
     public void testMinioSetup() throws Exception {

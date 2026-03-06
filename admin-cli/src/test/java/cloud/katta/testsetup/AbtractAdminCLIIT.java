@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.testcontainers;
+package cloud.katta.testsetup;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,8 +30,8 @@ import cloud.katta.client.auth.HttpBearerAuth;
 
 import static io.restassured.RestAssured.given;
 
-public class AbtractAdminCliIT {
-    private static final Logger log = LogManager.getLogger(AbtractAdminCliIT.class.getName());
+public class AbtractAdminCLIIT {
+    private static final Logger log = LogManager.getLogger(AbtractAdminCLIIT.class.getName());
     public static ComposeContainer compose;
 
     protected String accessToken;
@@ -46,7 +46,7 @@ public class AbtractAdminCliIT {
         final String hubAdminPassword = "admin";
         final String hubKeycloakSystemClientSecret = "top-secret";
         final Properties props = new Properties();
-        props.load(AbtractAdminCliIT.class.getResourceAsStream(envFile));
+        props.load(AbtractAdminCLIIT.class.getResourceAsStream(envFile));
         final HashMap<String, String> env = props.entrySet().stream().collect(
                 Collectors.toMap(
                         e -> String.valueOf(e.getKey()),
@@ -57,7 +57,7 @@ public class AbtractAdminCliIT {
         env.put("HUB_ADMIN_PASSWORD", hubAdminPassword);
         env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", hubKeycloakSystemClientSecret);
         compose = new ComposeContainer(
-                new File(AbtractAdminCliIT.class.getResource(composeFile).toURI()))
+                new File(AbtractAdminCLIIT.class.getResource(composeFile).toURI()))
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(profile == null ? "" : String.format("--profile=%s", profile))

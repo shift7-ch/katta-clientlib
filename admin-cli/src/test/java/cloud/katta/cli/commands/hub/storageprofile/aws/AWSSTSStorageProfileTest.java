@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.hub;
+package cloud.katta.cli.commands.hub.storageprofile.aws;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,12 +21,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
-class StorageProfileAwsStsSetupTest {
+class AWSSTSStorageProfileTest {
     @Test
     public void testCall() throws ApiException {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
-        final StorageProfileAwsStsSetup cli = new StorageProfileAwsStsSetup();
+        final AWSSTSStorageProfile cli = new AWSSTSStorageProfile();
         cli.spec = mock();
         cli.bucketPrefix = "fancy-";
         cli.rolePrefix = "arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-";

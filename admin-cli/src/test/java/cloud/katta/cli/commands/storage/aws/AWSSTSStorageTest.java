@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.storage;
+package cloud.katta.cli.commands.storage.aws;
 
 
 import org.junit.jupiter.api.Test;
@@ -21,13 +21,13 @@ import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
 
 import static org.mockito.Mockito.mock;
 
-public class AwsStsSetupTest {
+public class AWSSTSStorageTest {
     @Test
     public void testAwsSetup() throws IOException, InterruptedException {
         final IamClient iam = Mockito.mock(IamClient.class);
         Mockito.when(iam.listOpenIDConnectProviders()).thenReturn(ListOpenIdConnectProvidersResponse.builder().openIDConnectProviderList(OpenIDConnectProviderListEntry.builder().arn("arnP").build()).build());
         Mockito.when(iam.getRole(GetRoleRequest.builder().roleName("prae-access-bucket-a-role-web-identity").build())).thenReturn(GetRoleResponse.builder().role(Role.builder().arn("arn").build()).build());
-        final AwsStsSetup cli = new AwsStsSetup();
+        final AWSSTSStorage cli = new AWSSTSStorage();
         cli.spec = mock();
         cli.bucketPrefix = "prefix-";
         cli.roleNamePrefix = "prae-";

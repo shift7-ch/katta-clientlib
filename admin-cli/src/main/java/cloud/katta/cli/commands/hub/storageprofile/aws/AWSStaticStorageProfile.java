@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.hub;
+package cloud.katta.cli.commands.hub.storageprofile.aws;
 
 import java.util.List;
 import java.util.UUID;
 
+import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -25,7 +26,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "static",
         description = "Archive storage profile.",
         mixinStandardHelpOptions = true)
-public class StorageProfileAwsStaticSetup extends AbstractStorageProfile {
+public class AWSStaticStorageProfile extends AbstractStorageProfile {
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;

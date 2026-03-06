@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.storage;
+package cloud.katta.cli.commands.storage.minio;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -33,7 +33,7 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
  */
 @CommandLine.Command(name = "minio", description = "Setup/update OIDC provider and roles for STS in MinIO.", mixinStandardHelpOptions = true)
 @Deprecated
-public class MinioStsSetup implements Callable<Void> {
+public class MinioSTSStorage implements Callable<Void> {
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;

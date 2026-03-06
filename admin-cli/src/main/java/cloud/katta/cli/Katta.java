@@ -4,18 +4,16 @@
 
 package cloud.katta.cli;
 
-import cloud.katta.cli.commands.hub.StorageProfile;
 import cloud.katta.cli.commands.login.AuthorizationCodeFlow;
-import cloud.katta.cli.commands.storage.Setup;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "katta",
         mixinStandardHelpOptions = true,
         subcommands = {
                 // storage
-                Setup.class,
+                cloud.katta.cli.commands.storage.Wrapper.class,
                 // hub
-                StorageProfile.class,
+                cloud.katta.cli.commands.hub.storageprofile.Wrapper.class,
                 // misc.
                 AuthorizationCodeFlow.class,
                 CommandLine.HelpCommand.class,

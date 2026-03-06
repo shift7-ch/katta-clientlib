@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.cli.commands.hub;
+package cloud.katta.cli.commands.hub.storageprofile;
 
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -23,7 +23,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "archive",
         description = "Upload storage profile for AWS Static.",
         mixinStandardHelpOptions = true)
-public class StorageProfileArchive extends AbstractAuthorizationCode implements Callable<Void> {
+public class ArchiveStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
     @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.testing.katta.cloud\"", required = true)
     String hubUrl;
 
