@@ -1,13 +1,13 @@
 # Katta: the secure and easy way to work in teams
 
-Katta bring zero-config storage management and zero-knowledge key management for teams and organizations.
+Katta brings zero-config storage management and zero-knowledge key management for teams and organizations.
 
 ## Katta Admin CLI
 
 This CLI program is used to configure a Katta Server including its S3 storage backend. Supported storage backend configurations are:
 
 - AWS S3 accessed using static access keys
-- AWS S3 accessed using AWS Security Token Service (STS) issueing temporary access keys from OIDC access token obtained by user from Keycloak identity provider.
+- AWS S3 accessed using AWS Security Token Service (STS) issuing temporary access keys from OIDC access token obtained by user from Keycloak identity provider.
 
 ### Setup AWS using OIDC Provider and Security Token Service (STS) with `setup` command
 
