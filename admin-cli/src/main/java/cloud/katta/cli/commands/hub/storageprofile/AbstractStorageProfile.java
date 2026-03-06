@@ -26,7 +26,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--region"}, description = "Default Bucket region, e.g. \"eu-west-1\".", required = true)
     protected String region;
 
-    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
+    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\".", required = false)
     protected List<String> regions;
 
     public AbstractStorageProfile() {
