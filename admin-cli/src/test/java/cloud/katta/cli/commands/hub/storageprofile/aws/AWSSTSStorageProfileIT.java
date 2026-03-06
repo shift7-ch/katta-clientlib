@@ -30,7 +30,7 @@ class AWSSTSStorageProfileIT extends AbtractAdminCLIIT {
     public void testStorageProfileAwsStsSetup() throws Exception {
         final UUID storageProfileId = UUID.randomUUID();
         int rc = new CommandLine(new Katta()).execute(
-                "storageprofile aws sts",
+                "storageprofile", "aws", "sts",
                 "--hubUrl", "http://localhost:8280",
                 "--accessToken", accessToken,
                 "--uuid", storageProfileId.toString(),

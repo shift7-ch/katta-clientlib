@@ -26,7 +26,7 @@ class MinioSTSStorageIT extends AbtractAdminCLIIT {
     @Test
     public void testMinioSetup() throws Exception {
         int rc = new CommandLine(new Katta()).execute(
-                "minioStsSetup",
+                "setup", "minio",
                 "--endpointUrl", "http://localhost:9100",
                 "--hubUrl", "http://localhost:8280",
                 "--accessKey", "minioadmin",
