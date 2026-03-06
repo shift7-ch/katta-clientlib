@@ -19,7 +19,7 @@ import picocli.CommandLine;
  * Based on <a href="https://github.com/cryptomator/hub-cli/commit/bffcf2805530976c4a758990958ff75f9df68c0e#diff-c349f933a7698e31cfe25bd0a638ae487a02ac6fcb429bcce3e315aa8832be8b">hub-cli</a>.
  */
 @CommandLine.Command(name = "accesstoken", description = "Get access token using authorization code flow.", mixinStandardHelpOptions = true)
-public class AuthorizationCodeFlow implements Callable<Void> {
+public class AuthorizationCodeFlow implements Callable<Integer> {
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -35,7 +35,7 @@ public class AuthorizationCodeFlow implements Callable<Void> {
 
 
     @Override
-    public Void call() throws Exception {
+    public Integer call() throws Exception {
         var authResponse = TinyOAuth2.client(clientId)
                 .withTokenEndpoint(URI.create(tokenUrl))
                 .authorizationCodeGrant(URI.create(authUrl))
@@ -43,8 +43,7 @@ public class AuthorizationCodeFlow implements Callable<Void> {
                     spec.commandLine().getOut().println("Please login on " + uri);
                 });
         spec.commandLine().getOut().println(authResponse);
-        printAccessToken(authResponse);
-        return null;
+        return printAccessToken(authResponse);
     }
 
     private int printAccessToken(HttpResponse<String> response) throws JsonProcessingException {
