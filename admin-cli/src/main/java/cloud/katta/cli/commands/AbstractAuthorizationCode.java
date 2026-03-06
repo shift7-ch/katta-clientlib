@@ -56,13 +56,22 @@ public class AbstractAuthorizationCode {
         }
     }
 
-    private String extractAccessToken(HttpResponse<String> response) throws JsonProcessingException {
+    private String extractAccessToken(HttpResponse<String> response) throws IOException {
         var statusCode = response.statusCode();
-        if(statusCode != 200) {
-            System.err.println("""
-                    Request was responded with code %d and body:\n%s\n""".formatted(statusCode, response.body()));
-            return null;
+        if (statusCode != 200) {
+            throw new IOException("""
+                    Failed to retrieve access token. HTTP status: %d, body:
+                    %s
+                    """.formatted(statusCode, response.body()));
         }
-        return new ObjectMapper().reader().readTree(response.body()).get("access_token").asText();
+        var rootNode = new ObjectMapper().reader().readTree(response.body());
+        var accessTokenNode = rootNode.get("access_token");
+        if (accessTokenNode == null || accessTokenNode.isNull()) {
+            throw new IOException("""
+                    Failed to parse access token from response body:
+                    %s
+                    """.formatted(response.body()));
+        }
+        return accessTokenNode.asText();
     }
 }
