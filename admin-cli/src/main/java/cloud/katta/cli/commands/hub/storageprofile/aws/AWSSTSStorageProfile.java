@@ -4,7 +4,6 @@
 
 package cloud.katta.cli.commands.hub.storageprofile.aws;
 
-import java.util.List;
 import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
@@ -36,12 +35,6 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
     String bucketPrefix;
-
-    @CommandLine.Option(names = {"--region"}, description = "Default Bucket region, e.g. \"eu-west-1\".", required = true)
-    String region;
-
-    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
-    List<String> regions;
 
     @Override
     protected void call(final UUID uuid, final String name, final ApiClient apiClient) throws ApiException {

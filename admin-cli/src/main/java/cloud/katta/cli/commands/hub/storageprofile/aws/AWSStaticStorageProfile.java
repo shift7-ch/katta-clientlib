@@ -28,12 +28,6 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true)
 public class AWSStaticStorageProfile extends AbstractStorageProfile {
 
-    @CommandLine.Option(names = {"--region"}, description = "Bucket region, e.g. \"eu-west-1\".", required = true)
-    String region;
-
-    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
-    List<String> regions;
-
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
     String bucketPrefix;
 

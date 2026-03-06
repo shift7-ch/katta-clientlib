@@ -4,6 +4,7 @@
 
 package cloud.katta.cli.commands.hub.storageprofile;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -14,17 +15,26 @@ import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
     @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.default.katta.cloud/\"", required = true)
-    String hubUrl;
+    protected String hubUrl;
 
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
-    String uuid;
+    protected String uuid;
 
     @CommandLine.Option(names = {"--name"}, description = "The name.", required = false, defaultValue = "Storage Profile")
-    String name;
+    protected String name;
+
+    @CommandLine.Option(names = {"--region"}, description = "Default Bucket region, e.g. \"eu-west-1\".", required = true)
+    protected String region;
+
+    @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\"].", required = false)
+    protected List<String> regions;
 
     @Override
     public Void call() throws Exception {
         final String accessToken = login();
+        if(null == name) {
+
+        }
         call(hubUrl, accessToken, null == uuid ? UUID.randomUUID().toString() : uuid, name);
         return null;
     }
