@@ -39,9 +39,7 @@ public class AuthorizationCodeFlow implements Callable<Integer> {
         var authResponse = TinyOAuth2.client(clientId)
                 .withTokenEndpoint(URI.create(tokenUrl))
                 .authorizationCodeGrant(URI.create(authUrl))
-                .authorize(HttpClient.newHttpClient(), uri -> {
-                    spec.commandLine().getOut().println("Please login on " + uri);
-                });
+                .authorize(HttpClient.newHttpClient(), uri -> spec.commandLine().getOut().println("Please login on " + uri));
         spec.commandLine().getOut().println(authResponse);
         return printAccessToken(authResponse);
     }
