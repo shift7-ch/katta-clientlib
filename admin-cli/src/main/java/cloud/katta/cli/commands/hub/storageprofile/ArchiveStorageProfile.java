@@ -18,7 +18,7 @@ import picocli.CommandLine;
  * <p>
  * Requires <code>admin</code> role in Katta Server.
  * <p>
- * See also <a href="https://github.com/shift7-ch/katta-clientlib/blob/main/hub/src/main/resources/openapi.json>OpenAPI Specification</a>.
+ * See also <a href="https://github.com/shift7-ch/katta-clientlib/blob/main/hub/src/main/resources/openapi.json">OpenAPI Specification</a>.
  */
 @CommandLine.Command(name = "archive",
         description = "Upload storage profile for AWS Static.",
