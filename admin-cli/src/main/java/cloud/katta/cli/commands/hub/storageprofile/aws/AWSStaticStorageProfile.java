@@ -66,6 +66,6 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
 
     @Override
     public String toString() {
-        return String.format("AWS Static Storage Profile %s", null == regions ? List.of(region) : regions);
+        return String.format("AWS (Static) Storage Profile %s", null == regions ? List.of(region) : regions);
     }
 }
