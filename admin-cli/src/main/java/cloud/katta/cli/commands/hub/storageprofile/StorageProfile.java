@@ -4,13 +4,14 @@
 
 package cloud.katta.cli.commands.hub.storageprofile;
 
+import cloud.katta.cli.commands.hub.storageprofile.aws.AWS;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "storageprofile", subcommands = {
         ArchiveStorageProfile.class,
-        cloud.katta.cli.commands.hub.storageprofile.aws.Wrapper.class,
+        AWS.class,
         CommandLine.HelpCommand.class
 },
         description = "Setup Storage Provider Integration", mixinStandardHelpOptions = true)
-public class Wrapper {
+public class StorageProfile {
 }

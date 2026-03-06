@@ -4,16 +4,18 @@
 
 package cloud.katta.cli;
 
+import cloud.katta.cli.commands.hub.storageprofile.StorageProfile;
 import cloud.katta.cli.commands.login.AuthorizationCodeFlow;
+import cloud.katta.cli.commands.storage.Setup;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "katta",
         mixinStandardHelpOptions = true,
         subcommands = {
                 // storage
-                cloud.katta.cli.commands.storage.Wrapper.class,
+                Setup.class,
                 // hub
-                cloud.katta.cli.commands.hub.storageprofile.Wrapper.class,
+                StorageProfile.class,
                 // misc.
                 AuthorizationCodeFlow.class,
                 CommandLine.HelpCommand.class,
@@ -21,8 +23,7 @@ import picocli.CommandLine;
 public class Katta {
 
     public static void main(String... args) {
-        var app = new Katta();
-        int exitCode = new CommandLine(app)
+        int exitCode = new CommandLine(new Katta())
                 .setPosixClusteredShortOptionsAllowed(false)
                 .execute(args);
         System.exit(exitCode);

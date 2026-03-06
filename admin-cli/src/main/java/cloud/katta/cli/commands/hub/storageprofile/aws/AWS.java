@@ -12,5 +12,5 @@ import picocli.CommandLine;
         CommandLine.HelpCommand.class
 },
         description = "Setup Storage Provider Integration", mixinStandardHelpOptions = true)
-public class Wrapper {
+public class AWS {
 }
