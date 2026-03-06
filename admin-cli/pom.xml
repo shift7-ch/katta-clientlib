@@ -56,14 +56,10 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>iam</artifactId>
-            <version>2.31.27</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>iam-policy-builder</artifactId>
-            <version>2.31.27</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
@@ -105,6 +101,18 @@
             <version>8.5.17</version>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>2.42.7</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
