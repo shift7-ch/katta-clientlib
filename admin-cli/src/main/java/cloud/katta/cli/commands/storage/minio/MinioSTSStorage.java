@@ -57,10 +57,10 @@ public class MinioSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}-{bucketPrefix}.")
+    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}createbucketpolicy.")
     String createbucketPolicyName;
 
-    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}-{bucketPrefix}.")
+    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}accessbucketpolicy.")
     String accessbucketPolicyName;
 
     @Override
