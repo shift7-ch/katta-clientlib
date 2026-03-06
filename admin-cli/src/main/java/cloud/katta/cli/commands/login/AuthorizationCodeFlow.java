@@ -45,7 +45,9 @@ public class AuthorizationCodeFlow implements Callable<Integer> {
         var statusCode = response.statusCode();
         if(statusCode != 200) {
             System.err.println("""
-                    Request was responded with code %d and body:\n%s\n""".formatted(statusCode, response.body()));
+                    Request was responded with code %d and body:
+                    %s
+                    """.formatted(statusCode, response.body()));
             return statusCode;
         }
         var token = new ObjectMapper().reader().readTree(response.body()).get("access_token").asText();
