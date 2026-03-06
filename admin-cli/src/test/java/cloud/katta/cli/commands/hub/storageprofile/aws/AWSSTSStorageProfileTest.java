@@ -47,8 +47,8 @@ class AWSSTSStorageProfileTest {
         dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
         dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-a-role-web-identity");
-        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-a-role-tagged-session");
+        dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-web-identity-role");
+        dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-tagged-session-role");
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
     }
