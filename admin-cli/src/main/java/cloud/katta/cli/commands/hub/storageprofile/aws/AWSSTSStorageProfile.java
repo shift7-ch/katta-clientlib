@@ -75,6 +75,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-role-tagged-session
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
+                .stsSessionTag(REQUEST_TAG)
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
