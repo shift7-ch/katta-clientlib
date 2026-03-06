@@ -4,6 +4,7 @@
 
 package cloud.katta.cli.commands.hub.storageprofile.aws;
 
+import java.util.List;
 import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
@@ -73,6 +74,11 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("AWS Static Storage Profile %s", null == regions ? List.of(region) : regions);
     }
 }
 

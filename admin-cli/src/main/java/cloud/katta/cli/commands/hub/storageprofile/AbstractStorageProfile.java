@@ -20,7 +20,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
     protected String uuid;
 
-    @CommandLine.Option(names = {"--name"}, description = "The name.", required = false, defaultValue = "Storage Profile")
+    @CommandLine.Option(names = {"--name"}, description = "The name.", required = false)
     protected String name;
 
     @CommandLine.Option(names = {"--region"}, description = "Default Bucket region, e.g. \"eu-west-1\".", required = true)
@@ -32,10 +32,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @Override
     public Void call() throws Exception {
         final String accessToken = login();
-        if(null == name) {
-
-        }
-        call(hubUrl, accessToken, null == uuid ? UUID.randomUUID().toString() : uuid, name);
+        call(hubUrl, accessToken, null == uuid ? UUID.randomUUID().toString() : uuid, null == name ? this.toString() : name);
         return null;
     }
 

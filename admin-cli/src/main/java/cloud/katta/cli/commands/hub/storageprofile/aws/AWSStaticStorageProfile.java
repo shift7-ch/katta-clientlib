@@ -63,4 +63,9 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
     }
+
+    @Override
+    public String toString() {
+        return String.format("AWS Static Storage Profile %s", null == regions ? List.of(region) : regions);
+    }
 }
