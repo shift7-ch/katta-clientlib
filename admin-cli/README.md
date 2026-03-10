@@ -18,8 +18,14 @@ Keycloak.
 katta setup aws \
   --realmUrl <realm-url> \
   --profileName <aws-profile> \
-  --clientId cryptomator
+  --clientId cryptomator \
+  --clientId cryptomatorhub \
+  --clientId cryptomatorvaults \
 ```
+
+* Client ID `cryptomator` is used for Katta Desktop.
+* Client ID `cryptomatorhub` is used for Katta Hub Web Application.
+* Client ID `cryptomatorvaults` is used for Katta Hub Web Application to create buckets.
 
 **Required Options:**
 
@@ -39,7 +45,7 @@ katta storageprofile aws sts \
   --region <aws-region>
   --authUrl <auth-url> \
   --tokenUrl <token-url> \
-  --clientId cryptomator
+  --clientId cryptomator # Authorize as Katta Desktop
 ```
 
 **Required Options:**
