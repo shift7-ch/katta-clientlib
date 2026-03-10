@@ -31,6 +31,9 @@ import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderRequest;
 import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderResponse;
 import software.amazon.awssdk.services.iam.model.CreateRoleRequest;
+import software.amazon.awssdk.services.iam.model.DeleteOpenIdConnectProviderRequest;
+import software.amazon.awssdk.services.iam.model.GetOpenIdConnectProviderRequest;
+import software.amazon.awssdk.services.iam.model.GetOpenIdConnectProviderResponse;
 import software.amazon.awssdk.services.iam.model.GetRoleRequest;
 import software.amazon.awssdk.services.iam.model.GetRoleResponse;
 import software.amazon.awssdk.services.iam.model.ListOpenIdConnectProvidersResponse;
@@ -115,21 +118,40 @@ public class AWSSTSStorage implements Callable<Void> {
         //		aws iam create-open-id-connect-provider --url https://testing.hub.cryptomator.org/kc/realms/cipherduck --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
         //
         final String oidcProviderArn;
-        if(existingOIDCProvider.isEmpty()) {
-            final CreateOpenIdConnectProviderResponse openIDConnectProvider = iam.createOpenIDConnectProvider(CreateOpenIdConnectProviderRequest.builder()
+        if(existingOIDCProvider.isPresent()) {
+            final GetOpenIdConnectProviderResponse response = iam.getOpenIDConnectProvider(GetOpenIdConnectProviderRequest.builder()
+                    .openIDConnectProviderArn(existingOIDCProvider.get().arn()).build());
+            if(response.hasClientIDList()) {
+                if(response.clientIDList().containsAll(clientId)) {
+                    iam.updateOpenIDConnectProviderThumbprint(UpdateOpenIdConnectProviderThumbprintRequest.builder()
+                            .openIDConnectProviderArn(existingOIDCProvider.get().arn())
+                            .thumbprintList(thumbprint).build());
+                    oidcProviderArn = existingOIDCProvider.get().arn();
+                }
+                else {
+                    iam.deleteOpenIDConnectProvider(DeleteOpenIdConnectProviderRequest.builder()
+                            .openIDConnectProviderArn(existingOIDCProvider.get().arn()).build());
+                    oidcProviderArn = iam.createOpenIDConnectProvider(CreateOpenIdConnectProviderRequest.builder()
+                            .url(realmUrl)
+                            .clientIDList(clientId)
+                            .thumbprintList(thumbprint)
+                            .build()).openIDConnectProviderArn();
+                }
+            }
+            else {
+                iam.updateOpenIDConnectProviderThumbprint(UpdateOpenIdConnectProviderThumbprintRequest.builder()
+                        .openIDConnectProviderArn(existingOIDCProvider.get().arn())
+                        .thumbprintList(thumbprint).build());
+                oidcProviderArn = existingOIDCProvider.get().arn();
+            }
+        }
+        else {
+            final CreateOpenIdConnectProviderResponse response = iam.createOpenIDConnectProvider(CreateOpenIdConnectProviderRequest.builder()
                     .url(realmUrl)
                     .clientIDList(clientId)
                     .thumbprintList(thumbprint)
                     .build());
-            oidcProviderArn = openIDConnectProvider.openIDConnectProviderArn();
-            System.out.println(oidcProviderArn);
-        }
-        else {
-            oidcProviderArn = existingOIDCProvider.get().arn();
-            iam.updateOpenIDConnectProviderThumbprint(UpdateOpenIdConnectProviderThumbprintRequest.builder()
-                    .openIDConnectProviderArn(oidcProviderArn)
-                    .thumbprintList(thumbprint).build());
-
+            oidcProviderArn = response.openIDConnectProviderArn();
         }
         System.out.println(oidcProviderArn);
         final String arnPrefix = oidcProviderArn.replace(":oidc-provider" + "/" + arnPostfix, "");
