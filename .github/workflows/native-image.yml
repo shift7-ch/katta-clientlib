@@ -9,6 +9,8 @@ on:
 jobs:
   build-admin-cli:
     name: Build native image for ${{ matrix.os }}
+    permissions:
+      contents: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
