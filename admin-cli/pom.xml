@@ -17,7 +17,6 @@
         <picocli.version>4.7.7</picocli.version>
 
         <mvn-native.version>0.10.0</mvn-native.version>
-        <mvn-gpg.version>3.1.0</mvn-gpg.version>
         <native.optimization>-Ob</native.optimization>
     </properties>
 
