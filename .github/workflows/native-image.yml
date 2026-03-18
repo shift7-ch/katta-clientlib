@@ -31,21 +31,12 @@ jobs:
         working-directory: admin-cli
         run: >
           mvn -B clean package -Pnative,release
-      - name: Create detached GPG signatures with key 615D449FE6E6A235
-        working-directory: admin-cli
-        run: |
-          echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign --output target/katta.asc -a target/katta
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
       - name: Upload executable
         uses: actions/upload-artifact@v6
         with:
           name: katta-cli
           path: |
             admin-cli/target/katta
-            admin-cli/target/katta.asc
           if-no-files-found: error
       - name: Publish executable on Github Releases
         if: startsWith(github.ref, 'refs/tags/')
@@ -55,4 +46,3 @@ jobs:
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
             admin-cli/target/katta
-            admin-cli/target/katta.asc
