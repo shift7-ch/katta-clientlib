@@ -216,28 +216,6 @@
                             <imageName>hub</imageName>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <skipNativeTests>true</skipNativeTests>
-                            <resourcesConfigDirectory>${basedir}/src/main/resources/META-INF/native-image/org.cryptomator.hubcli/resource-config.json
-                            </resourcesConfigDirectory>
-                            <agent>
-                                <enabled>true</enabled>
-                                <defaultMode>Direct</defaultMode>
-                                <modes>
-                                    <direct>config-output-dir=${basedir}/src/main/resources/META-INF/native-image/org.cryptomator.hubcli</direct>
-                                </modes>
-                                <options>
-                                    <callerFilterFiles>
-                                        <filterFile>${basedir}/src/main/resources/META-INF/native-image/caller-filter.json</filterFile>
-                                    </callerFilterFiles>
-                                    <accessFilterFiles>
-                                        <filterFile>${basedir}/src/main/resources/META-INF/native-image/access-filter.json</filterFile>
-                                    </accessFilterFiles>
-                                    <builtinCallerFilter>true</builtinCallerFilter>
-                                    <builtinHeuristicFilter>true</builtinHeuristicFilter>
-                                    <enableExperimentalPredefinedClasses>true</enableExperimentalPredefinedClasses>
-                                    <enableExperimentalUnsafeAllocationTracing>true</enableExperimentalUnsafeAllocationTracing>
-                                    <trackReflectionMetadata>true</trackReflectionMetadata>
-                                </options>
-                            </agent>
                         </configuration>
                     </plugin>
                 </plugins>
