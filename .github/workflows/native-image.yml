@@ -8,8 +8,11 @@ on:
 
 jobs:
   build-admin-cli:
-    name: Build a native image
-    runs-on: ubuntu-latest
+    name: Build native image for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v6
       - uses: graalvm/setup-graalvm@v1
@@ -34,7 +37,7 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v6
         with:
-          name: katta-cli
+          name: katta-cli-${{ matrix.os }}
           path: |
             admin-cli/target/katta
           if-no-files-found: error
