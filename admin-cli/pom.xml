@@ -201,7 +201,7 @@
                             </buildArgs>
                             <fallback>false</fallback>
                             <mainClass>cloud.katta.cli.Katta</mainClass>
-                            <imageName>hub</imageName>
+                            <imageName>katta</imageName>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <skipNativeTests>true</skipNativeTests>
                         </configuration>
