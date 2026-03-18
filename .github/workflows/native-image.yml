@@ -43,13 +43,10 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v6
         with:
-          name: hub-cli
-          working-directory: admin-cli
+          name: katta-cli
           path: |
-            target/hub
-            target/HubCli_completion.sh
-            target/hub.asc
-            target/HubCli_completion*.asc
+            admin-cli/target/katta
+            admin-cli/target/katta.asc
           if-no-files-found: error
       - name: Publish executable on Github Releases
         if: startsWith(github.ref, 'refs/tags/')
@@ -57,9 +54,6 @@ jobs:
         with:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
-          working-directory: admin-cli
           files: |
-            target/hub
-            target/HubCli_completion.sh
-            target/hub.asc
-            target/HubCli_completion*.asc
+            admin-cli/target/katta
+            admin-cli/target/katta.asc
