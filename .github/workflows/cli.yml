@@ -26,16 +26,10 @@ jobs:
       - name: Ensure to use tagged version
         if: startsWith(github.ref, 'refs/tags/')
         run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}
-      - name: Build develop native image
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - name: Build native image
         working-directory: admin-cli
         run: >
           mvn --batch-mode clean package -Pnative -DskipTests -DskipITs
-      - name: Build release native image
-        if: startsWith(github.ref, 'refs/tags/')
-        working-directory: admin-cli
-        run: >
-          mvn -B clean package -Pnative,release
       - name: Upload executable
         uses: actions/upload-artifact@v6
         with:
