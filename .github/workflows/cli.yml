@@ -1,13 +1,13 @@
-name: Build native image
+name: Build Admin CLI Native Image
 
 on:
-  release:
-    types: [ published ]
+  push:
+    tags:
+      - "*"
   workflow_dispatch:
 
-
 jobs:
-  build-admin-cli:
+  cli:
     name: Build native image for ${{ matrix.os }}
     permissions:
       contents: write
