@@ -176,10 +176,7 @@
             <properties>
                 <native.optimization>-O3</native.optimization>
             </properties>
-            <build>
-            </build>
         </profile>
-
         <profile>
             <id>native</id>
             <build>
