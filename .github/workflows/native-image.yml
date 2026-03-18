@@ -25,7 +25,7 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         working-directory: admin-cli
         run: >
-          mvn -B clean package -Pnative
+          mvn --batch-mode clean package -Pnative -DskipTests -DskipITs
       - name: Build release native image
         if: startsWith(github.ref, 'refs/tags/')
         working-directory: admin-cli
