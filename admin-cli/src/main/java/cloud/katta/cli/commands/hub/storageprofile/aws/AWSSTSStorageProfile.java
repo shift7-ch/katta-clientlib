@@ -70,7 +70,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-create-bucket
                 .stsRoleCreateBucketClient(String.format("%s%s", rolePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
                 .stsRoleCreateBucketHub(String.format("%s%s", rolePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-role-web-identity
                 .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s%s%s", rolePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-role-tagged-session
