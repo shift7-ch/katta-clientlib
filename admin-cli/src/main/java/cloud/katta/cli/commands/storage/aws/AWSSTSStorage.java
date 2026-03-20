@@ -382,8 +382,12 @@ public class AWSSTSStorage implements Callable<Void> {
         HttpURLConnection.setFollowRedirects(false);
         final Certificate[] chain = getCertificates(url);
 
-        // TODO is it always first cert?
-        return DigestUtils.sha1Hex(chain[0].getEncoded());
+        // use the root/relevant CA certificate (typically the last in the chain) for the thumbprint
+        if(chain.length == 0) {
+            throw new CertificateEncodingException("No certificates returned for URL: " + url);
+        }
+        final Certificate caCert = chain[chain.length - 1];
+        return DigestUtils.sha1Hex(caCert.getEncoded());
     }
 
     private static Certificate[] getCertificates(final URL url) throws IOException {
