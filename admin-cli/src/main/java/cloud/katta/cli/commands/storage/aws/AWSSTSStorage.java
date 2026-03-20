@@ -31,7 +31,20 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
 import software.amazon.awssdk.policybuilder.iam.IamPrincipalType;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.iam.IamClient;
-import software.amazon.awssdk.services.iam.model.*;
+import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderRequest;
+import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderResponse;
+import software.amazon.awssdk.services.iam.model.CreateRoleRequest;
+import software.amazon.awssdk.services.iam.model.DeleteOpenIdConnectProviderRequest;
+import software.amazon.awssdk.services.iam.model.GetOpenIdConnectProviderRequest;
+import software.amazon.awssdk.services.iam.model.GetOpenIdConnectProviderResponse;
+import software.amazon.awssdk.services.iam.model.GetRoleRequest;
+import software.amazon.awssdk.services.iam.model.GetRoleResponse;
+import software.amazon.awssdk.services.iam.model.ListOpenIdConnectProvidersResponse;
+import software.amazon.awssdk.services.iam.model.NoSuchEntityException;
+import software.amazon.awssdk.services.iam.model.OpenIDConnectProviderListEntry;
+import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
+import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
+import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThumbprintRequest;
 
 import static cloud.katta.cli.commands.common.Defaults.*;
 
@@ -81,9 +94,6 @@ public class AWSSTSStorage implements Callable<Void> {
         // remove trailing slash
         realmUrl = realmUrl.replaceAll("/$", "");
         final String arnPostfix = realmUrl.replace("https://", "");
-        if(roleNamePrefix == null) {
-            roleNamePrefix = arnPostfix.replace("/", "-");
-        }
 
         final URL url = new URI(realmUrl).toURL();
 
