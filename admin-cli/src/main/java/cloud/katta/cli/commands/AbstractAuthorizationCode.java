@@ -11,17 +11,16 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.coffeelibs.tinyoauth2client.TinyOAuth2;
 import picocli.CommandLine;
 
 public class AbstractAuthorizationCode {
 
-    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud//realms/cryptomator/protocol/openid-connect/token\"", required = false)
+    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/realms/cryptomator/protocol/openid-connect/token\"", required = false)
     protected String tokenUrl;
 
-    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud//realms/cryptomator/protocol/openid-connect/auth\"", required = false)
+    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/realms/cryptomator/protocol/openid-connect/auth\"", required = false)
     protected String authUrl;
 
     @CommandLine.Option(names = {"--clientId"}, description = "Keycloak realm URL with scheme. Example: \"cryptomator\"", required = false)

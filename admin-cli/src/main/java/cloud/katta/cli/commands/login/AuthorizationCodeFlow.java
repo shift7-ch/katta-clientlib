@@ -21,10 +21,10 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "accesstoken", description = "Get access token using authorization code flow.", mixinStandardHelpOptions = true)
 public class AuthorizationCodeFlow implements Callable<Integer> {
 
-    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud//realms/cryptomator/protocol/openid-connect/token\"", required = true)
+    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud/realms/cryptomator/protocol/openid-connect/token\"", required = true)
     String tokenUrl;
 
-    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud//realms/cryptomator/protocol/openid-connect/auth\"", required = true)
+    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.default.katta.cloud/realms/cryptomator/protocol/openid-connect/auth\"", required = true)
     String authUrl;
 
     @CommandLine.Option(names = {"--clientId"}, description = "Keycloak realm URL with scheme. Example: \"cryptomator\"", required = true)
