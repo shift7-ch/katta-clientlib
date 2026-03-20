@@ -19,8 +19,8 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.policybuilder.iam.IamCondition;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
@@ -70,7 +70,7 @@ public class AWSSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--roleNamePrefix"}, description = "Role name prefix.", required = false, defaultValue = "katta-")
     String roleNamePrefix;
 
-    @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = true)
+    @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = false, defaultValue = "default")
     String profileName;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults. E.g. \"katta-\".", required = false, defaultValue = "katta-")
@@ -111,7 +111,7 @@ public class AWSSTSStorage implements Callable<Void> {
             System.out.println(String.format("Trying profile credentials provider with profile %s", profileName));
             try (final IamClient iam = IamClient.builder()
                     .region(Region.AWS_GLOBAL)
-                    .credentialsProvider(ProfileCredentialsProvider.create(profileName))
+                    .credentialsProvider(DefaultCredentialsProvider.builder().profileName(profileName).build())
                     .build()) {
                 call(iam, arnPostfix, sha);
             }
