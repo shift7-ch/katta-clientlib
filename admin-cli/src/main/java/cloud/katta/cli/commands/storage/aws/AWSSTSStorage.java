@@ -6,8 +6,6 @@ package cloud.katta.cli.commands.storage.aws;
 
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
@@ -283,17 +281,6 @@ public class AWSSTSStorage implements Callable<Void> {
                 maxSessionDuration
         );
     }
-
-    private static void injectBucketPrefixIntoResources(final JSONObject policy, final String bucketPrefix) {
-        final JSONArray statements = policy.getJSONArray("Statement");
-        for(int i = 0; i < statements.length(); i++) {
-            final JSONArray resources = statements.getJSONObject(i).getJSONArray("Resource");
-            for(int j = 0; j < resources.length(); j++) {
-                resources.put(j, resources.getString(j).replace("cipherduck", bucketPrefix));
-            }
-        }
-    }
-
 
     private void uploadAssumeRolePolicyAndPermissionPolicy(final IamClient iam, final String roleName, final String trustPolicy, final String permissionPolicy, final Integer maxSessionDuration) {
         try {
