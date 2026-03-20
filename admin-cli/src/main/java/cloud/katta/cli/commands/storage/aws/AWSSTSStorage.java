@@ -4,6 +4,7 @@
 
 package cloud.katta.cli.commands.storage.aws;
 
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -20,7 +21,9 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.policybuilder.iam.IamCondition;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
 import software.amazon.awssdk.policybuilder.iam.IamPolicy;
@@ -28,20 +31,7 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
 import software.amazon.awssdk.policybuilder.iam.IamPrincipalType;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.iam.IamClient;
-import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderRequest;
-import software.amazon.awssdk.services.iam.model.CreateOpenIdConnectProviderResponse;
-import software.amazon.awssdk.services.iam.model.CreateRoleRequest;
-import software.amazon.awssdk.services.iam.model.DeleteOpenIdConnectProviderRequest;
-import software.amazon.awssdk.services.iam.model.GetOpenIdConnectProviderRequest;
-import software.amazon.awssdk.services.iam.model.GetOpenIdConnectProviderResponse;
-import software.amazon.awssdk.services.iam.model.GetRoleRequest;
-import software.amazon.awssdk.services.iam.model.GetRoleResponse;
-import software.amazon.awssdk.services.iam.model.ListOpenIdConnectProvidersResponse;
-import software.amazon.awssdk.services.iam.model.NoSuchEntityException;
-import software.amazon.awssdk.services.iam.model.OpenIDConnectProviderListEntry;
-import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest;
-import software.amazon.awssdk.services.iam.model.UpdateAssumeRolePolicyRequest;
-import software.amazon.awssdk.services.iam.model.UpdateOpenIdConnectProviderThumbprintRequest;
+import software.amazon.awssdk.services.iam.model.*;
 
 import static cloud.katta.cli.commands.common.Defaults.*;
 
@@ -100,11 +90,23 @@ public class AWSSTSStorage implements Callable<Void> {
         final String sha = getThumbprint(url);
         System.out.println(sha);
 
-        try (final IamClient iam = IamClient.builder()
-                .region(Region.AWS_GLOBAL)
-                .credentialsProvider(ProfileCredentialsProvider.create(profileName))
-                .build()) {
-            call(iam, arnPostfix, sha);
+        try {
+            System.out.printf("Trying environment credentials provider");
+            try (final IamClient iam = IamClient.builder()
+                    .region(Region.AWS_GLOBAL)
+                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                    .build()) {
+                call(iam, arnPostfix, sha);
+            }
+        }
+        catch(SdkClientException e) {
+            System.out.println(String.format("Trying profile credentials provider with profile %s", profileName));
+            try (final IamClient iam = IamClient.builder()
+                    .region(Region.AWS_GLOBAL)
+                    .credentialsProvider(ProfileCredentialsProvider.create(profileName))
+                    .build()) {
+                call(iam, arnPostfix, sha);
+            }
         }
         return null;
     }
