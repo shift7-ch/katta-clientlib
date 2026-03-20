@@ -42,7 +42,7 @@ Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup
 katta storageprofile aws sts \
   --hubUrl <hub-url> \
   --rolePrefix <arn-role-prefix> \
-  --region <aws-region>
+  --region <aws-region> \
   --authUrl <auth-url> \
   --tokenUrl <token-url> \
   --clientId cryptomator # Authorize as Katta Desktop
