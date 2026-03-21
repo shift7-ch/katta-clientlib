@@ -135,8 +135,8 @@ public class HubSession extends HttpSession<HubApiClient> {
                 host.getProtocol().getOAuthClientSecret(),
                 host.getProtocol().getOAuthScopes(),
                 host.getProtocol().isOAuthPKCE(), prompt)
-                .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
-                .withRedirectUri(host.getProtocol().getOAuthRedirectUrl());
+                .setFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
+                .setRedirectUri(host.getProtocol().getOAuthRedirectUrl());
         configuration.setServiceUnavailableRetryStrategy(new CustomServiceUnavailableRetryStrategy(host,
                 new ExecutionCountServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService))));
         configuration.addInterceptorLast(authorizationService);

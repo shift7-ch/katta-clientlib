@@ -83,8 +83,6 @@ public class HubVaultListService implements ListService {
                                     ));
                             log.info("Loaded vault {}", vault);
                             registry.add(vault);
-                            // Add reference to self
-                            bucket.attributes().setVault(vault.getHome());
                             vaults.add(bucket);
                             listener.chunk(directory, vaults);
                         }

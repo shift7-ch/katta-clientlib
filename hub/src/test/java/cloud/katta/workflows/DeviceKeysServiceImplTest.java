@@ -6,17 +6,19 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStore;
-import ch.cyberduck.core.exception.LocalAccessDeniedException;
-import cloud.katta.client.model.UserDto;
-import cloud.katta.crypto.DeviceKeys;
-import cloud.katta.protocols.hub.HubProtocol;
-import cloud.katta.testsetup.AbstractHubTest;
-import cloud.katta.workflows.exceptions.AccessException;
+import ch.cyberduck.core.exception.AccessDeniedException;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Base64;
 import java.util.UUID;
+
+import cloud.katta.client.model.UserDto;
+import cloud.katta.crypto.DeviceKeys;
+import cloud.katta.protocols.hub.HubProtocol;
+import cloud.katta.testsetup.AbstractHubTest;
+import cloud.katta.workflows.exceptions.AccessException;
 
 import static cloud.katta.workflows.DeviceKeysServiceImpl.KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME;
 import static cloud.katta.workflows.DeviceKeysServiceImpl.KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME;
@@ -28,7 +30,7 @@ import static org.mockito.Mockito.*;
 class DeviceKeysServiceImplTest extends AbstractHubTest {
 
     @Test
-    void testGetDeviceKeys() throws LocalAccessDeniedException, AccessException {
+    void testGetDeviceKeys() throws AccessDeniedException, AccessException {
         final PasswordStore storeMock = Mockito.mock(PasswordStore.class);
         when(storeMock.getPassword(eq(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), any())).thenReturn("v");
         final DeviceKeysServiceImpl service = new DeviceKeysServiceImpl(storeMock);
@@ -42,7 +44,7 @@ class DeviceKeysServiceImplTest extends AbstractHubTest {
     }
 
     @Test
-    void testStoreDeviceKeys() throws LocalAccessDeniedException, AccessException {
+    void testStoreDeviceKeys() throws AccessDeniedException, AccessException {
         final PasswordStore storeMock = Mockito.mock(PasswordStore.class);
         when(storeMock.getPassword(eq(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), any())).thenReturn("v");
         final DeviceKeysServiceImpl service = new DeviceKeysServiceImpl(storeMock);
