@@ -149,7 +149,7 @@ public class UserKeysServiceImpl implements UserKeysService {
         return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
 
-    public static UserDto WithCountToUserDto(WithCounts withCounts) {
+    public static UserDto withCountToUserDto(WithCounts withCounts) {
         return new UserDto()
                 .id(withCounts.getId())
                 .firstName(withCounts.getFirstName())
@@ -162,7 +162,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .email(withCounts.getEmail())
                 .realmRoles(withCounts.getRealmRoles())
                 .pictureUrl(withCounts.getPictureUrl())
-                .privateKeys(withCounts.getPrivateKey())
+                .privateKeys(withCounts.getPrivateKeys())
                 .setupCode(withCounts.getSetupCode())
                 .type(withCounts.getType());
     }

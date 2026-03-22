@@ -14,7 +14,6 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.TrustedUserDto;
 import cloud.katta.client.model.UserDto;
-import cloud.katta.client.model.WithCounts;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.wot.SignedKeys;
 import cloud.katta.crypto.wot.WoT;
@@ -45,7 +44,7 @@ public class WoTServiceImpl implements WoTService {
 
         // 1. From the perspective of the currently logged-in user, GET a list of trusted users from /api/users/trusted
         final List<TrustedUserDto> trusts = usersApi.apiUsersTrustedGet();
-        final List<UserDto> users = usersApi.apiUsersGet().stream().map(UserKeysServiceImpl::WithCountToUserDto).collect(Collectors.toList());
+        final List<UserDto> users = usersApi.apiUsersGet().stream().map(UserKeysServiceImpl::withCountToUserDto).collect(Collectors.toList());
 
         // 2. Verify all returned signature chains
         return WoT.verifyTrusts(trusts, users, signerPublicKey);

@@ -6,7 +6,7 @@ package cloud.katta.workflows;
 
 import cloud.katta.client.model.WithCounts;
 
-import static cloud.katta.workflows.UserKeysServiceImpl.WithCountToUserDto;
+import static cloud.katta.workflows.UserKeysServiceImpl.withCountToUserDto;
 
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
@@ -60,7 +60,7 @@ class WoTServiceImplTest {
                     .name(String.format("user%s", i))
                     .ecdhPublicKey(encodePublicKey(userKeys.ecdhKeyPair().getPublic()))
                     .ecdsaPublicKey(encodePublicKey(userKeys.ecdsaKeyPair().getPublic()));
-            final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(),  WithCountToUserDto(previousUser));
+            final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(),  withCountToUserDto(previousUser));
             bobSignatureChain.add(0, signature);
 
             previousUser = user;
@@ -88,7 +88,7 @@ class WoTServiceImplTest {
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
-        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(WithCountToUserDto(alice));
+        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(withCountToUserDto(alice));
         Mockito.when(usersMock.apiUsersGet()).thenReturn(Arrays.asList(alice, bob, oscar));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
 
