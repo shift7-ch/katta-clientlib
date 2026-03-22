@@ -20,6 +20,7 @@ import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.DeviceDto;
 import cloud.katta.client.model.Type1;
 import cloud.katta.client.model.UserDto;
+import cloud.katta.client.model.WithCounts;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
@@ -146,4 +147,23 @@ public class UserKeysServiceImpl implements UserKeysService {
     private static boolean validate(final UserDto me) {
         return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
+
+    public static UserDto withCountsToUserDto(WithCounts withCounts) {
+        return new UserDto()
+                .id(withCounts.getId())
+                .firstName(withCounts.getFirstName())
+                .lastName(withCounts.getLastName())
+                .name(withCounts.getName())
+                .ecdhPublicKey(withCounts.getEcdhPublicKey())
+                .ecdsaPublicKey(withCounts.getEcdsaPublicKey())
+                .devices(withCounts.getDevices())
+                .language(withCounts.getLanguage())
+                .email(withCounts.getEmail())
+                .realmRoles(withCounts.getRealmRoles())
+                .pictureUrl(withCounts.getPictureUrl())
+                .privateKeys(withCounts.getPrivateKeys())
+                .setupCode(withCounts.getSetupCode())
+                .type(withCounts.getType());
+    }
+
 }
