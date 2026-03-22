@@ -5,7 +5,7 @@
 package cloud.katta.workflows;
 
 import ch.cyberduck.core.DefaultPathAttributes;
-import ch.cyberduck.core.DisabledLoginCallback;
+import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.UUIDRandomStringService;
@@ -16,6 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
@@ -36,8 +37,9 @@ import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
+import cloud.katta.crypto.uvf.HubVaultMetadataUVFProvider;
+import cloud.katta.crypto.uvf.UVFKeySet;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.SetupCodeJWE;
@@ -116,7 +118,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new DefaultPathAttributes().setDisplayname(String.format("Vault %s", name)));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
-            final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()
+            final UVFMetadataPayload vaultMetadata = UVFMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .username(config.vault.username)
                             .password(config.vault.password)
@@ -128,9 +130,11 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                             .enabled(true)
                             .maxWotDepth(3));
             final Session<?> storage = new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata);
-            final HubUVFVault cryptomator = new HubUVFVault(storage, bucket, new DisabledLoginCallback());
-            cryptomator.create(hubSession, location.getIdentifier(), new VaultIdMetadataUVFProvider(storage.getHost(), vaultId,
-                    UvfMetadataPayload.createKeys(), vaultMetadata));
+            final HubUVFVault cryptomator = new HubUVFVault(storage, bucket, LoginCallback.noop);
+            final UVFKeySet keys = UVFKeySet.create();
+            cryptomator.create(hubSession, location.getIdentifier(), new HubVaultMetadataUVFProvider(vaultId, keys,
+                    vaultMetadata.encrypt(hubSession.getClient().getBasePath(), vaultId, keys.serialize()).getBytes(StandardCharsets.US_ASCII),
+                    vaultMetadata.computeRootDirectoryMetadata(), vaultMetadata.computeRootDirectoryIdHash()));
 
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 

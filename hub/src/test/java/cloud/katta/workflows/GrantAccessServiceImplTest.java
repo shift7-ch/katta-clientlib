@@ -14,8 +14,8 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -48,8 +48,8 @@ class GrantAccessServiceImplTest {
                 .ecdsaPublicKey(bobKeys.encodedEcdsaPublicKey());
 
         when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
-        when(vaultServiceMock.getVaultMetadataJWE(vaultId, aliceKeys)).thenReturn(new UvfMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
-        when(vaultServiceMock.getVaultAccessTokenJWE(vaultId, aliceKeys)).thenReturn(new UvfAccessTokenPayload());
+        when(vaultServiceMock.getVaultMetadataJWE(vaultId, aliceKeys)).thenReturn(new UVFMetadataPayload().withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
+        when(vaultServiceMock.getVaultAccessTokenJWE(vaultId, aliceKeys)).thenReturn(new UVFAccessTokenPayload());
         when(wotServiceMock.getTrustLevelsPerUserId(aliceKeys)).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 
         final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, vaultServiceMock, wotServiceMock);

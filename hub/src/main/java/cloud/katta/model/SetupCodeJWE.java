@@ -4,7 +4,6 @@
 
 package cloud.katta.model;
 
-
 import java.security.interfaces.ECPublicKey;
 
 import cloud.katta.crypto.JWE;
@@ -17,11 +16,13 @@ public class SetupCodeJWE extends JWEPayload {
     @JsonProperty("setupCode")
     String setupCode;
 
-
     public SetupCodeJWE(final String setupCode) {
         this.setupCode = setupCode;
     }
 
+    /**
+     * @return Encrypts the setup code for a specific user.
+     */
     public String encryptForUser(final ECPublicKey recipientPublicKey) throws JOSEException, JsonProcessingException {
         return JWE.ecdhEsEncrypt(this, "org.cryptomator.hub.userkey", recipientPublicKey);
     }
