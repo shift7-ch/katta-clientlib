@@ -39,6 +39,7 @@
                 }
             },
             "AuthorityDto": {
+                "type": "object",
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/UserDto"
@@ -59,7 +60,6 @@
                         "MEMBER": "#/components/schemas/MemberDto"
                     }
                 },
-                "type": "object",
                 "properties": {
                     "id": {
                         "type": "string"
@@ -81,9 +81,6 @@
                     "hubId": {
                         "type": "string"
                     },
-                    "hasLicense": {
-                        "type": "boolean"
-                    },
                     "email": {
                         "type": "string"
                     },
@@ -103,6 +100,9 @@
                     },
                     "managedInstance": {
                         "type": "boolean"
+                    },
+                    "licenseKey": {
+                        "type": "string"
                     }
                 }
             },
@@ -134,11 +134,32 @@
                         "type": "integer",
                         "format": "int32"
                     },
+                    "entitlements": {
+                        "$ref": "#/components/schemas/HubLicenseEntitlements"
+                    },
+                    "billingUrl": {
+                        "type": "string"
+                    },
                     "keycloakClientIdCryptomatorVaults": {
                         "type": "string"
                     },
                     "uuid": {
                         "type": "string"
+                    }
+                }
+            },
+            "CreateGroupDto": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "pictureUrl": {
+                        "type": "string",
+                        "maxLength": 255
                     }
                 }
             },
@@ -174,8 +195,59 @@
                     }
                 }
             },
+            "CreateUserDto": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "email",
+                    "firstName",
+                    "lastName",
+                    "password",
+                    "realmRoles"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "pictureUrl": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "groupIds": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "realmRoles": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "$ref": "#/components/schemas/RealmRole"
+                        }
+                    }
+                }
+            },
             "DeviceDto": {
                 "type": "object",
+                "required": [
+                    "name",
+                    "publicKey",
+                    "userPrivateKey"
+                ],
                 "properties": {
                     "id": {
                         "type": "string",
@@ -212,12 +284,7 @@
                     "legacyDevice": {
                         "type": "boolean"
                     }
-                },
-                "required": [
-                    "name",
-                    "publicKey",
-                    "userPrivateKey"
-                ]
+                }
             },
             "GroupDto": {
                 "type": "object",
@@ -237,6 +304,41 @@
                     "memberSize": {
                         "type": "integer",
                         "format": "int32"
+                    },
+                    "vaultCount": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "HubLicenseEntitlements": {
+                "type": "object",
+                "properties": {
+                    "seats": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "showTrialHint": {
+                        "type": "boolean"
+                    },
+                    "auditLogRetentionDays": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "emergencyAccessEnabled": {
+                        "type": "boolean"
+                    },
+                    "keycloakAccessEnabled": {
+                        "type": "boolean"
+                    },
+                    "iosLicense": {
+                        "type": "string"
+                    },
+                    "androidLicense": {
+                        "type": "string"
+                    },
+                    "desktopLicense": {
+                        "type": "string"
                     }
                 }
             },
@@ -284,7 +386,7 @@
                     "ecdsaPublicKey": {
                         "type": "string"
                     },
-                    "role": {
+                    "vaultRole": {
                         "$ref": "#/components/schemas/Role"
                     },
                     "memberSize": {
@@ -299,6 +401,74 @@
                     "S3STATIC",
                     "S3STS"
                 ]
+            },
+            "RealmRole": {
+                "type": "string",
+                "enum": [
+                    "user",
+                    "admin",
+                    "create-vaults"
+                ]
+            },
+            "RecoveredKeyShareDto": {
+                "type": "object",
+                "properties": {
+                    "processPrivateKey": {
+                        "type": "string",
+                        "pattern": "[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*"
+                    },
+                    "unrecoveredKeyShare": {
+                        "type": "string",
+                        "pattern": "[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*"
+                    },
+                    "recoveredKeyShare": {
+                        "type": "string",
+                        "pattern": "[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*"
+                    },
+                    "signedProcessInfo": {
+                        "type": "string",
+                        "pattern": "[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]*=*"
+                    }
+                }
+            },
+            "RecoveryProcessDto": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "vaultId",
+                    "type",
+                    "processPublicKey",
+                    "recoveredKeyShares"
+                ],
+                "properties": {
+                    "id": {
+                        "$ref": "#/components/schemas/UUID"
+                    },
+                    "vaultId": {
+                        "$ref": "#/components/schemas/UUID"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/Type2"
+                    },
+                    "details": {
+                        "type": "string"
+                    },
+                    "requiredKeyShares": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 2
+                    },
+                    "processPublicKey": {
+                        "type": "string"
+                    },
+                    "recoveredKeyShares": {
+                        "type": "object",
+                        "minProperties": 1,
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/RecoveredKeyShareDto"
+                        }
+                    }
+                }
             },
             "Role": {
                 "type": "string",
@@ -330,6 +500,9 @@
             },
             "SettingsDto": {
                 "type": "object",
+                "required": [
+                    "emergencyCouncilMemberIds"
+                ],
                 "properties": {
                     "hubId": {
                         "type": "string"
@@ -344,10 +517,40 @@
                         "type": "integer",
                         "format": "int32",
                         "minimum": 0
+                    },
+                    "enableEmergencyAccess": {
+                        "type": "boolean"
+                    },
+                    "defaultRequiredEmergencyKeyShares": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                    },
+                    "defaultMinMembers": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                    },
+                    "allowChoosingEmergencyCouncil": {
+                        "type": "boolean"
+                    },
+                    "emergencyCouncilMemberIds": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 }
             },
             "StorageProfileDto": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "protocol",
+                    "archived"
+                ],
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/StorageProfileS3StaticDto"
@@ -364,27 +567,20 @@
                         "S3STS": "#/components/schemas/StorageProfileS3STSDto"
                     }
                 },
-                "type": "object",
-                "required": [
-                    "id",
-                    "name",
-                    "protocol",
-                    "archived"
-                ],
                 "properties": {
                     "id": {
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
+                        "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "$ref": "#/components/schemas/UUID"
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS).",
+                        "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "$ref": "#/components/schemas/Protocol"
+                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -393,7 +589,6 @@
                 }
             },
             "StorageProfileS3STSDto": {
-                "title": "StorageProfileS3STSDto",
                 "type": "object",
                 "required": [
                     "id",
@@ -411,20 +606,21 @@
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity",
                     "stsSessionTag"
                 ],
+                "title": "StorageProfileS3STSDto",
                 "properties": {
                     "id": {
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
+                        "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "$ref": "#/components/schemas/UUID"
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS).",
+                        "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "$ref": "#/components/schemas/Protocol"
+                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -435,16 +631,20 @@
                             "string",
                             "null"
                         ],
-                        "description": "Scheme of S3 endpoint for template upload/bucket creation. Defaults to default for protocol, i.e. https in most cases.",
-                        "example": "https"
+                        "examples": [
+                            "https"
+                        ],
+                        "description": "Scheme of S3 endpoint for template upload/bucket creation. Defaults to default for protocol, i.e. https in most cases."
                     },
                     "hostname": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "description": "Hostname S3 endpoint for template upload/bucket creation. Defaults to AWS SDK default.",
-                        "example": "s3-us-gov-west-1.amazonaws.com"
+                        "examples": [
+                            "s3-us-gov-west-1.amazonaws.com"
+                        ],
+                        "description": "Hostname S3 endpoint for template upload/bucket creation. Defaults to AWS SDK default."
                     },
                     "port": {
                         "type": [
@@ -452,25 +652,33 @@
                             "null"
                         ],
                         "format": "int32",
-                        "description": "Port S3 endpoint for template upload/bucket creation. Defaults to default port for scheme.",
-                        "example": 443
+                        "examples": [
+                            443
+                        ],
+                        "description": "Port S3 endpoint for template upload/bucket creation. Defaults to default port for scheme."
                     },
                     "withPathStyleAccessEnabled": {
                         "type": "boolean",
+                        "examples": [
+                            false
+                        ],
                         "description": "Whether to use path style for S3 endpoint for template upload/bucket creation.",
-                        "example": false,
                         "default": false
                     },
                     "storageClass": {
-                        "description": "Storage class for upload. Defaults to STANDARD",
+                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES",
                         "type": "string",
-                        "example": "STANDARD",
-                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES"
+                        "examples": [
+                            "STANDARD"
+                        ],
+                        "description": "Storage class for upload. Defaults to STANDARD"
                     },
                     "region": {
                         "type": "string",
+                        "examples": [
+                            "443"
+                        ],
                         "description": "Default region selected in the frontend/client to create bucket in.",
-                        "example": "443",
                         "default": "us-east-1"
                     },
                     "regions": {
@@ -482,18 +690,24 @@
                     },
                     "bucketPrefix": {
                         "type": "string",
-                        "description": "Buckets are create with name <bucket prefix><vault UUID>.",
-                        "example": "cipherduck"
+                        "examples": [
+                            "cipherduck"
+                        ],
+                        "description": "Buckets are create with name <bucket prefix><vault UUID>."
                     },
                     "stsRoleCreateBucketClient": {
                         "type": "string",
-                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO.",
-                        "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        "examples": [
+                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        ],
+                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
                     },
                     "stsRoleCreateBucketHub": {
                         "type": "string",
-                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO.",
-                        "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        "examples": [
+                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        ],
+                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
                     },
                     "stsEndpoint": {
                         "type": [
@@ -515,22 +729,26 @@
                         "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
                     },
                     "bucketEncryption": {
-                        "description": "Enable bucket versioning upon bucket creation",
+                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
                         "type": "string",
-                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION"
+                        "description": "Enable bucket versioning upon bucket creation"
                     },
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity": {
                         "type": "string",
-                        "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)",
-                        "example": "arn:aws:iam::930717317329:role/cipherduck_chain_01"
+                        "examples": [
+                            "arn:aws:iam::930717317329:role/cipherduck_chain_01"
+                        ],
+                        "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)"
                     },
                     "stsRoleAccessBucketAssumeRoleTaggedSession": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "description": "roleArn to assume for STS AssumeRole in role chaining (AWS only, not MinIO)",
-                        "example": "arn:aws:iam::930717317329:role/cipherduck_chain_02"
+                        "examples": [
+                            "arn:aws:iam::930717317329:role/cipherduck_chain_02"
+                        ],
+                        "description": "roleArn to assume for STS AssumeRole in role chaining (AWS only, not MinIO)"
                     },
                     "stsDurationSeconds": {
                         "type": [
@@ -548,7 +766,6 @@
                 }
             },
             "StorageProfileS3StaticDto": {
-                "title": "StorageProfileS3StaticDto",
                 "type": "object",
                 "required": [
                     "id",
@@ -564,20 +781,21 @@
                     "bucketVersioning",
                     "bucketEncryption"
                 ],
+                "title": "StorageProfileS3Dto",
                 "properties": {
                     "id": {
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
+                        "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "$ref": "#/components/schemas/UUID"
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS).",
+                        "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "$ref": "#/components/schemas/Protocol"
+                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -588,16 +806,20 @@
                             "string",
                             "null"
                         ],
-                        "description": "Scheme of S3 endpoint for template upload/bucket creation. Defaults to default for protocol, i.e. https in most cases.",
-                        "example": "https"
+                        "examples": [
+                            "https"
+                        ],
+                        "description": "Scheme of S3 endpoint for template upload/bucket creation. Defaults to default for protocol, i.e. https in most cases."
                     },
                     "hostname": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "description": "Hostname S3 endpoint for template upload/bucket creation. Defaults to AWS SDK default.",
-                        "example": "s3-us-gov-west-1.amazonaws.com"
+                        "examples": [
+                            "s3-us-gov-west-1.amazonaws.com"
+                        ],
+                        "description": "Hostname S3 endpoint for template upload/bucket creation. Defaults to AWS SDK default."
                     },
                     "port": {
                         "type": [
@@ -605,25 +827,33 @@
                             "null"
                         ],
                         "format": "int32",
-                        "description": "Port S3 endpoint for template upload/bucket creation. Defaults to default port for scheme.",
-                        "example": 443
+                        "examples": [
+                            443
+                        ],
+                        "description": "Port S3 endpoint for template upload/bucket creation. Defaults to default port for scheme."
                     },
                     "withPathStyleAccessEnabled": {
                         "type": "boolean",
+                        "examples": [
+                            false
+                        ],
                         "description": "Whether to use path style for S3 endpoint for template upload/bucket creation.",
-                        "example": false,
                         "default": false
                     },
                     "storageClass": {
-                        "description": "Storage class for upload. Defaults to STANDARD",
+                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES",
                         "type": "string",
-                        "example": "STANDARD",
-                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES"
+                        "examples": [
+                            "STANDARD"
+                        ],
+                        "description": "Storage class for upload. Defaults to STANDARD"
                     },
                     "region": {
                         "type": "string",
+                        "examples": [
+                            "443"
+                        ],
                         "description": "Default region selected in the frontend/client to create bucket in.",
-                        "example": "443",
                         "default": "us-east-1"
                     },
                     "regions": {
@@ -635,18 +865,24 @@
                     },
                     "bucketPrefix": {
                         "type": "string",
-                        "description": "Buckets are create with name <bucket prefix><vault UUID>.",
-                        "example": "cipherduck"
+                        "examples": [
+                            "cipherduck"
+                        ],
+                        "description": "Buckets are create with name <bucket prefix><vault UUID>."
                     },
                     "stsRoleCreateBucketClient": {
                         "type": "string",
-                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO.",
-                        "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        "examples": [
+                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        ],
+                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
                     },
                     "stsRoleCreateBucketHub": {
                         "type": "string",
-                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO.",
-                        "example": "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        "examples": [
+                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                        ],
+                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
                     },
                     "stsEndpoint": {
                         "type": [
@@ -668,9 +904,9 @@
                         "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
                     },
                     "bucketEncryption": {
-                        "description": "Enable bucket versioning upon bucket creation",
+                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
                         "type": "string",
-                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION"
+                        "description": "Enable bucket versioning upon bucket creation"
                     }
                 }
             },
@@ -703,10 +939,63 @@
                     "MOBILE"
                 ]
             },
+            "Type2": {
+                "type": "string",
+                "enum": [
+                    "CHANGE_PERMISSIONS",
+                    "COUNCIL_CHANGE"
+                ]
+            },
             "UUID": {
                 "type": "string",
                 "format": "uuid",
                 "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+            },
+            "UpdateGroupDto": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "pictureUrl": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                }
+            },
+            "UpdateUserDto": {
+                "type": "object",
+                "required": [
+                    "realmRoles"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "pictureUrl": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "realmRoles": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "$ref": "#/components/schemas/RealmRole"
+                        }
+                    }
+                }
             },
             "UserDto": {
                 "type": "object",
@@ -726,8 +1015,21 @@
                     "email": {
                         "type": "string"
                     },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
                     "language": {
                         "type": "string"
+                    },
+                    "realmRoles": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "devices": {
                         "type": "array",
@@ -772,6 +1074,9 @@
                         "type": "string",
                         "pattern": "[^*<>\"]*"
                     },
+                    "creationTime": {
+                        "$ref": "#/components/schemas/Instant"
+                    },
                     "description": {
                         "type": "string",
                         "pattern": "[^*<>\"]*"
@@ -779,8 +1084,16 @@
                     "archived": {
                         "type": "boolean"
                     },
-                    "creationTime": {
-                        "$ref": "#/components/schemas/Instant"
+                    "requiredEmergencyKeyShares": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                    },
+                    "emergencyKeyShares": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
                     },
                     "uvfMetadataFile": {
                         "type": "string"
@@ -810,6 +1123,29 @@
                     }
                 }
             },
+            "VaultDtoWithRole": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "$ref": "#/components/schemas/UUID"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "archived": {
+                        "type": "boolean"
+                    },
+                    "creationTime": {
+                        "$ref": "#/components/schemas/Instant"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/Role"
+                    }
+                }
+            },
             "VersionDto": {
                 "type": "object",
                 "properties": {
@@ -818,6 +1154,200 @@
                     },
                     "keycloakVersion": {
                         "type": "string"
+                    }
+                }
+            },
+            "WithCounts": {
+                "type": "object",
+                "properties": {
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "devices": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "$ref": "#/components/schemas/DeviceDto"
+                        }
+                    },
+                    "pictureUrl": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "publicKey": {
+                        "type": "string",
+                        "deprecated": true
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/Type"
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "realmRoles": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privateKey": {
+                        "type": "string",
+                        "deprecated": true
+                    },
+                    "ecdsaPublicKey": {
+                        "type": "string"
+                    },
+                    "setupCode": {
+                        "type": "string"
+                    },
+                    "ecdhPublicKey": {
+                        "type": "string"
+                    },
+                    "privateKeys": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "devicesCount": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "groupsCount": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "accessibleVaultCount": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "WithDetails": {
+                "type": "object",
+                "properties": {
+                    "memberSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "vaultCount": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pictureUrl": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/Type"
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuthorityDto"
+                        }
+                    },
+                    "vaults": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VaultDtoWithRole"
+                        }
+                    }
+                }
+            },
+            "WithDetails1": {
+                "type": "object",
+                "properties": {
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "devices": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "$ref": "#/components/schemas/DeviceDto"
+                        }
+                    },
+                    "pictureUrl": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "publicKey": {
+                        "type": "string",
+                        "deprecated": true
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/Type"
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "realmRoles": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privateKey": {
+                        "type": "string",
+                        "deprecated": true
+                    },
+                    "ecdsaPublicKey": {
+                        "type": "string"
+                    },
+                    "setupCode": {
+                        "type": "string"
+                    },
+                    "ecdhPublicKey": {
+                        "type": "string"
+                    },
+                    "privateKeys": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GroupDto"
+                        }
+                    },
+                    "accessibleVaults": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VaultDtoWithRole"
+                        }
+                    },
+                    "legacyDevices": {
+                        "type": "array",
+                        "uniqueItems": true,
+                        "items": {
+                            "$ref": "#/components/schemas/DeviceDto"
+                        }
                     }
                 }
             }
@@ -1456,6 +1986,228 @@
                 ]
             }
         },
+        "/api/emergency-access/{processId}": {
+            "put": {
+                "summary": "starts a new recovery process",
+                "parameters": [
+                    {
+                        "name": "processId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecoveryProcessDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "process created"
+                    },
+                    "400": {
+                        "description": "invalid request, e.g. missing required fields"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/emergency-access/{processId}/abort": {
+            "delete": {
+                "summary": "aborts an existing recovery process",
+                "parameters": [
+                    {
+                        "name": "processId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "existing recovery process aborted"
+                    },
+                    "404": {
+                        "description": "existing recovery process not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/emergency-access/{processId}/complete": {
+            "delete": {
+                "summary": "completes an existing recovery process",
+                "parameters": [
+                    {
+                        "name": "processId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "existing recovery process completed"
+                    },
+                    "404": {
+                        "description": "existing recovery process not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/emergency-access/{processId}/recovered-key-shares": {
+            "post": {
+                "summary": "adds recovered key share",
+                "parameters": [
+                    {
+                        "name": "processId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecoveredKeyShareDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "key share added"
+                    },
+                    "400": {
+                        "description": "invalid request, e.g. missing required fields"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/emergency-access/{vaultId}": {
+            "get": {
+                "summary": "finds an existing recovery process",
+                "parameters": [
+                    {
+                        "name": "vaultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RecoveryProcessDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/groups": {
             "get": {
                 "summary": "list all groups",
@@ -1486,7 +2238,190 @@
                 "security": [
                     {
                         "SecurityScheme": [
-                            "user"
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "summary": "create a new group in Keycloak",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateGroupDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "group created"
+                    },
+                    "400": {
+                        "description": "invalid input"
+                    },
+                    "409": {
+                        "description": "group name already exists"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Groups Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/groups/{groupId}": {
+            "put": {
+                "summary": "update a group in Keycloak",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateGroupDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "group updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GroupDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "group not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "tags": [
+                    "Groups Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "get": {
+                "summary": "get a specific group",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "group found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WithDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "group not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Groups Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "delete a group from Keycloak",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "group deleted"
+                    },
+                    "404": {
+                        "description": "group not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Groups Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
                         ]
                     }
                 ]
@@ -1533,7 +2468,133 @@
                 "security": [
                     {
                         "SecurityScheme": [
-                            "user"
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/groups/{groupId}/members/{userId}": {
+            "delete": {
+                "summary": "remove a user from a group",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "user removed from group"
+                    },
+                    "404": {
+                        "description": "group or user not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Groups Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "summary": "add a user to a group",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[-_.a-zA-Z0-9]*"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "user added to group"
+                    },
+                    "404": {
+                        "description": "group or user not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Groups Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/license/refresh": {
+            "post": {
+                "summary": "Refresh license information",
+                "description": "Refreshes the license information from the license server.",
+                "responses": {
+                    "204": {
+                        "description": "License information refreshed"
+                    },
+                    "500": {
+                        "description": "License refresh failed"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "License Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
                         ]
                     }
                 ]
@@ -1974,7 +3035,7 @@
         },
         "/api/users": {
             "get": {
-                "summary": "list all users",
+                "summary": "list all users with counts",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1983,7 +3044,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/UserDto"
+                                        "$ref": "#/components/schemas/WithCounts"
                                     }
                                 }
                             }
@@ -2002,7 +3063,47 @@
                 "security": [
                     {
                         "SecurityScheme": [
-                            "user"
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "summary": "create a new user in Keycloak",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "user created"
+                    },
+                    "400": {
+                        "description": "invalid input"
+                    },
+                    "409": {
+                        "description": "user already exists"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Users Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
                         ]
                     }
                 ]
@@ -2333,6 +3434,146 @@
                 ]
             }
         },
+        "/api/users/{id}": {
+            "put": {
+                "summary": "update a user in Keycloak",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "user updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserDto"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "user has federated identity and cannot be modified"
+                    },
+                    "404": {
+                        "description": "user not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "tags": [
+                    "Users Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "get": {
+                "summary": "get a specific user",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "user found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WithDetails1"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "user not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Users Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "delete a user from Keycloak",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "user deleted"
+                    },
+                    "403": {
+                        "description": "user has federated identity and cannot be deleted"
+                    },
+                    "404": {
+                        "description": "user not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    }
+                },
+                "tags": [
+                    "Users Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/vaults/accessible": {
             "get": {
                 "summary": "list all accessible vaults",
@@ -2411,6 +3652,43 @@
                     {
                         "SecurityScheme": [
                             "admin"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/vaults/recoverable": {
+            "get": {
+                "summary": "list all recoverable vaults",
+                "description": "list all vaults that can be recovered by the currently logged in user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VaultDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
                         ]
                     }
                 ]
@@ -2518,8 +3796,7 @@
                         "in": "query",
                         "name": "minio",
                         "schema": {
-                            "type": "boolean",
-                            "default": false
+                            "type": "boolean"
                         }
                     },
                     {
@@ -2527,8 +3804,7 @@
                         "in": "query",
                         "name": "aws",
                         "schema": {
-                            "type": "boolean",
-                            "default": false
+                            "type": "boolean"
                         }
                     },
                     {
@@ -2665,10 +3941,10 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "minProperties": 1,
                                 "additionalProperties": {
                                     "type": "string"
-                                },
-                                "minProperties": 1
+                                }
                             }
                         }
                     },
@@ -2682,7 +3958,7 @@
                         "description": "number of users granted access exceeds available license seats"
                     },
                     "403": {
-                        "description": "not a vault owner"
+                        "description": "not a vault owner or emergency access council member"
                     },
                     "404": {
                         "description": "at least one user has not been found"
@@ -2936,6 +4212,61 @@
             }
         },
         "/api/vaults/{vaultId}/members": {
+            "put": {
+                "summary": "set vault members",
+                "description": "replaces all direct vault members with the given ones",
+                "parameters": [
+                    {
+                        "name": "vaultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "minProperties": 1,
+                                "additionalProperties": {
+                                    "$ref": "#/components/schemas/Role"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "members updated"
+                    },
+                    "400": {
+                        "description": "invalid members in request body"
+                    },
+                    "403": {
+                        "description": "not a vault owner"
+                    },
+                    "404": {
+                        "description": "vault not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            },
             "get": {
                 "summary": "list vault members",
                 "description": "list all users or groups that this vault has been shared with directly (not inherited via group membership)",
@@ -3215,15 +4546,5 @@
     "info": {
         "title": "hub-backend API",
         "version": "1.5.0-SNAPSHOT"
-    },
-    "servers": [
-        {
-            "url": "http://localhost:8080",
-            "description": "Auto generated value"
-        },
-        {
-            "url": "http://0.0.0.0:8080",
-            "description": "Auto generated value"
-        }
-    ]
+    }
 }
