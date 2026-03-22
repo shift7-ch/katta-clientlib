@@ -57,7 +57,7 @@ class KeyRotationTest extends AbstractHubTest {
             final List<VaultDto> vaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
 
             // open to all users - does not require admin privileges in Cryptomator hub!
-            final List<UserDto> userDtos = usersResourceApi.apiUsersGet();
+            final List<UserDto> userDtos = usersResourceApi.apiUsersGet().stream().map(UserKeysServiceImpl::withCountToUserDto).collect(Collectors.toList());
 
             final Map<String, String> userPublicKeys = userDtos.stream()
                     .filter(u -> u.getEcdhPublicKey() != null)

@@ -6,6 +6,8 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.Host;
 
+import cloud.katta.client.model.WithCounts;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -146,4 +148,23 @@ public class UserKeysServiceImpl implements UserKeysService {
     private static boolean validate(final UserDto me) {
         return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
     }
+
+    public static UserDto withCountToUserDto(WithCounts withCounts) {
+        return new UserDto()
+                .id(withCounts.getId())
+                .firstName(withCounts.getFirstName())
+                .lastName(withCounts.getLastName())
+                .name(withCounts.getName())
+                .ecdhPublicKey(withCounts.getEcdhPublicKey())
+                .ecdsaPublicKey(withCounts.getEcdsaPublicKey())
+                .devices(withCounts.getDevices())
+                .language(withCounts.getLanguage())
+                .email(withCounts.getEmail())
+                .realmRoles(withCounts.getRealmRoles())
+                .pictureUrl(withCounts.getPictureUrl())
+                .privateKeys(withCounts.getPrivateKeys())
+                .setupCode(withCounts.getSetupCode())
+                .type(withCounts.getType());
+    }
+
 }

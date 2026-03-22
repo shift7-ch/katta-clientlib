@@ -44,7 +44,7 @@ public class WoTServiceImpl implements WoTService {
 
         // 1. From the perspective of the currently logged-in user, GET a list of trusted users from /api/users/trusted
         final List<TrustedUserDto> trusts = usersApi.apiUsersTrustedGet();
-        final List<UserDto> users = usersApi.apiUsersGet();
+        final List<UserDto> users = usersApi.apiUsersGet().stream().map(UserKeysServiceImpl::withCountToUserDto).collect(Collectors.toList());
 
         // 2. Verify all returned signature chains
         return WoT.verifyTrusts(trusts, users, signerPublicKey);

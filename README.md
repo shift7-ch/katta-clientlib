@@ -25,6 +25,12 @@ docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml 
 docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
 ```
 
+For integration tests:
+```bash
+docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local --env-file hub/src/test/resources/.local.env up  --wait
+docker compose -f hub/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
+```
+
 ### Architecture
 
 The following diagram shows the docker services:

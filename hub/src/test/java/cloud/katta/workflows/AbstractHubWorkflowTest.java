@@ -20,6 +20,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
@@ -135,7 +136,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
 
             log.info("S02 {} alice shares vault with admin as owner", setup);
-            final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet();
+            final List<UserDto> userDtos = new UsersResourceApi(hubSession.getClient()).apiUsersGet().stream().map(UserKeysServiceImpl::withCountToUserDto).collect(Collectors.toList());
             String adminId = null;
             for(final UserDto user : userDtos) {
                 if("admin".equals(user.getName())) {

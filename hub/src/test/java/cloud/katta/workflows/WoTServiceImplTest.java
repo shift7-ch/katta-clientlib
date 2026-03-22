@@ -4,6 +4,10 @@
 
 package cloud.katta.workflows;
 
+import cloud.katta.client.model.WithCounts;
+
+import static cloud.katta.workflows.UserKeysServiceImpl.withCountToUserDto;
+
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -41,32 +45,32 @@ class WoTServiceImplTest {
         final int len = 5;
 
         final UserKeys bobKeys = UserKeys.create();
-        final UserDto bob = new UserDto()
+        final WithCounts bob = new WithCounts()
                 .id(UUID.randomUUID().toString())
                 .name("bob")
                 .ecdhPublicKey(encodePublicKey(bobKeys.ecdhKeyPair().getPublic()))
                 .ecdsaPublicKey(encodePublicKey(bobKeys.ecdsaKeyPair().getPublic()));
-        UserDto previousUser = bob;
+        WithCounts previousUser = bob;
         UserKeys previousKeys = bobKeys;
 
         for(int i = 0; i < len; i++) {
             final UserKeys userKeys = UserKeys.create();
-            final UserDto user = new UserDto()
+            final WithCounts user = new WithCounts()
                     .id(UUID.randomUUID().toString())
                     .name(String.format("user%s", i))
                     .ecdhPublicKey(encodePublicKey(userKeys.ecdhKeyPair().getPublic()))
                     .ecdsaPublicKey(encodePublicKey(userKeys.ecdsaKeyPair().getPublic()));
-            final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(), previousUser);
+            final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(),  withCountToUserDto(previousUser));
             bobSignatureChain.add(0, signature);
 
             previousUser = user;
             previousKeys = userKeys;
         }
-        final UserDto alice = previousUser;
+        final WithCounts alice = previousUser;
         final UserKeys aliceKeys = previousKeys;
 
         final UserKeys oscarKeys = UserKeys.create();
-        final UserDto oscar = new UserDto()
+        final WithCounts oscar = new WithCounts()
                 .id(UUID.randomUUID().toString())
                 .name("oscar")
                 .ecdhPublicKey(encodePublicKey(oscarKeys.ecdhKeyPair().getPublic()))
@@ -84,7 +88,7 @@ class WoTServiceImplTest {
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
-        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(alice);
+        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(withCountToUserDto(alice));
         Mockito.when(usersMock.apiUsersGet()).thenReturn(Arrays.asList(alice, bob, oscar));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
 
