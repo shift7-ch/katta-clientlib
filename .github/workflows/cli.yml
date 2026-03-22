@@ -1,0 +1,47 @@
+name: Build Admin CLI Native Image
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  cli:
+    name: Build native image for ${{ matrix.os }}
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Ensure to use tagged version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}
+      - name: Build native image
+        working-directory: admin-cli
+        run: >
+          mvn --batch-mode clean package -Pnative -DskipTests -DskipITs
+      - name: Upload executable
+        uses: actions/upload-artifact@v6
+        with:
+          name: katta-cli-${{ matrix.os }}
+          path: |
+            admin-cli/target/katta
+          if-no-files-found: error
+      - name: Publish executable on Github Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          files: |
+            admin-cli/target/katta
