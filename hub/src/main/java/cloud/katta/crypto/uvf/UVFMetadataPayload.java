@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.crypto.uvf;
@@ -11,18 +11,12 @@ import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.cryptomator.cryptolib.api.Cryptor;
 import org.cryptomator.cryptolib.api.CryptorProvider;
-import org.cryptomator.cryptolib.api.DirectoryContentCryptor;
-import org.cryptomator.cryptolib.api.DirectoryMetadata;
 import org.cryptomator.cryptolib.api.UVFMasterkey;
-import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +25,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.model.JWEPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -40,20 +33,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEAlgorithm;
 import com.nimbusds.jose.JWEHeader;
 import com.nimbusds.jose.JWEObjectJSON;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.MultiDecrypter;
 import com.nimbusds.jose.crypto.MultiEncrypter;
-import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
-import com.nimbusds.jose.jwk.gen.OctetSequenceKeyGenerator;
-
-import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
 
 /**
  * Represents payload of <a href="https://github.com/encryption-alliance/unified-vault-format/blob/develop/vault%20metadata/README.md"><code>vault.uvf</code> metadata</a>.
@@ -71,11 +57,8 @@ import static cloud.katta.crypto.KeyHelper.decodePrivateKey;
  * </ul>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class UvfMetadataPayload extends JWEPayload {
+public class UVFMetadataPayload extends JWEPayload {
     private static final String UVF_SPEC_VERSION_KEY_PARAM = "uvf.spec.version";
-
-    private static final String KID_MEMBERKEY = "org.cryptomator.hub.memberkey";
-    private static final String KID_RECOVERYKEY_PREFIX = "org.cryptomator.hub.recoverykey.%s";
 
     private static final String UVF_FILEFORMAT = "AES-256-GCM-32k";
     private static final String UVF_NAME_FORMAT = "AES-SIV-512-B64URL";
@@ -107,28 +90,20 @@ public class UvfMetadataPayload extends JWEPayload {
     @JsonProperty(value = "cloud.katta.storage", required = true)
     VaultMetadataJWEBackendDto storage;
 
-
-    public static UvfMetadataPayload fromJWE(final String jwe) throws JsonProcessingException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
-        return mapper.readValue(jwe, UvfMetadataPayload.class);
+    public UVFMetadataPayload() {
     }
 
-    public String toJSON() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
-        return mapper.writeValueAsString(this);
-    }
-
-    public static UvfMetadataPayload create() {
+    /**
+     * Creates a new instance with initialized values. Initially, there is one seed in the map identified by its KID
+     * and the initial and latest seed is set to this single seed in the map via its KID
+     */
+    public static UVFMetadataPayload create() {
         final String kid = Base64.getUrlEncoder().encodeToString(new AlphanumericRandomStringService(4).random().getBytes(StandardCharsets.UTF_8));
         final byte[] rawSeed = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawSeed);
         final byte[] kdfSalt = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(kdfSalt);
-
-
-        return new UvfMetadataPayload()
+        return new UVFMetadataPayload()
                 .withFileFormat(UVF_FILEFORMAT)
                 .withNameFormat(UVF_NAME_FORMAT)
                 .withSeeds(new HashMap<String, String>() {{
@@ -140,105 +115,31 @@ public class UvfMetadataPayload extends JWEPayload {
                 .withKdfSalt(Base64.getUrlEncoder().encodeToString(kdfSalt));
     }
 
-    public String computeRootDirIdHash() throws JsonProcessingException {
+    /**
+     * @return hashed root directory ID using master key cryptor
+     */
+    public String computeRootDirectoryIdHash() throws JsonProcessingException {
         final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
         final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
-        final byte[] rootDirId = masterKey.rootDirId();
-        return cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(rootDirId);
+        return cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(masterKey.rootDirId());
     }
 
-    public byte[] computeRootDirUvf() throws JsonProcessingException {
+    /**
+     * @return encrypted root directory metadata using content cryptor
+     */
+    public byte[] computeRootDirectoryMetadata() throws JsonProcessingException {
         final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
         final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
         final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
-        DirectoryMetadata rootDirMetadata = cryptor.directoryContentCryptor().rootDirectoryMetadata();
-        DirectoryContentCryptor dirContentCryptor = cryptor.directoryContentCryptor();
-        return dirContentCryptor.encryptDirectoryMetadata(rootDirMetadata);
-    }
-
-    public static final class UniversalVaultFormatJWKS {
-        private final OctetSequenceKey memberKey;
-        private final ECKey recoveryKeyJWK;
-        private final P384KeyPair recoveryKey;
-
-        public ECKey recoveryKey() {
-            return recoveryKeyJWK;
-        }
-
-        public OctetSequenceKey memberKey() {
-            return memberKey;
-        }
-
-        private UniversalVaultFormatJWKS() throws JOSEException {
-            memberKey = new OctetSequenceKeyGenerator(256)
-                    .keyID(KID_MEMBERKEY)
-                    .algorithm(JWEAlgorithm.A256KW)
-                    .generate();
-
-            recoveryKey = P384KeyPair.generate();
-
-            final ECKey recoveryKeyJWKWithoutThumbprint = new ECKey.Builder(Curve.P_384,
-                    recoveryKey.getPublic())
-                    .build();
-
-
-            recoveryKeyJWK = new ECKey.Builder(Curve.P_384,
-                    recoveryKey.getPublic())
-                    .algorithm(JWEAlgorithm.ECDH_ES_A256KW)
-                    .keyID(String.format(KID_RECOVERYKEY_PREFIX, recoveryKeyJWKWithoutThumbprint.computeThumbprint()))
-                    .privateKey(recoveryKey.getPrivate())
-                    .build();
-        }
-
-        public JWKSet toJWKSet() {
-            return new JWKSet(Arrays.asList(memberKey, recoveryKeyJWK));
-        }
-
-        /**
-         * Retrieve Recovery Key as JSON Web Key
-         *
-         * @return The JSON object string representation. Only public keys will be included
-         */
-        public String serializePublicRecoveryKey() {
-            return new JWKSet(recoveryKeyJWK).toString();
-        }
-
-        public UvfAccessTokenPayload toAccessToken() {
-            return new UvfAccessTokenPayload().withKey(Base64.getEncoder().encodeToString(memberKey.toByteArray()));
-        }
-
-        public UvfAccessTokenPayload toOwnerAccessToken() {
-            return new UvfAccessTokenPayload()
-                    .withKey(Base64.getEncoder().encodeToString(memberKey.toByteArray()))
-                    .withRecoveryKey(Base64.getEncoder().encodeToString(recoveryKey.getPrivate().getEncoded()));
-        }
-
-        public static OctetSequenceKey memberKeyFromRawKey(final byte[] raw) {
-
-            return new OctetSequenceKey.Builder(raw)
-                    .keyID(KID_MEMBERKEY)
-                    .algorithm(JWEAlgorithm.A256KW)
-                    .build();
-        }
-
-        public static ECKey recoveryKeyFromRawKey(final ECKey publicRecoveryKey, final byte[] raw) throws NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException {
-            return new ECKey.Builder(publicRecoveryKey).privateKey(decodePrivateKey(Base64.getEncoder().encodeToString(raw))).build();
-        }
-    }
-
-    public static UniversalVaultFormatJWKS createKeys() throws JOSEException {
-        return new UniversalVaultFormatJWKS();
-    }
-
-    public UvfMetadataPayload() {
+        return cryptor.directoryContentCryptor().encryptDirectoryMetadata(cryptor.directoryContentCryptor().rootDirectoryMetadata());
     }
 
     public String fileFormat() {
         return fileFormat;
     }
 
-    public UvfMetadataPayload withFileFormat(final String fileFormat) {
+    public UVFMetadataPayload withFileFormat(final String fileFormat) {
         this.fileFormat = fileFormat;
         return this;
     }
@@ -247,7 +148,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return nameFormat;
     }
 
-    public UvfMetadataPayload withNameFormat(final String nameFormat) {
+    public UVFMetadataPayload withNameFormat(final String nameFormat) {
         this.nameFormat = nameFormat;
         return this;
     }
@@ -256,7 +157,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return seeds;
     }
 
-    public UvfMetadataPayload withSeeds(final Map<String, String> keys) {
+    public UVFMetadataPayload withSeeds(final Map<String, String> keys) {
         this.seeds = keys;
         return this;
     }
@@ -265,7 +166,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return initialSeed;
     }
 
-    public UvfMetadataPayload withinitialSeed(final String initialSeed) {
+    public UVFMetadataPayload withinitialSeed(final String initialSeed) {
         this.initialSeed = initialSeed;
         return this;
     }
@@ -274,7 +175,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return latestSeed;
     }
 
-    public UvfMetadataPayload withLatestSeed(final String latestSeed) {
+    public UVFMetadataPayload withLatestSeed(final String latestSeed) {
         this.latestSeed = latestSeed;
         return this;
     }
@@ -284,7 +185,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return kdf;
     }
 
-    public UvfMetadataPayload withKdf(final String kdf) {
+    public UVFMetadataPayload withKdf(final String kdf) {
         this.kdf = kdf;
         return this;
     }
@@ -293,7 +194,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return kdfSalt;
     }
 
-    public UvfMetadataPayload withKdfSalt(final String kdfSalt) {
+    public UVFMetadataPayload withKdfSalt(final String kdfSalt) {
         this.kdfSalt = kdfSalt;
         return this;
     }
@@ -302,7 +203,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return automaticAccessGrant;
     }
 
-    public UvfMetadataPayload withAutomaticAccessGrant(final VaultMetadataJWEAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto) {
+    public UVFMetadataPayload withAutomaticAccessGrant(final VaultMetadataJWEAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto) {
         this.automaticAccessGrant = vaultMetadataJWEAutomaticAccessGrantDto;
         return this;
     }
@@ -311,7 +212,7 @@ public class UvfMetadataPayload extends JWEPayload {
         return storage;
     }
 
-    public UvfMetadataPayload withStorage(final VaultMetadataJWEBackendDto backend) {
+    public UVFMetadataPayload withStorage(final VaultMetadataJWEBackendDto backend) {
         this.storage = backend;
         return this;
     }
@@ -322,10 +223,8 @@ public class UvfMetadataPayload extends JWEPayload {
      * @param jwe The jwe
      * @param jwk The jwk
      */
-    public static UvfMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
+    public static UVFMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
         final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
-
-
         // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.11
         // Recipients MAY consider the JWS to be invalid if the critical
         // list contains any Header Parameter names defined by this
@@ -334,11 +233,11 @@ public class UvfMetadataPayload extends JWEPayload {
         if(null == uvfSpecVersion || !uvfSpecVersion.equals(1L)) {
             throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
         }
-
         jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM)));
-
         final Payload payload = jweObject.getPayload();
-        return UvfMetadataPayload.fromJWE(payload.toString());
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JsonNullableModule());
+        return mapper.readValue(payload.toString(), UVFMetadataPayload.class);
     }
 
     /**
@@ -375,6 +274,12 @@ public class UvfMetadataPayload extends JWEPayload {
         return builder.serializeGeneral();
     }
 
+    public String toJSON() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JsonNullableModule());
+        return mapper.writeValueAsString(this);
+    }
+
     @Override
     public String toString() {
         return "UvfMetadataPayload{" +
@@ -399,7 +304,7 @@ public class UvfMetadataPayload extends JWEPayload {
             return false;
         }
 
-        final UvfMetadataPayload that = (UvfMetadataPayload) o;
+        final UVFMetadataPayload that = (UVFMetadataPayload) o;
         return Objects.equals(fileFormat, that.fileFormat) && Objects.equals(nameFormat, that.nameFormat) && Objects.equals(seeds, that.seeds) && Objects.equals(initialSeed, that.initialSeed) && Objects.equals(latestSeed, that.latestSeed) && Objects.equals(kdf, that.kdf) && Objects.equals(kdfSalt, that.kdfSalt) && Objects.equals(automaticAccessGrant, that.automaticAccessGrant) && Objects.equals(storage, that.storage);
     }
 

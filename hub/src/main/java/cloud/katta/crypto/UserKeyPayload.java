@@ -29,7 +29,6 @@ public class UserKeyPayload extends JWEPayload {
     @JsonProperty(JSON_PROPERTY_ECDSA_PRIVATE_KEY)
     String ecdsaPrivateKey;
 
-
     public UserKeyPayload() {
     }
 
@@ -55,6 +54,9 @@ public class UserKeyPayload extends JWEPayload {
 
     public static UserKeyPayload createFromPayload(final Payload payload) {
         final Map<String, Object> fields = payload.toJSONObject();
-        return new UserKeyPayload((String) fields.get(JSON_PROPERTY_ECDH_PRIVATE_KEY), (String) fields.get(JSON_PROPERTY_ECDSA_PRIVATE_KEY));
+        return new UserKeyPayload(
+                (String) fields.get(JSON_PROPERTY_ECDH_PRIVATE_KEY),
+                (String) fields.get(JSON_PROPERTY_ECDSA_PRIVATE_KEY)
+        );
     }
 }

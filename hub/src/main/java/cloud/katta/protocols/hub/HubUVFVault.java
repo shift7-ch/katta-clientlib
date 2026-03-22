@@ -4,14 +4,11 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.DisabledCancelCallback;
-import ch.cyberduck.core.DisabledHostKeyCallback;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostKeyCallback;
 import ch.cyberduck.core.LoginCallback;
-import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
-import ch.cyberduck.core.cryptomator.AbstractVault;
 import ch.cyberduck.core.cryptomator.impl.uvf.CryptoVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.InteroperabilityException;
@@ -23,6 +20,7 @@ import ch.cyberduck.core.proxy.ProxyFactory;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.shared.DefaultAttributesFinderFeature;
 import ch.cyberduck.core.shared.DefaultFindFeature;
+import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.vault.VaultMetadataProvider;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
@@ -40,7 +38,9 @@ import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
+import cloud.katta.crypto.uvf.HubVaultKeys;
+import cloud.katta.crypto.uvf.HubVaultMetadataUVFProvider;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -116,19 +116,22 @@ public class HubUVFVault extends CryptoVault {
     }
 
     @Override
-    public AbstractVault create(final Session<?> session, final String region, final VaultMetadataProvider metadata) throws BackgroundException {
+    public HubUVFVault create(final Session<?> session, final String region, final VaultMetadataProvider metadata) throws BackgroundException {
         try {
             final HubSession hub = HubSession.coerce(session);
             final Path home = this.getHome();
-            final UUID vaultId = VaultIdMetadataUVFProvider.cast(metadata).getVaultId();
+            final HubVaultMetadataUVFProvider provider = HubVaultMetadataUVFProvider.cast(metadata);
+            final HubVaultKeys keys = provider.getKeys();
+            final UUID vaultId = provider.getVaultId();
+            log.debug("Create vault with ID {}", vaultId);
             final VaultDto vaultDto = new VaultDto()
                     .id(vaultId)
                     .name(home.attributes().getDisplayname())
                     .description(null)
                     .archived(false)
                     .creationTime(DateTime.now())
-                    .uvfMetadataFile(new String(VaultIdMetadataUVFProvider.cast(metadata).getMetadata(), StandardCharsets.US_ASCII))
-                    .uvfKeySet(VaultIdMetadataUVFProvider.cast(metadata).getJwks().serializePublicRecoveryKey());
+                    .uvfMetadataFile(new String(provider.getVaultMetadata(), StandardCharsets.US_ASCII))
+                    .uvfKeySet(HubVaultKeys.serializePublicRecoveryKey(keys.recoveryKey()).toString());
             // Create vault in Hub
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hub.getClient());
             log.debug("Create vault {}", vaultDto);
@@ -140,8 +143,9 @@ public class HubUVFVault extends CryptoVault {
             final UserDto userDto = hub.getMe();
             final DeviceSetupCallback setup = login.getFeature(DeviceSetupCallback.class);
             final UserKeys userKeys = hub.getUserKeys(setup);
-            vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId,
-                    Collections.singletonMap(userDto.getId(), VaultIdMetadataUVFProvider.cast(metadata).getJwks().toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+            // Share vault with myself including admin access with recovery key
+            vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
+                    new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
             // Upload vault template to storage
             log.debug("Connect to {}", storage);
             final Host configuration = storage.getHost();
@@ -152,9 +156,10 @@ public class HubUVFVault extends CryptoVault {
                     HostPreferencesFactory.get(storage.getHost()).getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET));
             // No role chaining when creating vault
             configuration.setProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, null);
-            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), login, new DisabledCancelCallback());
+            storage.open(ProxyFactory.get(), HostKeyCallback.noop, login, CancelCallback.noop);
             log.debug("Upload vault template to {}", storage);
-            return super.create(storage, HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion(), metadata);
+            super.create(storage, HubStorageLocationService.StorageLocation.fromIdentifier(region).getRegion(), metadata);
+            return this;
         }
         catch(JOSEException | JsonProcessingException e) {
             throw new InteroperabilityException(e.getMessage(), e);
@@ -167,15 +172,14 @@ public class HubUVFVault extends CryptoVault {
     /**
      *
      * @param session  Hub Connection
-     * @param prompt   Return user keys
-     * @param metadata metadata
+     * @param metadata metadata Return user keys
      * @return Vault configuration with storage connection
      */
     @Override
-    public HubUVFVault load(final Session<?> session, final PasswordCallback prompt, final VaultMetadataProvider metadata) throws BackgroundException {
+    public HubUVFVault load(final Session<?> session, final VaultMetadataProvider metadata) throws BackgroundException {
         log.debug("Connect to {}", storage);
         try {
-            storage.open(ProxyFactory.get(), new DisabledHostKeyCallback(), login, new DisabledCancelCallback());
+            storage.open(ProxyFactory.get(), HostKeyCallback.noop, login, CancelCallback.noop);
         }
         catch(BackgroundException e) {
             log.warn("Skip loading vault with failure {} connecting to storage", e.toString());
@@ -183,7 +187,7 @@ public class HubUVFVault extends CryptoVault {
         }
         log.debug("Initialize vault {}", this);
         // Initialize cryptors
-        super.load(storage, prompt, metadata);
+        super.load(storage, metadata);
         return this;
     }
 
