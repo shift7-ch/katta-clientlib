@@ -30,7 +30,7 @@ jobs:
         run: >
           mvn --batch-mode clean package -pl admin-cli -am -Pnative -DskipTests -DskipITs
       - name: Upload executable
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: katta-cli-${{ matrix.os }}
           path: |
