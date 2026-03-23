@@ -10,8 +10,8 @@ import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -29,7 +29,7 @@ public interface VaultService {
      * @param userKeys EC key pair
      * @return Vault metadata
      */
-    UvfMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
+    UVFMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get vault access token containing vault member key and recovery key (if owner)
@@ -40,7 +40,7 @@ public interface VaultService {
      * @param userKeys EC key pair
      * @return User specific access token
      */
-    UvfAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
+    UVFAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get storage configuration for vault
@@ -48,7 +48,7 @@ public interface VaultService {
      * @param metadataPayload Vault metadata including storage configuration
      * @return Storage profile
      */
-    StorageProfileDtoWrapper getVaultStorageProfile(UvfMetadataPayload metadataPayload) throws ApiException, AccessException, SecurityFailure;
+    StorageProfileDtoWrapper getVaultStorageProfile(UVFMetadataPayload metadataPayload) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get storage session for vault
@@ -59,5 +59,5 @@ public interface VaultService {
      * @return Storage Session
      * @throws AccessException Unsupported storage configuration found for vault
      */
-    Session<?> getVaultStorageSession(HubSession session, UUID vaultId, UvfMetadataPayload metadataPayload) throws ApiException, AccessException;
+    Session<?> getVaultStorageSession(HubSession session, UUID vaultId, UVFMetadataPayload metadataPayload) throws ApiException, AccessException;
 }

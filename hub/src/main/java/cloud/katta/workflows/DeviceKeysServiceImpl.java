@@ -7,7 +7,7 @@ package cloud.katta.workflows;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
-import ch.cyberduck.core.exception.LocalAccessDeniedException;
+import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.nio.LocalProtocol;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,11 +16,11 @@ import org.apache.logging.log4j.Logger;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
-import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
-
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.workflows.exceptions.AccessException;
+
+import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
 
 public class DeviceKeysServiceImpl implements DeviceKeysService {
     private static final Logger log = LogManager.getLogger(DeviceKeysServiceImpl.class.getName());
@@ -76,7 +76,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
                 throw new SecurityException(e);
             }
         }
-        catch(LocalAccessDeniedException e) {
+        catch(AccessDeniedException e) {
             throw new AccessException(e);
         }
     }
@@ -93,7 +93,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
             log.debug("Saved device key pair for {} in keychain", accountName);
             return deviceKeys;
         }
-        catch(LocalAccessDeniedException e) {
+        catch(AccessDeniedException e) {
             throw new AccessException(e);
         }
     }

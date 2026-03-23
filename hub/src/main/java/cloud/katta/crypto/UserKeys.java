@@ -15,12 +15,12 @@ import java.text.ParseException;
 import java.util.Base64;
 import java.util.Objects;
 
-import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
-import static cloud.katta.crypto.UserKeyPayload.createFromPayload;
-
-import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
+
+import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
+import static cloud.katta.crypto.UserKeyPayload.createFromPayload;
 
 /**
  * Represents Cryptomator Hub <a href="https://docs.cryptomator.org/en/latest/security/hub/#user-key-pair>User Keys</a>.
@@ -178,7 +178,7 @@ public class UserKeys implements Destroyable {
      * @return The token's payload
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.decryptAccessToken()</a>
      */
-    public UvfAccessTokenPayload decryptAccessToken(final String jwe) throws ParseException, JOSEException, JsonProcessingException {
-        return UvfAccessTokenPayload.fromJWE(JWE.decryptEcdhEs(jwe, this.ecdhKeyPair().getPrivate()).toString());
+    public UVFAccessTokenPayload decryptAccessToken(final String jwe) throws ParseException, JOSEException, JsonProcessingException {
+        return UVFAccessTokenPayload.fromJWE(JWE.decryptEcdhEs(jwe, this.ecdhKeyPair().getPrivate()).toString());
     }
 }

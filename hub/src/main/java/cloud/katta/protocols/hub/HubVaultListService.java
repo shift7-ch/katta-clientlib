@@ -30,16 +30,15 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
-import cloud.katta.crypto.uvf.UvfJWKCallback;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
+import cloud.katta.crypto.uvf.HubVaultMetadataUVFProvider;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFKeySet;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.nimbusds.jose.JOSEException;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
@@ -68,30 +67,26 @@ public class HubVaultListService implements ListService {
                     try {
                         // Find storage configuration in vault metadata
                         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-                        final UvfMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
+                        final UVFMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
                         final Session<?> storage = vaultService.getVaultStorageSession(session, vaultDto.getId(), vaultMetadata);
                         final Path bucket = new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
                                 new DefaultPathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
                         try {
-                            final UvfAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
-                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session, new UvfJWKCallback(accessToken.memberKeyRecipient()),
-                                    new VaultIdMetadataUVFProvider(vaultDto.getId(),
-                                            UvfMetadataPayload.createKeys(),
-                                            vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
-                                            vaultMetadata.computeRootDirUvf(),
-                                            vaultMetadata.computeRootDirIdHash()
-                                    ));
+                            // JSON Web Key
+                            final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
+                            final UVFKeySet jwk = new UVFKeySet(accessToken.key());
+                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session,
+                                    new HubVaultMetadataUVFProvider(vaultDto.getId(), jwk, vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
+                                            vaultMetadata.computeRootDirectoryMetadata(), vaultMetadata.computeRootDirectoryIdHash()));
                             log.info("Loaded vault {}", vault);
                             registry.add(vault);
-                            // Add reference to self
-                            bucket.attributes().setVault(vault.getHome());
                             vaults.add(bucket);
                             listener.chunk(directory, vaults);
                         }
                         catch(VaultUnlockCancelException e) {
                             log.warn("Skip vault {} with failure {} loading", vaultDto, e);
                         }
-                        catch(JsonProcessingException | JOSEException e) {
+                        catch(JsonProcessingException e) {
                             throw new SecurityFailure(e);
                         }
                     }

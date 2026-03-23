@@ -16,7 +16,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.ParseException;
-import java.util.Base64;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
@@ -24,8 +23,9 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFKeySet;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubAwareProfile;
@@ -36,8 +36,6 @@ import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
-
-import static cloud.katta.crypto.uvf.UvfMetadataPayload.UniversalVaultFormatJWKS.memberKeyFromRawKey;
 
 public class VaultServiceImpl implements VaultService {
     private static final Logger log = LogManager.getLogger(VaultServiceImpl.class);
@@ -55,15 +53,15 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public UvfMetadataPayload getVaultMetadataJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure, AccessException {
+    public UVFMetadataPayload getVaultMetadataJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure, AccessException {
         final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
         // contains vault member key
-        final UvfAccessTokenPayload accessToken = this.getVaultAccessTokenJWE(vaultId, userKeys);
+        final UVFAccessTokenPayload accessToken = this.getVaultAccessTokenJWE(vaultId, userKeys);
         // extract and decode vault key
-        final OctetSequenceKey rawMemberKey = memberKeyFromRawKey(Base64.getDecoder().decode(accessToken.key()));
+        final OctetSequenceKey memberKey = new UVFKeySet(accessToken.key()).memberKey();
         // decode vault metadata (incl. key material)
         try {
-            return UvfMetadataPayload.decryptWithJWK(vault.getUvfMetadataFile(), rawMemberKey);
+            return UVFMetadataPayload.decryptWithJWK(vault.getUvfMetadataFile(), memberKey);
         }
         catch(ParseException | JsonProcessingException | JOSEException e) {
             throw new SecurityFailure(e);
@@ -71,7 +69,7 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public UvfAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure {
+    public UVFAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure {
         // Get the user-specific vault key with private user key
         final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vaultId, false);
         try {
@@ -83,14 +81,14 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public StorageProfileDtoWrapper getVaultStorageProfile(final UvfMetadataPayload metadataPayload) throws ApiException {
+    public StorageProfileDtoWrapper getVaultStorageProfile(final UVFMetadataPayload metadataPayload) throws ApiException {
         log.debug("Load profile {}", metadataPayload.storage().getProvider());
         return StorageProfileDtoWrapper.coerce(storageProfileResourceApi
                 .apiStorageprofileProfileIdGet(UUID.fromString(metadataPayload.storage().getProvider())));
     }
 
     @Override
-    public Session<?> getVaultStorageSession(final HubSession session, final UUID vaultId, final UvfMetadataPayload vaultMetadata) throws ApiException, AccessException {
+    public Session<?> getVaultStorageSession(final HubSession session, final UUID vaultId, final UVFMetadataPayload vaultMetadata) throws ApiException, AccessException {
         final StorageProfileDtoWrapper vaultStorageProfile = this.getVaultStorageProfile(vaultMetadata);
         switch(vaultStorageProfile.getProtocol()) {
             case S3_STATIC:

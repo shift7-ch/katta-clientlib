@@ -14,8 +14,9 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.uvf.UvfAccessTokenPayload;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFKeySet;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,15 +36,15 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final String accessToken = jwks.toOwnerAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFKeySet jwks = UVFKeySet.create();
+        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        final UvfAccessTokenPayload payload = service.getVaultAccessTokenJWE(vaultId, userKeys);
-        assertEquals(jwks.toOwnerAccessToken(), payload);
+        final UVFAccessTokenPayload payload = service.getVaultAccessTokenJWE(vaultId, userKeys);
+        assertEquals(new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey()), payload);
     }
 
     @Test
@@ -52,15 +53,15 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFKeySet jwks = UVFKeySet.create();
+        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        final UvfAccessTokenPayload payload = service.getVaultAccessTokenJWE(vaultId, userKeys);
-        assertEquals(jwks.toAccessToken(), payload);
+        final UVFAccessTokenPayload payload = service.getVaultAccessTokenJWE(vaultId, userKeys);
+        assertEquals(new UVFAccessTokenPayload(jwks.memberKey()), payload);
     }
 
     @Test
@@ -69,8 +70,8 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFKeySet jwks = UVFKeySet.create();
+        new UVFAccessTokenPayload(jwks.memberKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
@@ -85,22 +86,22 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFKeySet jwks = UVFKeySet.create();
+        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
 
-        final UvfMetadataPayload metadataJWE = UvfMetadataPayload.create();
+        final UVFMetadataPayload metadataJWE = UVFMetadataPayload.create();
         final String uvfMetadataFile = metadataJWE.encrypt(
                 "blabla",
                 vaultId,
-                jwks.toJWKSet()
+                jwks.serialize()
         );
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId).uvfMetadataFile(uvfMetadataFile));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        final UvfMetadataPayload payload = service.getVaultMetadataJWE(vaultId, userKeys);
+        final UVFMetadataPayload payload = service.getVaultMetadataJWE(vaultId, userKeys);
         assertEquals(metadataJWE, payload);
     }
 
@@ -110,8 +111,8 @@ class VaultServiceImplTest {
         final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
 
         final UserKeys userKeys = UserKeys.create();
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final String accessToken = jwks.toAccessToken().encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFKeySet jwks = UVFKeySet.create();
+        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
 

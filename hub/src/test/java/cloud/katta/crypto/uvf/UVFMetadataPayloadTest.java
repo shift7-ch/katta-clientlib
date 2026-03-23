@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.crypto.uvf;
@@ -8,7 +8,6 @@ import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.TestProtocol;
 import ch.cyberduck.core.cryptomator.impl.uvf.CryptoVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -20,8 +19,6 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Base64;
@@ -29,7 +26,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.UUID;
 
-import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -40,45 +36,16 @@ import com.nimbusds.jose.JWEHeader;
 import com.nimbusds.jose.JWEObjectJSON;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.MultiEncrypter;
+import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.util.Base64URL;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class UvfMetadataPayloadTest {
-
-    @Test
-    void serializePublicRecoverykey() throws JOSEException {
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final ECKey recoveryKey = jwks.recoveryKey();
-        assertEquals(String.format("{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-384\",\"kid\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"ECDH-ES+A256KW\"}]}", recoveryKey.getKeyID(), recoveryKey.getX(), recoveryKey.getY()), jwks.serializePublicRecoveryKey());
-    }
-
-    @Test
-    void memberKeyToAccessTokenAndBack() throws JOSEException {
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final UvfAccessTokenPayload accessToken = jwks.toAccessToken();
-        assertNull(accessToken.recoveryKey());
-        assertEquals(jwks.memberKey(), accessToken.memberKeyRecipient());
-    }
-
-    @Test
-    void recoveryKeyToOwnerAccessTokenAndBack() throws JOSEException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException {
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
-        final UvfAccessTokenPayload accessToken = jwks.toOwnerAccessToken();
-
-        final JWKSet recoveredJwks = JWKSet.parse(jwks.serializePublicRecoveryKey());
-        assertEquals(1, recoveredJwks.getKeys().size());
-        final ECKey publicRecoveryKey = (ECKey) recoveredJwks.getKeys().get(0);
-        assertFalse(publicRecoveryKey.isPrivate());
-
-        final ECKey recoveryKey = accessToken.recoveryKeyRecipient(publicRecoveryKey);
-        assertEquals(jwks.recoveryKey().toECPrivateKey(), recoveryKey.toECPrivateKey());
-
-        assertEquals(jwks.recoveryKey(), recoveryKey);
-    }
+class UVFMetadataPayloadTest {
 
     @Test
     void encryptDecrypt() throws JOSEException, JsonProcessingException, ParseException, SecurityFailure {
@@ -88,7 +55,7 @@ class UvfMetadataPayloadTest {
             put("key01", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
             put("key02", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
         }};
-        final UvfMetadataPayload orig = new UvfMetadataPayload()
+        final UVFMetadataPayload orig = new UVFMetadataPayload()
                 .withFileFormat("AES-256-GCM-32k")
                 .withNameFormat("AES-256-SIV")
                 .withSeeds(keys)
@@ -105,23 +72,24 @@ class UvfMetadataPayloadTest {
                         .maxWotDepth(42)
                 );
 
-        final UvfMetadataPayload.UniversalVaultFormatJWKS jwks = UvfMetadataPayload.createKeys();
+        final UVFKeySet jwks = UVFKeySet.create();
         final OctetSequenceKey memberKey = jwks.memberKey();
-        final ECKey recoveryKey = jwks.recoveryKey();
+        final Base64URL thumbprint = new ECKey.Builder(Curve.P_384, jwks.recoveryKey().getPublic()).build().computeThumbprint();
+        final ECKey recoveryKey = ((ECKey) jwks.serialize().getKeyByKeyId(String.format(UVFKeySet.KID_RECOVERY_KEY_PREFIX, thumbprint)));
 
         final UUID vaultId = UUID.randomUUID();
-        final String encrypted = orig.encrypt("https://example.com/gateway/api/", vaultId, jwks.toJWKSet());
+        final String encrypted = orig.encrypt("https://example.com/gateway/api/", vaultId, jwks.serialize());
 
         // decrypt with memberKey
         {
-            final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, memberKey);
+            final UVFMetadataPayload decrypted = UVFMetadataPayload.decryptWithJWK(encrypted, memberKey);
             assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
         // decrypt with recoveryKey
         {
-            final UvfMetadataPayload decrypted = UvfMetadataPayload.decryptWithJWK(encrypted, recoveryKey);
+            final UVFMetadataPayload decrypted = UVFMetadataPayload.decryptWithJWK(encrypted, recoveryKey);
             assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
@@ -129,7 +97,7 @@ class UvfMetadataPayloadTest {
         // decryption fails with wrong key
         {
             final ECKey fake = new ECKey.Builder(recoveryKey).keyID("kiddo").build();
-            assertThrows(JOSEException.class, () -> UvfMetadataPayload.decryptWithJWK(encrypted, fake));
+            assertThrows(JOSEException.class, () -> UVFMetadataPayload.decryptWithJWK(encrypted, fake));
         }
         assertTrue(orig.toString().startsWith("UvfMetadataPayload{fileFormat='AES-256-GCM-32k', nameFormat='AES-256-SIV', seeds={key02=********, key01=********}, initialSeed='key1', latestSeed='key0', kdf='1STEP-HMAC-SHA512', kdfSalt='********', automaticAccessGrant=class AutomaticAccessGrant {"));
     }
@@ -138,12 +106,12 @@ class UvfMetadataPayloadTest {
     void testDecrypt() throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
         final boolean regenerate = false;
         if(regenerate) {
-            final JWKSet jwks = UvfMetadataPayload.createKeys().toJWKSet();
+            final JWKSet jwks = UVFKeySet.create().serialize();
             System.out.println(jwks.getKeys());
             final HashMap<String, String> keys = new HashMap<String, String>() {{
                 put("ZO3G9w", "p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20");
             }};
-            final UvfMetadataPayload orig = new UvfMetadataPayload()
+            final UVFMetadataPayload orig = new UVFMetadataPayload()
                     .withFileFormat("AES-256-GCM-32k")
                     .withNameFormat("AES-SIV-512-B64URL")
                     .withSeeds(keys)
@@ -164,7 +132,7 @@ class UvfMetadataPayloadTest {
         final String protectedDecode = new String(Base64.getDecoder().decode("eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJjbG91ZC5rYXR0YS5vcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2dhdGV3YXkvYXBpL3ZhdWx0cy9iNjhiMDQ3My1lOTI0LTRlM2UtYWVhOS0zMTEzYmIzOWY1MDYvdXZmL3ZhdWx0LnV2ZiJ9"), StandardCharsets.UTF_8);
         assertEquals("{\"uvf.spec.version\":1,\"cty\":\"json\",\"enc\":\"A256GCM\",\"crit\":[\"uvf.spec.version\"],\"jku\":\"jwks.json\",\"cloud.katta.origin\":\"https://example.com/gateway/api/vaults/b68b0473-e924-4e3e-aea9-3113bb39f506/uvf/vault.uvf\"}", protectedDecode);
         for(JWK key : jwks.getKeys()) {
-            final UvfMetadataPayload meta = UvfMetadataPayload.decryptWithJWK(jwe, key);
+            final UVFMetadataPayload meta = UVFMetadataPayload.decryptWithJWK(jwe, key);
             assertEquals("AES-256-GCM-32k", meta.fileFormat());
             assertEquals("AES-SIV-512-B64URL", meta.nameFormat());
             assertEquals(1, meta.seeds().size());
@@ -181,7 +149,7 @@ class UvfMetadataPayloadTest {
 
     @Test
     void testMissingSpecVersion() throws JOSEException, JsonProcessingException, SecurityFailure, ParseException {
-        final JWKSet jwks = UvfMetadataPayload.createKeys().toJWKSet();
+        final JWKSet jwks = UVFKeySet.create().serialize();
         // header without additional critical param
         final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
                 .jwkURL(URI.create("jwks.json"))
@@ -192,7 +160,7 @@ class UvfMetadataPayloadTest {
         final JWEObjectJSON builder = new JWEObjectJSON(header, payload);
         builder.encrypt(new MultiEncrypter(jwks));
         String jwe = builder.serializeGeneral();
-        final SecurityFailure exc = assertThrows(SecurityFailure.class, () -> UvfMetadataPayload.decryptWithJWK(jwe, jwks.getKeyByKeyId("org.cryptomator.hub.memberkey")));
+        final SecurityFailure exc = assertThrows(SecurityFailure.class, () -> UVFMetadataPayload.decryptWithJWK(jwe, jwks.getKeyByKeyId("org.cryptomator.hub.memberkey")));
         assertEquals("Unexpected value for critical header uvf.spec.version: found null, expected \"1\"", exc.getMessage());
     }
 
@@ -208,19 +176,20 @@ class UvfMetadataPayloadTest {
 
     @Test
     void testUVFMasterkeyFromUvfMetadataPayload() throws JsonProcessingException {
-        final UvfMetadataPayload uvmetadataPayload = UvfMetadataPayload.create();
+        final UVFMetadataPayload uvmetadataPayload = UVFMetadataPayload.create();
         UVFMasterkey.fromDecryptedPayload(uvmetadataPayload.toJSON());
     }
 
     @Test
     void testUvfVaultLoadFromMetadataPayload() throws JsonProcessingException, BackgroundException, JOSEException {
-        final UvfMetadataPayload uvfMetadataPayload = UvfMetadataPayload.create();
-        final UvfMetadataPayload.UniversalVaultFormatJWKS keys = UvfMetadataPayload.createKeys();
+        final UVFMetadataPayload vaultMetadata = UVFMetadataPayload.create();
+        final UVFKeySet keys = UVFKeySet.create();
         final UUID vaultId = UUID.randomUUID();
-        final VaultIdMetadataUVFProvider provider = new VaultIdMetadataUVFProvider(new Host(new TestProtocol()), vaultId, keys, uvfMetadataPayload);
+        final HubVaultMetadataUVFProvider provider = new HubVaultMetadataUVFProvider(vaultId, keys,
+                vaultMetadata.encrypt("https://example.net/api", vaultId, keys.serialize()).getBytes(StandardCharsets.US_ASCII),
+                vaultMetadata.computeRootDirectoryMetadata(), vaultMetadata.computeRootDirectoryIdHash());
         final CryptoVault uvfVault = new CryptoVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
         final Host host = new Host(new HubProtocol());
-        uvfVault.load(new HubSession(host, new DisabledX509TrustManager(), new DefaultX509KeyManager()),
-                new UvfJWKCallback(keys.memberKey()), provider);
+        uvfVault.load(new HubSession(host, new DisabledX509TrustManager(), new DefaultX509KeyManager()), provider);
     }
 }
