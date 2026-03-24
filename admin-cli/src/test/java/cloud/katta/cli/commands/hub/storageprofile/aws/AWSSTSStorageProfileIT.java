@@ -35,7 +35,7 @@ class AWSSTSStorageProfileIT extends AbstractAdminCLIIT {
                 "--accessToken", accessToken,
                 "--uuid", storageProfileId.toString(),
                 "--name", "AWS S3 STS",
-                "--rolePrefix", "arn:aws:iam::linguine:role/farfalle-",
+                "--roleNamePrefix", "arn:aws:iam::linguine:role/farfalle-",
                 "--region", "eu-west-1",
                 "--regions", "eu-west-1",
                 "--regions", "eu-west-2",

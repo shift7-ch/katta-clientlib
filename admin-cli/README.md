@@ -43,7 +43,7 @@ katta storageprofile aws sts \
 **Required Options:**
 
 - `--hubUrl`: Hub URL
-- `--rolePrefix`: ARN Role Prefix. Example: `arn:aws:iam::930717317329:role/katta-`
+- `--roleNamePrefix`: ARN Role Prefix. Example: `arn:aws:iam::930717317329:role/katta-`
 - `--region`: Bucket region. Example: `eu-west-1`
 - `--authUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth`
 - `--tokenUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token`
