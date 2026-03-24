@@ -1588,15 +1588,15 @@
         },
         {
             "module": "java.base",
-            "glob": "jdk/internal/icu/impl/data/icudt76b/nfc.nrm"
+            "glob": "jdk/internal/icu/impl/data/icudt*/nfc.nrm"
         },
         {
             "module": "java.base",
-            "glob": "jdk/internal/icu/impl/data/icudt76b/nfkc.nrm"
+            "glob": "jdk/internal/icu/impl/data/icudt*/nfkc.nrm"
         },
         {
             "module": "java.base",
-            "glob": "jdk/internal/icu/impl/data/icudt76b/uprops.icu"
+            "glob": "jdk/internal/icu/impl/data/icudt*/uprops.icu"
         },
         {
             "module": "java.base",
