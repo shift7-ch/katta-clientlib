@@ -31,7 +31,10 @@ import static cloud.katta.cli.commands.common.Defaults.*;
         mixinStandardHelpOptions = true)
 public class AWSSTSStorageProfile extends AbstractStorageProfile {
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "ARN Role Prefix. Example: \"arn:aws:iam::<ACCOUNTID>:role/katta-\"", required = false, defaultValue = "katta-")
+    @CommandLine.Option(names = {"--awsAccountId"}, description = "AWS Account ID. A 12-digit number, such as 012345678901, that uniquely identifies an AWS account.", required = true)
+    String awsAccountId;
+
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "ARN Role Name Prefix.", required = false, defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
@@ -69,13 +72,13 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 .bucketVersioning(true)
 
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-create-bucket
-                .stsRoleCreateBucketClient(String.format("%s%s", roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
-                .stsRoleCreateBucketHub(String.format("%s%s", roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
+                .stsRoleCreateBucketClient(String.format("arn:aws:iam::%s:role/%s%s", awsAccountId, roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
+                .stsRoleCreateBucketHub(String.format("arn:aws:iam::%s:role/%s%s", awsAccountId, roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
 
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-role-web-identity
-                .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("%s%s%s", roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX))
+                .stsRoleAccessBucketAssumeRoleWithWebIdentity(String.format("arn:aws:iam::%s:role/%s%s%s", awsAccountId, roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX))
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-role-tagged-session
-                .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("%s%s%s", roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
+                .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("arn:aws:iam::%s:role/%s%s%s", awsAccountId, roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
                 .stsSessionTag(REQUEST_TAG)
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));

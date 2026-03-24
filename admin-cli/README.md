@@ -35,6 +35,7 @@ Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup
 ```bash
 katta storageprofile aws sts \
   --hubUrl <hub-url> \
+  --awsAccountId <aws-account-id> \
   --region <aws-region> \
   --authUrl <auth-url> \
   --tokenUrl <token-url> \
@@ -43,11 +44,10 @@ katta storageprofile aws sts \
 **Required Options:**
 
 - `--hubUrl`: Hub URL
-- `--roleNamePrefix`: ARN Role Prefix. Example: `arn:aws:iam::930717317329:role/katta-`
+- `--awsAccountId`: AWS Account ID. A 12-digit number, such as 012345678901, that uniquely identifies an AWS account.
 - `--region`: Bucket region. Example: `eu-west-1`
 - `--authUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth`
 - `--tokenUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token`
-- `--clientId`: Client Ids for the OIDC provider
 
 #### Update thumbprints of TLS certificates
 
