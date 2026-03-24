@@ -226,10 +226,22 @@
                             <imageName>katta</imageName>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <skipNativeTests>true</skipNativeTests>
+                            <metadataRepository>
+                                <enabled>true</enabled>
+                            </metadataRepository>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
+            <dependencies>
+                <dependency>
+                    <groupId>org.graalvm.buildtools</groupId>
+                    <artifactId>graalvm-reachability-metadata</artifactId>
+                    <version>${native-maven-plugin.version}</version>
+                    <classifier>repository</classifier>
+                    <type>zip</type>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 </project>
