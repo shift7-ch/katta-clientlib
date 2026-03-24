@@ -19,10 +19,6 @@ katta setup aws \
   --realmUrl <realm-url>
 ```
 
-* Client ID `cryptomator` is used for Katta Desktop.
-* Client ID `cryptomatorhub` is used for Katta Hub Web Application.
-* Client ID `cryptomatorvaults` is used for Katta Hub Web Application to create buckets.
-
 **Required Options:**
 
 - `--realmUrl`: Keycloak realm URL with scheme. Example: `https://keycloak.default.domain/realms/cryptomator`

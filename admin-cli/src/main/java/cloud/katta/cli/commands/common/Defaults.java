@@ -14,5 +14,10 @@ public class Defaults {
 
     public static final String REQUEST_TAG = "Vault";
 
+    /**
+     * Client ID `cryptomator` is used for Katta Desktop.
+     * Client ID `cryptomatorhub` is used for Katta Hub Web Application.
+     * Client ID `cryptomatorvaults` is used for Katta Hub Web Application to create buckets.
+     */
     public static final String[] CLIENT_IDS = {"cryptomator", "cryptomatorhub", "cryptomatorvaults"};
 }
