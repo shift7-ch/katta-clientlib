@@ -230,18 +230,18 @@
                                 <enabled>true</enabled>
                             </metadataRepository>
                         </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.graalvm.buildtools</groupId>
+                                <artifactId>graalvm-reachability-metadata</artifactId>
+                                <version>${native-maven-plugin.version}</version>
+                                <classifier>repository</classifier>
+                                <type>zip</type>
+                            </dependency>
+                        </dependencies>
                     </plugin>
                 </plugins>
             </build>
-            <dependencies>
-                <dependency>
-                    <groupId>org.graalvm.buildtools</groupId>
-                    <artifactId>graalvm-reachability-metadata</artifactId>
-                    <version>${native-maven-plugin.version}</version>
-                    <classifier>repository</classifier>
-                    <type>zip</type>
-                </dependency>
-            </dependencies>
         </profile>
     </profiles>
 </project>
