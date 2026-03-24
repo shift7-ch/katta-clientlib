@@ -34,6 +34,9 @@ import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
+import ch.cyberduck.core.synchronization.ComparisonService;
+import ch.cyberduck.core.synchronization.DefaultComparisonService;
+import ch.cyberduck.core.synchronization.ETagComparisonService;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.transfer.TransferStatus;
 
@@ -339,6 +342,9 @@ public class HubSession extends HttpSession<HubApiClient> {
             return (T) (Timestamp) (file, status) -> {
                 throw new UnsupportedException().withFile(file);
             };
+        }
+        if(type == ComparisonService.class) {
+            return (T) new DefaultComparisonService(new ETagComparisonService(), ComparisonService.disabled);
         }
         if(type == CredentialsConfigurator.class) {
             return (T) new HubOAuthTokensCredentialsConfigurator(keychain, host);
