@@ -41,7 +41,6 @@ Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup
 ```bash
 katta storageprofile aws sts \
   --hubUrl <hub-url> \
-  --rolePrefix <arn-role-prefix> \
   --region <aws-region> \
   --authUrl <auth-url> \
   --tokenUrl <token-url> \
