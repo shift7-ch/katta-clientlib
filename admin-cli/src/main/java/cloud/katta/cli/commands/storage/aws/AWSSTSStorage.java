@@ -20,8 +20,6 @@ import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.policybuilder.iam.IamCondition;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
 import software.amazon.awssdk.policybuilder.iam.IamPolicy;
@@ -101,23 +99,11 @@ public class AWSSTSStorage implements Callable<Void> {
         final String sha = getThumbprint(url);
         System.out.println(sha);
 
-        try {
-            System.out.println("Trying environment credentials provider");
-            try (final IamClient iam = IamClient.builder()
-                    .region(Region.AWS_GLOBAL)
-                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-                    .build()) {
-                call(iam, arnPostfix, sha);
-            }
-        }
-        catch(SdkClientException e) {
-            System.out.println(String.format("Trying profile credentials provider with profile %s", profileName));
-            try (final IamClient iam = IamClient.builder()
-                    .region(Region.AWS_GLOBAL)
-                    .credentialsProvider(DefaultCredentialsProvider.builder().profileName(profileName).build())
-                    .build()) {
-                call(iam, arnPostfix, sha);
-            }
+        try (final IamClient iam = IamClient.builder()
+                .region(Region.AWS_GLOBAL)
+                .credentialsProvider(DefaultCredentialsProvider.builder().profileName(profileName).build())
+                .build()) {
+            call(iam, arnPostfix, sha);
         }
         return null;
     }
