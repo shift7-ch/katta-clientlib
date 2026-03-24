@@ -13,4 +13,6 @@ public class Defaults {
     public static final String ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX = "-tagged-session-role";
 
     public static final String REQUEST_TAG = "Vault";
+
+    public static final String[] CLIENT_IDS = {"cryptomator", "cryptomatorhub", "cryptomatorvaults"};
 }

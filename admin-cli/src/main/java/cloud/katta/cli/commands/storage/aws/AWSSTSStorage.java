@@ -81,7 +81,7 @@ public class AWSSTSStorage implements Callable<Void> {
     Integer maxSessionDuration;
 
     // TODO can from /api/config instead/optionally?
-    @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
+    @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = false)
     List<String> clientId;
 
 
@@ -90,6 +90,9 @@ public class AWSSTSStorage implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
+        if(null == clientId) {
+            clientId = List.of(CLIENT_IDS);
+        }
         // remove trailing slash
         realmUrl = realmUrl.replaceAll("/$", "");
         final String arnPostfix = realmUrl.replace("https://", "");
