@@ -24,6 +24,9 @@ jobs:
           cache: 'maven'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
+      - name: Install musl tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y musl-tools
       - name: Ensure to use tagged version
         if: startsWith(github.ref, 'refs/tags/')
         run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}

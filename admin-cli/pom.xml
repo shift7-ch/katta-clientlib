@@ -18,6 +18,7 @@
 
         <native-maven-plugin.version>0.10.0</native-maven-plugin.version>
         <native.optimization>-Ob</native.optimization>
+        <native.libc>--libc=glibc</native.libc>
     </properties>
 
     <dependencies>
@@ -200,6 +201,17 @@
             </properties>
         </profile>
         <profile>
+            <id>linux</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                </os>
+            </activation>
+            <properties>
+                <native.libc>--static --libc=musl</native.libc>
+            </properties>
+        </profile>
+        <profile>
             <id>native</id>
             <build>
                 <plugins>
@@ -220,6 +232,7 @@
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
+                                <arg>${native.libc}</arg>
                             </buildArgs>
                             <fallback>false</fallback>
                             <mainClass>cloud.katta.cli.Katta</mainClass>
