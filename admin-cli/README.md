@@ -17,10 +17,7 @@ Keycloak.
 ```bash
 katta setup aws \
   --realmUrl <realm-url> \
-  --profileName <aws-profile> \
-  --clientId cryptomator \
-  --clientId cryptomatorhub \
-  --clientId cryptomatorvaults \
+  --profileName <aws-profile>
 ```
 
 * Client ID `cryptomator` is used for Katta Desktop.
@@ -30,6 +27,8 @@ katta setup aws \
 **Required Options:**
 
 - `--realmUrl`: Keycloak realm URL with scheme. Example: `https://keycloak.default.domain/realms/cryptomator`
+
+**Additional Options:**
 - `--profileName`: AWS profile to load AWS credentials from (see `~/.aws/credentials`)
 - `--clientId`: Client Ids for the OIDC provider
 
@@ -44,7 +43,6 @@ katta storageprofile aws sts \
   --region <aws-region> \
   --authUrl <auth-url> \
   --tokenUrl <token-url> \
-  --clientId cryptomator # Authorize as Katta Desktop
 ```
 
 **Required Options:**
