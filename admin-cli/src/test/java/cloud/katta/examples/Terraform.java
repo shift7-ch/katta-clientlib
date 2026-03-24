@@ -4,7 +4,6 @@
 
 package cloud.katta.examples;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import cloud.katta.cli.Katta;
@@ -21,8 +20,8 @@ public class Terraform {
         final String workspace = "default";
         final String bucketPrefix = "katta";
         final String roleNamePrefix = "katta";
-        final String realmUrl = String.format("https://keycloak.%s.catta.cloud/realms/cryptomator", workspace);
-        final String hubUrl = String.format("https://hub.%s.catta.cloud", workspace);
+        final String realmUrl = String.format("https://keycloak.%s.katta.cloud/realms/cryptomator", workspace);
+        final String hubUrl = String.format("https://hub.%s.katta.cloud", workspace);
         final String region = "eu-central-1";
         final String tokenUrl = String.format("%s/protocol/openid-connect/token", realmUrl);
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
