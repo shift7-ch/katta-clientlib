@@ -4,6 +4,7 @@
 
 package cloud.katta.examples;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import cloud.katta.cli.Katta;
@@ -17,15 +18,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class Terraform {
 
     public static void main(String[] args) {
+        final String workspace = "default";
         final String bucketPrefix = "katta";
         final String roleNamePrefix = "katta";
-        final String realmUrl = "https://keycloak.default.katta.cloud/realms/cryptomator";
-        final String hubUrl = "https://hub.default.katta.cloud";
+        final String realmUrl = String.format("https://keycloak.%s.catta.cloud/realms/cryptomator", workspace);
+        final String hubUrl = String.format("https://hub.%s.catta.cloud", workspace);
         final String region = "eu-central-1";
         final String tokenUrl = String.format("%s/protocol/openid-connect/token", realmUrl);
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
         if(true) {
-            int rc = new CommandLine(new Katta()).execute(
+            final String[] setupAwsArgs = {
                     "setup", "aws",
                     "--profileName", "430118840017_AdministratorAccess",
                     "--realmUrl", realmUrl,
@@ -33,8 +35,9 @@ public class Terraform {
                     "--clientId", "cryptomator",
                     "--clientId", "cryptomatorhub",
                     "--clientId", "cryptomatorvaults",
-                    "--bucketPrefix", bucketPrefix
-            );
+                    "--bucketPrefix", bucketPrefix};
+            System.out.println(String.format("katta \"%s\"", String.join("\" \"", setupAwsArgs)));
+            int rc = new CommandLine(new Katta()).execute(setupAwsArgs);
             assertEquals(0, rc);
         }
         if(false) {
@@ -50,7 +53,7 @@ public class Terraform {
         }
         if (true) {
             final UUID storageProfileId = UUID.randomUUID();
-            int rc = new CommandLine(new Katta()).execute(
+            final String[] storageProfileAwsStsArgs = {
                     "storageprofile", "aws", "sts",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -61,13 +64,16 @@ public class Terraform {
                     "--bucketPrefix", bucketPrefix,
                     "--rolePrefix", String.format("arn:aws:iam::430118840017:role/%s", roleNamePrefix),
                     "--region", region,
-                    "--regions", region
+                    "--regions", region};
+            System.out.println(String.format("katta \"%s\"", String.join("\" \"", storageProfileAwsStsArgs)));
+            int rc = new CommandLine(new Katta()).execute(
+                    storageProfileAwsStsArgs
             );
             assertEquals(0, rc);
         }
         if (true){
             final UUID storageProfileId = UUID.randomUUID();
-            int rc = new CommandLine(new Katta()).execute(
+            final String[] storageProfileAwsStaticArgs = {
                     "storageprofile", "aws", "static",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -78,7 +84,10 @@ public class Terraform {
                     "--region", "eu-west-1",
                     "--regions", "eu-west-1",
                     "--regions", "eu-west-2",
-                    "--regions", "eu-west-3"
+                    "--regions", "eu-west-3"};
+            System.out.println(String.format("katta \"%s\"", String.join("\" \"", storageProfileAwsStaticArgs)));
+            int rc = new CommandLine(new Katta()).execute(
+                    storageProfileAwsStaticArgs
             );
             assertEquals(0, rc);
         }
