@@ -99,7 +99,7 @@ public class AWSSTSStorage implements Callable<Void> {
         System.out.println(sha);
 
         try {
-            System.out.printf("Trying environment credentials provider");
+            System.out.println("Trying environment credentials provider");
             try (final IamClient iam = IamClient.builder()
                     .region(Region.AWS_GLOBAL)
                     .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
