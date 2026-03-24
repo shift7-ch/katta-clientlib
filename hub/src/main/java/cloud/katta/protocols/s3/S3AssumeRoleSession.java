@@ -6,7 +6,7 @@ package cloud.katta.protocols.s3;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LoginCallback;
-import ch.cyberduck.core.exception.LoginCanceledException;
+import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
 import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Session;
@@ -47,7 +47,7 @@ public class S3AssumeRoleSession extends S3Session {
      * @see S3AssumeRoleProtocol#S3_ASSUMEROLE_ROLEARN_TAG
      */
     @Override
-    protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) throws LoginCanceledException {
+    protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) throws BackgroundException {
         if(host.getProtocol().isOAuthConfigurable()) {
             log.debug("Register interceptor {}", oauth);
             configuration.addInterceptorLast(oauth);

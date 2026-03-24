@@ -9,9 +9,9 @@ import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
-import ch.cyberduck.core.DisabledLoginCallback;
-import ch.cyberduck.core.DisabledPasswordCallback;
 import ch.cyberduck.core.ListService;
+import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
@@ -38,6 +38,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -54,8 +55,9 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
-import cloud.katta.crypto.uvf.UvfMetadataPayload;
-import cloud.katta.crypto.uvf.VaultIdMetadataUVFProvider;
+import cloud.katta.crypto.uvf.HubVaultKeys;
+import cloud.katta.crypto.uvf.HubVaultMetadataUVFProvider;
+import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
 import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
@@ -219,7 +221,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final StorageProfileS3STSDto profile = (StorageProfileS3STSDto) storageProfile.getActualInstance();
                 profile.setId(uuid);
                 adminStorageProfileApi.apiStorageprofileS3stsPost(profile);
-            } else if (storageProfile.getActualInstance() instanceof StorageProfileS3StaticDto) {
+            }
+            else if(storageProfile.getActualInstance() instanceof StorageProfileS3StaticDto) {
                 final StorageProfileS3StaticDto profile = (StorageProfileS3StaticDto) storageProfile.getActualInstance();
                 profile.setId(uuid);
                 adminStorageProfileApi.apiStorageprofileS3staticPost(profile);
@@ -258,7 +261,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new DefaultPathAttributes().setDisplayname(String.format("Vault %s", name)));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
-            final UvfMetadataPayload vaultMetadata = UvfMetadataPayload.create()
+            final UVFMetadataPayload vaultMetadata = UVFMetadataPayload.create()
                     .withStorage(new VaultMetadataJWEBackendDto()
                             .username(config.vault.username)
                             .password(config.vault.password)
@@ -270,9 +273,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                             .enabled(true)
                             .maxWotDepth(null));
             final Session<?> storage = new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata);
-            final HubUVFVault cryptomator = new HubUVFVault(storage, bucket, new DisabledLoginCallback());
-            cryptomator.create(hubSession, location.getIdentifier(), new VaultIdMetadataUVFProvider(storage.getHost(), vaultId,
-                    UvfMetadataPayload.createKeys(), vaultMetadata));
+            final HubUVFVault cryptomator = new HubUVFVault(storage, bucket, LoginCallback.noop);
+
+            final HubVaultKeys keys = HubVaultKeys.create();
+            cryptomator.create(hubSession, location.getIdentifier(), new HubVaultMetadataUVFProvider(
+                    vaultId, keys, vaultMetadata.encrypt(hubSession.getClient().getBasePath(), vaultId, keys.serialize()).getBytes(StandardCharsets.US_ASCII),
+                    vaultMetadata.computeRootDirectoryMetadata(), vaultMetadata.computeRootDirectoryIdHash()));
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
@@ -359,14 +365,14 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
                     final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
                     assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
-                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), new DisabledPasswordCallback(), new Delete.DisabledCallback());
+                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), PasswordCallback.noop, new Delete.DisabledCallback());
                     assertFalse(hubSession.getFeature(Find.class).find(file));
                 }
                 {
                     // New directory
                     final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
                     hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
-                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), new DisabledPasswordCallback(), new Delete.DisabledCallback());
+                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), PasswordCallback.noop, new Delete.DisabledCallback());
                     assertFalse(hubSession.getFeature(Find.class).find(folder));
                 }
                 final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(d, new DisabledListProgressListener());
