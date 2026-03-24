@@ -16,8 +16,7 @@ Keycloak.
 
 ```bash
 katta setup aws \
-  --realmUrl <realm-url> \
-  --profileName <aws-profile>
+  --realmUrl <realm-url>
 ```
 
 * Client ID `cryptomator` is used for Katta Desktop.
