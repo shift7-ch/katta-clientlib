@@ -4,6 +4,10 @@
 
 package cloud.katta.core;
 
+import cloud.katta.client.api.AuthorityResourceApi;
+
+import cloud.katta.client.model.AuthorityDto;
+
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -51,13 +55,14 @@ class KeyRotationTest extends AbstractHubTest {
         final HubSession hubSession = setupConnection(hubTestConfig.setup);
         try {
             final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
+            final AuthorityResourceApi authoritiesApi = new AuthorityResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
             final UserDto me = usersResourceApi.apiUsersMeGet(false, false);
 
             final List<VaultDto> vaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
 
             // open to all users - does not require admin privileges in Cryptomator hub!
-            final List<UserDto> userDtos = usersResourceApi.apiUsersGet();
+            final List<UserDto> userDtos = authoritiesApi.apiAuthoritiesSearchGet("%", false).stream().filter((a)->a.getActualInstance() instanceof UserDto).map(AuthorityDto::getUserDto).collect(Collectors.toList());
 
             final Map<String, String> userPublicKeys = userDtos.stream()
                     .filter(u -> u.getEcdhPublicKey() != null)
