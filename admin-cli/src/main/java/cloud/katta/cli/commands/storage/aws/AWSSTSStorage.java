@@ -60,7 +60,10 @@ import static cloud.katta.cli.commands.common.Defaults.*;
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
-@CommandLine.Command(name = "aws", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "aws",
+        description = "Setup/update OIDC provider and roles for STS in AWS.",
+        showDefaultValues = true,
+        mixinStandardHelpOptions = true)
 public class AWSSTSStorage implements Callable<Void> {
 
     // TODO get from /api/config instead/optionally?

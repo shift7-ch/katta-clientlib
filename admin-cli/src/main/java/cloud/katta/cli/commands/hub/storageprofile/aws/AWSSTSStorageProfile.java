@@ -27,6 +27,7 @@ import static cloud.katta.cli.commands.common.Defaults.*;
  */
 @CommandLine.Command(name = "sts",
         description = "Upload storage profile for AWS STS.",
+        showDefaultValues = true,
         mixinStandardHelpOptions = true)
 public class AWSSTSStorageProfile extends AbstractStorageProfile {
 

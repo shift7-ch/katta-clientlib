@@ -24,6 +24,7 @@ import picocli.CommandLine;
  */
 @CommandLine.Command(name = "static",
         description = "Create or upload an AWS static storage profile for an existing S3 bucket.",
+        showDefaultValues = true,
         mixinStandardHelpOptions = true)
 public class AWSStaticStorageProfile extends AbstractStorageProfile {
 
