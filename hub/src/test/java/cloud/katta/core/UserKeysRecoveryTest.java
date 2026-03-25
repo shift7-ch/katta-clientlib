@@ -22,6 +22,7 @@ import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,13 +38,14 @@ class UserKeysRecoveryTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testFirstLoginAndUserKeyRecovery(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupConnection(hubTestConfig.setup);
+        final HubSession hubSession = setupConnection(hubTestConfig);
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true, false);
 
-        final JOSEException exception = assertThrows(JOSEException.class, () -> UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
+        final SecurityFailure exception = assertThrows(SecurityFailure.class, () -> UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
                 new AlphanumericRandomStringService().random()));
-        assertInstanceOf(InvalidKeyException.class, exception.getCause());
+        assertInstanceOf(JOSEException.class, exception.getCause());
+        assertInstanceOf(InvalidKeyException.class, exception.getCause().getCause());
         assertNotNull(UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
                 hubTestConfig.setup.userConfig.setupCode));
     }

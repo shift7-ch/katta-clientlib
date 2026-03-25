@@ -6,7 +6,6 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStore;
-import ch.cyberduck.core.exception.AccessDeniedException;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,7 +17,6 @@ import cloud.katta.client.model.UserDto;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.testsetup.AbstractHubTest;
-import cloud.katta.workflows.exceptions.AccessException;
 
 import static cloud.katta.workflows.DeviceKeysServiceImpl.KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME;
 import static cloud.katta.workflows.DeviceKeysServiceImpl.KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME;
@@ -30,7 +28,7 @@ import static org.mockito.Mockito.*;
 class DeviceKeysServiceImplTest extends AbstractHubTest {
 
     @Test
-    void testGetDeviceKeys() throws AccessDeniedException, AccessException {
+    void testGetDeviceKeys() throws Exception {
         final PasswordStore storeMock = Mockito.mock(PasswordStore.class);
         when(storeMock.getPassword(eq(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), any())).thenReturn("v");
         final DeviceKeysServiceImpl service = new DeviceKeysServiceImpl(storeMock);
@@ -44,7 +42,7 @@ class DeviceKeysServiceImplTest extends AbstractHubTest {
     }
 
     @Test
-    void testStoreDeviceKeys() throws AccessDeniedException, AccessException {
+    void testStoreDeviceKeys() throws Exception {
         final PasswordStore storeMock = Mockito.mock(PasswordStore.class);
         when(storeMock.getPassword(eq(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), any())).thenReturn("v");
         final DeviceKeysServiceImpl service = new DeviceKeysServiceImpl(storeMock);
@@ -61,7 +59,7 @@ class DeviceKeysServiceImplTest extends AbstractHubTest {
     }
 
     @Test
-    void testStoreAndRetrieveDeviceKeys() throws AccessException {
+    void testStoreAndRetrieveDeviceKeys() throws Exception {
         final UserDto userId = new UserDto();
         userId.setId(UUID.randomUUID().toString());
         final Host hubId = new Host(new HubProtocol());

@@ -39,6 +39,7 @@ import ch.cyberduck.core.synchronization.DefaultComparisonService;
 import ch.cyberduck.core.synchronization.ETagComparisonService;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.transfer.TransferStatus;
+import ch.cyberduck.core.vault.VaultProvider;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -81,6 +82,7 @@ public class HubSession extends HttpSession<HubApiClient> {
      * Interceptor for OpenID connect flow
      */
     private OAuth2RequestInterceptor authorizationService;
+    private HubUVFVaultProvider provider;
 
     private ConfigDto config;
 
@@ -154,7 +156,8 @@ public class HubSession extends HttpSession<HubApiClient> {
         log.debug("Configured with setup prompt {}", setup);
         final UserKeys userKeys = this.getUserKeys(setup);
         log.debug("Retrieved user keys {}", userKeys);
-        vaults = new HubVaultListService(this, prompt);
+        provider = new HubUVFVaultProvider(prompt);
+        vaults = new HubVaultListService(this, provider);
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
@@ -222,6 +225,9 @@ public class HubSession extends HttpSession<HubApiClient> {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
+        if(type == VaultProvider.class) {
+            return (T) provider;
+        }
         if(type == ListService.class) {
             return (T) vaults;
         }
@@ -238,7 +244,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             return (T) new HubStorageLocationService(this);
         }
         if(type == Find.class) {
-            return (T) (Find) (file, listener) -> new SimplePathPredicate(registry.find(HubSession.this, file).getHome()).test(file);
+            return (T) (Find) (file, listener) -> registry.contains(file);
         }
         if(type == Read.class) {
             return (T) new Read() {
@@ -345,9 +351,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == ComparisonService.class) {
             return (T) new DefaultComparisonService(new ETagComparisonService(), ComparisonService.disabled);
-        }
-        if(type == CredentialsConfigurator.class) {
-            return (T) new HubOAuthTokensCredentialsConfigurator(keychain, host);
         }
         if(type == OAuth2RequestInterceptor.class) {
             return (T) authorizationService;

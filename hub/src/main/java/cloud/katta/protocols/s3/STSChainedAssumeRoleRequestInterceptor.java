@@ -4,6 +4,7 @@
 
 package cloud.katta.protocols.s3;
 
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
@@ -54,6 +55,12 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         this.hub = hub;
         this.bookmark = host;
         this.vaultId = vaultId;
+    }
+
+    @Override
+    public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
+        // Refresh OAuth with tokens from Hub
+        return super.refresh(hub.getHost().getCredentials());
     }
 
     @Override

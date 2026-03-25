@@ -10,12 +10,12 @@ import org.cryptomator.cryptolib.common.P384KeyPair;
 import javax.security.auth.Destroyable;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.Objects;
 
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
@@ -118,8 +118,8 @@ public class UserKeys implements Destroyable {
      * @return The user's key pair
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.createFromJwe</a>
      */
-    public static UserKeys createFromJwe(final UserKeyPayload jwe, final String userEcdhPublicKey, final String userEcdsaPublicKey) throws InvalidKeySpecException {
-        return new UserKeys(decodeKeyPair(userEcdhPublicKey, jwe.ecdhPrivateKey()), decodeKeyPair(userEcdsaPublicKey, jwe.ecdsaPrivateKey));
+    public static UserKeys createFromJwe(final UserKeyPayload jwe, final String userEcdhPublicKey, final String userEcdsaPublicKey) throws SecurityFailure {
+        return new UserKeys(decodeKeyPair(userEcdhPublicKey, jwe.ecdhPrivateKey()), decodeKeyPair(userEcdsaPublicKey, jwe.ecdsaPrivateKey()));
     }
 
     /**
@@ -129,8 +129,13 @@ public class UserKeys implements Destroyable {
      * @return A JWE holding the encrypted private key
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.encryptWithSetupCode</a>
      */
-    public String encryptWithSetupCode(final String setupCode) throws JOSEException, JsonProcessingException {
-        return JWE.pbes2Encrypt(prepareForEncryption(), "org.cryptomator.hub.setupCode", setupCode);
+    public String encryptWithSetupCode(final String setupCode) throws SecurityFailure {
+        try {
+            return JWE.pbes2Encrypt(prepareForEncryption(), "org.cryptomator.hub.setupCode", setupCode);
+        }
+        catch(JOSEException | JsonProcessingException e) {
+            throw new SecurityFailure(e);
+        }
     }
 
     /**
@@ -143,8 +148,13 @@ public class UserKeys implements Destroyable {
      * @return Decrypted UserKeys
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.recover()</a>
      */
-    public static UserKeys recover(final String encodedEcdhPublicKey, final String encodedEcdsaPublicKey, final String privateKeys, final String setupCode) throws ParseException, JOSEException, InvalidKeySpecException {
-        return createFromJwe(createFromPayload(JWE.decryptPbes2(privateKeys, setupCode)), encodedEcdhPublicKey, encodedEcdsaPublicKey);
+    public static UserKeys recover(final String encodedEcdhPublicKey, final String encodedEcdsaPublicKey, final String privateKeys, final String setupCode) throws SecurityFailure {
+        try {
+            return createFromJwe(createFromPayload(JWE.decryptPbes2(privateKeys, setupCode)), encodedEcdhPublicKey, encodedEcdsaPublicKey);
+        }
+        catch(ParseException | JOSEException e) {
+            throw new SecurityFailure(e);
+        }
     }
 
     /**
@@ -167,8 +177,13 @@ public class UserKeys implements Destroyable {
      * @return The user's key pair
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.decryptOnBrowser()</a>
      */
-    public static UserKeys decryptOnDevice(final String jwe, final ECPrivateKey devicePrivateKey, final String userEcdhPublicKey, final String userEcdsaPublicKey) throws ParseException, JOSEException, InvalidKeySpecException {
-        return createFromJwe(createFromPayload(JWE.decryptEcdhEs(jwe, devicePrivateKey)), userEcdhPublicKey, userEcdsaPublicKey);
+    public static UserKeys decryptOnDevice(final String jwe, final ECPrivateKey devicePrivateKey, final String userEcdhPublicKey, final String userEcdsaPublicKey) throws SecurityFailure {
+        try {
+            return createFromJwe(createFromPayload(JWE.decryptEcdhEs(jwe, devicePrivateKey)), userEcdhPublicKey, userEcdsaPublicKey);
+        }
+        catch(ParseException | JOSEException e) {
+            throw new SecurityFailure(e);
+        }
     }
 
     /**

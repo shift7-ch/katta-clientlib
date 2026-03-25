@@ -20,22 +20,22 @@ import io.swagger.annotations.ApiModelProperty;
  */
 
 @JsonPropertyOrder({
-        VaultMetadataJWEAutomaticAccessGrantDto.JSON_PROPERTY_ENABLED,
-        VaultMetadataJWEAutomaticAccessGrantDto.JSON_PROPERTY_MAX_WOT_DEPTH
+        VaultMetadataAutomaticAccessGrantDto.JSON_PROPERTY_ENABLED,
+        VaultMetadataAutomaticAccessGrantDto.JSON_PROPERTY_MAX_WOT_DEPTH
 })
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class VaultMetadataJWEAutomaticAccessGrantDto {
+public class VaultMetadataAutomaticAccessGrantDto {
     public static final String JSON_PROPERTY_ENABLED = "enabled";
     private Boolean enabled;
 
     public static final String JSON_PROPERTY_MAX_WOT_DEPTH = "maxWotDepth";
     private Integer maxWotDepth;
 
-    public VaultMetadataJWEAutomaticAccessGrantDto() {
+    public VaultMetadataAutomaticAccessGrantDto() {
     }
 
-    public VaultMetadataJWEAutomaticAccessGrantDto enabled(Boolean enabled) {
+    public VaultMetadataAutomaticAccessGrantDto enabled(Boolean enabled) {
         this.enabled = enabled;
         return this;
     }
@@ -62,7 +62,7 @@ public class VaultMetadataJWEAutomaticAccessGrantDto {
     }
 
 
-    public VaultMetadataJWEAutomaticAccessGrantDto maxWotDepth(Integer maxWotDepth) {
+    public VaultMetadataAutomaticAccessGrantDto maxWotDepth(Integer maxWotDepth) {
         this.maxWotDepth = maxWotDepth;
         return this;
     }
@@ -100,7 +100,7 @@ public class VaultMetadataJWEAutomaticAccessGrantDto {
         if(o == null || getClass() != o.getClass()) {
             return false;
         }
-        VaultMetadataJWEAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto = (VaultMetadataJWEAutomaticAccessGrantDto) o;
+        VaultMetadataAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto = (VaultMetadataAutomaticAccessGrantDto) o;
         return Objects.equals(this.enabled, vaultMetadataJWEAutomaticAccessGrantDto.enabled) &&
                 Objects.equals(this.maxWotDepth, vaultMetadataJWEAutomaticAccessGrantDto.maxWotDepth);
     }

@@ -23,6 +23,7 @@ import java.util.Base64;
 import java.util.function.Supplier;
 
 import cloud.katta.crypto.exceptions.NotECKeyException;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.google.common.io.BaseEncoding;
 
 public final class KeyHelper {
@@ -38,17 +39,20 @@ public final class KeyHelper {
      * @param publicKey PEM-encoded public key in Base64.
      */
     // adapted from org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider
-    public static ECPublicKey decodePublicKey(final String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException {
+    public static ECPublicKey decodePublicKey(final String publicKey) throws SecurityFailure {
         final EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
-
-        final KeyFactory keyFactory = KeyFactory.getInstance("EC");
-        final PublicKey key = keyFactory.generatePublic(keySpec);
-
-        if(key instanceof ECPublicKey) {
-            return (ECPublicKey) key;
+        try {
+            final KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            final PublicKey key = keyFactory.generatePublic(keySpec);
+            if(key instanceof ECPublicKey) {
+                return (ECPublicKey) key;
+            }
+            else {
+                throw new SecurityFailure(new NotECKeyException("Key not an EC public key."));
+            }
         }
-        else {
-            throw new NotECKeyException("Key not an EC public key.");
+        catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new SecurityFailure(e);
         }
     }
 
@@ -71,17 +75,20 @@ public final class KeyHelper {
     /**
      * @param privateKey PKCS8-encoded in Base64
      */
-    public static ECPrivateKey decodePrivateKey(final String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NotECKeyException {
+    public static ECPrivateKey decodePrivateKey(final String privateKey) throws SecurityFailure {
         final EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey));
-
-        final KeyFactory keyFactory = KeyFactory.getInstance("EC");
-        final PrivateKey key = keyFactory.generatePrivate(privateKeySpec);
-
-        if(key instanceof ECPrivateKey) {
-            return (ECPrivateKey) key;
+        try {
+            final KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            final PrivateKey key = keyFactory.generatePrivate(privateKeySpec);
+            if(key instanceof ECPrivateKey) {
+                return (ECPrivateKey) key;
+            }
+            else {
+                throw new SecurityFailure(new NotECKeyException("Key not an EC private key."));
+            }
         }
-        else {
-            throw new NotECKeyException("Key not an EC private key.");
+        catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new SecurityFailure(e);
         }
     }
 
@@ -89,10 +96,14 @@ public final class KeyHelper {
      * @param publicKey  PEM-encoded public key in Base64.
      * @param privateKey PKCS8-encoded in Base64
      */
-    public static ECKeyPair decodeKeyPair(final String publicKey, final String privateKey) throws InvalidKeySpecException {
+    public static ECKeyPair decodeKeyPair(final String publicKey, final String privateKey) throws SecurityFailure {
         final PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey));
         final X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
-        // TODO beware - may use BC!
-        return P384KeyPair.create(publicKeySpec, privateKeySpec);
+        try {
+            return P384KeyPair.create(publicKeySpec, privateKeySpec);
+        }
+        catch(InvalidKeySpecException e) {
+            throw new SecurityFailure(e);
+        }
     }
 }

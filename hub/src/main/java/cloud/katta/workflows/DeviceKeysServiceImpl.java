@@ -13,13 +13,13 @@ import ch.cyberduck.core.nio.LocalProtocol;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.workflows.exceptions.AccessException;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 
 import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
 
@@ -46,7 +46,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
     }
 
     @Override
-    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final UserDto me, final DeviceSetupCallback setup) throws AccessException {
+    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final UserDto me, final DeviceSetupCallback setup) throws AccessException, SecurityFailure {
         final DeviceKeys deviceKeys = this.getDeviceKeys(hub, me);
         if(DeviceKeys.validate(deviceKeys)) {
             return deviceKeys;
@@ -56,7 +56,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
     }
 
     @Override
-    public DeviceKeys getDeviceKeys(final Host hub, final UserDto me) throws AccessException, SecurityException {
+    public DeviceKeys getDeviceKeys(final Host hub, final UserDto me) throws AccessException, SecurityFailure {
         final String accountName = toAccountName(hub, me);
         try {
             final String encodedPublicDeviceKey = store.getPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName);
@@ -70,12 +70,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
                 return DeviceKeys.notfound;
             }
             log.debug("Retrieved device key pair for {} from keychain", accountName);
-            try {
-                return new DeviceKeys(decodeKeyPair(encodedPublicDeviceKey, encodedPrivateDeviceKey));
-            }
-            catch(InvalidKeySpecException e) {
-                throw new SecurityException(e);
-            }
+            return new DeviceKeys(decodeKeyPair(encodedPublicDeviceKey, encodedPrivateDeviceKey));
         }
         catch(AccessDeniedException e) {
             throw new AccessException(e);

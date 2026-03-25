@@ -7,13 +7,13 @@ package cloud.katta.crypto;
 import org.cryptomator.cryptolib.common.ECKeyPair;
 import org.junit.jupiter.api.Test;
 
-import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.Map;
 
 import cloud.katta.crypto.exceptions.InvalidSignatureException;
 import cloud.katta.crypto.exceptions.JWTParseException;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.google.common.collect.ImmutableMap;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -48,7 +48,7 @@ class JWTTest {
     final ECKeyPair signerKey = decodeKeyPair(Base64.getEncoder().encodeToString(signerPublicJwk.toECPublicKey().getEncoded()),
             Base64.getEncoder().encodeToString(signerPublicJwk.toECPrivateKey().getEncoded()));
 
-    JWTTest() throws InvalidKeySpecException, JOSEException {
+    JWTTest() throws SecurityFailure, JOSEException {
     }
 
     @Test

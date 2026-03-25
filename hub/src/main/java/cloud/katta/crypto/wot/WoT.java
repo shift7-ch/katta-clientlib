@@ -7,10 +7,8 @@ package cloud.katta.crypto.wot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +20,6 @@ import cloud.katta.client.model.UserDto;
 import cloud.katta.crypto.JWT;
 import cloud.katta.crypto.exceptions.InvalidSignatureException;
 import cloud.katta.crypto.exceptions.JWTParseException;
-import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -66,13 +63,7 @@ public class WoT {
         }
         else {
             // otherwise, the payload is an intermediate public key used to sign the next element
-            final ECPublicKey nextTrustedPublicKey;
-            try {
-                nextTrustedPublicKey = decodePublicKey(signedKeys.ecdsaPublicKey());
-            }
-            catch(NoSuchAlgorithmException | InvalidKeySpecException | NotECKeyException e) {
-                throw new SecurityFailure(e);
-            }
+            final ECPublicKey nextTrustedPublicKey = decodePublicKey(signedKeys.ecdsaPublicKey());
             verifyRecursive(remainingChain, nextTrustedPublicKey, allegedSignedKey);
         }
     }
@@ -133,7 +124,7 @@ public class WoT {
             verifyRecursive(signatureChain, decodePublicKey(signer.getEcdsaPublicKey()), SignedKeys.fromUser(trustedUser));
             return signatureChain.size();
         }
-        catch(SecurityFailure | NoSuchAlgorithmException | InvalidKeySpecException | NotECKeyException e) {
+        catch(SecurityFailure e) {
             log.warn("Web of Trust signature chain verification failed for user {}", trustedUser, e);
             return -1; // unverified
         }

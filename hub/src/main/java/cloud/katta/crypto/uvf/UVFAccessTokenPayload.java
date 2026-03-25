@@ -15,6 +15,7 @@ import java.util.Objects;
 
 import cloud.katta.crypto.JWE;
 import cloud.katta.model.JWEPayload;
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -94,8 +95,13 @@ public class UVFAccessTokenPayload extends JWEPayload {
      * @param userPublicKey the public key of the user
      * @return User-specific access token for the given vault.
      */
-    public String encryptForUser(final ECPublicKey userPublicKey) throws JOSEException, JsonProcessingException {
-        return JWE.ecdhEsEncrypt(this, "org.cryptomator.hub.userkey", userPublicKey);
+    public String encryptForUser(final ECPublicKey userPublicKey) throws SecurityFailure {
+        try {
+            return JWE.ecdhEsEncrypt(this, "org.cryptomator.hub.userkey", userPublicKey);
+        }
+        catch(JsonProcessingException | JOSEException e) {
+            throw new SecurityFailure(e.getMessage(), e);
+        }
     }
 
     @Override

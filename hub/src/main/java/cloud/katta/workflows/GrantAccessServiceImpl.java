@@ -7,8 +7,6 @@ package cloud.katta.workflows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,19 +14,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
+import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.nimbusds.jose.JOSEException;
 
 import static cloud.katta.crypto.KeyHelper.decodePublicKey;
 
@@ -40,11 +35,11 @@ public class GrantAccessServiceImpl implements GrantAccessService {
     private final WoTService woTService;
 
     public GrantAccessServiceImpl(final HubSession hubSession) {
-        this(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
+        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
     }
 
-    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final StorageProfileResourceApi storageProfileResourceApi, final UsersResourceApi usersResourceApi) {
-        this(vaultResourceApi, new VaultServiceImpl(vaultResourceApi, storageProfileResourceApi), new WoTServiceImpl(usersResourceApi));
+    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final UsersResourceApi usersResourceApi) {
+        this(vaultResourceApi, new VaultServiceImpl(vaultResourceApi), new WoTServiceImpl(usersResourceApi));
     }
 
     public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final VaultService vaultService, final WoTService woTService) {
@@ -55,10 +50,9 @@ public class GrantAccessServiceImpl implements GrantAccessService {
 
     @Override
     public void grantAccessToUsersRequiringAccessGrant(final UUID vaultId, final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
-        final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
-        log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
-        final UVFMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultId, userKeys);
-        final UVFAccessTokenPayload uvfAccessToken = vaultService.getVaultAccessTokenJWE(vaultId, userKeys);
+        final VaultDto vault = vaultResourceApi.apiVaultsVaultIdGet(vaultId);
+        final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, userKeys);
+        final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vault.getUvfMetadataFile());
         if(vaultMetadata.automaticAccessGrant() == null || !Optional.ofNullable(vaultMetadata.automaticAccessGrant().getEnabled()).orElse(false)) {
             log.debug("Ignoring vault {} - automatic access grant disabled", vaultId);
             return;
@@ -73,6 +67,8 @@ public class GrantAccessServiceImpl implements GrantAccessService {
         final Map<String, Integer> verifiedTrustedUsers = woTService.getTrustLevelsPerUserId(userKeys);
         // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key (and optionally its recovery key):
         final Map<String, String> accessTokens = new HashMap<>();
+        final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
+        log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
         for(final MemberDto user : usersRequiringAccessGrant) {
             if(user.getEcdhPublicKey() == null) {
                 log.debug("Ignoring user {} for vault {} - no user key yet", user, vaultId);
@@ -88,14 +84,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                 log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
                 continue;
             }
-            final String userSpecificJWE;
-            try {
-                userSpecificJWE = uvfAccessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey()));
-            }
-            catch(JOSEException | JsonProcessingException | NoSuchAlgorithmException | InvalidKeySpecException | NotECKeyException e) {
-                throw new SecurityFailure(e);
-            }
-            accessTokens.put(user.getId(), userSpecificJWE);
+            accessTokens.put(user.getId(), accessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey())));
         }
         if(accessTokens.isEmpty()) {
             log.info("for vault {} - nothing to upload", vaultId);

@@ -50,7 +50,7 @@ class KeyRotationTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testKeyRotation(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupConnection(hubTestConfig.setup);
+        final HubSession hubSession = setupConnection(hubTestConfig);
         try {
             final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
             final AuthorityResourceApi authoritiesApi = new AuthorityResourceApi(hubSession.getClient());
@@ -71,8 +71,8 @@ class KeyRotationTest extends AbstractHubTest {
                 final UserKeysService service = new UserKeysServiceImpl(hubSession);
                 final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
                 final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
-                final UVFMetadataPayload metadataJWE = vaultService.getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
-                final UVFAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
+                final UVFAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessToken(UUID.fromString(vaultDto.getId().toString()), userKeys);
+                final UVFMetadataPayload metadataJWE = vaultService.decryptVaultMetadata(masterkeyJWE, vaultDto.getUvfMetadataFile());
 
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
                 metadataJWE.storage().nickname(String.format("ZZZZ %s", vaultDto.getName()));

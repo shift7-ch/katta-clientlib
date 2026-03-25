@@ -4,72 +4,35 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.CredentialsConfigurator;
-import ch.cyberduck.core.Host;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
-import ch.cyberduck.core.Session;
-import ch.cyberduck.core.exception.InteroperabilityException;
-import ch.cyberduck.core.exception.LoginCanceledException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.text.ParseException;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
-import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
-import cloud.katta.model.StorageProfileDtoWrapper;
-import cloud.katta.protocols.hub.HubAwareProfile;
 import cloud.katta.protocols.hub.HubSession;
-import cloud.katta.protocols.s3.S3AssumeRoleSession;
-import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 
 public class VaultServiceImpl implements VaultService {
-    private static final Logger log = LogManager.getLogger(VaultServiceImpl.class);
 
     private final VaultResourceApi vaultResource;
-    private final StorageProfileResourceApi storageProfileResourceApi;
 
     public VaultServiceImpl(final HubSession hubSession) {
-        this(new VaultResourceApi(hubSession.getClient()), new StorageProfileResourceApi(hubSession.getClient()));
+        this(new VaultResourceApi(hubSession.getClient()));
     }
 
-    public VaultServiceImpl(final VaultResourceApi vaultResource, final StorageProfileResourceApi storageProfileResourceApi) {
+    public VaultServiceImpl(final VaultResourceApi vaultResource) {
         this.vaultResource = vaultResource;
-        this.storageProfileResourceApi = storageProfileResourceApi;
     }
 
     @Override
-    public UVFMetadataPayload getVaultMetadataJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure, AccessException {
-        final VaultDto vault = vaultResource.apiVaultsVaultIdGet(vaultId);
-        // contains vault member key
-        final UVFAccessTokenPayload accessToken = this.getVaultAccessTokenJWE(vaultId, userKeys);
-        // extract and decode vault key
-        final OctetSequenceKey memberKey = new HubVaultKeys(accessToken.key()).memberKey();
-        // decode vault metadata (incl. key material)
-        try {
-            return UVFMetadataPayload.decryptWithJWK(vault.getUvfMetadataFile(), memberKey);
-        }
-        catch(ParseException | JsonProcessingException | JOSEException e) {
-            throw new SecurityFailure(e);
-        }
-    }
-
-    @Override
-    public UVFAccessTokenPayload getVaultAccessTokenJWE(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure {
+    public UVFAccessTokenPayload getVaultAccessToken(final UUID vaultId, final UserKeys userKeys) throws ApiException, SecurityFailure {
         // Get the user-specific vault key with private user key
         final String userSpecificVaultJWE = vaultResource.apiVaultsVaultIdAccessTokenGet(vaultId, false);
         try {
@@ -81,33 +44,14 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public StorageProfileDtoWrapper getVaultStorageProfile(final UVFMetadataPayload metadataPayload) throws ApiException {
-        log.debug("Load profile {}", metadataPayload.storage().getProvider());
-        return StorageProfileDtoWrapper.coerce(storageProfileResourceApi
-                .apiStorageprofileProfileIdGet(UUID.fromString(metadataPayload.storage().getProvider())));
-    }
-
-    @Override
-    public Session<?> getVaultStorageSession(final HubSession session, final UUID vaultId, final UVFMetadataPayload vaultMetadata) throws ApiException, AccessException {
-        final StorageProfileDtoWrapper vaultStorageProfile = this.getVaultStorageProfile(vaultMetadata);
-        switch(vaultStorageProfile.getProtocol()) {
-            case S3_STATIC:
-            case S3_STS:
-                final VaultMetadataJWEBackendDto vaultStorageMetadata = vaultMetadata.storage();
-                try {
-                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(session, vaultId, new Host(new HubAwareProfile(
-                            ProtocolFactory.get().forType(Protocol.Type.s3), session.getConfig(), vaultStorageProfile),
-                            session.getFeature(CredentialsConfigurator.class).reload().configure(session.getHost())
-                                    .setUsername(vaultStorageMetadata.getUsername()).setPassword(vaultStorageMetadata.getPassword())).setRegion(vaultStorageMetadata.getRegion()));
-                    log.debug("Configured {} for vault {}", storage, vaultId);
-                    return storage;
-                }
-                catch(LoginCanceledException e) {
-                    throw new AccessException(e);
-                }
-            default:
-                log.warn("Unsupported storage configuration {} for vault {}", vaultStorageProfile.getProtocol(), vaultId);
-                throw new AccessException(new InteroperabilityException());
+    public UVFMetadataPayload decryptVaultMetadata(final UVFAccessTokenPayload accessToken, final String uvfMetadataFile) throws SecurityFailure {
+        final OctetSequenceKey memberKey = new HubVaultKeys(accessToken.key()).memberKey();
+        try {
+            // Decode vault metadata (incl. key material)
+            return UVFMetadataPayload.decrypt(uvfMetadataFile, memberKey);
+        }
+        catch(ParseException | JsonProcessingException | JOSEException e) {
+            throw new SecurityFailure(e);
         }
     }
 }

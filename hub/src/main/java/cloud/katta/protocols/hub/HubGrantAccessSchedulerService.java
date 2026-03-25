@@ -18,7 +18,6 @@ import java.util.List;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.DeviceResourceApi;
-import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.Role;
@@ -59,7 +58,6 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
                 }
                 new GrantAccessServiceImpl(
                         new VaultResourceApi(session.getClient()),
-                        new StorageProfileResourceApi(session.getClient()),
                         new UsersResourceApi(session.getClient())
                 ).grantAccessToUsersRequiringAccessGrant(accessibleVault.getId(), userKeys);
             }

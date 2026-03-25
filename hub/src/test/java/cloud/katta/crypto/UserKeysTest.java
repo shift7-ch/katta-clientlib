@@ -7,12 +7,7 @@ package cloud.katta.crypto;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 
-import java.security.spec.InvalidKeySpecException;
-import java.text.ParseException;
 import java.util.Base64;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.nimbusds.jose.JOSEException;
 
 import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -20,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 class UserKeysTest {
 
     @Test
-    void testEncryptWithSetupCodeAndRecover() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncryptWithSetupCodeAndRecover() throws Exception {
         // PEM-encoded
         final String encodedPublicKey = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESA0oPUI0DrULBpIjTRckRduqaPqKz2f4zF6UvB+WHyOVZNsWZHHWIdjZ4LkoOygNenLgllv/iyzzVrH2ILR3Si6s03UOnicBbLy8jPY3MRvdgJPNz4C0kFa7HNXtQNKE";
         // pkcs8-encoded
@@ -36,7 +31,7 @@ class UserKeysTest {
     }
 
     @Test
-    void testEncryptWithSetupCodeAndRecoverNew() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncryptWithSetupCodeAndRecoverNew() throws Exception {
         final UserKeys userKeys = UserKeys.create();
 
         final String encryptedPrivateKey = userKeys.encryptWithSetupCode("top secret");
@@ -48,7 +43,7 @@ class UserKeysTest {
     }
 
     @Test
-    void testEncrypForDeviceAndDecryptOnDevice() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncrypForDeviceAndDecryptOnDevice() throws Exception {
         // PEM-encoded
         final String encodedPublicKey = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESA0oPUI0DrULBpIjTRckRduqaPqKz2f4zF6UvB+WHyOVZNsWZHHWIdjZ4LkoOygNenLgllv/iyzzVrH2ILR3Si6s03UOnicBbLy8jPY3MRvdgJPNz4C0kFa7HNXtQNKE";
         // pkcs8-encoded
@@ -68,7 +63,7 @@ class UserKeysTest {
     }
 
     @Test
-    void testEncrypForDeviceAndDecryptOnDeviceNew() throws ParseException, JOSEException, JsonProcessingException, InvalidKeySpecException {
+    void testEncrypForDeviceAndDecryptOnDeviceNew() throws Exception {
         final P384KeyPair deviceKeys = P384KeyPair.generate();
         final UserKeys userKeys = UserKeys.create();
 

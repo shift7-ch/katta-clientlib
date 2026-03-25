@@ -10,8 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
-import java.security.spec.InvalidKeySpecException;
-import java.text.ParseException;
 import java.util.Base64;
 
 import cloud.katta.client.ApiException;
@@ -56,13 +54,7 @@ public class UserKeysServiceImpl implements UserKeysService {
         final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeyPair.getEcKeyPair());
         log.info("Got device key pair from keychain with deviceId={}", deviceId);
         final String deviceSpecificUserKeys = deviceResourceApi.apiDevicesDeviceIdGet(deviceId).getUserPrivateKey();
-        final UserKeys userKeys;
-        try {
-            userKeys = UserKeys.decryptOnDevice(deviceSpecificUserKeys, deviceKeyPair.getEcKeyPair().getPrivate(), me.getEcdhPublicKey(), me.getEcdsaPublicKey());
-        }
-        catch(ParseException | JOSEException | InvalidKeySpecException e) {
-            throw new SecurityFailure(e);
-        }
+        final UserKeys userKeys = UserKeys.decryptOnDevice(deviceSpecificUserKeys, deviceKeyPair.getEcKeyPair().getPrivate(), me.getEcdhPublicKey(), me.getEcdsaPublicKey());
         log.info("Decrypting device-specific user keys for deviceId={}", deviceId);
         return userKeys;
     }
@@ -102,15 +94,9 @@ public class UserKeysServiceImpl implements UserKeysService {
         }
     }
 
-    private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws
-            ApiException, SecurityFailure {
-        try {
-            return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
-                    UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
-        }
-        catch(ParseException | JOSEException | InvalidKeySpecException e) {
-            throw new SecurityFailure(e);
-        }
+    private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
+        return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
+                UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
     }
 
     private UserKeys uploadUserKeys(final UserDto me, final UserKeys userKeys, final String setupCode) throws ApiException, SecurityFailure {

@@ -19,16 +19,16 @@ import io.swagger.annotations.ApiModelProperty;
  * Counterpart of <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts"><code>VaultMetadataJWEBackendDto</code></a>.
  */
 @JsonPropertyOrder({
-        VaultMetadataJWEBackendDto.JSON_PROPERTY_PROVIDER,
-        VaultMetadataJWEBackendDto.JSON_PROPERTY_DEFAULT_PATH,
-        VaultMetadataJWEBackendDto.JSON_PROPERTY_NICKNAME,
-        VaultMetadataJWEBackendDto.JSON_PROPERTY_REGION,
-        VaultMetadataJWEBackendDto.JSON_PROPERTY_USERNAME,
-        VaultMetadataJWEBackendDto.JSON_PROPERTY_PASSWORD
+        VaultMetadataStorageDto.JSON_PROPERTY_PROVIDER,
+        VaultMetadataStorageDto.JSON_PROPERTY_DEFAULT_PATH,
+        VaultMetadataStorageDto.JSON_PROPERTY_NICKNAME,
+        VaultMetadataStorageDto.JSON_PROPERTY_REGION,
+        VaultMetadataStorageDto.JSON_PROPERTY_USERNAME,
+        VaultMetadataStorageDto.JSON_PROPERTY_PASSWORD
 })
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class VaultMetadataJWEBackendDto {
+public class VaultMetadataStorageDto {
     public static final String JSON_PROPERTY_PROVIDER = "provider";
     private String provider;
 
@@ -47,10 +47,10 @@ public class VaultMetadataJWEBackendDto {
     public static final String JSON_PROPERTY_PASSWORD = "password";
     private String password;
 
-    public VaultMetadataJWEBackendDto() {
+    public VaultMetadataStorageDto() {
     }
 
-    public VaultMetadataJWEBackendDto provider(String provider) {
+    public VaultMetadataStorageDto provider(String provider) {
         this.provider = provider;
         return this;
     }
@@ -77,7 +77,7 @@ public class VaultMetadataJWEBackendDto {
     }
 
 
-    public VaultMetadataJWEBackendDto defaultPath(String defaultPath) {
+    public VaultMetadataStorageDto defaultPath(String defaultPath) {
         this.defaultPath = defaultPath;
         return this;
     }
@@ -104,7 +104,7 @@ public class VaultMetadataJWEBackendDto {
     }
 
 
-    public VaultMetadataJWEBackendDto nickname(String nickname) {
+    public VaultMetadataStorageDto nickname(String nickname) {
         this.nickname = nickname;
         return this;
     }
@@ -131,7 +131,7 @@ public class VaultMetadataJWEBackendDto {
     }
 
 
-    public VaultMetadataJWEBackendDto region(String region) {
+    public VaultMetadataStorageDto region(String region) {
         this.region = region;
         return this;
     }
@@ -158,7 +158,7 @@ public class VaultMetadataJWEBackendDto {
     }
 
 
-    public VaultMetadataJWEBackendDto username(String username) {
+    public VaultMetadataStorageDto username(String username) {
         this.username = username;
         return this;
     }
@@ -185,7 +185,7 @@ public class VaultMetadataJWEBackendDto {
     }
 
 
-    public VaultMetadataJWEBackendDto password(String password) {
+    public VaultMetadataStorageDto password(String password) {
         this.password = password;
         return this;
     }
@@ -223,7 +223,7 @@ public class VaultMetadataJWEBackendDto {
         if(o == null || getClass() != o.getClass()) {
             return false;
         }
-        VaultMetadataJWEBackendDto vaultMetadataJWEBackendDto = (VaultMetadataJWEBackendDto) o;
+        VaultMetadataStorageDto vaultMetadataJWEBackendDto = (VaultMetadataStorageDto) o;
         return Objects.equals(this.provider, vaultMetadataJWEBackendDto.provider) &&
                 Objects.equals(this.defaultPath, vaultMetadataJWEBackendDto.defaultPath) &&
                 Objects.equals(this.nickname, vaultMetadataJWEBackendDto.nickname) &&
@@ -239,28 +239,13 @@ public class VaultMetadataJWEBackendDto {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("class VaultJWEBackendDto {\n");
-        sb.append("    provider: ").append(toIndentedString(provider)).append("\n");
-        sb.append("    defaultPath: ").append(toIndentedString(defaultPath)).append("\n");
-        sb.append("    nickname: ").append(toIndentedString(nickname)).append("\n");
-        sb.append("    region: ").append(toIndentedString(region)).append("\n");
-        sb.append("    username: ").append(toIndentedString(username)).append("\n");
-        sb.append("    password: ").append(toIndentedString(password)).append("\n");
-        sb.append("}");
+        final StringBuilder sb = new StringBuilder("VaultMetadataStorageDto{");
+        sb.append("region='").append(region).append('\'');
+        sb.append(", nickname='").append(nickname).append('\'');
+        sb.append(", defaultPath='").append(defaultPath).append('\'');
+        sb.append(", provider='").append(provider).append('\'');
+        sb.append('}');
         return sb.toString();
     }
-
-    /**
-     * Convert the given object to string with each line indented by 4 spaces
-     * (except the first line).
-     */
-    private String toIndentedString(Object o) {
-        if(o == null) {
-            return "null";
-        }
-        return o.toString().replace("\n", "\n    ");
-    }
-
 }
 

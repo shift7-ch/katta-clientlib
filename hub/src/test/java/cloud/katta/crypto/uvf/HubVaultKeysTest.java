@@ -6,17 +6,15 @@ package cloud.katta.crypto.uvf;
 
 import org.junit.jupiter.api.Test;
 
-import com.nimbusds.jose.JOSEException;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HubVaultKeysTest {
 
     @Test
-    void serializePublicRecoveryKey() throws JOSEException {
+    void serializePublicRecoveryKey() throws Exception {
         final HubVaultKeys keys = HubVaultKeys.create();
         assertTrue(keys.serialize().containsNonPublicKeys());
-        assertFalse(HubVaultKeys.serializePublicRecoveryKey(keys.recoveryKey()).containsNonPublicKeys());
+        assertFalse(keys.serialize().toPublicJWKSet().containsNonPublicKeys());
     }
 }

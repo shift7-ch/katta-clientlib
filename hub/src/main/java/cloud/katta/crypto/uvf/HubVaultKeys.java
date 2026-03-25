@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Base64;
 
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEAlgorithm;
 import com.nimbusds.jose.jwk.Curve;
@@ -64,17 +65,22 @@ public final class HubVaultKeys {
      * Initializing memberKey and recoveryKey using standard cryptographic algorithms and parameters.
      *
      * @return New key set
-     * @throws JOSEException if there is an error during the creation of cryptographic keys.
+     * @throws SecurityFailure if there is an error during the creation of cryptographic keys.
      */
-    public static HubVaultKeys create() throws JOSEException {
-        return new HubVaultKeys();
+    public static HubVaultKeys create() throws SecurityFailure {
+        try {
+            return new HubVaultKeys();
+        }
+        catch(JOSEException e) {
+            throw new SecurityFailure(e.getMessage(), e);
+        }
     }
 
     /**
      * This private constructor generates a default instance of the class, initializing memberKey and recoveryKey
      * using standard cryptographic algorithms and parameters.
      *
-     * @throws JOSEException if there is an error during the creation of cryptographic keys.
+     * @throws SecurityFailure if there is an error during the creation of cryptographic keys.
      */
     private HubVaultKeys() throws JOSEException {
         this(new OctetSequenceKeyGenerator(256)
@@ -132,29 +138,22 @@ public final class HubVaultKeys {
      *
      * @return A {@link JWKSet} containing the serialized cryptographic key set. The returned JWKSet may
      * include both the member key and recovery key, if present.
-     * @throws JOSEException If an error occurs during the serialization of cryptographic keys.
+     * @throws SecurityFailure If an error occurs during the serialization of cryptographic keys.
      */
-    public JWKSet serialize() throws JOSEException {
+    public JWKSet serialize() throws SecurityFailure {
         if(recoveryKey == null) {
             log.warn("Missing recovery key");
             return new JWKSet(memberKey);
         }
-        return new JWKSet(Arrays.asList(memberKey, new ECKey.Builder(Curve.P_384, recoveryKey.getPublic())
-                .algorithm(JWEAlgorithm.ECDH_ES_A256KW)
-                .keyID(String.format(KID_RECOVERY_KEY_PREFIX, new ECKey.Builder(Curve.P_384, recoveryKey.getPublic()).build().computeThumbprint()))
-                .privateKey(recoveryKey.getPrivate())
-                .build()));
-    }
-
-    /**
-     * Retrieve JSON Web Key Set containing only public part of recovery key.
-     *
-     * @return The JSON object string representation. Only the public key will be included
-     */
-    public static JWKSet serializePublicRecoveryKey(final P384KeyPair recoveryKey) throws JOSEException {
-        return new JWKSet(new ECKey.Builder(Curve.P_384, recoveryKey.getPublic())
-                .algorithm(JWEAlgorithm.ECDH_ES_A256KW)
-                .keyID(String.format(KID_RECOVERY_KEY_PREFIX, new ECKey.Builder(Curve.P_384, recoveryKey.getPublic()).build().computeThumbprint()))
-                .build()).toPublicJWKSet();
+        try {
+            return new JWKSet(Arrays.asList(memberKey, new ECKey.Builder(Curve.P_384, recoveryKey.getPublic())
+                    .algorithm(JWEAlgorithm.ECDH_ES_A256KW)
+                    .keyID(String.format(KID_RECOVERY_KEY_PREFIX, new ECKey.Builder(Curve.P_384, recoveryKey.getPublic()).build().computeThumbprint()))
+                    .privateKey(recoveryKey.getPrivate())
+                    .build()));
+        }
+        catch(JOSEException e) {
+            throw new SecurityFailure(e.getMessage(), e);
+        }
     }
 }
