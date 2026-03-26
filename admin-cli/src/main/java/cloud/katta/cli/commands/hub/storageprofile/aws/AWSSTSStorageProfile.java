@@ -43,8 +43,9 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
     public AWSSTSStorageProfile() {
     }
 
-    public AWSSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions, final String roleNamePrefix, final String bucketPrefix) {
+    public AWSSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions, final String awsAccountId, final String roleNamePrefix, final String bucketPrefix) {
         super(hubUrl, uuid, name, region, regions);
+        this.awsAccountId = awsAccountId;
         this.roleNamePrefix = roleNamePrefix;
         this.bucketPrefix = bucketPrefix;
     }
