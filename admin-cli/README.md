@@ -24,8 +24,11 @@ katta setup aws \
 - `--realmUrl`: Keycloak realm URL with scheme. Example: `https://keycloak.default.domain/realms/cryptomator`
 
 **Additional Options:**
+
 - `--profileName`: AWS profile to load AWS credentials from (see `~/.aws/credentials`)
 - `--clientId`: Client Ids for the OIDC provider
+- `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
 
 ### Configure storage profile in AWS Setup using `storageprofile` command
 
@@ -48,6 +51,11 @@ katta storageprofile aws sts \
 - `--region`: Bucket region. Example: `eu-west-1`
 - `--authUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth`
 - `--tokenUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token`
+
+**Additional Options:**
+
+- `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
 
 #### Update thumbprints of TLS certificates
 
