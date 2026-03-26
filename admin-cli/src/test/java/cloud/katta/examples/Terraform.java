@@ -61,7 +61,8 @@ public class Terraform {
                     "--uuid", storageProfileId.toString(),
                     "--name", "AWS S3 STS",
                     "--bucketPrefix", bucketPrefix,
-                    "--roleNamePrefix", String.format("arn:aws:iam::430118840017:role/%s", roleNamePrefix),
+                    "--awsAccountId", "430118840017",
+                    "--roleNamePrefix", roleNamePrefix,
                     "--region", region,
                     "--regions", region};
             System.out.println(String.format("katta \"%s\"", String.join("\" \"", storageProfileAwsStsArgs)));
