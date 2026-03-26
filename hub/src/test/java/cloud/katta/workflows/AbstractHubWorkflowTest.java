@@ -167,11 +167,11 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             log.info("S04 {} alice adds trust to admin", setup);
             new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
-                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost())), admin);
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe())), admin);
 
             log.info("S04 {} alice grants access to admin", setup);
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
-                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
+                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
         }

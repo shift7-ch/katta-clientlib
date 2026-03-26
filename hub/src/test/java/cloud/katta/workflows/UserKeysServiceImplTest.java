@@ -43,7 +43,7 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     void testSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
 
-        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), deviceSetupCallback(config.setup));
+        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup));
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // N.B. DeviceKeysServiceImpl does not override device keys in keychain, so compare remote
@@ -73,7 +73,7 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     void testSetupExistingDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup);
 
-        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), deviceSetupCallback(config.setup));
+        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup));
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // delete devices remote in order to simplify checking new device uploaded
@@ -96,7 +96,7 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         final HubSession hubSession = setupConnection(config.setup);
         final UserDto me = hubSession.getMe();
 
-        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), deviceSetupCallback(config.setup));
+        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup));
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // delete devices remote in order to simplify checking new device uploaded
