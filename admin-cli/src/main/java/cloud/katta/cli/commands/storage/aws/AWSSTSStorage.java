@@ -68,7 +68,7 @@ public class AWSSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.testing.katta.cloud/realms/cryptomator\".", required = true)
     String realmUrl;
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "Role name prefix.", required = false, defaultValue = "katta-")
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "IAM ARN role name prefix (not a full ARN; do not include 'arn:aws:iam::...:role", required = false, defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = false, defaultValue = "default")

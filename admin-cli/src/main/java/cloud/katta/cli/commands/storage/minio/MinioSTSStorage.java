@@ -54,7 +54,7 @@ public class MinioSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--secretKey"}, description = "Secret Key for administering MinIO if no profile is used.", required = true)
     String secretKey;
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "Role name prefix.", defaultValue = "katta-")
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "IAM ARN role name prefix (not a full ARN; do not include 'arn:aws:iam::...:role", defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", defaultValue = "katta-")

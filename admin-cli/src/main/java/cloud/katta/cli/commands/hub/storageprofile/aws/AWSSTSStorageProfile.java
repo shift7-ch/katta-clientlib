@@ -34,7 +34,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--awsAccountId"}, description = "AWS Account ID. A 12-digit number, such as 012345678901, that uniquely identifies an AWS account.", required = true)
     String awsAccountId;
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "ARN Role Name Prefix.", required = false, defaultValue = "katta-")
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "IAM ARN role name prefix (not a full ARN; do not include 'arn:aws:iam::...:role/')", required = false, defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix.", required = false, defaultValue = "katta-")
