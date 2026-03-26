@@ -50,7 +50,7 @@ public class Terraform {
             );
             assertEquals(0, rc);
         }
-        if (true) {
+        if(true) {
             final UUID storageProfileId = UUID.randomUUID();
             final String[] storageProfileAwsStsArgs = {
                     "storageprofile", "aws", "sts",
@@ -71,7 +71,7 @@ public class Terraform {
             );
             assertEquals(0, rc);
         }
-        if (true){
+        if(true) {
             final UUID storageProfileId = UUID.randomUUID();
             final String[] storageProfileAwsStaticArgs = {
                     "storageprofile", "aws", "static",
