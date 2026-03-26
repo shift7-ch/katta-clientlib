@@ -16,22 +16,19 @@ Keycloak.
 
 ```bash
 katta setup aws \
-  --realmUrl <realm-url> \
-  --profileName <aws-profile> \
-  --clientId cryptomator \
-  --clientId cryptomatorhub \
-  --clientId cryptomatorvaults \
+  --realmUrl <realm-url>
 ```
-
-* Client ID `cryptomator` is used for Katta Desktop.
-* Client ID `cryptomatorhub` is used for Katta Hub Web Application.
-* Client ID `cryptomatorvaults` is used for Katta Hub Web Application to create buckets.
 
 **Required Options:**
 
 - `--realmUrl`: Keycloak realm URL with scheme. Example: `https://keycloak.default.domain/realms/cryptomator`
+
+**Additional Options:**
+
 - `--profileName`: AWS profile to load AWS credentials from (see `~/.aws/credentials`)
 - `--clientId`: Client Ids for the OIDC provider
+- `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
 
 ### Configure storage profile in AWS Setup using `storageprofile` command
 
@@ -41,21 +38,24 @@ Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup
 ```bash
 katta storageprofile aws sts \
   --hubUrl <hub-url> \
-  --rolePrefix <arn-role-prefix> \
+  --awsAccountId <aws-account-id> \
   --region <aws-region> \
   --authUrl <auth-url> \
   --tokenUrl <token-url> \
-  --clientId cryptomator # Authorize as Katta Desktop
 ```
 
 **Required Options:**
 
 - `--hubUrl`: Hub URL
-- `--rolePrefix`: ARN Role Prefix. Example: `arn:aws:iam::930717317329:role/katta-`
+- `--awsAccountId`: AWS Account ID. A 12-digit number, such as 012345678901, that uniquely identifies an AWS account.
 - `--region`: Bucket region. Example: `eu-west-1`
 - `--authUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth`
 - `--tokenUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token`
-- `--clientId`: Client Ids for the OIDC provider
+
+**Additional Options:**
+
+- `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
 
 #### Update thumbprints of TLS certificates
 

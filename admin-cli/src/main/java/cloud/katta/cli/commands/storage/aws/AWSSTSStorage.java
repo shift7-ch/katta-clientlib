@@ -20,8 +20,6 @@ import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.policybuilder.iam.IamCondition;
 import software.amazon.awssdk.policybuilder.iam.IamEffect;
 import software.amazon.awssdk.policybuilder.iam.IamPolicy;
@@ -60,14 +58,17 @@ import static cloud.katta.cli.commands.common.Defaults.*;
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#setup-aws">Katta Docs</a>.
  */
-@CommandLine.Command(name = "aws", description = "Setup/update OIDC provider and roles for STS in AWS.", mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "aws",
+        description = "Setup/update OIDC provider and roles for STS in AWS.",
+        showDefaultValues = true,
+        mixinStandardHelpOptions = true)
 public class AWSSTSStorage implements Callable<Void> {
 
     // TODO get from /api/config instead/optionally?
     @CommandLine.Option(names = {"--realmUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://keycloak.testing.katta.cloud/realms/cryptomator\".", required = true)
     String realmUrl;
 
-    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "Role name prefix.", required = false, defaultValue = "katta-")
+    @CommandLine.Option(names = {"--roleNamePrefix"}, description = "IAM ARN role name prefix (not a full ARN; do not include 'arn:aws:iam::...:role", required = false, defaultValue = "katta-")
     String roleNamePrefix;
 
     @CommandLine.Option(names = {"--profileName"}, description = "AWS profile to load AWS credentials from. See ~/.aws/credentials.", required = false, defaultValue = "default")
@@ -80,15 +81,16 @@ public class AWSSTSStorage implements Callable<Void> {
     Integer maxSessionDuration;
 
     // TODO can from /api/config instead/optionally?
-    @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = true)
+    @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = false)
     List<String> clientId;
 
-
-    int millis = 10000;
-
+    int sleep = 10000;
 
     @Override
     public Void call() throws Exception {
+        if(null == clientId) {
+            clientId = List.of(CLIENT_IDS);
+        }
         // remove trailing slash
         realmUrl = realmUrl.replaceAll("/$", "");
         final String arnPostfix = realmUrl.replace("https://", "");
@@ -98,23 +100,11 @@ public class AWSSTSStorage implements Callable<Void> {
         final String sha = getThumbprint(url);
         System.out.println(sha);
 
-        try {
-            System.out.printf("Trying environment credentials provider");
-            try (final IamClient iam = IamClient.builder()
-                    .region(Region.AWS_GLOBAL)
-                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-                    .build()) {
-                call(iam, arnPostfix, sha);
-            }
-        }
-        catch(SdkClientException e) {
-            System.out.println(String.format("Trying profile credentials provider with profile %s", profileName));
-            try (final IamClient iam = IamClient.builder()
-                    .region(Region.AWS_GLOBAL)
-                    .credentialsProvider(DefaultCredentialsProvider.builder().profileName(profileName).build())
-                    .build()) {
-                call(iam, arnPostfix, sha);
-            }
+        try (final IamClient iam = IamClient.builder()
+                .region(Region.AWS_GLOBAL)
+                .credentialsProvider(DefaultCredentialsProvider.builder().profileName(profileName).build())
+                .build()) {
+            call(iam, arnPostfix, sha);
         }
         return null;
     }
@@ -235,8 +225,8 @@ public class AWSSTSStorage implements Callable<Void> {
         //
         //		sleep 10;
         //
-
-        Thread.sleep(millis);
+        System.out.printf("Wait %ss%n", sleep / 1000);
+        Thread.sleep(sleep);
 
         //
         //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json

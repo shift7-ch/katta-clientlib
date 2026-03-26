@@ -13,4 +13,11 @@ public class Defaults {
     public static final String ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX = "-tagged-session-role";
 
     public static final String REQUEST_TAG = "Vault";
+
+    /**
+     * Client ID `cryptomator` is used for Katta Desktop.
+     * Client ID `cryptomatorhub` is used for Katta Hub Web Application.
+     * Client ID `cryptomatorvaults` is used for Katta Hub Web Application to create buckets.
+     */
+    public static final String[] CLIENT_IDS = {"cryptomator", "cryptomatorhub", "cryptomatorvaults"};
 }

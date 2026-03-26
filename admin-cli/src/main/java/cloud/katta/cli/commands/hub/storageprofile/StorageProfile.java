@@ -12,6 +12,6 @@ import picocli.CommandLine;
         AWS.class,
         CommandLine.HelpCommand.class
 },
-        description = "Setup Storage Provider Integration", mixinStandardHelpOptions = true)
+        description = "Configure Storage Location", mixinStandardHelpOptions = true)
 public class StorageProfile {
 }
