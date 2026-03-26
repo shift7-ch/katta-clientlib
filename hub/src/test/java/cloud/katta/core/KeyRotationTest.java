@@ -4,10 +4,6 @@
 
 package cloud.katta.core;
 
-import cloud.katta.client.api.AuthorityResourceApi;
-
-import cloud.katta.client.model.AuthorityDto;
-
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,8 +17,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cloud.katta.client.api.AuthorityResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.AuthorityDto;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.UserDto;
@@ -71,7 +69,7 @@ class KeyRotationTest extends AbstractHubTest {
             for(final VaultDto vaultDto : vaults) {
                 final HashMap<String, String> tokens = new HashMap<>();
                 final UserKeysService service = new UserKeysServiceImpl(hubSession);
-                final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost()));
+                final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
                 final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
                 final UVFMetadataPayload metadataJWE = vaultService.getVaultMetadataJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);
                 final UVFAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessTokenJWE(UUID.fromString(vaultDto.getId().toString()), userKeys);

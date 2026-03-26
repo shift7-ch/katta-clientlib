@@ -50,7 +50,7 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
             final UserKeys userKeys = new UserKeysServiceImpl(
                     new UsersResourceApi(session.getClient()),
                     new DeviceResourceApi(session.getClient())).getUserKeys(session.getHost(), session.getMe(),
-                    new DeviceKeysServiceImpl(keychain).getDeviceKeys(session.getHost()));
+                    new DeviceKeysServiceImpl(keychain).getDeviceKeys(session.getHost(), session.getMe()));
             final List<VaultDto> accessibleVaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(Role.OWNER);
             for(final VaultDto accessibleVault : accessibleVaults) {
                 if(Boolean.TRUE.equals(accessibleVault.getArchived())) {

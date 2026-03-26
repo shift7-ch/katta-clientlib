@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
+import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -40,23 +41,23 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
         this.store = store;
     }
 
-    private static String toAccountName(final Host hub) {
-        return String.format("%s@%s", hub.getCredentials().getUsername(), hub.getHostname());
+    private static String toAccountName(final Host hub, final UserDto me) {
+        return String.format("%s@%s", me.getName(), hub.getHostname());
     }
 
     @Override
-    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final DeviceSetupCallback setup) throws AccessException {
-        final DeviceKeys deviceKeys = this.getDeviceKeys(hub);
+    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final UserDto me, final DeviceSetupCallback setup) throws AccessException {
+        final DeviceKeys deviceKeys = this.getDeviceKeys(hub, me);
         if(DeviceKeys.validate(deviceKeys)) {
             return deviceKeys;
         }
         log.warn("Create new device key for {}", hub);
-        return this.storeDeviceKeys(hub, setup.generateDeviceKey());
+        return this.storeDeviceKeys(hub, me, setup.generateDeviceKey());
     }
 
     @Override
-    public DeviceKeys getDeviceKeys(final Host hub) throws AccessException, SecurityException {
-        final String accountName = toAccountName(hub);
+    public DeviceKeys getDeviceKeys(final Host hub, final UserDto me) throws AccessException, SecurityException {
+        final String accountName = toAccountName(hub, me);
         try {
             final String encodedPublicDeviceKey = store.getPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName);
             if(null == encodedPublicDeviceKey) {
@@ -81,8 +82,8 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
         }
     }
 
-    protected DeviceKeys storeDeviceKeys(final Host hub, final DeviceKeys deviceKeys) throws AccessException {
-        final String accountName = toAccountName(hub);
+    protected DeviceKeys storeDeviceKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeys) throws AccessException {
+        final String accountName = toAccountName(hub, me);
         try {
             store.addPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName,
                     Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPublic().getEncoded())

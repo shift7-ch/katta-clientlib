@@ -159,10 +159,10 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
         try {
-            final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, setup);
+            final UserDto user = this.getMe();
+            final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, user, setup);
             log.debug("Retrieved device keys {}", deviceKeys);
-            final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host,
-                    this.getMe(), deviceKeys, setup);
+            final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
             log.debug("Retrieved user keys {}", userKeys);
             return userKeys;
         }

@@ -38,7 +38,7 @@ class DeviceKeysServiceImplTest extends AbstractHubTest {
         hubId.setUuid(UUID.randomUUID().toString());
         final UserDto userId = new UserDto();
         userId.setId(UUID.randomUUID().toString());
-        service.getDeviceKeys(hubId);
+        service.getDeviceKeys(hubId, userId);
         verify(storeMock, times(1)).getPassword(eq(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), any());
         verify(storeMock, times(1)).getPassword(eq(KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME), any());
     }
@@ -53,7 +53,7 @@ class DeviceKeysServiceImplTest extends AbstractHubTest {
         final Host hubId = new Host(new HubProtocol());
         hubId.setUuid(UUID.randomUUID().toString());
         final DeviceKeys deviceKeys = DeviceKeys.create();
-        service.storeDeviceKeys(hubId, deviceKeys);
+        service.storeDeviceKeys(hubId, userId, deviceKeys);
         verify(storeMock, times(1)).addPassword(eq(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME), any(),
                 eq(Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPublic().getEncoded())));
         verify(storeMock, times(1)).addPassword(eq(KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME), any(),
@@ -66,9 +66,9 @@ class DeviceKeysServiceImplTest extends AbstractHubTest {
         userId.setId(UUID.randomUUID().toString());
         final Host hubId = new Host(new HubProtocol());
         hubId.setUuid(UUID.randomUUID().toString());
-        assertEquals(DeviceKeys.notfound, new DeviceKeysServiceImpl().getDeviceKeys(hubId));
+        assertEquals(DeviceKeys.notfound, new DeviceKeysServiceImpl().getDeviceKeys(hubId, userId));
         final DeviceKeys deviceKeys = DeviceKeys.create();
-        new DeviceKeysServiceImpl().storeDeviceKeys(hubId, deviceKeys);
-        assertEquals(deviceKeys, new DeviceKeysServiceImpl().getDeviceKeys(hubId));
+        new DeviceKeysServiceImpl().storeDeviceKeys(hubId, userId, deviceKeys);
+        assertEquals(deviceKeys, new DeviceKeysServiceImpl().getDeviceKeys(hubId, userId));
     }
 }
