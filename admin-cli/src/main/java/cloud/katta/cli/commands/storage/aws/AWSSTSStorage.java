@@ -84,6 +84,8 @@ public class AWSSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--clientId"}, description = "ClientIds for the OIDC provider.", required = false)
     List<String> clientId;
 
+    int sleep = 10000;
+
     @Override
     public Void call() throws Exception {
         if(null == clientId) {
@@ -219,6 +221,12 @@ public class AWSSTSStorage implements Callable<Void> {
                 accessBucketAssumeRoleWithWebIdentityPermissionPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()),
                 maxSessionDuration
         );
+
+        //
+        //		sleep 10;
+        //
+        System.out.printf("Wait %ss%n", sleep / 1000);
+        Thread.sleep(sleep);
 
         //
         //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
