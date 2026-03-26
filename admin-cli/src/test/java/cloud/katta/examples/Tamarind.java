@@ -38,7 +38,7 @@ public class Tamarind {
                     "--name", "AWS S3 STS",
                     "--bucketPrefix", "katta-test-",
                     "--awsAccountId", "430118840017",
-                    "--roleNamePrefix", "testing.katta.cloud-kc-realms-tamarind"
+                    "--roleNamePrefix", "testing.katta.cloud-kc-realms-tamarind-"
             );
         }
 
