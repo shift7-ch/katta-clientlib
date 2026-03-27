@@ -30,7 +30,7 @@ class GrantAccessServiceImplTest {
     @ParameterizedTest
     @CsvSource({
             "false,-1,2,0", // automatic access grant disabled -> no upload
-            "true,-1,2,0",  // invalid maxWotDepth value -> no upload
+            "true,-1,2,1",  // default maxWotDepth value -> upload all
             "true,3,2,1",   // maxWotDepth > bobTrustLevel -> 1 upload
             "true,2,2,1",   // maxWotDepth == bobTrustLevel -> 1 upload
             "true,1,2,0",   // maxWotDepth < bobTrustLevel -> no upload

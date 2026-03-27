@@ -181,15 +181,7 @@ public abstract class AbstractHubTest extends VaultTest {
         return new DisabledLoginCallback() {
             @Override
             public Credentials prompt(final Host bookmark, final String username, final String title, final String reason, final LoginOptions options) {
-                return new Credentials(config.vault.username, config.vault.password) {
-                    @Override
-                    public String getProperty(final String key) {
-                        if("katta.wot.depth.max".equals(key)) {
-                            return "3";
-                        }
-                        return null;
-                    }
-                };
+                return new Credentials(config.vault.username, config.vault.password);
             }
 
             @SuppressWarnings("unchecked")

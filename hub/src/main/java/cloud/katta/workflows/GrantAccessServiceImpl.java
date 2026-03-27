@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
@@ -26,6 +25,7 @@ import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
 import static cloud.katta.crypto.KeyHelper.decodePublicKey;
+import static java.util.Optional.ofNullable;
 
 public class GrantAccessServiceImpl implements GrantAccessService {
     private static final Logger log = LogManager.getLogger(GrantAccessServiceImpl.class.getName());
@@ -53,17 +53,13 @@ public class GrantAccessServiceImpl implements GrantAccessService {
         final VaultDto vault = vaultResourceApi.apiVaultsVaultIdGet(vaultId);
         final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, userKeys);
         final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vault.getUvfMetadataFile());
-        if(vaultMetadata.automaticAccessGrant() == null || !Optional.ofNullable(vaultMetadata.automaticAccessGrant().getEnabled()).orElse(false)) {
+        if(vaultMetadata.automaticAccessGrant() == null || !ofNullable(vaultMetadata.automaticAccessGrant().getEnabled()).orElse(false)) {
             log.debug("Ignoring vault {} - automatic access grant disabled", vaultId);
             return;
         }
         // 1. Get Ids of trusted and verified users
         // maxWotDepth must be non-negative
-        final int maxWotDepth = Optional.ofNullable(vaultMetadata.automaticAccessGrant().getMaxWotDepth()).orElse(-1);
-        if(maxWotDepth < 0) {
-            log.warn("Ignoring vault {} - invalid maxWotDepth value \"{}\"", vaultId, vaultMetadata.automaticAccessGrant().getMaxWotDepth());
-            return;
-        }
+        final int maxWotDepth = ofNullable(vaultMetadata.automaticAccessGrant().getMaxWotDepth()).orElse(-1);
         final Map<String, Integer> verifiedTrustedUsers = woTService.getTrustLevelsPerUserId(userKeys);
         // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key (and optionally its recovery key):
         final Map<String, String> accessTokens = new HashMap<>();
@@ -74,15 +70,17 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                 log.debug("Ignoring user {} for vault {} - no user key yet", user, vaultId);
                 continue;
             }
-            final Integer trustLevel = verifiedTrustedUsers.getOrDefault(user.getId(), -1);
-            if(trustLevel == null) {
-                log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
-                continue;
-            }
-            // trustLevel must be <= maxWotDepth for automatic access grant
-            if(trustLevel > maxWotDepth) {
-                log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
-                continue;
+            if(maxWotDepth >= 0) {
+                final Integer trustLevel = verifiedTrustedUsers.getOrDefault(user.getId(), -1);
+                if(trustLevel == null) {
+                    log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
+                    continue;
+                }
+                // trustLevel must be <= maxWotDepth for automatic access grant
+                if(trustLevel > maxWotDepth) {
+                    log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
+                    continue;
+                }
             }
             accessTokens.put(user.getId(), accessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey())));
         }

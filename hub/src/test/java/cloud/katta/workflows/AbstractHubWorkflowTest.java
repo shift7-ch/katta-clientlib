@@ -120,13 +120,8 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             log.info("S02 {} alice shares vault with admin as owner", setup);
             final List<UserDto> userDtos = new UsersResourceApi(adminApiClient).apiUsersGet().stream().map(UserKeysServiceImpl::withCountsToUserDto).collect(Collectors.toList());
-            String adminId = null;
-            for(final UserDto user : userDtos) {
-                if("admin".equals(user.getName())) {
-                    adminId = user.getId();
-                    break;
-                }
-            }
+            String adminId = userDtos.stream().filter(u -> "admin".equals(u.getName())).findFirst().get().getId();
+
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultId, Role.OWNER);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
 
@@ -145,13 +140,13 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 1);
 
             log.info("S04 {} alice adds trust to admin", setup);
-            new WoTServiceImpl(users).sign(new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
-                    new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe())), admin);
-
-            log.info("S04 {} alice grants access to admin", setup);
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
+            new WoTServiceImpl(users).sign(userKeys, admin);
+
+            log.info("S04 {} alice grants access to admin", setup);
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
+
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
         }
         finally {

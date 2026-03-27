@@ -7,7 +7,6 @@ package cloud.katta.protocols.hub;
 import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.features.Location;
-import ch.cyberduck.core.preferences.PreferencesReader;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -131,7 +130,7 @@ public class HubStorageLocationService implements Location {
                             .nickname(bucket.attributes().getDisplayname()))
                     .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto()
                             .enabled(true)
-                            .maxWotDepth(null == credentials.getProperty("katta.wot.depth.max") ? null : PreferencesReader.toInteger(credentials.getProperty("katta.wot.depth.max"))));
+                            .maxWotDepth(-1));
         }
     }
 }
