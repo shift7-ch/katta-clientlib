@@ -76,6 +76,11 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         final PreferencesReader settings = HostPreferencesFactory.get(bookmark);
         final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(this.tokenExchange(oauth), settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY));
         if(StringUtils.isNotBlank(settings.getProperty(S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG))) {
+            // Role chaining with session tags is only supported by AWS, not MinIO
+            if(!StringUtils.equals(new S3Protocol().getSTSEndpoint(), bookmark.getProtocol().getSTSEndpoint())) {
+                log.warn("Skip role chaining for non-AWS STS endpoint {}", bookmark.getProtocol().getSTSEndpoint());
+                return tokens;
+            }
             log.debug("Assume role with temporary credentials {}", tokens);
             // Assume role with previously obtained temporary access token
             final String key = HostPreferencesFactory.get(bookmark).getProperty("s3.assumerole.rolearn.tag.vaultid.key");
