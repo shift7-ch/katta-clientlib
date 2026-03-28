@@ -170,20 +170,21 @@ public class HubUVFVaultProvider implements VaultProvider {
     @Override
     public Vault load(final Session<?> session, final Path id, final VaultMetadata metadata, final VaultCredentials passphrase) throws BackgroundException {
         try {
-            final VaultDto vaultDto = new VaultResourceApi(HubSession.coerce(session).getClient()).apiVaultsVaultIdGet(UUID.fromString(id.getName()));
+            final UUID vaultId = UUID.fromString(id.getName());
+            final String vaultMetadataFile = new VaultResourceApi(HubSession.coerce(session).getClient()).apiVaultsVaultIdUvfVaultUvfGet(vaultId);
             // Find storage configuration in vault metadata
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             final VaultServiceImpl vaultService = new VaultServiceImpl(HubSession.coerce(session));
-            final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultDto.getId(), HubSession.coerce(session).getUserKeys(setup));
-            log.debug("Retrieved vault access token for vault {}", vaultDto.getId());
-            final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vaultDto.getUvfMetadataFile());
-            log.debug("Decrypted vault metadata {} for vault {}", vaultDto.getUvfMetadataFile(), vaultDto.getId());
+            final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, HubSession.coerce(session).getUserKeys(setup));
+            log.debug("Retrieved vault access token for vault {}", vaultId);
+            final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vaultMetadataFile);
+            log.debug("Decrypted vault metadata {} for vault {}", vaultMetadataFile, vaultId);
             final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
-            log.debug("Determined storage location {} for vault {}", location, vaultDto.getId());
+            log.debug("Determined storage location {} for vault {}", location, vaultId);
             final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(new StorageProfileResourceApi(HubSession.coerce(session).getClient())
                     .apiStorageprofileProfileIdGet(UUID.fromString(location.getProfile())));
-            log.debug("Retrieved storage profile {} for vault {}", storageProfile, vaultDto.getId());
+            log.debug("Retrieved storage profile {} for vault {}", storageProfile, vaultId);
             final Credentials credentials;
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC:
@@ -197,20 +198,20 @@ public class HubUVFVaultProvider implements VaultProvider {
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC:
                 case S3_STS:
-                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(HubSession.coerce(session), vaultDto.getId(), new Host(new HubStorageProfile(
+                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(HubSession.coerce(session), vaultId, new Host(new HubStorageProfile(
                             new S3AssumeRoleProtocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()));
-                    log.debug("Configured {} for vault {}", storage, vaultDto.getId());
+                    log.debug("Configured {} for vault {}", storage, vaultId);
                     final Path bucket = new Path(vaultStorageMetadata.getDefaultPath() /*Bucket Name*/, EnumSet.of(Path.Type.directory, Path.Type.volume),
                             new DefaultPathAttributes()
                                     .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
                                     .setDisplayname(vaultStorageMetadata.getNickname())
                     );
                     final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt);
-                    vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultDto.getId()),
+                    vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
                             new HubVaultKeys(accessToken.key())));
                     return vault;
                 default:
-                    log.error("Unsupported storage configuration {} for vault {}", storageProfile.getProtocol(), vaultDto.getId());
+                    log.error("Unsupported storage configuration {} for vault {}", storageProfile.getProtocol(), vaultId);
                     throw new VaultException(storageProfile.getProtocol().toString());
             }
         }
