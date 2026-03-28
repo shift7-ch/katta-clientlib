@@ -76,7 +76,7 @@ public class HubSession extends HttpSession<HubApiClient> {
     /**
      * Periodically grant vault access to users
      */
-    private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
+    private Scheduler<?> access;
 
     /**
      * Interceptor for OpenID connect flow
@@ -158,6 +158,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         log.debug("Retrieved user keys {}", userKeys);
         provider = new HubUVFVaultProvider(prompt);
         vaults = new HubVaultListService(this, provider);
+        access = new HubGrantAccessSchedulerService(this, setup);
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
