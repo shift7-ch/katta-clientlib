@@ -15,6 +15,7 @@ import ch.cyberduck.core.exception.NotfoundException;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultMetadata;
+import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
@@ -33,9 +34,9 @@ public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
     private final HubSession session;
-    private final HubUVFVaultProvider provider;
+    private final VaultProvider provider;
 
-    public HubVaultListService(final HubSession session, final HubUVFVaultProvider provider) {
+    public HubVaultListService(final HubSession session, final VaultProvider provider) {
         this.session = session;
         this.provider = provider;
     }

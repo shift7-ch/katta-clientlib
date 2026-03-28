@@ -82,7 +82,7 @@ public class HubSession extends HttpSession<HubApiClient> {
      * Interceptor for OpenID connect flow
      */
     private OAuth2RequestInterceptor authorizationService;
-    private HubUVFVaultProvider provider;
+    private VaultProvider provider;
 
     private ConfigDto config;
 
@@ -92,7 +92,7 @@ public class HubSession extends HttpSession<HubApiClient> {
     private final ExpiringObjectHolder<UserKeys> userKeysHolder
             = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
 
-    private HubVaultListService vaults;
+    private ListService vaults;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
