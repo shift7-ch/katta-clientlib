@@ -35,7 +35,6 @@ import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @HubIntegrationTest
 public abstract class AbstractHubTest extends VaultTest {
@@ -164,9 +163,6 @@ public abstract class AbstractHubTest extends VaultTest {
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
         assertNotNull(factory.forName("hub:katta"));
-        assertNotNull(factory.forName("s3"));
-        assertTrue(factory.forName("s3").isEnabled());
-        assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
         final Host hub = new HostParser(factory).get(config.setup.hubURL).setCredentials(new Credentials(config.setup.userConfig.username, config.setup.userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())

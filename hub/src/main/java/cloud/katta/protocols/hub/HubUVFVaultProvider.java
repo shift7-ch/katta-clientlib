@@ -12,8 +12,6 @@ import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Protocol;
-import ch.cyberduck.core.ProtocolFactory;
 import ch.cyberduck.core.Session;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -101,8 +99,8 @@ public class HubUVFVaultProvider implements VaultProvider {
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC:
                 case S3_STS:
-                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(HubSession.coerce(session), vaultId, new Host(new HubAwareProfile(
-                            ProtocolFactory.get().forType(Protocol.Type.s3), HubSession.coerce(session).getConfig(), storageProfile), credentials) {
+                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(HubSession.coerce(session), vaultId, new Host(new HubStorageProfile(
+                            new S3AssumeRoleProtocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials) {
                         @Override
                         public String getProperty(final String key) {
                             if(S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE.equals(key)) {
@@ -199,8 +197,8 @@ public class HubUVFVaultProvider implements VaultProvider {
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC:
                 case S3_STS:
-                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(HubSession.coerce(session), vaultDto.getId(), new Host(new HubAwareProfile(
-                            ProtocolFactory.get().forType(Protocol.Type.s3), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()));
+                    final S3AssumeRoleSession storage = new S3AssumeRoleSession(HubSession.coerce(session), vaultDto.getId(), new Host(new HubStorageProfile(
+                            new S3AssumeRoleProtocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()));
                     log.debug("Configured {} for vault {}", storage, vaultDto.getId());
                     final Path bucket = new Path(vaultStorageMetadata.getDefaultPath() /*Bucket Name*/, EnumSet.of(Path.Type.directory, Path.Type.volume),
                             new DefaultPathAttributes()
