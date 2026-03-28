@@ -5,11 +5,13 @@
 package cloud.katta.cli.commands.hub.storageprofile;
 
 import cloud.katta.cli.commands.hub.storageprofile.aws.AWS;
+import cloud.katta.cli.commands.hub.storageprofile.minio.MinIO;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "storageprofile", subcommands = {
         ArchiveStorageProfile.class,
         AWS.class,
+        MinIO.class,
         CommandLine.HelpCommand.class
 },
         description = "Configure Storage Location", mixinStandardHelpOptions = true)
