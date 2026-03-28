@@ -61,7 +61,8 @@ public class GrantAccessServiceImpl implements GrantAccessService {
         // maxWotDepth must be non-negative
         final int maxWotDepth = ofNullable(vaultMetadata.automaticAccessGrant().getMaxWotDepth()).orElse(-1);
         final Map<String, Integer> verifiedTrustedUsers = woTService.getTrustLevelsPerUserId(userKeys);
-        // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key (and optionally its recovery key):
+        // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter
+        // than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key (and optionally its recovery key):
         final Map<String, String> accessTokens = new HashMap<>();
         final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
         log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
