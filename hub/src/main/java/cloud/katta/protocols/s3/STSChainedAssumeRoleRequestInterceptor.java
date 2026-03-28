@@ -121,6 +121,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
                 throw new HubExceptionMappingService().map(e);
             }
         }
+        log.debug("No token exchange for {}", bookmark);
         return tokens;
     }
 
