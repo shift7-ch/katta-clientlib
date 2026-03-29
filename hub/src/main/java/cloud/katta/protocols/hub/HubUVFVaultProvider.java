@@ -116,7 +116,9 @@ public class HubUVFVaultProvider implements VaultProvider {
                         @Override
                         public String getProperty(final String key) {
                             if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
-                                return storageProfile.getStsRoleCreateBucketClient();
+                                final String arn = storageProfile.getStsRoleCreateBucketClient();
+                                log.debug("Use STS role ARN {} for vault {}", arn, vaultId);
+                                return arn;
                             }
                             return super.getProperty(key);
                         }
@@ -124,8 +126,10 @@ public class HubUVFVaultProvider implements VaultProvider {
                     storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
                         @Override
                         protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
-                            configuration.addInterceptorLast(session.getFeature(OAuth2RequestInterceptor.class));
-                            return new STSAssumeRoleWithWebIdentityCredentialsStrategy(session.getFeature(OAuth2RequestInterceptor.class),
+                            final OAuth2RequestInterceptor interceptor = session.getFeature(OAuth2RequestInterceptor.class);
+                            log.debug("Configure with shared OAuth interceptor {}", interceptor);
+                            configuration.addInterceptorLast(interceptor);
+                            return new STSAssumeRoleWithWebIdentityCredentialsStrategy(interceptor,
                                     host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt);
                         }
                     };
@@ -217,7 +221,9 @@ public class HubUVFVaultProvider implements VaultProvider {
                         @Override
                         public String getProperty(final String key) {
                             if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
-                                return storageProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity();
+                                final String arn = storageProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity();
+                                log.debug("Use STS role ARN {} for vault {}", arn, vaultId);
+                                return arn;
                             }
                             return super.getProperty(key);
                         }
@@ -225,8 +231,10 @@ public class HubUVFVaultProvider implements VaultProvider {
                     storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
                         @Override
                         protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
-                            configuration.addInterceptorLast(session.getFeature(OAuth2RequestInterceptor.class));
-                            return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), session.getFeature(OAuth2RequestInterceptor.class), vaultId,
+                            final OAuth2RequestInterceptor interceptor = session.getFeature(OAuth2RequestInterceptor.class);
+                            log.debug("Configure with shared OAuth interceptor {}", interceptor);
+                            configuration.addInterceptorLast(interceptor);
+                            return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), interceptor, vaultId,
                                     storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
                                     host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
                         }

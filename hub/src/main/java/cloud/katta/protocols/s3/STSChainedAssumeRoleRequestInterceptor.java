@@ -160,4 +160,14 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
         }
         throw new AccessDeniedException(String.format("Invalid value type for %s in claim", key));
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("STSChainedAssumeRoleRequestInterceptor{");
+        sb.append("stsSessionTagRoleArn='").append(stsSessionTagRoleArn).append('\'');
+        sb.append(", stsSessionTag='").append(stsSessionTag).append('\'');
+        sb.append(", vaultId=").append(vaultId);
+        sb.append('}');
+        return sb.toString();
+    }
 }
