@@ -4,6 +4,7 @@
 
 package cloud.katta.protocols.hub.serializer;
 
+import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.serializer.Deserializer;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,12 +14,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import cloud.katta.client.model.Protocol;
 import cloud.katta.model.StorageProfileDtoWrapper;
-import cloud.katta.protocols.s3.S3AssumeRoleProtocol;
 import com.dd.plist.NSDictionary;
 
 import static ch.cyberduck.core.Profile.*;
+import static cloud.katta.client.model.Protocol.S3_STS;
 
 public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDictionary> {
     private static final Logger log = LogManager.getLogger(StorageProfileDtoWrapperDeserializer.class);
@@ -51,20 +51,9 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                     properties.add(String.format("3.storage.class.options=%s", dto.getStorageClass().name()));
                     properties.add(String.format("3.storage.class=%s", dto.getStorageClass().name()));
                 }
-                if(dto.getProtocol() == Protocol.S3_STS) {
-                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.OAUTH_TOKENEXCHANGE, true));
-                    properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_WEBIDENTITY, dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity()));
-                    if(dto.getStsRoleAccessBucketAssumeRoleTaggedSession() != null) {
-                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_TAG, dto.getStsRoleAccessBucketAssumeRoleTaggedSession()));
-                    }
-                    if(dto.getStsRoleCreateBucketClient() != null) {
-                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_ROLEARN_CREATE_BUCKET, dto.getStsRoleCreateBucketClient()));
-                    }
+                if(dto.getProtocol() == S3_STS) {
                     if(dto.getStsDurationSeconds() != null) {
-                        properties.add(String.format("%s=%s", S3AssumeRoleProtocol.S3_ASSUMEROLE_DURATIONSECONDS, dto.getStsDurationSeconds().toString()));
-                    }
-                    if(dto.getStsSessionTag() != null) {
-                        properties.add(String.format("%s=%s", "s3.assumerole.rolearn.tag.vaultid.key", dto.getStsSessionTag()));
+                        properties.add(String.format("%s=%s", Profile.STS_DURATION_SECONDS_PROPERTY_KEY, dto.getStsDurationSeconds().toString()));
                     }
                 }
                 log.debug("Return properties {} from {}", properties, dto);
@@ -79,13 +68,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
     public String stringForKey(final String key) {
         // default profile and possible regions for UI:
         switch(key) {
-            case PROTOCOL_KEY:
-                switch(dto.getProtocol()) {
-                    case S3_STATIC:
-                    case S3_STS:
-                        return new S3AssumeRoleProtocol().getIdentifier();
-                }
-                break;
             case VENDOR_KEY:
                 return dto.getId().toString();
             case DEFAULT_NICKNAME_KEY:
@@ -116,9 +98,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 break;
             case ROLE_KEY_CONFIGURABLE_KEY:
-                // Indicates Role ARN is required for STS `AssumeRoleWithWebIdentity`.
-                // Determines usage of role grant flags when creating a new vault
-                return dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity() != null;
+                return dto.getProtocol() == S3_STS;
         }
         return super.booleanForKey(key);
     }
@@ -127,7 +107,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
     public List<String> keys() {
         final List<String> keys = new ArrayList<>(super.keys());
         keys.addAll(Arrays.asList(
-                PROTOCOL_KEY,
                 VENDOR_KEY,
                 PROPERTIES_KEY,
                 OAUTH_CONFIGURABLE_KEY)
@@ -153,8 +132,10 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         if(dto.getRegions() != null) {
             keys.add(REGIONS_KEY);
         }
-        if(dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity() != null) {
-            keys.add(ROLE_KEY_CONFIGURABLE_KEY);
+        switch(dto.getProtocol()) {
+            case S3_STS:
+                keys.add(ROLE_KEY_CONFIGURABLE_KEY);
+                break;
         }
         return keys;
     }

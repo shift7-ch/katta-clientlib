@@ -8,6 +8,8 @@ import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.exception.AccessDeniedException;
 
+import ch.cyberduck.core.s3.S3Protocol;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -25,10 +27,10 @@ class STSChainedAssumeRoleRequestInterceptorTest {
         final UUID vault = UUID.randomUUID();
         final Host host = Mockito.mock(Host.class);
         when(host.getCredentials()).thenReturn(new Credentials());
-        when(host.getProtocol()).thenReturn(new S3AssumeRoleProtocol());
+        when(host.getProtocol()).thenReturn(new S3Protocol());
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
                 Mockito.mock(), vault,
-                host,
+                "arn", "vaultid", host,
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock());
@@ -40,7 +42,7 @@ class STSChainedAssumeRoleRequestInterceptorTest {
         final UUID vault = UUID.randomUUID();
         final Host host = Mockito.mock(Host.class);
         when(host.getCredentials()).thenReturn(new Credentials());
-        when(host.getProtocol()).thenReturn(new S3AssumeRoleProtocol() {
+        when(host.getProtocol()).thenReturn(new S3Protocol() {
             @Override
             public String getSTSEndpoint() {
                 return "custom";
@@ -48,7 +50,7 @@ class STSChainedAssumeRoleRequestInterceptorTest {
         });
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
                 Mockito.mock(), vault,
-                host,
+                "arn", "vaultid", host,
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock());
@@ -60,10 +62,10 @@ class STSChainedAssumeRoleRequestInterceptorTest {
         final UUID vault = UUID.randomUUID();
         final Host host = Mockito.mock(Host.class);
         when(host.getCredentials()).thenReturn(new Credentials());
-        when(host.getProtocol()).thenReturn(new S3AssumeRoleProtocol());
+        when(host.getProtocol()).thenReturn(new S3Protocol());
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
                 Mockito.mock(), vault,
-                host,
+                "arn", "vaultid", host,
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock());
@@ -75,10 +77,10 @@ class STSChainedAssumeRoleRequestInterceptorTest {
         final UUID vault = UUID.fromString("450e17ed-1fb6-4930-8586-4360b790a04b");
         final Host host = Mockito.mock(Host.class);
         when(host.getCredentials()).thenReturn(new Credentials());
-        when(host.getProtocol()).thenReturn(new S3AssumeRoleProtocol());
+        when(host.getProtocol()).thenReturn(new S3Protocol());
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
                 Mockito.mock(), vault,
-                host,
+                "arn", "vaultid", host,
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock());
