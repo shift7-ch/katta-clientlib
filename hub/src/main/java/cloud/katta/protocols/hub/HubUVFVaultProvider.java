@@ -228,7 +228,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             configuration.addInterceptorLast(session.getFeature(OAuth2RequestInterceptor.class));
                             return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), session.getFeature(OAuth2RequestInterceptor.class), vaultId,
                                     storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt);
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
                         }
                     };
                     break;

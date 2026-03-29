@@ -5,8 +5,8 @@
 package cloud.katta.protocols.s3;
 
 import ch.cyberduck.core.Credentials;
+import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.OAuthTokens;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.TemporaryAccessTokens;
@@ -59,8 +59,8 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
                                                   final UUID vaultId,
                                                   final String stsSessionTagRoleArn,
                                                   final String stsSessionTagKey,
-                                                  final Host host, final X509TrustManager trust, final X509KeyManager key, final LoginCallback prompt) {
-        super(oauth, host, trust, key, prompt);
+                                                  final Host host, final X509TrustManager trust, final X509KeyManager key) {
+        super(oauth, host, trust, key, new DisabledLoginCallback());
         this.hub = hub;
         this.stsSessionTagRoleArn = stsSessionTagRoleArn;
         this.stsSessionTag = stsSessionTagKey;
