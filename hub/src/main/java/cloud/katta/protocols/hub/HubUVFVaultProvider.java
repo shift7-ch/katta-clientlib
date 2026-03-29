@@ -19,6 +19,7 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Protocol;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
@@ -32,6 +33,7 @@ import ch.cyberduck.core.vault.VaultUnlockCancelException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -54,7 +56,6 @@ import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataStorageDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
-import cloud.katta.protocols.s3.S3AssumeRoleSession;
 import cloud.katta.protocols.s3.STSChainedAssumeRoleRequestInterceptor;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -120,12 +121,14 @@ public class HubUVFVaultProvider implements VaultProvider {
                             return super.getProperty(key);
                         }
                     }.setRegion(location.getRegion());
-                    storage = new S3AssumeRoleSession(host,
-                            session.getFeature(OAuth2RequestInterceptor.class),
-                            new STSAssumeRoleWithWebIdentityCredentialsStrategy(session.getFeature(OAuth2RequestInterceptor.class),
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt),
-                            session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)
-                    );
+                    storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
+                        @Override
+                        protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
+                            configuration.addInterceptorLast(session.getFeature(OAuth2RequestInterceptor.class));
+                            return new STSAssumeRoleWithWebIdentityCredentialsStrategy(session.getFeature(OAuth2RequestInterceptor.class),
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt);
+                        }
+                    };
                     break;
                 }
                 default:
@@ -219,13 +222,15 @@ public class HubUVFVaultProvider implements VaultProvider {
                             return super.getProperty(key);
                         }
                     }.setRegion(location.getRegion());
-                    storage = new S3AssumeRoleSession(host,
-                            session.getFeature(OAuth2RequestInterceptor.class),
-                            new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), session.getFeature(OAuth2RequestInterceptor.class), vaultId,
+                    storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
+                        @Override
+                        protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
+                            configuration.addInterceptorLast(session.getFeature(OAuth2RequestInterceptor.class));
+                            return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), session.getFeature(OAuth2RequestInterceptor.class), vaultId,
                                     storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt),
-                            session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)
-                    );
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt);
+                        }
+                    };
                     break;
                 default:
                     log.error("Unsupported storage configuration {} for vault {}", storageProfile.getProtocol(), vaultId);
