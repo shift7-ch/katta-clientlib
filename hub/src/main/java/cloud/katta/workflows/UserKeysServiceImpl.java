@@ -113,20 +113,15 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     private UserKeys uploadDeviceKeys(final String deviceName, final UserKeys userKeys, final DeviceKeys deviceKeys) throws ApiException, SecurityFailure {
-        try {
-            final String encodedPublicKeyDeviceKey = Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPublic().getEncoded());
-            final String deviceSpecificUserKeyJWE = userKeys.encryptForDevice(deviceKeys.getEcKeyPair().getPublic());
-            final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeys.getEcKeyPair());
-            deviceResourceApi.apiDevicesDeviceIdPut(deviceId, new DeviceDto()
-                    .name(deviceName)
-                    .publicKey(encodedPublicKeyDeviceKey)
-                    .userPrivateKey(deviceSpecificUserKeyJWE)
-                    .type(Type1.DESKTOP)
-                    .creationTime(new DateTime()));
-        }
-        catch(JOSEException | JsonProcessingException e) {
-            throw new SecurityFailure(e);
-        }
+        final String encodedPublicKeyDeviceKey = Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPublic().getEncoded());
+        final String deviceSpecificUserKeyJWE = userKeys.encryptForDevice(deviceKeys.getEcKeyPair().getPublic());
+        final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeys.getEcKeyPair());
+        deviceResourceApi.apiDevicesDeviceIdPut(deviceId, new DeviceDto()
+                .name(deviceName)
+                .publicKey(encodedPublicKeyDeviceKey)
+                .userPrivateKey(deviceSpecificUserKeyJWE)
+                .type(Type1.DESKTOP)
+                .creationTime(new DateTime()));
         return userKeys;
     }
 

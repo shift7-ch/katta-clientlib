@@ -163,8 +163,13 @@ public class UserKeys implements Destroyable {
      * @param devicePublicKey The device's public key (DER-encoded)
      * @return a JWE containing the PKCS#8-encoded private key
      */
-    public String encryptForDevice(final ECPublicKey devicePublicKey) throws JOSEException, JsonProcessingException {
-        return JWE.ecdhEsEncrypt(prepareForEncryption(), "org.cryptomator.hub.deviceKey", devicePublicKey);
+    public String encryptForDevice(final ECPublicKey devicePublicKey) throws SecurityFailure {
+        try {
+            return JWE.ecdhEsEncrypt(prepareForEncryption(), "org.cryptomator.hub.deviceKey", devicePublicKey);
+        }
+        catch(JOSEException | JsonProcessingException e) {
+            throw new SecurityFailure(e);
+        }
     }
 
     /**
@@ -193,7 +198,12 @@ public class UserKeys implements Destroyable {
      * @return The token's payload
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.decryptAccessToken()</a>
      */
-    public UVFAccessTokenPayload decryptAccessToken(final String jwe) throws ParseException, JOSEException, JsonProcessingException {
-        return UVFAccessTokenPayload.fromJWE(JWE.decryptEcdhEs(jwe, this.ecdhKeyPair().getPrivate()).toString());
+    public UVFAccessTokenPayload decryptAccessToken(final String jwe) throws SecurityFailure {
+        try {
+            return UVFAccessTokenPayload.fromJWE(JWE.decryptEcdhEs(jwe, this.ecdhKeyPair().getPrivate()).toString());
+        }
+        catch(JsonProcessingException | JOSEException | ParseException e) {
+            throw new SecurityFailure(e);
+        }
     }
 }

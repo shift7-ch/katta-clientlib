@@ -29,7 +29,6 @@ import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEHeader;
 import com.nimbusds.jose.JWEObjectJSON;
 import com.nimbusds.jose.Payload;
@@ -95,7 +94,7 @@ class UVFMetadataPayloadTest {
         // decryption fails with wrong key
         {
             final ECKey fake = new ECKey.Builder(recoveryKey).keyID("kiddo").build();
-            assertThrows(JOSEException.class, () -> UVFMetadataPayload.decrypt(encrypted, fake));
+            assertThrows(SecurityFailure.class, () -> UVFMetadataPayload.decrypt(encrypted, fake));
         }
     }
 
