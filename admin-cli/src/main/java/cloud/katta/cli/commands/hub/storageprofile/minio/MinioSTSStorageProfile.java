@@ -4,6 +4,8 @@
 
 package cloud.katta.cli.commands.hub.storageprofile.minio;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,14 +35,8 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true)
 public class MinioSTSStorageProfile extends AbstractStorageProfile {
 
-    @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO endpoint URL (S3 API). Example: \"https://minio.example.com\"", required = true)
+    @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO endpoint URL (S3 API). Example: \"https://minio.example.com\" or \"https://minio.example.com:9000\"", required = true)
     String endpointUrl;
-
-    @CommandLine.Option(names = {"--port"}, description = "MinIO endpoint port.", defaultValue = "443")
-    Integer port;
-
-    @CommandLine.Option(names = {"--scheme"}, description = "URL scheme (https or http).", defaultValue = "https")
-    String scheme;
 
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix for STS vaults.", defaultValue = "katta-")
     String bucketPrefix;
@@ -57,7 +53,16 @@ public class MinioSTSStorageProfile extends AbstractStorageProfile {
     @Override
     protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
-        final String hostname = endpointUrl.replaceFirst("^https?://", "");
+        final URI uri;
+        try {
+            uri = new URI(endpointUrl);
+        }
+        catch(URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid endpoint URL: " + endpointUrl, e);
+        }
+        final String scheme = uri.getScheme();
+        final String hostname = uri.getHost();
+        final int port = uri.getPort() == -1 ? ("https".equals(scheme) ? 443 : 80) : uri.getPort();
         storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
                 .id(uuid)
                 .name(null == name ? this.toString() : name)
