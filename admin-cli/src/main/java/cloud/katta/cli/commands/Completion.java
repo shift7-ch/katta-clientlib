@@ -27,7 +27,7 @@ public class Completion implements Callable<Void> {
         }
         var commandLine = new CommandLine(new Katta())
                 .setPosixClusteredShortOptionsAllowed(false);
-        System.out.print(AutoComplete.bash("katta", commandLine));
+        System.out.print(AutoComplete.bash(commandLine.getCommandName(), commandLine));
         return null;
     }
 }
