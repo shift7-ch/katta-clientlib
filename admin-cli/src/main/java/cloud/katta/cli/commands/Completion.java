@@ -16,15 +16,15 @@ import picocli.CommandLine;
 )
 public class Completion implements Callable<Void> {
 
+    private enum Shell {
+        BASH
+    }
+
     @CommandLine.Option(names = {"--shell"}, description = "Shell to generate completion for. Defaults to bash.", defaultValue = "bash")
-    private String shell;
+    private Shell shell;
 
     @Override
     public Void call() {
-        if(!"bash".equalsIgnoreCase(shell)) {
-            throw new CommandLine.ParameterException(new CommandLine(this),
-                    "Unsupported shell: " + shell + " (only bash is supported)");
-        }
         var commandLine = new CommandLine(new Katta())
                 .setPosixClusteredShortOptionsAllowed(false);
         System.out.print(AutoComplete.bash(commandLine.getCommandName(), commandLine));
