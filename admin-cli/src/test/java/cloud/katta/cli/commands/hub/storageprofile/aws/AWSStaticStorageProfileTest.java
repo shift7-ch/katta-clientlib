@@ -42,6 +42,7 @@ class AWSStaticStorageProfileTest {
         dto.setBucketPrefix("katta-");
         dto.setStorageClass(S3STORAGECLASSES.STANDARD);
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
+        dto.setBucketAcceleration(null);
         dto.stsRoleCreateBucketClient("");
         dto.stsRoleCreateBucketHub("");
         Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(dto);

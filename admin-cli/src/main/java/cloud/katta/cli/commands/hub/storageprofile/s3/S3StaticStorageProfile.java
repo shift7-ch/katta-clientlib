@@ -65,26 +65,23 @@ public class S3StaticStorageProfile extends AbstractStorageProfile {
                 .protocol(Protocol.S3_STATIC)
                 .archived(false)
 
-                // -- (1) S3 endpoint configuration
                 .scheme(scheme)
                 .hostname(hostname)
                 .port(port)
                 .storageClass(S3STORAGECLASSES.STANDARD)
                 .withPathStyleAccessEnabled(true) // Required for generic S3-compatible providers
 
-                // -- (2) bucket creation
                 .bucketPrefix(bucketPrefix)
-                .region(region)
-                .regions(null == regions ? List.of(region) : regions)
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(false)
                 .bucketAcceleration(null) // Not supported by generic S3 providers
 
-                // -- (3) No STS roles for static access token profiles
-                .stsRoleCreateBucketClient(null)
-                .stsRoleCreateBucketHub(null)
+                .region(region)
+                .regions(null == regions ? List.of(region) : regions)
 
-                // -- (4) No STS endpoint
+                // Workaround https://github.com/shift7-ch/katta-server/issues/124
+                .stsRoleCreateBucketClient("")
+                .stsRoleCreateBucketHub("")
                 .stsEndpoint(null)
         );
         System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
