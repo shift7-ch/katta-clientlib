@@ -184,7 +184,9 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     protected void logout() {
-        access.shutdown(false);
+        if(access != null) {
+            access.shutdown(false);
+        }
         client.getHttpClient().close();
     }
 
