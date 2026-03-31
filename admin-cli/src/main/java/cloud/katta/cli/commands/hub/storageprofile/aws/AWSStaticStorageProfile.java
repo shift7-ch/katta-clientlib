@@ -48,19 +48,20 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
                 .protocol(Protocol.S3_STATIC)
                 .archived(false)
 
-                // -- (1) bucket creation, template upload and client profile
                 .scheme("https")
                 .port(443)
                 .storageClass(S3STORAGECLASSES.STANDARD)
                 .withPathStyleAccessEnabled(false)
 
-                // -- (2) bucket creation only (only relevant for Desktop client)
+                .bucketPrefix(bucketPrefix)
                 .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(true)
+                .bucketAcceleration(null)
+
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-                .bucketPrefix(bucketPrefix)
-                // TODO bad design smell? not all S3 providers might have STS to create static bucket?
+
+                // Workaround https://github.com/shift7-ch/katta-server/issues/124
                 .stsRoleCreateBucketClient("")
                 .stsRoleCreateBucketHub("")
         );

@@ -46,8 +46,8 @@ class S3StaticStorageProfileTest {
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
         dto.setBucketVersioning(false);
         dto.setBucketAcceleration(null);
-        dto.stsRoleCreateBucketClient(null);
-        dto.stsRoleCreateBucketHub(null);
+        dto.stsRoleCreateBucketClient("");
+        dto.stsRoleCreateBucketHub("");
         dto.stsEndpoint(null);
         Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(dto);
         Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(any());
