@@ -41,7 +41,7 @@ public class WoT {
      * @param signatureChain   The chain of signatures to verify
      * @param signerPublicKey  A trusted public key to verify the first signature in the chain
      * @param allegedSignedKey The public key that should be signed by the last signature in the chain
-     * @throws SecurityException Error if the signature chain is invalid
+     * @throws SecurityFailure Error if the signature chain is invalid
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/wot.ts">wot.ts/verifyRescursive()</a>
      */
     public static void verifyRecursive(final List<String> signatureChain, final ECPublicKey signerPublicKey, final SignedKeys allegedSignedKey) throws SecurityFailure {

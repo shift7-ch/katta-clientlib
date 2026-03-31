@@ -20,8 +20,8 @@ public interface DeviceKeysService {
      * @param hub Identification for server instance
      * @param me
      * @return Device keys
-     * @throws AccessException   Failure accessing storage or not found
-     * @throws SecurityException Failure decoding device keys retrieved from storage
+     * @throws AccessException Failure accessing storage or not found
+     * @throws SecurityFailure Failure decoding device keys retrieved from storage
      */
     DeviceKeys getOrCreateDeviceKeys(Host hub, final UserDto me, DeviceSetupCallback setup) throws AccessException, SecurityFailure;
 
@@ -31,8 +31,8 @@ public interface DeviceKeysService {
      * @param hub Identification for server instance
      * @param me
      * @return Device keys
-     * @throws AccessException   Failure accessing storage or not found
-     * @throws SecurityException Failure decoding device keys retrieved from storage
+     * @throws AccessException Failure accessing storage or not found
+     * @throws SecurityFailure Failure decoding device keys retrieved from storage
      */
     DeviceKeys getDeviceKeys(Host hub, final UserDto me) throws AccessException, SecurityFailure;
 }
