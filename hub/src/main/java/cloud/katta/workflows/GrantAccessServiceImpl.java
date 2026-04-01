@@ -83,6 +83,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                     continue;
                 }
             }
+            // else: -1 means grant to all
             accessTokens.put(user.getId(), accessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey())));
         }
         if(accessTokens.isEmpty()) {
