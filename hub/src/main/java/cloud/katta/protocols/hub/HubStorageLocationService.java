@@ -4,6 +4,7 @@
 
 package cloud.katta.protocols.hub;
 
+import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.features.Location;
 
@@ -20,8 +21,8 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
-import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
+import cloud.katta.crypto.uvf.VaultMetadataAutomaticAccessGrantDto;
+import cloud.katta.crypto.uvf.VaultMetadataStorageDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 
 public class HubStorageLocationService implements Location {
@@ -104,7 +105,7 @@ public class HubStorageLocationService implements Location {
         /**
          * Parse a storage location from an identifier containing storage profile and AWS location.
          *
-         * @param identifier Storage profile identifier and AWS region separated by dash
+         * @param identifier Storage profile identifier and AWS region separated by comma
          * @return Location with storage profile as identifier and AWS location as region
          */
         public static StorageLocation fromIdentifier(final String identifier) {
@@ -115,16 +116,21 @@ public class HubStorageLocationService implements Location {
             return new StorageLocation(StringUtils.isBlank(parts[0]) ? null : parts[0], StringUtils.isBlank(parts[1]) ? null : parts[1], null);
         }
 
-        public UVFMetadataPayload toUvfMetadataPayload(final Path bucket) {
+        public static StorageLocation fromMetadata(final VaultMetadataStorageDto storage) {
+            return new StorageLocation(storage.getProvider(), storage.getRegion(), storage.getNickname());
+        }
+
+        public UVFMetadataPayload toPayload(final Path bucket, final Credentials credentials) {
             return UVFMetadataPayload.create()
-                    .withStorage(new VaultMetadataJWEBackendDto()
-                            .provider(this.getProfile())
-                            .defaultPath(bucket.getAbsolute())
-                            .region(this.getRegion())
+                    .withStorage(new VaultMetadataStorageDto()
+                            .username(credentials.getUsername()).password(credentials.getPassword())
+                            .provider(storageProfileId)
+                            .defaultPath(bucket.getName())
+                            .region(region)
                             .nickname(bucket.attributes().getDisplayname()))
-                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
+                    .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto()
                             .enabled(true)
-                            .maxWotDepth(null));
+                            .maxWotDepth(-1));
         }
     }
 }

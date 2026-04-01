@@ -5,7 +5,6 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.HostPasswordStore;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
@@ -17,17 +16,14 @@ import org.apache.logging.log4j.Logger;
 import java.util.List;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.DeviceResourceApi;
-import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.VaultDto;
+import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
-import cloud.katta.workflows.DeviceKeysServiceImpl;
 import cloud.katta.workflows.GrantAccessServiceImpl;
-import cloud.katta.workflows.UserKeysServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
@@ -35,22 +31,19 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
     private static final Logger log = LogManager.getLogger(HubGrantAccessSchedulerService.class);
 
     private final HubSession session;
-    private final HostPasswordStore keychain;
+    private final DeviceSetupCallback setup;
 
-    public HubGrantAccessSchedulerService(final HubSession session, final HostPasswordStore keychain) {
+    public HubGrantAccessSchedulerService(final HubSession session, final DeviceSetupCallback setup) {
         super(HostPreferencesFactory.get(session.getHost()).getLong("hub.protocol.scheduler.period"));
         this.session = session;
-        this.keychain = keychain;
+        this.setup = setup;
     }
 
     @Override
     public Host operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session.getHost());
         try {
-            final UserKeys userKeys = new UserKeysServiceImpl(
-                    new UsersResourceApi(session.getClient()),
-                    new DeviceResourceApi(session.getClient())).getUserKeys(session.getHost(), session.getMe(),
-                    new DeviceKeysServiceImpl(keychain).getDeviceKeys(session.getHost(), session.getMe()));
+            final UserKeys userKeys = session.getUserKeys(setup);
             final List<VaultDto> accessibleVaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(Role.OWNER);
             for(final VaultDto accessibleVault : accessibleVaults) {
                 if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
@@ -59,11 +52,9 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
                 }
                 new GrantAccessServiceImpl(
                         new VaultResourceApi(session.getClient()),
-                        new StorageProfileResourceApi(session.getClient()),
                         new UsersResourceApi(session.getClient())
                 ).grantAccessToUsersRequiringAccessGrant(accessibleVault.getId(), userKeys);
             }
-            userKeys.destroy();
         }
         catch(ApiException e) {
             log.error("Scheduler for {}: Automatic Access Grant failed.", session.getHost(), e);

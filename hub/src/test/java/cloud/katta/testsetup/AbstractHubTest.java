@@ -5,7 +5,6 @@
 package cloud.katta.testsetup;
 
 import ch.cyberduck.core.*;
-import ch.cyberduck.core.cryptomator.CryptoVaultProvider;
 import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -36,7 +35,6 @@ import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @HubIntegrationTest
 public abstract class AbstractHubTest extends VaultTest {
@@ -141,7 +139,6 @@ public abstract class AbstractHubTest extends VaultTest {
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
-        preferences.setProperty("factory.vaultprovider.class", CryptoVaultProvider.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
         preferences.setProperty("hub.protocol.scheduler.period", 30);
@@ -157,7 +154,7 @@ public abstract class AbstractHubTest extends VaultTest {
         return "setupcode";
     }
 
-    protected static HubSession setupConnection(final HubTestConfig.Setup setup) throws Exception {
+    protected static HubSession setupConnection(final HubTestConfig config) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
         // Register parent protocol definitions
         for(Protocol p : new AnnotationAutoServiceLoader<Protocol>().load(Protocol.class)) {
@@ -166,26 +163,28 @@ public abstract class AbstractHubTest extends VaultTest {
         // Load bundled profiles
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
         assertNotNull(factory.forName("hub:katta"));
-        assertNotNull(factory.forName("s3"));
-        assertTrue(factory.forName("s3").isEnabled());
-        assertTrue(factory.forType(Protocol.Type.s3).isEnabled());
 
-        final Host hub = new HostParser(factory).get(setup.hubURL).setCredentials(new Credentials(setup.userConfig.username, setup.userConfig.password));
+        final Host hub = new HostParser(factory).get(config.setup.hubURL).setCredentials(new Credentials(config.setup.userConfig.username, config.setup.userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
-        final LoginConnectionService login = new LoginConnectionService(loginCallback(setup), new DisabledHostKeyCallback(),
+        final LoginConnectionService login = new LoginConnectionService(loginCallback(config), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, CancelCallback.noop);
         return session;
     }
 
-    protected static LoginCallback loginCallback(HubTestConfig.Setup setup) {
+    protected static LoginCallback loginCallback(HubTestConfig config) {
         return new DisabledLoginCallback() {
+            @Override
+            public Credentials prompt(final Host bookmark, final String username, final String title, final String reason, final LoginOptions options) {
+                return new Credentials(config.vault.username, config.vault.password);
+            }
+
             @SuppressWarnings("unchecked")
             @Override
             public <T> T getFeature(final Class<T> type) {
                 if(DeviceSetupCallback.class == type) {
-                    return (T) deviceSetupCallback(setup);
+                    return (T) deviceSetupCallback(config.setup);
                 }
                 return null;
             }

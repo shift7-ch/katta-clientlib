@@ -217,4 +217,12 @@ public class StorageProfileDtoWrapper {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("StorageProfileDtoWrapper{");
+        sb.append("proxy=").append(proxy);
+        sb.append('}');
+        return sb.toString();
+    }
 }

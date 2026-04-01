@@ -6,16 +6,12 @@ package cloud.katta.workflows;
 
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.DisabledConnectionCallback;
 import ch.cyberduck.core.DisabledListProgressListener;
 import ch.cyberduck.core.ListService;
-import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Session;
 import ch.cyberduck.core.SimplePathPredicate;
-import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.NotfoundException;
 import ch.cyberduck.core.features.AttributesFinder;
@@ -27,7 +23,10 @@ import ch.cyberduck.core.features.Move;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.transfer.TransferStatus;
+import ch.cyberduck.core.vault.VaultCredentials;
+import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
+import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +37,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -55,15 +53,9 @@ import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
-import cloud.katta.crypto.uvf.HubVaultKeys;
-import cloud.katta.crypto.uvf.HubVaultMetadataUVFProvider;
-import cloud.katta.crypto.uvf.UVFMetadataPayload;
-import cloud.katta.crypto.uvf.VaultMetadataJWEAutomaticAccessGrantDto;
-import cloud.katta.crypto.uvf.VaultMetadataJWEBackendDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubStorageLocationService;
-import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
@@ -96,7 +88,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         (prev, next) -> next, HashMap::new
                 ));
 
-        final HubSession hubSession = setupConnection(hubTestConfig.setup);
+        final HubSession hubSession = setupConnection(hubTestConfig);
         try {
 
             final ApiClient adminApiClient = getAdminApiClient(hubTestConfig.setup);
@@ -207,7 +199,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test02AddStorageProfile(final HubTestConfig hubTestConfig) throws Exception {
         log.info("M02 {}", hubTestConfig);
 
-        final HubSession hubSession = setupConnection(hubTestConfig.setup);
+        final HubSession hubSession = setupConnection(hubTestConfig);
         try {
             final ApiClient adminApiClient = getAdminApiClient(hubTestConfig.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
@@ -245,7 +237,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test03AddVault(final HubTestConfig config) throws Exception {
         log.info("M03 {}", config);
 
-        final HubSession hubSession = setupConnection(config.setup);
+        final HubSession hubSession = setupConnection(config);
         try {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
@@ -255,30 +247,14 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             log.info("Creating vault in {}", hubSession);
-            final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
 
-            final String name = storageProfileWrapper.getBucketPrefix() + vaultId;
-            final Path bucket = new Path(name, EnumSet.of(Path.Type.volume, Path.Type.directory), new DefaultPathAttributes().setDisplayname(String.format("Vault %s", name)));
+            final Path vaultName = new Path(String.format("Vault %s", new AlphanumericRandomStringService().random()), EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
                     storageProfileWrapper.getName());
-            final UVFMetadataPayload vaultMetadata = UVFMetadataPayload.create()
-                    .withStorage(new VaultMetadataJWEBackendDto()
-                            .username(config.vault.username)
-                            .password(config.vault.password)
-                            .provider(location.getProfile())
-                            .defaultPath(bucket.getAbsolute())
-                            .region(location.getRegion())
-                            .nickname(bucket.attributes().getDisplayname()))
-                    .withAutomaticAccessGrant(new VaultMetadataJWEAutomaticAccessGrantDto()
-                            .enabled(true)
-                            .maxWotDepth(null));
-            final Session<?> storage = new VaultServiceImpl(hubSession).getVaultStorageSession(hubSession, vaultId, vaultMetadata);
-            final HubUVFVault cryptomator = new HubUVFVault(storage, bucket, LoginCallback.noop);
 
-            final HubVaultKeys keys = HubVaultKeys.create();
-            cryptomator.create(hubSession, location.getIdentifier(), new HubVaultMetadataUVFProvider(
-                    vaultId, keys, vaultMetadata.encrypt(hubSession.getClient().getBasePath(), vaultId, keys.serialize()).getBytes(StandardCharsets.US_ASCII),
-                    vaultMetadata.computeRootDirectoryMetadata(), vaultMetadata.computeRootDirectoryIdHash()));
+            final VaultProvider vaultProvider = hubSession.getFeature(VaultProvider.class);
+            final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF),
+                    new VaultCredentials());
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
             assertFalse(vaults.isEmpty());
@@ -286,14 +262,15 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final VaultRegistry vaultRegistry = hubSession.getRegistry();
             assertInstanceOf(HubVaultRegistry.class, vaultRegistry);
             {
-                assertNotNull(vaults.find(new SimplePathPredicate(bucket)));
-                assertTrue(hubSession.getFeature(Find.class).find(bucket));
-                assertEquals(config.vault.region, hubSession.getFeature(AttributesFinder.class).find(bucket).getRegion());
+                assertNotNull(vaults.find(new SimplePathPredicate(cryptomator.getHome())));
+                assertTrue(hubSession.getFeature(Find.class).find(cryptomator.getHome()));
+                assertEquals(location.getRegion(), hubSession.getFeature(AttributesFinder.class).find(cryptomator.getHome()).getRegion());
 
-                assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, bucket));
+                assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, cryptomator.getHome()));
+                assertTrue(vaultRegistry.contains(cryptomator.getHome()));
             }
 
-            final Path vault = vaults.find(new SimplePathPredicate(bucket));
+            final Path vault = vaults.find(new SimplePathPredicate(cryptomator.getHome()));
             {
                 // decrypted file listing
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
@@ -345,7 +322,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void test04SetupCode(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup);
+        final HubSession hubSession = setupConnection(config);
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
         assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));

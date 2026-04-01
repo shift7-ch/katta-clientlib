@@ -4,32 +4,16 @@
 
 package cloud.katta.workflows;
 
-import ch.cyberduck.core.Session;
-
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
-import cloud.katta.model.StorageProfileDtoWrapper;
-import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
 public interface VaultService {
-
-    /**
-     * Get vault metadata JWE for vault:
-     * 1. device key (EC) decrypts user key (EC)
-     * 2. user key (EC) decrypts vault member key (AES)
-     * 3. vault masterkey (AES) decrypts vault metadata (incl. key material (seeds))
-     *
-     * @param vaultId  Vault ID
-     * @param userKeys EC key pair
-     * @return Vault metadata
-     */
-    UVFMetadataPayload getVaultMetadataJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
      * Get vault access token containing vault member key and recovery key (if owner)
@@ -40,24 +24,7 @@ public interface VaultService {
      * @param userKeys EC key pair
      * @return User specific access token
      */
-    UVFAccessTokenPayload getVaultAccessTokenJWE(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
+    UVFAccessTokenPayload getVaultAccessToken(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
-    /**
-     * Get storage configuration for vault
-     *
-     * @param metadataPayload Vault metadata including storage configuration
-     * @return Storage profile
-     */
-    StorageProfileDtoWrapper getVaultStorageProfile(UVFMetadataPayload metadataPayload) throws ApiException, AccessException, SecurityFailure;
-
-    /**
-     * Get storage session for vault
-     *
-     * @param session         Hub Connection
-     * @param vaultId         Vault ID
-     * @param metadataPayload Vault metadata including storage configuration
-     * @return Storage Session
-     * @throws AccessException Unsupported storage configuration found for vault
-     */
-    Session<?> getVaultStorageSession(HubSession session, UUID vaultId, UVFMetadataPayload metadataPayload) throws ApiException, AccessException;
+    UVFMetadataPayload decryptVaultMetadata(UVFAccessTokenPayload accessToken, final String uvfMetadataFile) throws SecurityFailure;
 }

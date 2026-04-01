@@ -8,10 +8,6 @@ package cloud.katta.crypto.uvf;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 
-import org.apache.commons.lang3.StringUtils;
-import org.cryptomator.cryptolib.api.Cryptor;
-import org.cryptomator.cryptolib.api.CryptorProvider;
-import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.net.URI;
@@ -23,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import cloud.katta.model.JWEPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -85,10 +80,10 @@ public class UVFMetadataPayload extends JWEPayload {
     String kdfSalt;
 
     @JsonProperty(value = "org.cryptomator.automaticAccessGrant", required = true)
-    VaultMetadataJWEAutomaticAccessGrantDto automaticAccessGrant;
+    VaultMetadataAutomaticAccessGrantDto automaticAccessGrant;
 
     @JsonProperty(value = "cloud.katta.storage", required = true)
-    VaultMetadataJWEBackendDto storage;
+    VaultMetadataStorageDto storage;
 
     public UVFMetadataPayload() {
     }
@@ -113,26 +108,6 @@ public class UVFMetadataPayload extends JWEPayload {
                 .withinitialSeed(kid)
                 .withKdf("HKDF-SHA512")
                 .withKdfSalt(Base64.getUrlEncoder().encodeToString(kdfSalt));
-    }
-
-    /**
-     * @return hashed root directory ID using master key cryptor
-     */
-    public String computeRootDirectoryIdHash() throws JsonProcessingException {
-        final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
-        final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
-        final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
-        return cryptor.fileNameCryptor(masterKey.firstRevision()).hashDirectoryId(masterKey.rootDirId());
-    }
-
-    /**
-     * @return encrypted root directory metadata using content cryptor
-     */
-    public byte[] computeRootDirectoryMetadata() throws JsonProcessingException {
-        final UVFMasterkey masterKey = UVFMasterkey.fromDecryptedPayload(this.toJSON());
-        final CryptorProvider provider = CryptorProvider.forScheme(CryptorProvider.Scheme.UVF_DRAFT);
-        final Cryptor cryptor = provider.provide(masterKey, FastSecureRandomProvider.get().provide());
-        return cryptor.directoryContentCryptor().encryptDirectoryMetadata(cryptor.directoryContentCryptor().rootDirectoryMetadata());
     }
 
     public String fileFormat() {
@@ -199,20 +174,20 @@ public class UVFMetadataPayload extends JWEPayload {
         return this;
     }
 
-    public VaultMetadataJWEAutomaticAccessGrantDto automaticAccessGrant() {
+    public VaultMetadataAutomaticAccessGrantDto automaticAccessGrant() {
         return automaticAccessGrant;
     }
 
-    public UVFMetadataPayload withAutomaticAccessGrant(final VaultMetadataJWEAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto) {
+    public UVFMetadataPayload withAutomaticAccessGrant(final VaultMetadataAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto) {
         this.automaticAccessGrant = vaultMetadataJWEAutomaticAccessGrantDto;
         return this;
     }
 
-    public VaultMetadataJWEBackendDto storage() {
+    public VaultMetadataStorageDto storage() {
         return storage;
     }
 
-    public UVFMetadataPayload withStorage(final VaultMetadataJWEBackendDto backend) {
+    public UVFMetadataPayload withStorage(final VaultMetadataStorageDto backend) {
         this.storage = backend;
         return this;
     }
@@ -223,33 +198,41 @@ public class UVFMetadataPayload extends JWEPayload {
      * @param jwe The jwe
      * @param jwk The jwk
      */
-    public static UVFMetadataPayload decryptWithJWK(final String jwe, final JWK jwk) throws ParseException, JOSEException, JsonProcessingException, SecurityFailure {
-        final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
-        // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.11
-        // Recipients MAY consider the JWS to be invalid if the critical
-        // list contains any Header Parameter names defined by this
-        // specification or [JWA] for use with JWS or if any other constraints on its use are violated.
-        final Object uvfSpecVersion = jweObject.getHeader().getCustomParams().get(UVF_SPEC_VERSION_KEY_PARAM);
-        if(null == uvfSpecVersion || !uvfSpecVersion.equals(1L)) {
-            throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
+    public static UVFMetadataPayload decrypt(final String jwe, final JWK jwk) throws SecurityFailure {
+        try {
+            final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
+            // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.11
+            // Recipients MAY consider the JWS to be invalid if the critical
+            // list contains any Header Parameter names defined by this
+            // specification or [JWA] for use with JWS or if any other constraints on its use are violated.
+            final Object uvfSpecVersion = jweObject.getHeader().getCustomParams().get(UVF_SPEC_VERSION_KEY_PARAM);
+            if(null == uvfSpecVersion || !uvfSpecVersion.equals(1L)) {
+                throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
+            }
+            jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM)));
+            final Payload payload = jweObject.getPayload();
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JsonNullableModule());
+            return mapper.readValue(payload.toString(), UVFMetadataPayload.class);
         }
-        jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM)));
-        final Payload payload = jweObject.getPayload();
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
-        return mapper.readValue(payload.toString(), UVFMetadataPayload.class);
+        catch(ParseException | JOSEException | JsonProcessingException e) {
+            throw new SecurityFailure(e);
+        }
+    }
+
+    public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
+        final JWEObjectJSON json = this.toJSON(apiURL, vaultId);
+        json.encrypt(new MultiEncrypter(keys));
+        return json.serializeGeneral();
     }
 
     /**
-     * Encrypt for recipients.
      *
      * @param apiURL  api URL that goes into custom header param "cloud.katta.origin"
      * @param vaultId the vault ID that goes into custom header param "cloud.katta.origin"
-     * @param keys    recipient keys for whom to encrypt
+     * @see <a href="https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header">UVF Specification of JWE Header</a>
      */
-    public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
-        // spec: https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header
-        // web frontend implementation: https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/universalVaultFormat.ts#L343-L346
+    public JWEObjectJSON toJSON(final String apiURL, final UUID vaultId) {
         final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
                 // kid goes into recipient-specific header
                 .customParam("cloud.katta.origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
@@ -269,30 +252,13 @@ public class UVFMetadataPayload extends JWEPayload {
             put("org.cryptomator.automaticAccessGrant", automaticAccessGrant);
             put("cloud.katta.storage", storage);
         }});
-        final JWEObjectJSON builder = new JWEObjectJSON(header, payload);
-        builder.encrypt(new MultiEncrypter(keys));
-        return builder.serializeGeneral();
+        return new JWEObjectJSON(header, payload);
     }
 
     public String toJSON() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
         return mapper.writeValueAsString(this);
-    }
-
-    @Override
-    public String toString() {
-        return "UvfMetadataPayload{" +
-                "fileFormat='" + fileFormat + '\'' +
-                ", nameFormat='" + nameFormat + '\'' +
-                ", seeds={" + seeds.entrySet().stream().map(e -> e.getKey() + "=" + StringUtils.repeat("*", Integer.min(8, StringUtils.length(e.getValue())))).collect(Collectors.joining(", ")) + "}" +
-                ", initialSeed='" + initialSeed + '\'' +
-                ", latestSeed='" + latestSeed + '\'' +
-                ", kdf='" + kdf + '\'' +
-                ", kdfSalt='" + StringUtils.repeat("*", Integer.min(8, StringUtils.length(kdf))) + '\'' +
-                ", automaticAccessGrant=" + automaticAccessGrant +
-                ", storage=" + storage +
-                '}';
     }
 
     @Override

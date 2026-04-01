@@ -10,7 +10,6 @@ import org.mockito.Mockito;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
@@ -33,7 +32,7 @@ class VaultServiceImplTest {
     @Test
     void testGetVaultOwnerAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
         final HubVaultKeys jwks = HubVaultKeys.create();
@@ -43,14 +42,14 @@ class VaultServiceImplTest {
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        final UVFAccessTokenPayload payload = service.getVaultAccessTokenJWE(vaultId, userKeys);
+        final UVFAccessTokenPayload payload = service.getVaultAccessToken(vaultId, userKeys);
         assertEquals(new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey()), payload);
     }
 
     @Test
-    void testGetVaultAccessTokenJWE() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
+    void testGetVaultAccessToken() throws JOSEException, JsonProcessingException, AccessException, SecurityFailure, ApiException {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
         final HubVaultKeys jwks = HubVaultKeys.create();
@@ -60,14 +59,14 @@ class VaultServiceImplTest {
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        final UVFAccessTokenPayload payload = service.getVaultAccessTokenJWE(vaultId, userKeys);
+        final UVFAccessTokenPayload payload = service.getVaultAccessToken(vaultId, userKeys);
         assertEquals(new UVFAccessTokenPayload(jwks.memberKey()), payload);
     }
 
     @Test
-    void testGetVaultWrongAccessTokenJWE() throws JOSEException, JsonProcessingException, ApiException {
+    void testGetVaultWrongAccessTokenJWE() throws Exception {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
         final HubVaultKeys jwks = HubVaultKeys.create();
@@ -77,17 +76,18 @@ class VaultServiceImplTest {
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn("lkajsdflkadsj");
 
-        assertThrows(SecurityFailure.class, () -> service.getVaultAccessTokenJWE(vaultId, userKeys));
+        assertThrows(SecurityFailure.class, () -> service.getVaultAccessToken(vaultId, userKeys));
     }
 
     @Test
-    void testGetVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException, AccessException, SecurityFailure {
+    void testDecryptVaultMetadata() throws Exception {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
         final HubVaultKeys jwks = HubVaultKeys.create();
-        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFAccessTokenPayload uvfAccessTokenPayload = new UVFAccessTokenPayload(jwks.memberKey());
+        final String accessToken = uvfAccessTokenPayload.encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
 
@@ -99,27 +99,27 @@ class VaultServiceImplTest {
         );
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId).uvfMetadataFile(uvfMetadataFile));
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
-        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        final UVFMetadataPayload payload = service.getVaultMetadataJWE(vaultId, userKeys);
+        final UVFMetadataPayload payload = service.decryptVaultMetadata(uvfAccessTokenPayload, uvfMetadataFile);
         assertEquals(metadataJWE, payload);
     }
 
     @Test
-    void testGetWrongVaultMetadataJWE() throws JOSEException, JsonProcessingException, ApiException {
+    void testGetWrongVaultMetadataJWE() throws Exception {
         final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock, Mockito.mock(StorageProfileResourceApi.class));
+        final VaultService service = new VaultServiceImpl(vaultResourceMock);
 
         final UserKeys userKeys = UserKeys.create();
         final HubVaultKeys jwks = HubVaultKeys.create();
-        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final UVFAccessTokenPayload accessTokenPayload = new UVFAccessTokenPayload(jwks.memberKey());
+        final String accessToken = accessTokenPayload.encryptForUser(userKeys.ecdhKeyPair().getPublic());
 
         final UUID vaultId = UUID.randomUUID();
 
-        when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId).uvfMetadataFile("lkajsdflkjas"));
-        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
+        final VaultDto vaultDto = new VaultDto().id(vaultId).uvfMetadataFile("lkajsdflkjas");
+        when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(vaultDto);
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
 
-        assertThrows(SecurityFailure.class, () -> service.getVaultMetadataJWE(vaultId, userKeys));
+        assertThrows(SecurityFailure.class, () -> service.decryptVaultMetadata(accessTokenPayload, vaultDto.getUvfMetadataFile()));
     }
 }

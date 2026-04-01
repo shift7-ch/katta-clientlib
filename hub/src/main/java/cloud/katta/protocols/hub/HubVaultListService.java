@@ -5,57 +5,46 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.AttributedList;
-import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
 import ch.cyberduck.core.LocaleFactory;
-import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.Path;
-import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
+import ch.cyberduck.core.features.Vault;
+import ch.cyberduck.core.vault.VaultCredentials;
+import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
+import ch.cyberduck.core.vault.VaultVersion;
 
-import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.EnumSet;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.VaultDto;
-import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.crypto.uvf.HubVaultKeys;
-import cloud.katta.crypto.uvf.HubVaultMetadataUVFProvider;
-import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
-import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
-import cloud.katta.workflows.VaultServiceImpl;
-import cloud.katta.workflows.exceptions.AccessException;
-import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class HubVaultListService implements ListService {
     private static final Logger log = LogManager.getLogger(HubVaultListService.class);
 
     private final HubSession session;
-    private final LoginCallback prompt;
+    private final VaultProvider provider;
 
-    public HubVaultListService(final HubSession session, final LoginCallback prompt) {
+    public HubVaultListService(final HubSession session, final VaultProvider provider) {
         this.session = session;
-        this.prompt = prompt;
+        this.provider = provider;
     }
 
     @Override
     public AttributedList<Path> list(final Path directory, final ListProgressListener listener) throws BackgroundException {
         if(directory.isRoot()) {
             try {
-                final VaultServiceImpl vaultService = new VaultServiceImpl(session);
                 final VaultRegistry registry = session.getRegistry();
                 final AttributedList<Path> vaults = new AttributedList<>();
                 for(final VaultDto vaultDto : new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null)) {
@@ -65,42 +54,16 @@ public class HubVaultListService implements ListService {
                     }
                     log.debug("Load vault {}", vaultDto);
                     try {
-                        // Find storage configuration in vault metadata
-                        final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-                        final UVFMetadataPayload vaultMetadata = vaultService.getVaultMetadataJWE(vaultDto.getId(), session.getUserKeys(setup));
-                        final Session<?> storage = vaultService.getVaultStorageSession(session, vaultDto.getId(), vaultMetadata);
-                        final Path bucket = new Path(vaultMetadata.storage().getDefaultPath(), EnumSet.of(Path.Type.directory, Path.Type.volume),
-                                new DefaultPathAttributes().setDisplayname(vaultMetadata.storage().getNickname()));
-                        try {
-                            // JSON Web Key
-                            final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessTokenJWE(vaultDto.getId(), session.getUserKeys(setup));
-                            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt).load(session,
-                                    new HubVaultMetadataUVFProvider(vaultDto.getId(), new HubVaultKeys(accessToken.key()), vaultDto.getUvfMetadataFile().getBytes(StandardCharsets.US_ASCII),
-                                            vaultMetadata.computeRootDirectoryMetadata(), vaultMetadata.computeRootDirectoryIdHash()));
-                            log.info("Loaded vault {}", vault);
-                            registry.add(vault);
-                            vaults.add(bucket);
-                            listener.chunk(directory, vaults);
-                        }
-                        catch(VaultUnlockCancelException e) {
-                            log.warn("Skip vault {} with failure {} loading", vaultDto, e);
-                        }
-                        catch(JsonProcessingException e) {
-                            throw new SecurityFailure(e);
-                        }
+                        final Vault vault = provider.load(session,
+                                new Path(directory, vaultDto.getId().toString(), EnumSet.of(Path.Type.directory, Path.Type.volume)),
+                                new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
+                        log.info("Loaded vault {}", vault);
+                        registry.add(vault);
+                        vaults.add(vault.getHome());
+                        listener.chunk(directory, vaults);
                     }
-                    catch(ApiException e) {
-                        if(HttpStatus.SC_FORBIDDEN == e.getCode()) {
-                            log.warn("Skip vault {} with insufficient permissions {}", vaultDto, e);
-                            continue;
-                        }
-                        throw e;
-                    }
-                    catch(AccessException e) {
-                        log.warn("Skip vault {} with access failure {}", vaultDto, e);
-                    }
-                    catch(SecurityFailure e) {
-                        throw new AccessDeniedException(e.getMessage(), e);
+                    catch(VaultUnlockCancelException e) {
+                        log.warn("Skip vault {} with failure {} loading", vaultDto, e);
                     }
                 }
                 return vaults;

@@ -39,6 +39,7 @@ import ch.cyberduck.core.synchronization.DefaultComparisonService;
 import ch.cyberduck.core.synchronization.ETagComparisonService;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.transfer.TransferStatus;
+import ch.cyberduck.core.vault.VaultProvider;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -75,12 +76,13 @@ public class HubSession extends HttpSession<HubApiClient> {
     /**
      * Periodically grant vault access to users
      */
-    private final Scheduler<?> access = new HubGrantAccessSchedulerService(this, keychain);
+    private Scheduler<?> access;
 
     /**
      * Interceptor for OpenID connect flow
      */
     private OAuth2RequestInterceptor authorizationService;
+    private VaultProvider provider;
 
     private ConfigDto config;
 
@@ -90,7 +92,7 @@ public class HubSession extends HttpSession<HubApiClient> {
     private final ExpiringObjectHolder<UserKeys> userKeysHolder
             = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
 
-    private HubVaultListService vaults;
+    private ListService vaults;
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
@@ -154,7 +156,9 @@ public class HubSession extends HttpSession<HubApiClient> {
         log.debug("Configured with setup prompt {}", setup);
         final UserKeys userKeys = this.getUserKeys(setup);
         log.debug("Retrieved user keys {}", userKeys);
-        vaults = new HubVaultListService(this, prompt);
+        provider = new HubUVFVaultProvider(prompt);
+        vaults = new HubVaultListService(this, provider);
+        access = new HubGrantAccessSchedulerService(this, setup);
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
@@ -180,7 +184,9 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     @Override
     protected void logout() {
-        access.shutdown(false);
+        if(access != null) {
+            access.shutdown(false);
+        }
         client.getHttpClient().close();
     }
 
@@ -222,6 +228,9 @@ public class HubSession extends HttpSession<HubApiClient> {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T _getFeature(final Class<T> type) {
+        if(type == VaultProvider.class) {
+            return (T) provider;
+        }
         if(type == ListService.class) {
             return (T) vaults;
         }
@@ -238,7 +247,7 @@ public class HubSession extends HttpSession<HubApiClient> {
             return (T) new HubStorageLocationService(this);
         }
         if(type == Find.class) {
-            return (T) (Find) (file, listener) -> new SimplePathPredicate(registry.find(HubSession.this, file).getHome()).test(file);
+            return (T) (Find) (file, listener) -> registry.contains(file);
         }
         if(type == Read.class) {
             return (T) new Read() {
@@ -345,9 +354,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == ComparisonService.class) {
             return (T) new DefaultComparisonService(new ETagComparisonService(), ComparisonService.disabled);
-        }
-        if(type == CredentialsConfigurator.class) {
-            return (T) new HubOAuthTokensCredentialsConfigurator(keychain, host);
         }
         if(type == OAuth2RequestInterceptor.class) {
             return (T) authorizationService;

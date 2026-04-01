@@ -12,9 +12,9 @@ import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.serializer.HubConfigDtoDeserializer;
 import cloud.katta.protocols.hub.serializer.StorageProfileDtoWrapperDeserializer;
 
-public final class HubAwareProfile extends Profile {
+public final class HubStorageProfile extends Profile {
 
-    public HubAwareProfile(final Protocol parent, final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) {
+    public HubStorageProfile(final Protocol parent, final ConfigDto configDto, final StorageProfileDtoWrapper storageProfile) {
         super(parent, new HubConfigDtoDeserializer(configDto, new StorageProfileDtoWrapperDeserializer(storageProfile)));
     }
 }
