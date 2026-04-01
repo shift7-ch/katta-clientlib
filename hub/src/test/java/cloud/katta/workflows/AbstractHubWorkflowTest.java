@@ -8,8 +8,8 @@ import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.vault.VaultCredentials;
-import ch.cyberduck.core.vault.VaultMetadata;
 import ch.cyberduck.core.vault.VaultProvider;
+import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -113,7 +113,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     storageProfileWrapper.getName());
 
             final VaultProvider vaultProvider = hubSession.getFeature(VaultProvider.class);
-            final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultMetadata(VaultMetadata.Type.UVF), new VaultCredentials());
+            final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
 
             final UUID vaultId = UUID.fromString(StringUtils.removeStart(cryptomator.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
             checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);

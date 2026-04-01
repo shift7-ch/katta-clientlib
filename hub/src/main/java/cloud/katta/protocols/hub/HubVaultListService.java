@@ -14,10 +14,10 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.NotfoundException;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.vault.VaultCredentials;
-import ch.cyberduck.core.vault.VaultMetadata;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
+import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,7 +56,7 @@ public class HubVaultListService implements ListService {
                     try {
                         final Vault vault = provider.load(session,
                                 new Path(directory, vaultDto.getId().toString(), EnumSet.of(Path.Type.directory, Path.Type.volume)),
-                                new VaultMetadata(VaultMetadata.Type.UVF), new VaultCredentials());
+                                new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
                         log.info("Loaded vault {}", vault);
                         registry.add(vault);
                         vaults.add(vault.getHome());

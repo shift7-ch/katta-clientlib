@@ -24,9 +24,9 @@ import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.transfer.TransferStatus;
 import ch.cyberduck.core.vault.VaultCredentials;
-import ch.cyberduck.core.vault.VaultMetadata;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
+import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.logging.log4j.LogManager;
@@ -253,7 +253,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     storageProfileWrapper.getName());
 
             final VaultProvider vaultProvider = hubSession.getFeature(VaultProvider.class);
-            final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultMetadata(VaultMetadata.Type.UVF),
+            final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF),
                     new VaultCredentials());
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());

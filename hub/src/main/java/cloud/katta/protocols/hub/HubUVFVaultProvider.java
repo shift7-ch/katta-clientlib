@@ -27,9 +27,9 @@ import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityCredentialsStrategy;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultException;
-import ch.cyberduck.core.vault.VaultMetadata;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
+import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -70,17 +70,17 @@ public class HubUVFVaultProvider implements VaultProvider {
     }
 
     @Override
-    public VaultMetadata matches(final Path file) {
-        return new VaultMetadata(VaultMetadata.Type.UVF);
+    public VaultVersion matches(final Path file) {
+        return new VaultVersion(VaultVersion.Type.UVF);
     }
 
     @Override
-    public VaultMetadata find(final Path directory, final Find find, final ListProgressListener listener) {
-        return new VaultMetadata(VaultMetadata.Type.UVF);
+    public VaultVersion find(final Path directory, final Find find, final ListProgressListener listener) {
+        return new VaultVersion(VaultVersion.Type.UVF);
     }
 
     @Override
-    public Vault create(final Session<?> session, final String region, final Path name, final VaultMetadata metadata, final VaultCredentials passphrase) throws BackgroundException {
+    public Vault create(final Session<?> session, final String region, final Path name, final VaultVersion metadata, final VaultCredentials passphrase) throws BackgroundException {
         try {
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromIdentifier(region);
             // Determine actual bucket name from storage location
@@ -186,7 +186,7 @@ public class HubUVFVaultProvider implements VaultProvider {
     }
 
     @Override
-    public Vault load(final Session<?> session, final Path id, final VaultMetadata metadata, final VaultCredentials passphrase) throws BackgroundException {
+    public Vault load(final Session<?> session, final Path id, final VaultVersion metadata, final VaultCredentials passphrase) throws BackgroundException {
         try {
             final UUID vaultId = UUID.fromString(id.getName());
             final String vaultMetadataFile = new VaultResourceApi(HubSession.coerce(session).getClient()).apiVaultsVaultIdUvfVaultUvfGet(vaultId);
