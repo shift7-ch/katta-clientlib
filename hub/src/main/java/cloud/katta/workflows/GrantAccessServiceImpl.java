@@ -72,7 +72,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                 continue;
             }
             if(maxWotDepth >= 0) {
-                final Integer trustLevel = verifiedTrustedUsers.getOrDefault(user.getId(), -1);
+                final Integer trustLevel = verifiedTrustedUsers.get(user.getId());
                 if(trustLevel == null) {
                     log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
                     continue;
