@@ -36,7 +36,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
 /**
- * Assume role with temporary credentials obtained using OIDC token from security token service (STS)
+ * STS assume role chaining (AWS only) with session tag referencing vault id
  */
 public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWebIdentityCredentialsStrategy {
     private static final Logger log = LogManager.getLogger(STSChainedAssumeRoleRequestInterceptor.class);
@@ -51,8 +51,8 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      *
      * @param hub                  Connection for token exchange API
      * @param vaultId              Vault Id
-     * @param stsSessionTagRoleArn STS assume role chaining (AWS only) with session tag referencing vault id
-     * @param stsSessionTagKey     STS assume role chaining (AWS only) with session tag referencing vault id
+     * @param stsSessionTagRoleArn Role ARN to assume
+     * @param stsSessionTagKey     STS assume role chaining (AWS only) session tag name for vault id
      * @param host                 Storage details
      */
     public STSChainedAssumeRoleRequestInterceptor(final HubSession hub, final OAuth2RequestInterceptor oauth,
