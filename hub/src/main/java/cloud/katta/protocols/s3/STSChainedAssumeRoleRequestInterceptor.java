@@ -47,14 +47,6 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     private final Host bookmark;
     private final UUID vaultId;
 
-    /**
-     *
-     * @param hub                  Connection for token exchange API
-     * @param vaultId              Vault Id
-     * @param stsSessionTagRoleArn Role ARN to assume
-     * @param stsSessionTagKey     STS assume role chaining (AWS only) session tag name for vault id
-     * @param host                 Storage details
-     */
     public STSChainedAssumeRoleRequestInterceptor(final HubSession hub, final OAuth2RequestInterceptor oauth,
                                                   final UUID vaultId,
                                                   final String stsSessionTagRoleArn,
