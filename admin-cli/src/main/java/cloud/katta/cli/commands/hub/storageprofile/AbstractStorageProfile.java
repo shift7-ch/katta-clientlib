@@ -10,7 +10,9 @@ import java.util.concurrent.Callable;
 import cloud.katta.cli.commands.AbstractAuthorizationCode;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.model.StorageProfileDto;
 import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
@@ -42,9 +44,10 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
         final ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(hubUrl);
         apiClient.addDefaultHeader("Authorization", "Bearer %s".formatted(this.login()));
-        this.call(new StorageProfileResourceApi(apiClient));
+        final StorageProfileDto response = this.call(new StorageProfileResourceApi(apiClient));
+        System.out.println(new JSON().getContext(null).writeValueAsString(response));
         return null;
     }
 
-    protected abstract void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException;
+    protected abstract StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException;
 }

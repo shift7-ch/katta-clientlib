@@ -13,6 +13,7 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
 
@@ -51,7 +52,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
     }
 
     @Override
-    protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
         storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
                 .id(uuid)
@@ -82,7 +83,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("arn:aws:iam::%s:role/%s%s%s", awsAccountId, roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
                 .stsSessionTag(REQUEST_TAG)
         );
-        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 
     @Override
