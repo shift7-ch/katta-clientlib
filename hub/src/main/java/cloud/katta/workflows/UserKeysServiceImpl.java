@@ -76,22 +76,9 @@ public class UserKeysServiceImpl implements UserKeysService {
                 }
             }
         }
-        else if(validate(me)) {
-            // No device keys
-            log.info("Setting up new device w/ Account Key for existing user keys.");
-            return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
-        }
-        else {
-            log.info("Setting up new user keys and account key");
-
-            // TODO https://github.com/shift7-ch/katta-server/issues/27
-            // private key generated with P384KeyPair causes "Unexpected Error: Data provided to an operation does not meet requirements" in `UserKeys.recover`: `const privateKey = await crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, false, UserKeys.KEY_USAGES);`
-            final String accountKey = prompt.generateAccountKey();
-            final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
-                    new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
-            return this.uploadDeviceKeys(input.deviceName(),
-                    this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
-        }
+        // No device keys
+        log.info("Setting up new device w/ Account Key for existing user keys.");
+        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
     }
 
     private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
