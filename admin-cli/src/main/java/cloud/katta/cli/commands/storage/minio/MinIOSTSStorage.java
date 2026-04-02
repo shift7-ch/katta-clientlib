@@ -35,7 +35,7 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
         description = "Setup/update OIDC provider and roles for STS in MinIO.",
         showDefaultValues = true,
         mixinStandardHelpOptions = true)
-public class MinioSTSStorage implements Callable<Void> {
+public class MinIOSTSStorage implements Callable<Void> {
 
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO URL. Example: \"http://localhost:9000\"", required = true)
     String endpointUrl;
