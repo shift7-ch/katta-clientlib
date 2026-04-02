@@ -50,6 +50,15 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
     public MinIOSTSStorageProfile() {
     }
 
+    public MinIOSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions,
+                                  final String endpointUrl, final String bucketPrefix, final String stsRoleCreateBucket, final String stsRoleAccessBucket) {
+        super(hubUrl, uuid, name, region, regions);
+        this.endpointUrl = endpointUrl;
+        this.bucketPrefix = bucketPrefix;
+        this.stsRoleCreateBucket = stsRoleCreateBucket;
+        this.stsRoleAccessBucket = stsRoleAccessBucket;
+    }
+
     @Override
     protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
