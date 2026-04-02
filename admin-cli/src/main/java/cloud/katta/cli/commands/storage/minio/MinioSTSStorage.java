@@ -35,7 +35,6 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
         description = "Setup/update OIDC provider and roles for STS in MinIO.",
         showDefaultValues = true,
         mixinStandardHelpOptions = true)
-@Deprecated
 public class MinioSTSStorage implements Callable<Void> {
 
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO URL. Example: \"http://localhost:9000\"", required = true)
@@ -47,7 +46,6 @@ public class MinioSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--minioAlias"}, description = "MinIO alias to use.", defaultValue = "myminio")
     String minioAlias;
 
-    // TODO offer to use predefined minio alias only?
     @CommandLine.Option(names = {"--accessKey"}, description = "Access Key for administering MinIO if no profile is used.", required = true)
     String accessKey;
 
@@ -132,38 +130,36 @@ public class MinioSTSStorage implements Callable<Void> {
         final String keycloakClientIdHub = apiConfig.getString("keycloakClientIdHub");
         final String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
 
-        // TODO should we run mc cli tool instead of prompting command?
-        System.out.println(String.format("""
+        System.out.printf("""
                         # The MinIO Client API is incomplete (https://github.com/minio/minio/issues/16151).
                         # Please execute the following commands on the command line.
                         # Further info: https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio
 
                         mc alias set %s %s %s %s
 
-                        mc idp openid add %s %s \\
-                            config_url="%s" \\
-                            client_id="%s" \\
-                            client_secret="ignore-me" \\
+                        mc idp openid add %s %s \
+                            config_url="%s" \
+                            client_id="%s" \
+                            client_secret="ignore-me" \
                             role_policy="%s"
-                        mc idp openid add %s %s \\
-                            config_url="%s" \\
-                            client_id="%s" \\
-                            client_secret="ignore-me" \\
-                            role_policy="%s"   \s
-                        mc idp openid add %s %s \\
-                            config_url="%s" \\
-                            client_id="%s" \\
-                            client_secret="ignore-me" \\
-                            role_policy="%s"   \s
+                        mc idp openid add %s %s \
+                            config_url="%s" \
+                            client_id="%s" \
+                            client_secret="ignore-me" \
+                            role_policy="%s"
+                        mc idp openid add %s %s \
+                            config_url="%s" \
+                            client_id="%s" \
+                            client_secret="ignore-me" \
+                            role_policy="%s"
                         mc admin service restart %s
-                        """,
+                        %n""",
                 minioAlias, endpointUrl, accessKey, secretKey,
                 minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createbucketPolicyName,
                 minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
                 minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName,
                 minioAlias
-        ));
-
+        );
         return null;
     }
 }
