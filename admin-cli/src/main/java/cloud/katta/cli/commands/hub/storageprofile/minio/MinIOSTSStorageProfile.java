@@ -27,7 +27,7 @@ import picocli.CommandLine;
  * <p>
  * MinIO uses the {@code ${jwt:client_id}} policy variable to scope bucket access per vault.
  * <p>
- * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio">katta docs</a>.
+ * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio">katta-docs</a>.
  */
 @CommandLine.Command(name = "sts",
         description = "Upload storage profile for MinIO STS.",

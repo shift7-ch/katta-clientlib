@@ -73,6 +73,25 @@ public class Terraform {
         }
         if(true) {
             final UUID storageProfileId = UUID.randomUUID();
+            final String[] storageProfileS3StaticArgs = {
+                    "storageprofile", "s3", "static",
+                    "--tokenUrl", tokenUrl,
+                    "--authUrl", authUrl,
+                    "--clientId", "cryptomator",
+                    "--hubUrl", hubUrl,
+                    "--uuid", storageProfileId.toString(),
+                    "--name", "S3 Static",
+                    "--endpointUrl", "https://s3.example.com",
+                    "--region", region,
+                    "--regions", region};
+            System.out.println(String.format("katta \"%s\"", String.join("\" \"", storageProfileS3StaticArgs)));
+            int rc = new CommandLine(new Katta()).execute(
+                    storageProfileS3StaticArgs
+            );
+            assertEquals(0, rc);
+        }
+        if(true) {
+            final UUID storageProfileId = UUID.randomUUID();
             final String[] storageProfileAwsStaticArgs = {
                     "storageprofile", "aws", "static",
                     "--tokenUrl", tokenUrl,
