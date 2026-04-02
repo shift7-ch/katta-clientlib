@@ -33,7 +33,7 @@ import picocli.CommandLine;
         description = "Upload storage profile for MinIO STS.",
         showDefaultValues = true,
         mixinStandardHelpOptions = true)
-public class MinioSTSStorageProfile extends AbstractStorageProfile {
+public class MinIOSTSStorageProfile extends AbstractStorageProfile {
 
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO endpoint URL (S3 API). Example: \"https://minio.example.com\" or \"https://minio.example.com:9000\"", required = true)
     String endpointUrl;
@@ -47,7 +47,7 @@ public class MinioSTSStorageProfile extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--stsRoleAccessBucket"}, description = "MinIO role ARN for bucket access (from 'mc idp openid ls' for the cryptomatorvaults client).", required = true)
     String stsRoleAccessBucket;
 
-    public MinioSTSStorageProfile() {
+    public MinIOSTSStorageProfile() {
     }
 
     @Override
