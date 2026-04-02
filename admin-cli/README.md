@@ -57,6 +57,39 @@ katta storageprofile aws sts \
 - `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
 - `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
 
+### Configure storage profile for MinIO using `storageprofile` command
+
+Uploads a storage profile to Katta Server for use with MinIO STS. Requires MinIO STS setup with an OIDC provider.
+
+Unlike AWS, MinIO does not support role chaining, so the same role ARN is used for both bucket creation and hub access.
+MinIO uses the `${jwt:client_id}` policy variable to scope bucket access per vault.
+
+See also: [MinIO setup documentation](https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio).
+
+```bash
+katta storageprofile minio sts \
+  --hubUrl <hub-url> \
+  --endpointUrl <minio-endpoint-url> \
+  --region <region> \
+  --stsRoleCreateBucket <role-arn> \
+  --stsRoleAccessBucket <role-arn>
+```
+
+**Required Options:**
+
+- `--hubUrl`: Hub URL. Example: `https://hub.default.katta.cloud/`
+- `--endpointUrl`: MinIO endpoint URL (S3 API). Example: `https://minio.example.com` or `https://minio.example.com:9000`
+- `--region`: Default bucket region. Example: `us-east-1`
+- `--stsRoleCreateBucket`: MinIO role ARN for bucket creation (from `mc idp openid ls` for the `cryptomator` client).
+- `--stsRoleAccessBucket`: MinIO role ARN for bucket access (from `mc idp openid ls` for the `cryptomatorvaults` client).
+
+**Additional Options:**
+
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
+- `--regions`: Additional bucket regions. Example: `--regions us-east-1 --regions us-west-2`
+- `--name`: Display name for the storage profile.
+- `--uuid`: UUID for the storage profile (auto-generated if omitted).
+
 ### Generate shell completion script with `completion` command
 
 Generate a bash completion script for the `katta` CLI and install it for the current shell session.
