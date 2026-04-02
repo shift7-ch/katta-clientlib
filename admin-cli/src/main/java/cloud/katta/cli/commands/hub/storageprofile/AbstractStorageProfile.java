@@ -14,9 +14,6 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.default.katta.cloud/\"", required = true)
-    protected String hubUrl;
-
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
     protected String uuid;
 

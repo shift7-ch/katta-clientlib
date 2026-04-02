@@ -24,10 +24,7 @@ import picocli.CommandLine;
         description = "Archive (deactivate) an existing storage profile.",
         mixinStandardHelpOptions = true)
 public class ArchiveStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.testing.katta.cloud\"", required = true)
-    String hubUrl;
-
-    @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = true)
+    @CommandLine.Option(names = {"--uuid"}, description = "Storage Profile.", required = true)
     String uuid;
 
     public ArchiveStorageProfile() {
