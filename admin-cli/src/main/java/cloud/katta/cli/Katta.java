@@ -4,6 +4,7 @@
 
 package cloud.katta.cli;
 
+import cloud.katta.cli.commands.Completion;
 import cloud.katta.cli.commands.hub.storageprofile.StorageProfile;
 import cloud.katta.cli.commands.login.AuthorizationCodeFlow;
 import cloud.katta.cli.commands.storage.Setup;
@@ -18,6 +19,7 @@ import picocli.CommandLine;
                 StorageProfile.class,
                 // misc.
                 AuthorizationCodeFlow.class,
+                Completion.class,
                 CommandLine.HelpCommand.class,
         })
 public class Katta {

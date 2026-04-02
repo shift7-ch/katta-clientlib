@@ -57,6 +57,25 @@ katta storageprofile aws sts \
 - `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
 - `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
 
+### Generate shell completion script with `completion` command
+
+Generate a bash completion script for the `katta` CLI and install it for the current shell session.
+
+```bash
+source <(katta completion)
+```
+
+To persist completion across sessions, write the script to a file and source it from your shell profile:
+
+```bash
+katta completion > ~/.bash_completion.d/katta
+echo 'source ~/.bash_completion.d/katta' >> ~/.bashrc
+```
+
+**Options:**
+
+- `--shell`: Shell to generate completion for. Only `bash` is supported. Defaults to `bash`.
+
 #### Update thumbprints of TLS certificates
 
 Thumbprints from the TLS certificates of the Keycloak endpoint need to be in place at AWS in the IAM identity provider endpoint verification and updated when
