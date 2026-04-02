@@ -7,7 +7,7 @@ package cloud.katta.cli.commands.hub.storageprofile.minio;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "minio", subcommands = {
-        MinioSTSStorageProfile.class,
+        MinIOSTSStorageProfile.class,
         CommandLine.HelpCommand.class
 },
         description = "Setup MinIO Storage Provider Integration", mixinStandardHelpOptions = true)
