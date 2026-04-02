@@ -4,10 +4,12 @@
 
 package cloud.katta.core;
 
+import ch.cyberduck.core.Controller;
 import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
+import ch.cyberduck.core.LoginCallbackFactory;
 import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.exception.LoginCanceledException;
@@ -19,8 +21,8 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
 
     private final LoginCallback prompt;
 
-    public DefaultDeviceSetupCallback(final LoginCallback prompt) {
-        this.prompt = prompt;
+    public DefaultDeviceSetupCallback(final Controller controller) {
+        this.prompt = LoginCallbackFactory.get(controller);
     }
 
     @Override
