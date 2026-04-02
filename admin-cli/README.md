@@ -8,6 +8,8 @@ This CLI program is used to configure a Katta Server including its S3 storage ba
 
 - AWS S3 accessed using static access keys
 - AWS S3 accessed using AWS Security Token Service (STS) issuing temporary access keys from OIDC access token obtained by user from Keycloak identity provider.
+- Generic S3-compatible provider accessed using static access credentials.
+- MinIO accessed using Security Token Service (STS) with OIDC.
 
 ### Setup AWS using OIDC Provider and Security Token Service (STS) with `setup` command
 
@@ -56,6 +58,31 @@ katta storageprofile aws sts \
 
 - `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
 - `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
+
+### Configure storage profile for a generic S3-compatible provider using `storageprofile` command
+
+Uploads a storage profile to Katta Server for use with any S3-compatible storage provider using static access credentials.
+Unlike STS-based profiles, no temporary credentials are issued; the server uses static access key credentials directly.
+
+```bash
+katta storageprofile s3 static \
+  --hubUrl <hub-url> \
+  --endpointUrl <s3-endpoint-url> \
+  --region <region>
+```
+
+**Required Options:**
+
+- `--hubUrl`: Hub URL. Example: `https://hub.default.katta.cloud/`
+- `--endpointUrl`: S3 endpoint URL. Example: `https://s3.example.com` or `https://s3.example.com:9000`
+- `--region`: Default bucket region. Example: `us-east-1`
+
+**Additional Options:**
+
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
+- `--regions`: Additional bucket regions. Example: `--regions us-east-1 --regions us-west-2`
+- `--name`: Display name for the storage profile.
+- `--uuid`: UUID for the storage profile (auto-generated if omitted).
 
 ### Configure storage profile for MinIO using `storageprofile` command
 
