@@ -15,6 +15,7 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
 
@@ -60,7 +61,7 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
     }
 
     @Override
-    protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
         final URI uri;
         try {
@@ -105,7 +106,7 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
                 .stsRoleAccessBucketAssumeRoleTaggedSession(null)
                 .stsSessionTag(null)
         );
-        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 
     @Override

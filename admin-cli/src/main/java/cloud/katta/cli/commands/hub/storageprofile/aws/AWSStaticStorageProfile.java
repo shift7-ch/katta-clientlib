@@ -13,6 +13,7 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
 
@@ -40,7 +41,7 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
     }
 
     @Override
-    protected void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
+    protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
         storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
                 .id(uuid)
@@ -65,7 +66,7 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
                 .stsRoleCreateBucketClient("")
                 .stsRoleCreateBucketHub("")
         );
-        System.out.println(storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid));
+        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 
     @Override
