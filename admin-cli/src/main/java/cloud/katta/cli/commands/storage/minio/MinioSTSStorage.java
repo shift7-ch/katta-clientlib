@@ -58,16 +58,16 @@ public class MinioSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}createbucketpolicy.")
-    String createbucketPolicyName;
+    @CommandLine.Option(names = {"--createBucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}createbucketpolicy.")
+    String createBucketPolicyName;
 
     @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}accessbucketpolicy.")
     String accessbucketPolicyName;
 
     @Override
     public Void call() throws Exception {
-        if(createbucketPolicyName == null) {
-            createbucketPolicyName = String.format("%screatebucketpolicy", roleNamePrefix);
+        if(createBucketPolicyName == null) {
+            createBucketPolicyName = String.format("%screatebucketpolicy", roleNamePrefix);
         }
         if(accessbucketPolicyName == null) {
             accessbucketPolicyName = String.format("%saccessbucketpolicy", roleNamePrefix);
@@ -93,10 +93,10 @@ public class MinioSTSStorage implements Callable<Void> {
                             .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
                             .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
                     .build();
-            minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toJson(IamPolicyWriter.builder()
+            minioAdminClient.addCannedPolicy(createBucketPolicyName, miniocreatebucketpolicy.toJson(IamPolicyWriter.builder()
                     .prettyPrint(true)
                     .build()));
-            System.out.println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
+            System.out.println(minioAdminClient.listCannedPolicies().get(createBucketPolicyName));
         }
         // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
         {
@@ -155,7 +155,7 @@ public class MinioSTSStorage implements Callable<Void> {
                         mc admin service restart %s
                         %n""",
                 minioAlias, endpointUrl, accessKey, secretKey,
-                minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createbucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createBucketPolicyName,
                 minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
                 minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName,
                 minioAlias
