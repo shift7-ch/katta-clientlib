@@ -41,23 +41,21 @@ Requires [Setup AWS using OIDC Provider and Security Token Service (STS)](#setup
 katta storageprofile aws sts \
   --hubUrl <hub-url> \
   --awsAccountId <aws-account-id> \
-  --region <aws-region> \
-  --authUrl <auth-url> \
-  --tokenUrl <token-url> \
+  --region <aws-region>
 ```
 
 **Required Options:**
 
-- `--hubUrl`: Hub URL
+- `--hubUrl`: Hub URL. Example: `https://hub.default.katta.cloud/`. Keycloak auth and token endpoints are fetched automatically from `<hub-url>/api/config`.
 - `--awsAccountId`: AWS Account ID. A 12-digit number, such as 012345678901, that uniquely identifies an AWS account.
 - `--region`: Bucket region. Example: `eu-west-1`
-- `--authUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/auth`
-- `--tokenUrl`: Keycloak URL. Example: `https://keycloak.default.katta.cloud/kc/realms/cryptomator/protocol/openid-connect/token`
 
 **Additional Options:**
 
 - `--roleNamePrefix`: Prefix used for IAM role names. Defaults to `katta-`.
 - `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
+- `--authUrl`: Keycloak auth endpoint URL. Overrides the value fetched from `--hubUrl`.
+- `--tokenUrl`: Keycloak token endpoint URL. Overrides the value fetched from `--hubUrl`.
 
 ### Configure storage profile for a generic S3-compatible provider using `storageprofile` command
 
