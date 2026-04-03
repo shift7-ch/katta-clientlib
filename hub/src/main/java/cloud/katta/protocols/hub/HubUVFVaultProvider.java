@@ -86,33 +86,32 @@ public class HubUVFVaultProvider implements VaultProvider {
             // Determine actual bucket name from storage location
             final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(new StorageProfileResourceApi(HubSession.coerce(session).getClient())
                     .apiStorageprofileProfileIdGet(UUID.fromString(location.getProfile())));
-            final Credentials credentials;
+            final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
+            final S3Session storage;
+            final Path bucket = new Path(storageProfile.getBucketPrefix() + vaultId, EnumSet.of(Path.Type.volume, Path.Type.directory),
+                    new DefaultPathAttributes()
+                            .setRegion(region)
+                            .setDisplayname(name.getName()));
+            final UVFMetadataPayload payload;
             switch(storageProfile.getProtocol()) {
-                case S3_STATIC:
-                    credentials = prompt.prompt(session.getHost(), StringUtils.EMPTY,
+                case S3_STATIC: {
+                    final Credentials credentials = prompt.prompt(session.getHost(), StringUtils.EMPTY,
                             LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
                             StringUtils.EMPTY, new LoginOptions(new S3Protocol())
                                     .user(true)
                                     .password(true)
                                     .save(false));
                     log.debug("Use static S3 credentials {}", credentials);
-                    break;
-                default:
-                    // OAuth Tokens shared with request interceptor
-                    credentials = new Credentials();
-            }
-            final UUID vaultId = UUID.fromString(new UUIDRandomStringService().random());
-            final S3Session storage;
-            switch(storageProfile.getProtocol()) {
-                case S3_STATIC: {
+                    payload = location.toPayload(bucket, credentials);
                     storage = new S3Session(new Host(new HubStorageProfile(
                             new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()),
                             session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
                     break;
                 }
                 case S3_STS: {
+                    // OAuth Tokens shared with request interceptor
                     final Host host = new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials) {
+                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), session.getHost().getCredentials()) {
                         @Override
                         public String getProperty(final String key) {
                             if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
@@ -123,6 +122,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             return super.getProperty(key);
                         }
                     }.setRegion(location.getRegion());
+                    payload = location.toPayload(bucket);
                     storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
                         @Override
                         protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
@@ -140,11 +140,6 @@ public class HubUVFVaultProvider implements VaultProvider {
                     throw new VaultException(storageProfile.getProtocol().toString());
             }
             log.debug("Configured {} for vault {}", storage, vaultId);
-            final Path bucket = new Path(storageProfile.getBucketPrefix() + vaultId, EnumSet.of(Path.Type.volume, Path.Type.directory),
-                    new DefaultPathAttributes()
-                            .setRegion(region)
-                            .setDisplayname(name.getName()));
-            final UVFMetadataPayload payload = location.toPayload(bucket, credentials);
             final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt);
             final HubVaultKeys keys = HubVaultKeys.create();
             final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
@@ -203,7 +198,6 @@ public class HubUVFVaultProvider implements VaultProvider {
             final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(new StorageProfileResourceApi(HubSession.coerce(session).getClient())
                     .apiStorageprofileProfileIdGet(UUID.fromString(location.getProfile())));
             log.debug("Retrieved storage profile {} for vault {}", storageProfile, vaultId);
-
             final S3Session storage;
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC: {
@@ -217,7 +211,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                 case S3_STS:
                     // OAuth Tokens shared with request interceptor
                     final Host host = new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile)) {
+                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), session.getHost().getCredentials()) {
                         @Override
                         public String getProperty(final String key) {
                             if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {

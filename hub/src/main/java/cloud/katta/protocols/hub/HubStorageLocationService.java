@@ -120,6 +120,15 @@ public class HubStorageLocationService implements Location {
             return new StorageLocation(storage.getProvider(), storage.getRegion(), storage.getNickname());
         }
 
+        public UVFMetadataPayload toPayload(final Path bucket) {
+            return this.toPayload(bucket, new Credentials(null, null));
+        }
+
+        /**
+         * Create UVF Metadata Payload
+         *
+         * @param credentials Static credentials for storage access
+         */
         public UVFMetadataPayload toPayload(final Path bucket, final Credentials credentials) {
             return UVFMetadataPayload.create()
                     .withStorage(new VaultMetadataStorageDto()
