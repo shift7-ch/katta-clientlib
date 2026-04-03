@@ -15,6 +15,7 @@ import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.Session;
+import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Find;
@@ -177,7 +178,6 @@ public class HubUVFVaultProvider implements VaultProvider {
                     new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
             // Upload metadata to bucket
             vault.create(session, location.getRegion(), vaultMetadataProvider);
-            vault.close();
             return vault;
         }
         catch(SecurityFailure e) {
@@ -239,12 +239,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             configuration.addInterceptorLast(interceptor);
                             return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), interceptor, vaultId,
                                     storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
-                                @Override
-                                public Credentials get() throws BackgroundException {
-                                    return super.get();
-                                }
-                            };
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
                         }
                     };
                     break;

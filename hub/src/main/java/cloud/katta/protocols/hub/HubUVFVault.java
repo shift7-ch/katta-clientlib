@@ -4,10 +4,8 @@
 
 package cloud.katta.protocols.hub;
 
-import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Session;
-import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.cryptomator.impl.uvf.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.UnsupportedException;
@@ -83,14 +81,6 @@ public class HubUVFVault extends UVFVault {
         log.debug("Initialize vault {}", this);
         // Initialize cryptors
         super.load(storage, metadata);
-    }
-
-    @Override
-    public synchronized void close() {
-        super.close();
-        final Credentials credentials = storage.getHost().getCredentials();
-        // Reset STS tokens to make sure new access token is retrieved with different Role ARN to access vault
-        credentials.setTokens(TemporaryAccessTokens.EMPTY);
     }
 
     @Override
