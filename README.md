@@ -36,24 +36,24 @@ docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml
 
 The following diagram shows the docker services:
 
-````mermaid
+```mermaid
 architecture-beta
-group dockernetwork(internet)[Docker Network]
-
-service miniosetup(server)[MinIO setup] in dockernetwork
-service minio(server)[MinIO] in dockernetwork
-service keycloak(server)[Keycloak] in dockernetwork
-service kattaweb(server)[Katta Web] in dockernetwork
-service kattaserver(server)[Katta Server] in dockernetwork
-service kattaserversetup(server)[Katta Server Setup] in dockernetwork
-service postgres(database)[postgres] in dockernetwork
-miniosetup:B --> T:minio
-minio:R --> L:keycloak
-kattaserver:T --> B:keycloak
-kattaweb:R --> L:kattaserver
-kattaserversetup:T --> B:kattaserver
-kattaserver:R --> L:postgres
-````
+    group dockernetwork(internet)[Docker Network]
+    
+    service miniosetup(server)[MinIO setup] in dockernetwork
+    service minio(server)[MinIO] in dockernetwork
+    service keycloak(server)[Keycloak] in dockernetwork
+    service kattaweb(server)[Katta Web] in dockernetwork
+    service kattaserver(server)[Katta Server] in dockernetwork
+    service kattaserversetup(server)[Katta Server Setup] in dockernetwork
+    service postgres(database)[postgres] in dockernetwork
+    miniosetup:B --> T:minio
+    minio:R --> L:keycloak
+    kattaserver:T --> B:keycloak
+    kattaweb:R --> L:kattaserver
+    kattaserversetup:T --> B:kattaserver
+    kattaserver:R --> L:postgres
+```
 
 ### Users
 
