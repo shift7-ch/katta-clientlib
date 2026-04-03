@@ -130,7 +130,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         finally {
             client.getHttpClient().close();
         }
-        provider = new HubUVFVaultProvider(prompt);
+        provider = new HubUVFVaultProvider(proxy, prompt);
         vaults = new HubVaultListService(this, provider);
         // Setup authorization endpoint from configuration
         authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,

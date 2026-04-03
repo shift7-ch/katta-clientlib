@@ -7,6 +7,7 @@ package cloud.katta.protocols.hub;
 import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.DefaultPathAttributes;
 import ch.cyberduck.core.Host;
+import ch.cyberduck.core.HostKeyCallback;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.LoginCallback;
@@ -14,17 +15,20 @@ import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.Session;
+import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
+import ch.cyberduck.core.proxy.ProxyFinder;
 import ch.cyberduck.core.s3.S3CredentialsStrategy;
 import ch.cyberduck.core.s3.S3Protocol;
 import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityCredentialsStrategy;
+import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultException;
 import ch.cyberduck.core.vault.VaultProvider;
@@ -63,9 +67,11 @@ import cloud.katta.workflows.exceptions.SecurityFailure;
 public class HubUVFVaultProvider implements VaultProvider {
     private static final Logger log = LogManager.getLogger(HubUVFVaultProvider.class);
 
+    private final ProxyFinder proxy;
     private final LoginCallback prompt;
 
-    public HubUVFVaultProvider(final LoginCallback prompt) {
+    public HubUVFVaultProvider(final ProxyFinder proxy, final LoginCallback prompt) {
+        this.proxy = proxy;
         this.prompt = prompt;
     }
 
@@ -95,6 +101,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             final UVFMetadataPayload payload;
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC: {
+                    // Prompt for static tokens to create vault in storage
                     final Credentials credentials = prompt.prompt(session.getHost(), StringUtils.EMPTY,
                             LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
                             StringUtils.EMPTY, new LoginOptions(new S3Protocol())
@@ -140,7 +147,9 @@ public class HubUVFVaultProvider implements VaultProvider {
                     throw new VaultException(storageProfile.getProtocol().toString());
             }
             log.debug("Configured {} for vault {}", storage, vaultId);
-            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt);
+            storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
+            log.debug("Connected to {}", storage);
+            final HubUVFVault vault = new HubUVFVault(storage, bucket);
             final HubVaultKeys keys = HubVaultKeys.create();
             final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
                     payload.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId), keys);
@@ -244,7 +253,9 @@ public class HubUVFVaultProvider implements VaultProvider {
                             .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
                             .setDisplayname(vaultStorageMetadata.getNickname())
             );
-            final HubUVFVault vault = new HubUVFVault(storage, bucket, prompt);
+            storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
+            log.debug("Connected to {}", storage);
+            final HubUVFVault vault = new HubUVFVault(storage, bucket);
             vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
                     new HubVaultKeys(accessToken.key())));
             return vault;
