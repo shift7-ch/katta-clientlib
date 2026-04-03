@@ -267,7 +267,12 @@ public class HubUVFVaultProvider implements VaultProvider {
                             .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
                             .setDisplayname(vaultStorageMetadata.getNickname())
             );
-            storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
+            try {
+                storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
+            }
+            catch(BackgroundException e) {
+                throw new VaultUnlockCancelException(bucket, e);
+            }
             log.debug("Connected to {}", storage);
             final HubUVFVault vault = new HubUVFVault(storage, bucket);
             vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
