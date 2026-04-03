@@ -82,7 +82,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     @Override
     public TemporaryAccessTokens assumeRoleWithWebIdentity(final OAuthTokens oauth, final String roleArn) throws BackgroundException {
         final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(this.tokenExchange(oauth), roleArn);
-        if(StringUtils.isNotBlank(stsSessionTag)) {
+        if(StringUtils.isNotBlank(stsSessionTagRoleArn) && StringUtils.isNotBlank(stsSessionTag)) {
             log.debug("Assume role with temporary credentials {}", tokens);
             return super.assumeRole(bookmark.getCredentials().setTokens(tokens)
                     .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", stsSessionTag, vaultId)), stsSessionTagRoleArn);
