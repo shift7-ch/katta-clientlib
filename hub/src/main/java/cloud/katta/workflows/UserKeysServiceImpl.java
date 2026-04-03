@@ -77,8 +77,12 @@ public class UserKeysServiceImpl implements UserKeysService {
             }
         }
         // No device keys
-        log.info("Setting up new device w/ Account Key for existing user keys.");
-        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
+        log.info("Setting up new user keys and account key");
+        final String accountKey = prompt.generateAccountKey();
+        final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
+                new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
+        return this.uploadDeviceKeys(input.deviceName(),
+                this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
     }
 
     private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
