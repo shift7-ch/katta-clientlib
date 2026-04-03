@@ -49,7 +49,7 @@ public class HubExceptionMappingService extends AbstractExceptionMappingService<
                 return new ConnectionCanceledException(cause);
             }
         }
-        final StringBuilder buffer = new StringBuilder(failure.getMessage());
+        final StringBuilder buffer = new StringBuilder();
         return new DefaultHttpResponseExceptionMappingService().map(failure, buffer, failure.getCode());
     }
 }
