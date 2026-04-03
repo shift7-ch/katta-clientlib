@@ -17,7 +17,6 @@ import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 
 class AWSStaticStorageProfileTest {
@@ -46,6 +45,5 @@ class AWSStaticStorageProfileTest {
         dto.stsRoleCreateBucketClient("");
         dto.stsRoleCreateBucketHub("");
         Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(any());
     }
 }
