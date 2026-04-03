@@ -29,7 +29,8 @@ class MinIOSTSStorageProfileTest {
         final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile(null, profileId.toString(), "MinIO STS", "us-east-1",
                 Arrays.asList("us-east-1", "us-west-2"),
                 "https://minio.example.com:9000", "katta-",
-                "arn:minio:iam:::role/fusilli-create-bucket",
+                "arn:minio:iam:::role/fusilli-create-bucket-client",
+                "arn:minio:iam:::role/fusilli-create-bucket-hub",
                 "arn:minio:iam:::role/fusilli-access-bucket");
         cli.call(api);
 
@@ -49,8 +50,8 @@ class MinIOSTSStorageProfileTest {
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
         dto.setBucketVersioning(false);
         dto.setBucketAcceleration(null);
-        dto.setStsRoleCreateBucketClient("arn:minio:iam:::role/fusilli-create-bucket");
-        dto.setStsRoleCreateBucketHub("arn:minio:iam:::role/fusilli-create-bucket");
+        dto.setStsRoleCreateBucketClient("arn:minio:iam:::role/fusilli-create-bucket-client");
+        dto.setStsRoleCreateBucketHub("arn:minio:iam:::role/fusilli-create-bucket-hub");
         dto.setStsRoleAccessBucketAssumeRoleWithWebIdentity("arn:minio:iam:::role/fusilli-access-bucket");
         dto.setStsEndpoint("https://minio.example.com:9000");
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);
@@ -65,7 +66,8 @@ class MinIOSTSStorageProfileTest {
         final UUID profileId = UUID.randomUUID();
         final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile(null, profileId.toString(), "MinIO STS", "us-east-1", null,
                 "https://minio.example.com", "katta-",
-                "arn:minio:iam:::role/create-bucket",
+                "arn:minio:iam:::role/create-bucket-client",
+                "arn:minio:iam:::role/create-bucket-hub",
                 "arn:minio:iam:::role/access-bucket");
         cli.call(api);
 
@@ -85,8 +87,8 @@ class MinIOSTSStorageProfileTest {
         dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
         dto.setBucketVersioning(false);
         dto.setBucketAcceleration(null);
-        dto.setStsRoleCreateBucketClient("arn:minio:iam:::role/create-bucket");
-        dto.setStsRoleCreateBucketHub("arn:minio:iam:::role/create-bucket");
+        dto.setStsRoleCreateBucketClient("arn:minio:iam:::role/create-bucket-client");
+        dto.setStsRoleCreateBucketHub("arn:minio:iam:::role/create-bucket-hub");
         dto.setStsRoleAccessBucketAssumeRoleWithWebIdentity("arn:minio:iam:::role/access-bucket");
         dto.setStsEndpoint("https://minio.example.com");
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);

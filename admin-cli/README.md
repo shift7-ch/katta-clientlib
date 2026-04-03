@@ -96,7 +96,8 @@ katta storageprofile minio sts \
   --hubUrl <hub-url> \
   --endpointUrl <minio-endpoint-url> \
   --region <region> \
-  --stsRoleCreateBucket <role-arn> \
+  --stsRoleCreateBucketClient <role-arn> \
+  --stsRoleCreateBucketHub <role-arn> \
   --stsRoleAccessBucket <role-arn>
 ```
 
@@ -105,7 +106,8 @@ katta storageprofile minio sts \
 - `--hubUrl`: Hub URL. Example: `https://hub.default.katta.cloud/`
 - `--endpointUrl`: MinIO endpoint URL (S3 API). Example: `https://minio.example.com` or `https://minio.example.com:9000`
 - `--region`: Default bucket region. Example: `us-east-1`
-- `--stsRoleCreateBucket`: MinIO role ARN for bucket creation (from `mc idp openid ls` for the `cryptomator` client).
+- `--stsRoleCreateBucketClient`: MinIO role ARN for bucket creation by the Cryptomator client (from `mc idp openid ls` for the `cryptomator` client).
+- `--stsRoleCreateBucketHub`: MinIO role ARN for bucket creation by Cryptomator Hub (from `mc idp openid ls` for the `cryptomatorhub` client).
 - `--stsRoleAccessBucket`: MinIO role ARN for bucket access (from `mc idp openid ls` for the `cryptomatorvaults` client).
 
 **Additional Options:**

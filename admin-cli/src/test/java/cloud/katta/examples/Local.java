@@ -4,13 +4,12 @@
 
 package cloud.katta.examples;
 
+import java.util.UUID;
+
 import cloud.katta.cli.Katta;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import picocli.CommandLine;
 
-import java.util.UUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Example to use with
@@ -37,10 +36,8 @@ public class Local {
                     "--bucketPrefix", bucketPrefix,
                     "--endpointUrl", "http://localhost:9000",
                     "--stsRoleAccessBucket", "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94", // cryptomatorvaults
-                    // TODO works onyl in Desktop xor Web - differentiate:
-                    "--stsRoleCreateBucket", "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
-                    //"--stsRoleCreateBucketClient", "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE", // cryptomator (Desktop)
-                    //"--stsRoleCreateBucketHub", "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE", // cryptomatorhub (Web)
+                    "--stsRoleCreateBucketClient", "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE", // cryptomator (Desktop)
+                    "--stsRoleCreateBucketHub", "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE", // cryptomatorhub (Web)
                     "--region", region,
                     "--regions", region
             };

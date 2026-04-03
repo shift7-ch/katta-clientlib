@@ -42,8 +42,11 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket prefix for STS vaults.", defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--stsRoleCreateBucket"}, description = "MinIO role ARN for bucket creation (from 'mc idp openid ls' for the cryptomator client).", required = true)
-    String stsRoleCreateBucket;
+    @CommandLine.Option(names = {"--stsRoleCreateBucketClient"}, description = "MinIO role ARN for bucket creation by the Cryptomator client (from 'mc idp openid ls' for the cryptomator client).", required = true)
+    String stsRoleCreateBucketClient;
+
+    @CommandLine.Option(names = {"--stsRoleCreateBucketHub"}, description = "MinIO role ARN for bucket creation by Cryptomator Hub (from 'mc idp openid ls' for the cryptomatorhub client).", required = true)
+    String stsRoleCreateBucketHub;
 
     @CommandLine.Option(names = {"--stsRoleAccessBucket"}, description = "MinIO role ARN for bucket access (from 'mc idp openid ls' for the cryptomatorvaults client).", required = true)
     String stsRoleAccessBucket;
@@ -52,11 +55,12 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
     }
 
     public MinIOSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions,
-                                  final String endpointUrl, final String bucketPrefix, final String stsRoleCreateBucket, final String stsRoleAccessBucket) {
+                                  final String endpointUrl, final String bucketPrefix, final String stsRoleCreateBucketClient, final String stsRoleCreateBucketHub, final String stsRoleAccessBucket) {
         super(hubUrl, uuid, name, region, regions);
         this.endpointUrl = endpointUrl;
         this.bucketPrefix = bucketPrefix;
-        this.stsRoleCreateBucket = stsRoleCreateBucket;
+        this.stsRoleCreateBucketClient = stsRoleCreateBucketClient;
+        this.stsRoleCreateBucketHub = stsRoleCreateBucketHub;
         this.stsRoleAccessBucket = stsRoleAccessBucket;
     }
 
@@ -95,8 +99,8 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
                 .bucketAcceleration(null) // Not supported by MinIO
 
                 // -- (3) STS roles from MinIO OIDC setup
-                .stsRoleCreateBucketClient(stsRoleCreateBucket)
-                .stsRoleCreateBucketHub(stsRoleCreateBucket)
+                .stsRoleCreateBucketClient(stsRoleCreateBucketClient)
+                .stsRoleCreateBucketHub(stsRoleCreateBucketHub)
                 .stsRoleAccessBucketAssumeRoleWithWebIdentity(stsRoleAccessBucket)
 
                 // -- (4) STS endpoint override for MinIO
