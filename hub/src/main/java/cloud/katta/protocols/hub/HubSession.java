@@ -103,8 +103,7 @@ public class HubSession extends HttpSession<HubApiClient> {
     }
 
     @Override
-    protected HubApiClient connect(final ProxyFinder proxy, final HostKeyCallback key,
-                                   final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
+    protected HubApiClient connect(final ProxyFinder proxy, final HostKeyCallback key, final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final HttpClientBuilder configuration = builder.build(proxy, this, prompt);
         final Protocol bundled = host.getProtocol();
         // Use REST API for bootstrapping via /api/config
@@ -131,6 +130,8 @@ public class HubSession extends HttpSession<HubApiClient> {
         finally {
             client.getHttpClient().close();
         }
+        provider = new HubUVFVaultProvider(prompt);
+        vaults = new HubVaultListService(this, provider);
         // Setup authorization endpoint from configuration
         authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
                 host.getProtocol().getOAuthTokenUrl(),
@@ -154,32 +155,34 @@ public class HubSession extends HttpSession<HubApiClient> {
         // Ensure device key is available
         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
         log.debug("Configured with setup prompt {}", setup);
-        final UserKeys userKeys = this.getUserKeys(setup);
+        final UserKeys userKeys = this.pair(setup);
         log.debug("Retrieved user keys {}", userKeys);
-        provider = new HubUVFVaultProvider(prompt);
-        vaults = new HubVaultListService(this, provider);
         access = new HubGrantAccessSchedulerService(this, setup);
     }
 
-    private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
-        try {
-            final UserDto user = this.getMe();
-            final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, user, setup);
-            log.debug("Retrieved device keys {}", deviceKeys);
-            final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
-            log.debug("Retrieved user keys {}", userKeys);
-            return userKeys;
+    public UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
+        if(userKeysHolder.get() == null) {
+            try {
+                final UserDto user = this.getMe();
+                final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, user, setup);
+                log.debug("Retrieved device keys {}", deviceKeys);
+                final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
+                log.debug("Retrieved user keys {}", userKeys);
+                userKeysHolder.set(userKeys);
+                return userKeys;
+            }
+            catch(SecurityFailure e) {
+                // Repeat until canceled by user
+                return this.pair(setup);
+            }
+            catch(AccessException e) {
+                throw new ConnectionCanceledException(e);
+            }
+            catch(ApiException e) {
+                throw new HubExceptionMappingService().map(e);
+            }
         }
-        catch(SecurityFailure e) {
-            // Repeat until canceled by user
-            return this.pair(setup);
-        }
-        catch(AccessException e) {
-            throw new ConnectionCanceledException(e);
-        }
-        catch(ApiException e) {
-            throw new HubExceptionMappingService().map(e);
-        }
+        return userKeysHolder.get();
     }
 
     @Override
@@ -210,19 +213,6 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     public ConfigDto getConfig() {
         return config;
-    }
-
-    /**
-     *
-     * @return Destroyed keys after login
-     */
-    public UserKeys getUserKeys(final DeviceSetupCallback setup) throws BackgroundException {
-        if(userKeysHolder.get() == null) {
-            final UserKeys keys = this.pair(setup);
-            log.debug("Retrieved keys {}", keys);
-            userKeysHolder.set(keys);
-        }
-        return userKeysHolder.get();
     }
 
     @Override
