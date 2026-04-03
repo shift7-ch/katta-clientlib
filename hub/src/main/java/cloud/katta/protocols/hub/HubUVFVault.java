@@ -65,6 +65,18 @@ public class HubUVFVault extends UVFVault {
     }
 
     @Override
+    public synchronized void close() {
+        try {
+            log.debug("Close connection {}", storage);
+            storage.close();
+        }
+        catch(BackgroundException e) {
+            //
+        }
+        super.close();
+    }
+
+    @Override
     public void create(final Session<?> session, final String region, final VaultMetadataProvider metadata) throws BackgroundException {
         // Upload vault template to storage
         log.debug("Upload vault template to {}", storage);
