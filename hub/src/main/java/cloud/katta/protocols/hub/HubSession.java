@@ -123,6 +123,8 @@ public class HubSession extends HttpSession<HubApiClient> {
             host.setProtocol(profile);
             // Save for lookup in keychain on reconnect
             host.setProperty(Profile.OAUTH_CLIENT_ID_KEY, profile.getOAuthClientId());
+            host.setProperty(Profile.OAUTH_AUTHORIZATION_URL_KEY, profile.getOAuthAuthorizationUrl());
+            host.setProperty(Profile.OAUTH_TOKEN_URL_KEY, profile.getOAuthTokenUrl());
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
