@@ -116,9 +116,11 @@ public class HubUVFVaultProvider implements VaultProvider {
                     break;
                 }
                 case S3_STS: {
-                    // OAuth Tokens shared with request interceptor
+                    // OAuth Tokens shared with request interceptor of Hub connection
+                    final Credentials oauthCredentials = session.getHost().getCredentials();
+                    final Credentials stsCredentials = new Credentials().setOauth(oauthCredentials.getOauth());
                     final Host host = new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), session.getHost().getCredentials()) {
+                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), stsCredentials) {
                         @Override
                         public String getProperty(final String key) {
                             if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
@@ -137,7 +139,12 @@ public class HubUVFVaultProvider implements VaultProvider {
                             log.debug("Configure with shared OAuth interceptor {}", interceptor);
                             configuration.addInterceptorLast(interceptor);
                             return new STSAssumeRoleWithWebIdentityCredentialsStrategy(interceptor,
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt);
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt) {
+                                @Override
+                                public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
+                                    return super.refresh(oauthCredentials);
+                                }
+                            };
                         }
                     };
                     break;
@@ -218,9 +225,11 @@ public class HubUVFVaultProvider implements VaultProvider {
                     break;
                 }
                 case S3_STS:
-                    // OAuth Tokens shared with request interceptor
+                    // OAuth Tokens shared with request interceptor of Hub connection
+                    final Credentials oauthCredentials = session.getHost().getCredentials();
+                    final Credentials stsCredentials = new Credentials().setOauth(oauthCredentials.getOauth());
                     final Host host = new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), session.getHost().getCredentials()) {
+                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), stsCredentials) {
                         @Override
                         public String getProperty(final String key) {
                             if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
@@ -239,7 +248,12 @@ public class HubUVFVaultProvider implements VaultProvider {
                             configuration.addInterceptorLast(interceptor);
                             return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), interceptor, vaultId,
                                     storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
+                                @Override
+                                public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
+                                    return super.refresh(oauthCredentials);
+                                }
+                            };
                         }
                     };
                     break;
