@@ -17,16 +17,16 @@ import picocli.CommandLine;
 
 public class AbstractAuthorizationCode {
 
-    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/realms/cryptomator/protocol/openid-connect/token\"", required = false)
+    @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/realms/cryptomator/protocol/openid-connect/token\". Overrides the value fetched from --hubUrl.", required = false)
     protected String tokenUrl;
 
-    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/realms/cryptomator/protocol/openid-connect/auth\"", required = false)
+    @CommandLine.Option(names = {"--authUrl"}, description = "Keycloak realm URL with scheme. Example: \"https://testing.katta.cloud/realms/cryptomator/protocol/openid-connect/auth\". Overrides the value fetched from --hubUrl.", required = false)
     protected String authUrl;
 
     @CommandLine.Option(names = {"--clientId"}, description = "Client ID to authorize with. Example: \"cryptomator\"", required = false, defaultValue = "cryptomator")
     protected String clientId;
 
-    @CommandLine.Option(names = {"--accessToken"}, description = "The access token. If not provided, --tokenUrl, --authUrl and --clientId need to be provided. Requires admin role in the hub.", required = false)
+    @CommandLine.Option(names = {"--accessToken"}, description = "The access token. If not provided, --hubUrl or --tokenUrl, --authUrl and --clientId need to be provided. Requires admin role in the hub.", required = false)
     protected String accessToken;
 
     public AbstractAuthorizationCode() {
