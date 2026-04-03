@@ -76,7 +76,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 }
             }
         }
-        // No device keys
+        // First login: No user nor device keys
         log.info("Setting up new user keys and account key");
         final String accountKey = prompt.generateAccountKey();
         final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
