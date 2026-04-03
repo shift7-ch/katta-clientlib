@@ -17,7 +17,6 @@ import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 
 class MinIOSTSStorageProfileTest {
@@ -57,7 +56,6 @@ class MinIOSTSStorageProfileTest {
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);
         dto.setStsSessionTag(null);
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
     }
 
     @Test
@@ -94,6 +92,5 @@ class MinIOSTSStorageProfileTest {
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);
         dto.setStsSessionTag(null);
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
     }
 }

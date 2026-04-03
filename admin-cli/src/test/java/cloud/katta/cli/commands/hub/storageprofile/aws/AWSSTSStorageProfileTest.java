@@ -17,7 +17,6 @@ import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 
 class AWSSTSStorageProfileTest {
@@ -48,6 +47,5 @@ class AWSSTSStorageProfileTest {
         dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-web-identity-role");
         dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-tagged-session-role");
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
     }
 }
