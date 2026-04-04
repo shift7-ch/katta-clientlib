@@ -179,7 +179,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             log.debug("Grant access to vault {}", vaultDto);
             final UserDto userDto = HubSession.coerce(session).getMe();
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-            final UserKeys userKeys = HubSession.coerce(session).pair(setup);
+            final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
             // Share vault with myself including admin access with recovery key
             vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
                     new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
@@ -204,7 +204,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             // Find storage configuration in vault metadata
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             final VaultServiceImpl vaultService = new VaultServiceImpl(HubSession.coerce(session));
-            final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, HubSession.coerce(session).pair(setup));
+            final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, HubSession.coerce(session).getUserKeys(setup));
             log.debug("Retrieved vault access token for vault {}", vaultId);
             final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vaultMetadataFile);
             log.debug("Decrypted vault metadata {} for vault {}", vaultMetadataFile, vaultId);

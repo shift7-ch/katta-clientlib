@@ -43,7 +43,7 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
     public Host operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session.getHost());
         try {
-            final UserKeys userKeys = session.pair(setup);
+            final UserKeys userKeys = session.getUserKeys(setup);
             final List<VaultDto> accessibleVaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(Role.OWNER);
             for(final VaultDto accessibleVault : accessibleVaults) {
                 if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
