@@ -68,7 +68,7 @@ public class UserKeysServiceImpl implements UserKeysService {
             catch(ApiException e) {
                 switch(e.getCode()) {
                     case 404:
-                        log.warn("Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
+                        log.warn("Device keys from keychain not found on server. Setting up existing device w/ Account Key for existing user keys.");
                         // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
                         return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
                     default:

@@ -166,15 +166,16 @@ public class HubSession extends HttpSession<HubApiClient> {
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
         try {
             final UserDto user = this.getMe();
+            // Setup parameter allows generating new device key
             final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, user, setup);
             log.debug("Retrieved device keys {}", deviceKeys);
+            // Setup parameter allows generating account and user keys or prompt for account key and device name
             final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
             log.debug("Retrieved user keys {}", userKeys);
             return userKeys;
         }
         catch(SecurityFailure e) {
-            // Repeat until canceled by user
-            return this.pair(setup);
+            throw new InteroperabilityException(e.getMessage(), e);
         }
         catch(AccessException e) {
             throw new ConnectionCanceledException(e);

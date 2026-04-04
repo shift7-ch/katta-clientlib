@@ -6,7 +6,9 @@ package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordCallback;
+import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.preferences.HostPreferencesFactory;
 import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
 
@@ -60,9 +62,13 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
             log.error("Scheduler for {}: Automatic Access Grant failed.", session.getHost(), e);
             throw new HubExceptionMappingService().map(e);
         }
-        catch(AccessException | SecurityFailure e) {
-            log.error(String.format("Scheduler for %s: Automatic Access Grant failed.", session.getHost()), e);
-            throw new BackgroundException(e);
+        catch(AccessException e) {
+            log.error("Scheduler for {}: Automatic Access Grant failed.", session.getHost(), e);
+            throw new AccessDeniedException(e.getMessage(), e);
+        }
+        catch(SecurityFailure e) {
+            log.error("Scheduler for {}: Automatic Access Grant failed.", session.getHost(), e);
+            throw new InteroperabilityException(e.getMessage(), e);
         }
         return session.getHost();
     }
