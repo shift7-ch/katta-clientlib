@@ -160,7 +160,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         log.debug("Configured with setup prompt {}", setup);
         final UserKeys userKeys = this.getUserKeys(setup);
         log.debug("Retrieved user keys {}", userKeys);
-        access = new HubGrantAccessSchedulerService(this, setup);
+        access = new HubGrantAccessSchedulerService(this);
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
