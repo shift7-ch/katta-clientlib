@@ -47,7 +47,7 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair) throws ApiException, SecurityFailure {
         log.info("Get user keys from {}", hub);
         final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeyPair.getEcKeyPair());
         log.info("Got device key pair from keychain with deviceId={}", deviceId);
@@ -58,17 +58,16 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getOrCreateUserKeys(final Host bookmark, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         if(validate(me)) {
             try {
-                return this.getUserKeys(hub, me, deviceKeyPair);
+                return this.getUserKeys(bookmark, me, deviceKeyPair);
             }
             catch(ApiException e) {
                 switch(e.getCode()) {
                     case 404:
-                        log.warn("Device keys from keychain not found on server. Setting up existing device w/ Account Key for existing user keys.");
-                        // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
-                        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub));
+                        log.warn("Device keys from keychain not found on server. Setting up existing device with account key for existing user keys.");
+                        return this.recoverUserKeys(bookmark, me, deviceKeyPair, prompt);
                     default:
                         throw e;
                 }
@@ -77,17 +76,33 @@ public class UserKeysServiceImpl implements UserKeysService {
         // First login: No user nor device keys
         log.info("Setting up new user keys and account key");
         final String accountKey = prompt.generateAccountKey();
-        final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub, accountKey);
-        return this.uploadDeviceKeys(input.deviceName(),
-                this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
+        final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(bookmark, accountKey);
+        final UserKeys userKey = prompt.generateUserKeys();
+        this.uploadUserKeys(me, userKey, accountKey);
+        this.uploadDeviceKeys(input.deviceName(), userKey, deviceKeyPair);
+        return userKey;
     }
 
-    private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
-        return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
-                UserKeys.recoverWithAccountKey(me.getPrivateKey(), accountKeyAndDeviceName.accountKey(), me.getEcdhPublicKey(), me.getEcdsaPublicKey()), deviceKeyPair);
+    /**
+     * @throws AccessException Canceled prompt by user
+     */
+    private UserKeys recoverUserKeys(final Host bookmark, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws AccessException {
+        // Setup existing device with account key
+        final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.askForAccountKeyAndDeviceName(bookmark);
+        try {
+            final UserKeys userKeys = UserKeys.recoverWithAccountKey(me.getPrivateKey(), input.accountKey(),
+                    me.getEcdhPublicKey(), me.getEcdsaPublicKey());
+            this.uploadDeviceKeys(input.deviceName(), userKeys, deviceKeyPair);
+            return userKeys;
+        }
+        catch(SecurityFailure | ApiException f) {
+            log.warn("Failure {} to recover user keys with account key", f.getMessage());
+            // Repeat until canceled by user
+            return recoverUserKeys(bookmark, me, deviceKeyPair, prompt);
+        }
     }
 
-    private UserKeys uploadUserKeys(final UserDto me, final UserKeys userKeys, final String accountKey) throws ApiException, SecurityFailure {
+    private void uploadUserKeys(final UserDto me, final UserKeys userKeys, final String accountKey) throws ApiException, SecurityFailure {
         try {
             usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
@@ -97,10 +112,9 @@ public class UserKeysServiceImpl implements UserKeysService {
         catch(JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);
         }
-        return userKeys;
     }
 
-    private UserKeys uploadDeviceKeys(final String deviceName, final UserKeys userKeys, final DeviceKeys deviceKeys) throws ApiException, SecurityFailure {
+    private void uploadDeviceKeys(final String deviceName, final UserKeys userKeys, final DeviceKeys deviceKeys) throws ApiException, SecurityFailure {
         final String encodedPublicKeyDeviceKey = Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPublic().getEncoded());
         final String deviceSpecificUserKeyJWE = userKeys.encryptForDevice(deviceKeys.getEcKeyPair().getPublic());
         final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeys.getEcKeyPair());
@@ -110,7 +124,6 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .userPrivateKey(deviceSpecificUserKeyJWE)
                 .type(Type1.DESKTOP)
                 .creationTime(new DateTime()));
-        return userKeys;
     }
 
     private static boolean validate(final UserDto me) {
