@@ -87,7 +87,7 @@ public class UserKeysServiceImpl implements UserKeysService {
 
     private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
         return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
-                UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
+                UserKeys.recoverWithAccountKey(me.getPrivateKey(), accountKeyAndDeviceName.accountKey(), me.getEcdhPublicKey(), me.getEcdsaPublicKey()), deviceKeyPair);
     }
 
     private UserKeys uploadUserKeys(final UserDto me, final UserKeys userKeys, final String accountKey) throws ApiException, SecurityFailure {
