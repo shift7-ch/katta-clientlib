@@ -23,7 +23,7 @@ import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.model.AccountKeyAndDeviceName;
-import cloud.katta.model.SetupCodeJWE;
+import cloud.katta.model.AccountKeyPayload;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -90,12 +90,12 @@ public class UserKeysServiceImpl implements UserKeysService {
                 UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
     }
 
-    private UserKeys uploadUserKeys(final UserDto me, final UserKeys userKeys, final String setupCode) throws ApiException, SecurityFailure {
+    private UserKeys uploadUserKeys(final UserDto me, final UserKeys userKeys, final String accountKey) throws ApiException, SecurityFailure {
         try {
             usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
-                    .privateKey(userKeys.encryptWithSetupCode(setupCode))
-                    .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                    .privateKey(userKeys.encryptWithAccountKey(accountKey))
+                    .setupCode(new AccountKeyPayload(accountKey).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);

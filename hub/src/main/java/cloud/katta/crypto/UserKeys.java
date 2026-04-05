@@ -125,13 +125,13 @@ public class UserKeys implements Destroyable {
     /**
      * Encrypts the user's private key using a key derived from the given setupCode.
      *
-     * @param setupCode The password to protect the private key.
+     * @param accountKey The setup code to protect the private key.
      * @return A JWE holding the encrypted private key
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.encryptWithSetupCode</a>
      */
-    public String encryptWithSetupCode(final String setupCode) throws SecurityFailure {
+    public String encryptWithAccountKey(final String accountKey) throws SecurityFailure {
         try {
-            return JWE.pbes2Encrypt(prepareForEncryption(), "org.cryptomator.hub.setupCode", setupCode);
+            return JWE.pbes2Encrypt(prepareForEncryption(), "org.cryptomator.hub.setupCode", accountKey);
         }
         catch(JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);
@@ -144,13 +144,13 @@ public class UserKeys implements Destroyable {
      * @param encodedEcdhPublicKey  The ECDH public key (base64-encoded SPKI)
      * @param encodedEcdsaPublicKey The ECDSA public key (base64-encoded SPKI)
      * @param privateKeys           The JWE holding the encrypted private keys
-     * @param setupCode             The password used to protect the private keys
+     * @param accountKey            The setup code used to protect the private keys
      * @return Decrypted UserKeys
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.recover()</a>
      */
-    public static UserKeys recover(final String encodedEcdhPublicKey, final String encodedEcdsaPublicKey, final String privateKeys, final String setupCode) throws SecurityFailure {
+    public static UserKeys recover(final String encodedEcdhPublicKey, final String encodedEcdsaPublicKey, final String privateKeys, final String accountKey) throws SecurityFailure {
         try {
-            return createFromJwe(createFromPayload(JWE.decryptPbes2(privateKeys, setupCode)), encodedEcdhPublicKey, encodedEcdsaPublicKey);
+            return createFromJwe(createFromPayload(JWE.decryptPbes2(privateKeys, accountKey)), encodedEcdhPublicKey, encodedEcdsaPublicKey);
         }
         catch(ParseException | JOSEException e) {
             throw new SecurityFailure(e);

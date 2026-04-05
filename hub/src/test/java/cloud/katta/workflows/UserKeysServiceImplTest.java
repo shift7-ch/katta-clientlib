@@ -63,7 +63,9 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         final HubSession hubSession = setupConnection(config);
 
         // Setting up new device w/ Account Key for existing user keys with erroneous setup code
-        final SecurityFailure securityException = assertThrows(SecurityFailure.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")))));
+        final SecurityFailure securityException = assertThrows(SecurityFailure.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(
+                hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(),
+                deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")))));
         assertEquals(JOSEException.class, securityException.getCause().getClass());
         assertEquals("checksum failed", securityException.getCause().getCause().getMessage());
     }
@@ -114,7 +116,8 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
 
         // setting up new user keys and account key
-        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"))));
+        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(),
+                deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"))));
 
         assertNotEquals(expecteduserKeys, userKeys);
 

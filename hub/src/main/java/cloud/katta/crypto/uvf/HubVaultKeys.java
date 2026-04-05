@@ -80,7 +80,7 @@ public final class HubVaultKeys {
      * This private constructor generates a default instance of the class, initializing memberKey and recoveryKey
      * using standard cryptographic algorithms and parameters.
      *
-     * @throws SecurityFailure if there is an error during the creation of cryptographic keys.
+     * @throws JOSEException if there is an error during the creation of cryptographic keys.
      */
     private HubVaultKeys() throws JOSEException {
         this(new OctetSequenceKeyGenerator(256)

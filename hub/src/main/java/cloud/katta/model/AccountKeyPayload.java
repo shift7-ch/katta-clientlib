@@ -11,12 +11,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
-public class SetupCodeJWE extends JWEPayload {
+public class AccountKeyPayload extends JWEPayload {
 
     @JsonProperty("setupCode")
     String setupCode;
 
-    public SetupCodeJWE(final String setupCode) {
+    public AccountKeyPayload(final String setupCode) {
         this.setupCode = setupCode;
     }
 
