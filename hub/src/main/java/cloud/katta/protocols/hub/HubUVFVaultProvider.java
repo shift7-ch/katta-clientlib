@@ -156,36 +156,42 @@ public class HubUVFVaultProvider implements VaultProvider {
             log.debug("Configured {} for vault {}", storage, vaultId);
             storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
             log.debug("Connected to {}", storage);
-            final HubUVFVault vault = new HubUVFVault(storage, bucket);
-            final HubVaultKeys keys = HubVaultKeys.create();
-            final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
-                    payload.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId), keys);
-            log.debug("Create vault with ID {}", vaultId);
-            final VaultDto vaultDto = new VaultDto()
-                    .id(vaultId)
-                    .name(name.getName())
-                    .description(null)
-                    .archived(false)
-                    .creationTime(DateTime.now())
-                    .uvfMetadataFile(new String(vaultMetadataProvider.encrypt(), StandardCharsets.US_ASCII))
-                    .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
-            // Create vault in Hub
-            final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());
-            log.debug("Create vault {}", vaultDto);
-            vaultResourceApi.apiVaultsVaultIdPut(vaultId, vaultDto,
-                    storage.getHost().getProtocol().isRoleConfigurable() && !S3Session.isAwsHostname(storage.getHost().getHostname()),
-                    storage.getHost().getProtocol().isRoleConfigurable() && S3Session.isAwsHostname(storage.getHost().getHostname()));
-            // Upload JWE
-            log.debug("Grant access to vault {}", vaultDto);
-            final UserDto userDto = HubSession.coerce(session).getMe();
-            final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-            final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
-            // Share vault with myself including admin access with recovery key
-            vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
-                    new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
-            // Upload metadata to bucket
-            vault.create(session, location.getRegion(), vaultMetadataProvider);
-            return vault;
+            try {
+                final HubUVFVault vault = new HubUVFVault(storage, bucket);
+                final HubVaultKeys keys = HubVaultKeys.create();
+                final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
+                        payload.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId), keys);
+                log.debug("Create vault with ID {}", vaultId);
+                final VaultDto vaultDto = new VaultDto()
+                        .id(vaultId)
+                        .name(name.getName())
+                        .description(null)
+                        .archived(false)
+                        .creationTime(DateTime.now())
+                        .uvfMetadataFile(new String(vaultMetadataProvider.encrypt(), StandardCharsets.US_ASCII))
+                        .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
+                // Create vault in Hub
+                final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());
+                log.debug("Create vault {}", vaultDto);
+                vaultResourceApi.apiVaultsVaultIdPut(vaultId, vaultDto,
+                        storage.getHost().getProtocol().isRoleConfigurable() && !S3Session.isAwsHostname(storage.getHost().getHostname()),
+                        storage.getHost().getProtocol().isRoleConfigurable() && S3Session.isAwsHostname(storage.getHost().getHostname()));
+                // Upload JWE
+                log.debug("Grant access to vault {}", vaultDto);
+                final UserDto userDto = HubSession.coerce(session).getMe();
+                final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+                final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
+                // Share vault with myself including admin access with recovery key
+                vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
+                        new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                // Upload metadata to bucket
+                vault.create(session, location.getRegion(), vaultMetadataProvider);
+                return vault;
+            }
+            catch(SecurityFailure | ApiException e) {
+                storage.close();
+                throw e;
+            }
         }
         catch(SecurityFailure e) {
             throw new VaultException(e.getMessage(), e);
@@ -275,8 +281,14 @@ public class HubUVFVaultProvider implements VaultProvider {
             }
             log.debug("Connected to {}", storage);
             final HubUVFVault vault = new HubUVFVault(storage, bucket);
-            vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
-                    new HubVaultKeys(accessToken.key())));
+            try {
+                vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
+                        new HubVaultKeys(accessToken.key())));
+            }
+            catch(BackgroundException e) {
+                storage.close();
+                throw e;
+            }
             return vault;
         }
         catch(SecurityFailure e) {
