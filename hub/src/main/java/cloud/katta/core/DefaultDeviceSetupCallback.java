@@ -14,7 +14,6 @@ import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.exception.LoginCanceledException;
 
-import cloud.katta.model.AccountKeyAndDeviceName;
 import cloud.katta.workflows.exceptions.AccessException;
 
 public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
@@ -26,9 +25,9 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
     }
 
     @Override
-    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
+    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) throws AccessException {
         try {
-            final Credentials input = prompt.prompt(bookmark, accountKeyAndDeviceName.accountKey(),
+            final Credentials input = prompt.prompt(bookmark, accountKey,
                     LocaleFactory.localizedString("Account Key", "Hub"),
                     new StringAppender()
                             .append(LocaleFactory.localizedString("On first login, every user gets a unique Account Key", "Hub"))
@@ -38,14 +37,12 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .usernamePlaceholder(LocaleFactory.localizedString("Account Key", "Hub"))
                             // Account key not editable
                             .user(false)
-                            .passwordPlaceholder(accountKeyAndDeviceName.deviceName())
+                            .passwordPlaceholder(AccountKeyAndDeviceName.COMPUTER_NAME)
                             // Input device name
                             .password(true)
                             .keychain(false)
             );
-            return new AccountKeyAndDeviceName()
-                    .withDeviceName(input.getUsername())
-                    .withAccountKey(input.getPassword());
+            return new AccountKeyAndDeviceName(input.getUsername(), input.getPassword());
         }
         catch(LoginCanceledException e) {
             throw new AccessException(e);
@@ -53,9 +50,9 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
     }
 
     @Override
-    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws AccessException {
+    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) throws AccessException {
         try {
-            final Credentials input = prompt.prompt(bookmark, initialDeviceName,
+            final Credentials input = prompt.prompt(bookmark, AccountKeyAndDeviceName.COMPUTER_NAME,
                     LocaleFactory.localizedString("Authorization Required", "Hub"),
                     new StringAppender()
                             .append(LocaleFactory.localizedString("This is your first login on this device.", "Hub"))
@@ -69,9 +66,7 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .password(true)
                             .keychain(false)
             );
-            return new AccountKeyAndDeviceName()
-                    .withDeviceName(input.getUsername())
-                    .withAccountKey(input.getPassword());
+            return new AccountKeyAndDeviceName(input.getUsername(), input.getPassword());
         }
         catch(LoginCanceledException e) {
             throw new AccessException(e);

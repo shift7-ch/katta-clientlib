@@ -10,11 +10,11 @@ import ch.cyberduck.binding.application.SheetCallback;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.model.AccountKeyAndDeviceName;
 import cloud.katta.workflows.exceptions.AccessException;
 
 public class PromptDeviceSetupCallback implements DeviceSetupCallback {
@@ -27,25 +27,26 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
     }
 
     @Override
-    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws AccessException {
+    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) throws AccessException {
         if(log.isDebugEnabled()) {
             log.debug(String.format("Display Account Key for %s", bookmark));
         }
-        final SheetController sheet = new FirstLoginController(accountKeyAndDeviceName);
+        final AccountKeyAndDeviceName input = new AccountKeyAndDeviceName(accountKey, AccountKeyAndDeviceName.COMPUTER_NAME);
+        final SheetController sheet = new FirstLoginController(input);
         switch(controller.alert(sheet)) {
             case SheetCallback.CANCEL_OPTION:
             case SheetCallback.ALTERNATE_OPTION:
                 throw new AccessException(new ConnectionCanceledException());
         }
-        return accountKeyAndDeviceName;
+        return input;
     }
 
     @Override
-    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) throws AccessException {
+    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) throws AccessException {
         if(log.isDebugEnabled()) {
             log.debug(String.format("Ask for Account Key for %s", bookmark));
         }
-        final AccountKeyAndDeviceName accountKeyAndDeviceName = new AccountKeyAndDeviceName().withDeviceName(initialDeviceName);
+        final AccountKeyAndDeviceName accountKeyAndDeviceName = new AccountKeyAndDeviceName(StringUtils.EMPTY, AccountKeyAndDeviceName.COMPUTER_NAME);
         final DeviceSetupController sheet = new DeviceSetupController(accountKeyAndDeviceName);
         switch(controller.alert(sheet)) {
             case SheetCallback.CANCEL_OPTION:

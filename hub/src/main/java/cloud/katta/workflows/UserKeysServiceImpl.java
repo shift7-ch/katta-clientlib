@@ -23,7 +23,6 @@ import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.AccountKeyPayload;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.model.AccountKeyAndDeviceName;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -31,7 +30,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
 import static cloud.katta.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static cloud.katta.workflows.DeviceKeysServiceImpl.COMPUTER_NAME;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
@@ -70,7 +68,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                     case 404:
                         log.warn("Device keys from keychain not found on server. Setting up existing device w/ Account Key for existing user keys.");
                         // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
-                        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
+                        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub));
                     default:
                         throw e;
                 }
@@ -79,13 +77,12 @@ public class UserKeysServiceImpl implements UserKeysService {
         // First login: No user nor device keys
         log.info("Setting up new user keys and account key");
         final String accountKey = prompt.generateAccountKey();
-        final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
-                new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
+        final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub, accountKey);
         return this.uploadDeviceKeys(input.deviceName(),
                 this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
     }
 
-    private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
+    private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
         return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
                 UserKeys.recoverWithAccountKey(me.getPrivateKey(), accountKeyAndDeviceName.accountKey(), me.getEcdhPublicKey(), me.getEcdsaPublicKey()), deviceKeyPair);
     }

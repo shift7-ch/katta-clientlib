@@ -29,7 +29,6 @@ import java.time.format.FormatStyle;
 import java.util.function.Function;
 
 import cloud.katta.core.DeviceSetupCallback;
-import cloud.katta.model.AccountKeyAndDeviceName;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubUVFVault;
 import cloud.katta.protocols.hub.HubVaultRegistry;
@@ -194,16 +193,15 @@ public abstract class AbstractHubTest extends VaultTest {
     protected static DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
         return new DeviceSetupCallback() {
             @Override
-            public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final AccountKeyAndDeviceName accountKeyAndDeviceName) {
-                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(
-                        String.format("%s %s", accountKeyAndDeviceName.deviceName(), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
-                                .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
+            public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) {
+                return new AccountKeyAndDeviceName(setup.userConfig.setupCode, String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                        .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
-            public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark, final String initialDeviceName) {
-                return new AccountKeyAndDeviceName().withAccountKey(setup.userConfig.setupCode).withDeviceName(
-                        String.format("%s %s", initialDeviceName, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+            public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) {
+                return new AccountKeyAndDeviceName(setup.userConfig.setupCode,
+                        String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                                 .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 

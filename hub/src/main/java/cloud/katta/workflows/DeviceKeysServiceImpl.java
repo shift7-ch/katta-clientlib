@@ -8,7 +8,6 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.AccessDeniedException;
-import ch.cyberduck.core.nio.LocalProtocol;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,8 +27,6 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
 
     public static final String KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME = "Katta Public Device Key";
     public static final String KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME = "Katta Private Device Key";
-
-    public static final String COMPUTER_NAME = new LocalProtocol().getName();
 
     private final PasswordStore store;
 

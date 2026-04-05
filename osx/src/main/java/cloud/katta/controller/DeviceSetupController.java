@@ -23,11 +23,11 @@ import ch.cyberduck.core.preferences.PreferencesFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.rococoa.Foundation;
 
-import cloud.katta.model.AccountKeyAndDeviceName;
+import cloud.katta.core.DeviceSetupCallback;
 
 public class DeviceSetupController extends AlertController {
 
-    private final AccountKeyAndDeviceName accountKeyAndDeviceName;
+    private final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName;
 
     @Outlet
     private final NSTextField accountKeyField = NSSecureTextField.textFieldWithString(StringUtils.EMPTY);
@@ -35,7 +35,7 @@ public class DeviceSetupController extends AlertController {
     @Outlet
     private final NSTextField deviceNameField = NSTextField.textFieldWithString(StringUtils.EMPTY);
 
-    public DeviceSetupController(final AccountKeyAndDeviceName accountKeyAndDeviceName) {
+    public DeviceSetupController(final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName) {
         this.accountKeyAndDeviceName = accountKeyAndDeviceName;
     }
 
@@ -96,12 +96,12 @@ public class DeviceSetupController extends AlertController {
 
     @Action
     public void accountKeyFieldTextDidChange(final NSNotification sender) {
-        accountKeyAndDeviceName.withAccountKey(StringUtils.trim(accountKeyField.stringValue()));
+        accountKeyAndDeviceName.setAccountKey(StringUtils.trim(accountKeyField.stringValue()));
     }
 
     @Action
     public void deviceNameFieldTextDidChange(final NSNotification sender) {
-        accountKeyAndDeviceName.withDeviceName(StringUtils.trim(deviceNameField.stringValue()));
+        accountKeyAndDeviceName.setDeviceName(StringUtils.trim(deviceNameField.stringValue()));
     }
 }
 
