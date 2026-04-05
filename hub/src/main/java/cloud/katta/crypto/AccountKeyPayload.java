@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
-package cloud.katta.model;
+package cloud.katta.crypto;
 
 import java.security.interfaces.ECPublicKey;
 
-import cloud.katta.crypto.JWE;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;

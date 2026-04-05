@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import cloud.katta.model.JWEPayload;
+import cloud.katta.crypto.JWEPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

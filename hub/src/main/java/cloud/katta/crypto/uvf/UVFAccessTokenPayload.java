@@ -14,7 +14,7 @@ import java.util.Base64;
 import java.util.Objects;
 
 import cloud.katta.crypto.JWE;
-import cloud.katta.model.JWEPayload;
+import cloud.katta.crypto.JWEPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
