@@ -6,6 +6,7 @@ package cloud.katta.cli.commands;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -66,7 +67,17 @@ public class AbstractAuthorizationCode {
             var authResponse = TinyOAuth2.client(clientId)
                     .withTokenEndpoint(URI.create(tokenUrl))
                     .authorizationCodeGrant(URI.create(authUrl))
-                    .authorize(HttpClient.newHttpClient(), uri -> System.out.println("Please login on " + uri));
+                    .authorize(HttpClient.newHttpClient(), uri -> {
+                        System.out.println("Please login on " + uri);
+                        if(Desktop.isDesktopSupported()) {
+                            try {
+                                Desktop.getDesktop().browse(uri);
+                            }
+                            catch(IOException e) {
+                                // Ignore
+                            }
+                        }
+                    });
             return extractAccessToken(authResponse);
         }
         else {
