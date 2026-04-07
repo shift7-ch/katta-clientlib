@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 class UserKeysTest {
 
     @Test
-    void testEncryptWithSetupCodeAndRecover() throws Exception {
+    void testEncryptWithAccountKeyAndRecoverWithAccountKey() throws Exception {
         // PEM-encoded
         final String encodedPublicKey = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESA0oPUI0DrULBpIjTRckRduqaPqKz2f4zF6UvB+WHyOVZNsWZHHWIdjZ4LkoOygNenLgllv/iyzzVrH2ILR3Si6s03UOnicBbLy8jPY3MRvdgJPNz4C0kFa7HNXtQNKE";
         // pkcs8-encoded
@@ -24,19 +24,19 @@ class UserKeysTest {
         final String encodedPrivateKey = "MIG/AgEAMBAGByqGSM49AgEGBSuBBAAiBIGnMIGkAgEBBDCwqDLejJNvg83KP+zeNuLcrHnGjABYZXDq4NNxwHPtwv12vHDghCng4vM+qmN+EzWgBwYFK4EEACKhZANiAARIDSg9QjQOtQsGkiNNFyRF26po+orPZ/jMXpS8H5YfI5Vk2xZkcdYh2NnguSg7KA16cuCWW/+LLPNWsfYgtHdKLqzTdQ6eJwFsvLyM9jcxG92Ak83PgLSQVrsc1e1A0oQ=";
 
         final UserKeys userKeys = new UserKeys(decodeKeyPair(encodedPublicKey, encodedPrivateKey), decodeKeyPair(encodedPublicKey, encodedPrivateKey));
-        final String encryptedPrivateKey = userKeys.encryptWithSetupCode("top secret");
-        final UserKeys userKeysRecovered = UserKeys.recover(encodedPublicKey, encodedPublicKey, encryptedPrivateKey, "top secret");
+        final String encryptedPrivateKey = userKeys.encryptWithAccountKey("top secret");
+        final UserKeys userKeysRecovered = UserKeys.recoverWithAccountKey(encryptedPrivateKey, "top secret", encodedPublicKey, encodedPublicKey);
         assertArrayEquals(Base64.getDecoder().decode(encodedPrivateKey), userKeysRecovered.ecdhKeyPair().getPrivate().getEncoded());
         assertArrayEquals(Base64.getDecoder().decode(encodedPrivateKey), userKeysRecovered.ecdsaKeyPair().getPrivate().getEncoded());
     }
 
     @Test
-    void testEncryptWithSetupCodeAndRecoverNew() throws Exception {
+    void testEncryptWithAccountKeyAndRecoverWithAccountKeyNew() throws Exception {
         final UserKeys userKeys = UserKeys.create();
 
-        final String encryptedPrivateKey = userKeys.encryptWithSetupCode("top secret");
+        final String encryptedPrivateKey = userKeys.encryptWithAccountKey("top secret");
 
-        final UserKeys userKeysRecovered = UserKeys.recover(userKeys.encodedEcdhPublicKey(), userKeys.encodedEcdsaPublicKey(), encryptedPrivateKey, "top secret");
+        final UserKeys userKeysRecovered = UserKeys.recoverWithAccountKey(encryptedPrivateKey, "top secret", userKeys.encodedEcdhPublicKey(), userKeys.encodedEcdsaPublicKey());
 
         assertArrayEquals(userKeys.ecdhKeyPair().getPrivate().getEncoded(), userKeysRecovered.ecdhKeyPair().getPrivate().getEncoded());
         assertArrayEquals(userKeys.ecdsaKeyPair().getPrivate().getEncoded(), userKeysRecovered.ecdsaKeyPair().getPrivate().getEncoded());

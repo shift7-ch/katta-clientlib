@@ -86,7 +86,9 @@ public class UserKeys implements Destroyable {
     }
 
     private UserKeyPayload prepareForEncryption() {
-        return new UserKeyPayload(Base64.getEncoder().encodeToString(ecdhKeyPair().getPrivate().getEncoded()), Base64.getEncoder().encodeToString(ecdsaKeyPair().getPrivate().getEncoded()));
+        return new UserKeyPayload(
+                Base64.getEncoder().encodeToString(ecdhKeyPair().getPrivate().getEncoded()),
+                Base64.getEncoder().encodeToString(ecdsaKeyPair().getPrivate().getEncoded()));
     }
 
     /**
@@ -125,13 +127,13 @@ public class UserKeys implements Destroyable {
     /**
      * Encrypts the user's private key using a key derived from the given setupCode.
      *
-     * @param setupCode The password to protect the private key.
+     * @param accountKey The setup code to protect the private key.
      * @return A JWE holding the encrypted private key
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.encryptWithSetupCode</a>
      */
-    public String encryptWithSetupCode(final String setupCode) throws SecurityFailure {
+    public String encryptWithAccountKey(final String accountKey) throws SecurityFailure {
         try {
-            return JWE.pbes2Encrypt(prepareForEncryption(), "org.cryptomator.hub.setupCode", setupCode);
+            return JWE.pbes2Encrypt(prepareForEncryption(), "org.cryptomator.hub.setupCode", accountKey);
         }
         catch(JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);
@@ -141,16 +143,16 @@ public class UserKeys implements Destroyable {
     /**
      * Recovers the user key pair using a recovery code. All other information can be retrieved from the backend.
      *
+     * @param userPrivateKey        JWE containing the PKCS#8-encoded private key
+     * @param accountKey            The setup code used to protect the private keys
      * @param encodedEcdhPublicKey  The ECDH public key (base64-encoded SPKI)
      * @param encodedEcdsaPublicKey The ECDSA public key (base64-encoded SPKI)
-     * @param privateKeys           The JWE holding the encrypted private keys
-     * @param setupCode             The password used to protect the private keys
      * @return Decrypted UserKeys
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.recover()</a>
      */
-    public static UserKeys recover(final String encodedEcdhPublicKey, final String encodedEcdsaPublicKey, final String privateKeys, final String setupCode) throws SecurityFailure {
+    public static UserKeys recoverWithAccountKey(final String userPrivateKey, final String accountKey, final String encodedEcdhPublicKey, final String encodedEcdsaPublicKey) throws SecurityFailure {
         try {
-            return createFromJwe(createFromPayload(JWE.decryptPbes2(privateKeys, setupCode)), encodedEcdhPublicKey, encodedEcdsaPublicKey);
+            return createFromJwe(createFromPayload(JWE.decryptPbes2(userPrivateKey, accountKey)), encodedEcdhPublicKey, encodedEcdsaPublicKey);
         }
         catch(ParseException | JOSEException e) {
             throw new SecurityFailure(e);
@@ -173,18 +175,18 @@ public class UserKeys implements Destroyable {
     }
 
     /**
-     * Decrypts the user's private key using the device 's private key
+     * Decrypts the user's private key using the device private key
      *
-     * @param jwe                JWE containing the PKCS#8-encoded private key
-     * @param devicePrivateKey   The browser's private key
-     * @param userEcdhPublicKey  User's public ECDH key
-     * @param userEcdsaPublicKey User's public ECDSA key (will be generated if missing - added in Hub 1.4.0)
+     * @param userPrivateKey     JWE containing the PKCS#8-encoded private key
+     * @param devicePrivateKey   Device private key
+     * @param userEcdhPublicKey  User public ECDH key
+     * @param userEcdsaPublicKey User public ECDSA key
      * @return The user's key pair
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.decryptOnBrowser()</a>
      */
-    public static UserKeys decryptOnDevice(final String jwe, final ECPrivateKey devicePrivateKey, final String userEcdhPublicKey, final String userEcdsaPublicKey) throws SecurityFailure {
+    public static UserKeys decryptOnDevice(final String userPrivateKey, final ECPrivateKey devicePrivateKey, final String userEcdhPublicKey, final String userEcdsaPublicKey) throws SecurityFailure {
         try {
-            return createFromJwe(createFromPayload(JWE.decryptEcdhEs(jwe, devicePrivateKey)), userEcdhPublicKey, userEcdsaPublicKey);
+            return createFromJwe(createFromPayload(JWE.decryptEcdhEs(userPrivateKey, devicePrivateKey)), userEcdhPublicKey, userEcdsaPublicKey);
         }
         catch(ParseException | JOSEException e) {
             throw new SecurityFailure(e);
@@ -194,13 +196,13 @@ public class UserKeys implements Destroyable {
     /**
      * Decrypts the access token using the user's ECDH private key
      *
-     * @param jwe The encrypted access token
+     * @param vaultAccessTokenPayload The encrypted access token
      * @return The token's payload
      * @see <a href="https://github.com/shift7-ch/katta-server/blob/feature/cipherduck-uvf/frontend/src/common/crypto.ts">crypto.ts/UserKeys.decryptAccessToken()</a>
      */
-    public UVFAccessTokenPayload decryptAccessToken(final String jwe) throws SecurityFailure {
+    public UVFAccessTokenPayload decryptAccessToken(final String vaultAccessTokenPayload) throws SecurityFailure {
         try {
-            return UVFAccessTokenPayload.fromJWE(JWE.decryptEcdhEs(jwe, this.ecdhKeyPair().getPrivate()).toString());
+            return UVFAccessTokenPayload.fromJWE(JWE.decryptEcdhEs(vaultAccessTokenPayload, this.ecdhKeyPair().getPrivate()).toString());
         }
         catch(JsonProcessingException | JOSEException | ParseException e) {
             throw new SecurityFailure(e);

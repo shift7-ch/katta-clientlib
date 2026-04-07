@@ -8,7 +8,6 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.text.ParseException;
 
-import cloud.katta.model.JWEPayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JOSEException;

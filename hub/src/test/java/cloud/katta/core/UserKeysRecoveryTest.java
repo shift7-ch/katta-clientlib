@@ -42,11 +42,11 @@ class UserKeysRecoveryTest extends AbstractHubTest {
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true, false);
 
-        final SecurityFailure exception = assertThrows(SecurityFailure.class, () -> UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
-                new AlphanumericRandomStringService().random()));
+        final SecurityFailure exception = assertThrows(SecurityFailure.class, () -> UserKeys.recoverWithAccountKey(me.getPrivateKey(), new AlphanumericRandomStringService().random(), me.getEcdhPublicKey(), me.getEcdsaPublicKey()
+        ));
         assertInstanceOf(JOSEException.class, exception.getCause());
         assertInstanceOf(InvalidKeyException.class, exception.getCause().getCause());
-        assertNotNull(UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(),
-                hubTestConfig.setup.userConfig.setupCode));
+        assertNotNull(UserKeys.recoverWithAccountKey(me.getPrivateKey(), hubTestConfig.setup.userConfig.setupCode, me.getEcdhPublicKey(), me.getEcdsaPublicKey()
+        ));
     }
 }

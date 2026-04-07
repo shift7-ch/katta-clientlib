@@ -8,7 +8,6 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStore;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.AccessDeniedException;
-import ch.cyberduck.core.nio.LocalProtocol;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +17,6 @@ import java.util.Base64;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
-import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
 import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
@@ -28,8 +26,6 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
 
     public static final String KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME = "Katta Public Device Key";
     public static final String KEYCHAIN_PRIVATE_DEVICE_KEY_ACCOUNT_NAME = "Katta Private Device Key";
-
-    public static final String COMPUTER_NAME = new LocalProtocol().getName();
 
     private final PasswordStore store;
 
@@ -46,7 +42,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
     }
 
     @Override
-    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final UserDto me, final DeviceSetupCallback setup) throws AccessException, SecurityFailure {
+    public DeviceKeys getOrCreateDeviceKeys(final Host hub, final UserDto me, final DeviceSetupCallback setup) throws SecurityFailure {
         final DeviceKeys deviceKeys = this.getDeviceKeys(hub, me);
         if(DeviceKeys.validate(deviceKeys)) {
             return deviceKeys;
@@ -56,7 +52,7 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
     }
 
     @Override
-    public DeviceKeys getDeviceKeys(final Host hub, final UserDto me) throws AccessException, SecurityFailure {
+    public DeviceKeys getDeviceKeys(final Host hub, final UserDto me) throws SecurityFailure {
         final String accountName = toAccountName(hub, me);
         try {
             final String encodedPublicDeviceKey = store.getPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName);
@@ -73,11 +69,12 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
             return new DeviceKeys(decodeKeyPair(encodedPublicDeviceKey, encodedPrivateDeviceKey));
         }
         catch(AccessDeniedException e) {
-            throw new AccessException(e);
+            log.error("Error {} retrieving device keys for {}", e.getMessage(), accountName);
+            return DeviceKeys.notfound;
         }
     }
 
-    protected DeviceKeys storeDeviceKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeys) throws AccessException {
+    protected DeviceKeys storeDeviceKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeys) {
         final String accountName = toAccountName(hub, me);
         try {
             store.addPassword(KEYCHAIN_PUBLIC_DEVICE_KEY_ACCOUNT_NAME, accountName,
@@ -87,10 +84,10 @@ public class DeviceKeysServiceImpl implements DeviceKeysService {
                     Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPrivate().getEncoded())
             );
             log.debug("Saved device key pair for {} in keychain", accountName);
-            return deviceKeys;
         }
         catch(AccessDeniedException e) {
-            throw new AccessException(e);
+            log.error("Error {} saving device keys for {}", e.getMessage(), accountName);
         }
+        return deviceKeys;
     }
 }

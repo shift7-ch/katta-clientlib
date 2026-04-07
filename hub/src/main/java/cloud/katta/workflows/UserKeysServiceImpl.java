@@ -20,10 +20,9 @@ import cloud.katta.client.model.Type1;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.WithCounts;
 import cloud.katta.core.DeviceSetupCallback;
+import cloud.katta.crypto.AccountKeyPayload;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.model.AccountKeyAndDeviceName;
-import cloud.katta.model.SetupCodeJWE;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -31,7 +30,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 
 import static cloud.katta.crypto.KeyHelper.getDeviceIdFromDeviceKeyPair;
-import static cloud.katta.workflows.DeviceKeysServiceImpl.COMPUTER_NAME;
 
 public class UserKeysServiceImpl implements UserKeysService {
     private static final Logger log = LogManager.getLogger(UserKeysServiceImpl.class.getName());
@@ -49,7 +47,7 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair) throws ApiException, SecurityFailure {
         log.info("Get user keys from {}", hub);
         final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeyPair.getEcKeyPair());
         log.info("Got device key pair from keychain with deviceId={}", deviceId);
@@ -60,59 +58,63 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     @Override
-    public UserKeys getOrCreateUserKeys(final Host hub, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
+    public UserKeys getOrCreateUserKeys(final Host bookmark, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws ApiException, AccessException, SecurityFailure {
         if(validate(me)) {
             try {
-                return this.getUserKeys(hub, me, deviceKeyPair);
+                return this.getUserKeys(bookmark, me, deviceKeyPair);
             }
             catch(ApiException e) {
                 switch(e.getCode()) {
                     case 404:
-                        log.warn("Device keys from keychain not present in hub. Setting up existing device w/ Account Key for existing user keys.");
-                        // Setup existing device w/ Account Key (e.g. same device for multiple hubs)
-                        return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
+                        log.warn("Device keys from keychain not found on server. Setting up existing device with account key for existing user keys.");
+                        return this.recoverUserKeys(bookmark, me, deviceKeyPair, prompt);
                     default:
                         throw e;
                 }
             }
         }
-        else if(validate(me)) {
-            // No device keys
-            log.info("Setting up new device w/ Account Key for existing user keys.");
-            return this.recover(me, deviceKeyPair, prompt.askForAccountKeyAndDeviceName(hub, COMPUTER_NAME));
-        }
-        else {
-            log.info("Setting up new user keys and account key");
+        // First login: No user nor device keys
+        log.info("Setting up new user keys and account key");
+        final String accountKey = prompt.generateAccountKey();
+        final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(bookmark, accountKey);
+        final UserKeys userKey = prompt.generateUserKeys();
+        this.uploadUserKeys(me, userKey, accountKey);
+        this.uploadDeviceKeys(input.deviceName(), userKey, deviceKeyPair);
+        return userKey;
+    }
 
-            // TODO https://github.com/shift7-ch/katta-server/issues/27
-            // private key generated with P384KeyPair causes "Unexpected Error: Data provided to an operation does not meet requirements" in `UserKeys.recover`: `const privateKey = await crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, false, UserKeys.KEY_USAGES);`
-            final String accountKey = prompt.generateAccountKey();
-            final AccountKeyAndDeviceName input = prompt.displayAccountKeyAndAskDeviceName(hub,
-                    new AccountKeyAndDeviceName().withAccountKey(accountKey).withDeviceName(COMPUTER_NAME));
-            return this.uploadDeviceKeys(input.deviceName(),
-                    this.uploadUserKeys(me, prompt.generateUserKeys(), accountKey), deviceKeyPair);
+    /**
+     * @throws AccessException Canceled prompt by user
+     */
+    private UserKeys recoverUserKeys(final Host bookmark, final UserDto me, final DeviceKeys deviceKeyPair, final DeviceSetupCallback prompt) throws AccessException {
+        // Setup existing device with account key
+        final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.askForAccountKeyAndDeviceName(bookmark);
+        try {
+            final UserKeys userKeys = UserKeys.recoverWithAccountKey(me.getPrivateKey(), input.accountKey(),
+                    me.getEcdhPublicKey(), me.getEcdsaPublicKey());
+            this.uploadDeviceKeys(input.deviceName(), userKeys, deviceKeyPair);
+            return userKeys;
+        }
+        catch(SecurityFailure | ApiException f) {
+            log.warn("Failure {} to recover user keys with account key", f.getMessage());
+            // Repeat until canceled by user
+            return recoverUserKeys(bookmark, me, deviceKeyPair, prompt);
         }
     }
 
-    private UserKeys recover(final UserDto me, final DeviceKeys deviceKeyPair, final AccountKeyAndDeviceName accountKeyAndDeviceName) throws ApiException, SecurityFailure {
-        return this.uploadDeviceKeys(accountKeyAndDeviceName.deviceName(),
-                UserKeys.recover(me.getEcdhPublicKey(), me.getEcdsaPublicKey(), me.getPrivateKey(), accountKeyAndDeviceName.accountKey()), deviceKeyPair);
-    }
-
-    private UserKeys uploadUserKeys(final UserDto me, final UserKeys userKeys, final String setupCode) throws ApiException, SecurityFailure {
+    private void uploadUserKeys(final UserDto me, final UserKeys userKeys, final String accountKey) throws ApiException, SecurityFailure {
         try {
             usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
-                    .privateKey(userKeys.encryptWithSetupCode(setupCode))
-                    .setupCode(new SetupCodeJWE(setupCode).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                    .privateKey(userKeys.encryptWithAccountKey(accountKey))
+                    .setupCode(new AccountKeyPayload(accountKey).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {
             throw new SecurityFailure(e);
         }
-        return userKeys;
     }
 
-    private UserKeys uploadDeviceKeys(final String deviceName, final UserKeys userKeys, final DeviceKeys deviceKeys) throws ApiException, SecurityFailure {
+    private void uploadDeviceKeys(final String deviceName, final UserKeys userKeys, final DeviceKeys deviceKeys) throws ApiException, SecurityFailure {
         final String encodedPublicKeyDeviceKey = Base64.getEncoder().encodeToString(deviceKeys.getEcKeyPair().getPublic().getEncoded());
         final String deviceSpecificUserKeyJWE = userKeys.encryptForDevice(deviceKeys.getEcKeyPair().getPublic());
         final String deviceId = getDeviceIdFromDeviceKeyPair(deviceKeys.getEcKeyPair());
@@ -122,7 +124,6 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .userPrivateKey(deviceSpecificUserKeyJWE)
                 .type(Type1.DESKTOP)
                 .creationTime(new DateTime()));
-        return userKeys;
     }
 
     private static boolean validate(final UserDto me) {

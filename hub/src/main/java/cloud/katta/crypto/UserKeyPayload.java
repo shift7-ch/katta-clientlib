@@ -7,7 +7,6 @@ package cloud.katta.crypto;
 
 import java.util.Map;
 
-import cloud.katta.model.JWEPayload;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jose.Payload;
 

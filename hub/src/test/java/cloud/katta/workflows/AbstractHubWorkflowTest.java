@@ -38,8 +38,8 @@ import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
+import cloud.katta.crypto.AccountKeyPayload;
 import cloud.katta.crypto.UserKeys;
-import cloud.katta.model.SetupCodeJWE;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubStorageLocationService;
@@ -130,12 +130,11 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final String adminAccountKey = config.setup.adminConfig.setupCode;
             final UsersResourceApi users = new UsersResourceApi(adminApiClient);
 
-            // TODO https://github.com/shift7-ch/katta-server/issues/4 bad code smell - encapsulate initial setup
             final UserDto admin = users.apiUsersMeGet(false, false)
                     .ecdhPublicKey(adminKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(adminKeys.encodedEcdsaPublicKey())
-                    .privateKey(adminKeys.encryptWithSetupCode(adminAccountKey))
-                    .setupCode(new SetupCodeJWE(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
+                    .privateKey(adminKeys.encryptWithAccountKey(adminAccountKey))
+                    .setupCode(new AccountKeyPayload(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
             users.apiUsersMePut(admin);
             checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 1);
 

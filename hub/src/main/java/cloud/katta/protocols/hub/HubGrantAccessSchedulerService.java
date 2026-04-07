@@ -31,38 +31,37 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
     private static final Logger log = LogManager.getLogger(HubGrantAccessSchedulerService.class);
 
     private final HubSession session;
-    private final DeviceSetupCallback setup;
 
-    public HubGrantAccessSchedulerService(final HubSession session, final DeviceSetupCallback setup) {
+    public HubGrantAccessSchedulerService(final HubSession session) {
         super(HostPreferencesFactory.get(session.getHost()).getLong("hub.protocol.scheduler.period"));
         this.session = session;
-        this.setup = setup;
     }
 
     @Override
     public Host operate(final PasswordCallback callback) throws BackgroundException {
         log.info("Scheduler for {}", session.getHost());
         try {
-            final UserKeys userKeys = session.getUserKeys(setup);
+            final UserKeys userKeys = session.getUserKeys(DeviceSetupCallback.disabled);
             final List<VaultDto> accessibleVaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(Role.OWNER);
+            final GrantAccessServiceImpl service = new GrantAccessServiceImpl(
+                    new VaultResourceApi(session.getClient()),
+                    new UsersResourceApi(session.getClient()));
             for(final VaultDto accessibleVault : accessibleVaults) {
                 if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
                     log.debug("Skip archived vault {}", accessibleVault);
                     continue;
                 }
-                new GrantAccessServiceImpl(
-                        new VaultResourceApi(session.getClient()),
-                        new UsersResourceApi(session.getClient())
-                ).grantAccessToUsersRequiringAccessGrant(accessibleVault.getId(), userKeys);
+                try {
+                    service.grantAccessToUsersRequiringAccessGrant(accessibleVault.getId(), userKeys);
+                }
+                catch(ApiException | AccessException | SecurityFailure e) {
+                    log.warn("Grant access for vault {} failed with error {}", accessibleVault.getId(), e.getMessage());
+                    // Continue with next vault
+                }
             }
         }
         catch(ApiException e) {
-            log.error("Scheduler for {}: Automatic Access Grant failed.", session.getHost(), e);
             throw new HubExceptionMappingService().map(e);
-        }
-        catch(AccessException | SecurityFailure e) {
-            log.error(String.format("Scheduler for %s: Automatic Access Grant failed.", session.getHost()), e);
-            throw new BackgroundException(e);
         }
         return session.getHost();
     }

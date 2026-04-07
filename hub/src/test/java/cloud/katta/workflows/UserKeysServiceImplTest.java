@@ -4,27 +4,30 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStoreFactory;
+import ch.cyberduck.core.exception.ConnectionCanceledException;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import cloud.katta.client.api.DeviceResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.DeviceDto;
 import cloud.katta.client.model.UserDto;
+import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
-import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.nimbusds.jose.JOSEException;
+import cloud.katta.workflows.exceptions.AccessException;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,10 +65,26 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     void testFailSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config);
 
+        final AtomicReference<DeviceSetupCallback.AccountKeyAndDeviceName> input = new AtomicReference<>();
+        final DeviceSetupCallback setup = deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")));
         // Setting up new device w/ Account Key for existing user keys with erroneous setup code
-        final SecurityFailure securityException = assertThrows(SecurityFailure.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")))));
-        assertEquals(JOSEException.class, securityException.getCause().getClass());
-        assertEquals("checksum failed", securityException.getCause().getCause().getMessage());
+        assertThrows(AccessException.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(
+                hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(),
+                new DeviceSetupCallback() {
+                    @Override
+                    public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) throws AccessException {
+                        return setup.displayAccountKeyAndAskDeviceName(bookmark, accountKey);
+                    }
+
+                    @Override
+                    public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) throws AccessException {
+                        if(input.get() == null) {
+                            input.set(setup.askForAccountKeyAndDeviceName(bookmark));
+                            return input.get();
+                        }
+                        throw new AccessException(new ConnectionCanceledException());
+                    }
+                }));
     }
 
     @ParameterizedTest
@@ -77,7 +96,7 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // delete devices remote in order to simplify checking new device uploaded
-        for (final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
+        for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
             new DeviceResourceApi(hubSession.getClient()).apiDevicesDeviceIdDelete(device.getId());
         }
         assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size());
@@ -100,12 +119,12 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // delete devices remote in order to simplify checking new device uploaded
-        for (final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
+        for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
             new DeviceResourceApi(hubSession.getClient()).apiDevicesDeviceIdDelete(device.getId());
         }
         assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size());
 
-        for (final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
+        for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
             new DeviceResourceApi(hubSession.getClient()).apiDevicesDeviceIdDelete(device.getId());
         }
 
@@ -114,7 +133,8 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
 
         // setting up new user keys and account key
-        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(), deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"))));
+        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(),
+                deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"))));
 
         assertNotEquals(expecteduserKeys, userKeys);
 

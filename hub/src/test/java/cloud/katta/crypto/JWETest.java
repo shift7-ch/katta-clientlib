@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import cloud.katta.crypto.exceptions.NotECKeyException;
-import cloud.katta.model.JWEPayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.Payload;
