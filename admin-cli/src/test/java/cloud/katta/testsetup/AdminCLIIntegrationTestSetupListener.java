@@ -21,8 +21,8 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class AdminCLIIntegrationTestSetupListener implements TestExecutionListener {
-    private static final Logger log = LogManager.getLogger(AbstractAdminCLIIT.class.getName());
-    public static ComposeContainer compose;
+    private static final Logger log = LogManager.getLogger(AdminCLIIntegrationTestSetupListener.class);
+    private static ComposeContainer<?> compose;
 
 
     @Override
@@ -59,7 +59,7 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                         new File(AbstractAdminCLIIT.class.getResource(composeFile).toURI()))
                         .withPull(true)
                         .withEnv(env)
-                        .withOptions(profile == null ? "" : String.format("--profile=%s", profile))
+                        .withOptions(String.format("--profile=%s", profile))
                         .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
             }
             catch(URISyntaxException e) {
@@ -77,7 +77,7 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
             }
         }
         catch(Exception e) {
-            log.warn(e);
+            log.warn("Failed to stop docker-compose test environment", e);
         }
     }
 }
