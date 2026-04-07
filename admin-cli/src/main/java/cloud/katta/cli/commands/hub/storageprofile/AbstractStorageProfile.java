@@ -28,6 +28,9 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\".", required = false)
     protected List<String> regions;
 
+    @CommandLine.Option(names = {"--debug"}, description = "Print HTTP request and response headers.", defaultValue = "false")
+    protected boolean debug;
+
     public AbstractStorageProfile() {
     }
 
@@ -44,6 +47,7 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
         final ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(hubUrl);
         apiClient.addDefaultHeader("Authorization", "Bearer %s".formatted(this.login()));
+        apiClient.setDebugging(debug);
         final StorageProfileDto response = this.call(new StorageProfileResourceApi(apiClient));
         System.out.println(new JSON().getContext(null).writeValueAsString(response));
         return null;
