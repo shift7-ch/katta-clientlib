@@ -124,6 +124,8 @@ public class HubSession extends HttpSession<HubApiClient> {
             host.setProtocol(profile);
             // Save for lookup in keychain on reconnect
             host.setProperty(Profile.OAUTH_CLIENT_ID_KEY, profile.getOAuthClientId());
+            host.setProperty(Profile.OAUTH_AUTHORIZATION_URL_KEY, profile.getOAuthAuthorizationUrl());
+            host.setProperty(Profile.OAUTH_TOKEN_URL_KEY, profile.getOAuthTokenUrl());
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
@@ -131,6 +133,8 @@ public class HubSession extends HttpSession<HubApiClient> {
         finally {
             client.getHttpClient().close();
         }
+        provider = new HubUVFVaultProvider(proxy, prompt);
+        vaults = new HubVaultListService(this, provider);
         // Setup authorization endpoint from configuration
         authorizationService = new OAuth2RequestInterceptor(configuration.build(), host,
                 host.getProtocol().getOAuthTokenUrl(),
@@ -156,8 +160,6 @@ public class HubSession extends HttpSession<HubApiClient> {
         log.debug("Configured with setup prompt {}", setup);
         final UserKeys userKeys = this.getUserKeys(setup);
         log.debug("Retrieved user keys {}", userKeys);
-        provider = new HubUVFVaultProvider(prompt);
-        vaults = new HubVaultListService(this, provider);
         access = new HubGrantAccessSchedulerService(this, setup);
     }
 

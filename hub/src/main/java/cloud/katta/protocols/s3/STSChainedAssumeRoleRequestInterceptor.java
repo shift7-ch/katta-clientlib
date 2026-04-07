@@ -4,7 +4,6 @@
 
 package cloud.katta.protocols.s3;
 
-import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.DisabledLoginCallback;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.OAuthTokens;
@@ -61,12 +60,6 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     }
 
     @Override
-    public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
-        // Refresh OAuth with tokens from Hub
-        return super.refresh(hub.getHost().getCredentials());
-    }
-
-    @Override
     protected String getWebIdentityToken(final OAuthTokens oauth) {
         return oauth.getAccessToken();
     }
@@ -82,7 +75,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     @Override
     public TemporaryAccessTokens assumeRoleWithWebIdentity(final OAuthTokens oauth, final String roleArn) throws BackgroundException {
         final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(this.tokenExchange(oauth), roleArn);
-        if(StringUtils.isNotBlank(stsSessionTag)) {
+        if(StringUtils.isNotBlank(stsSessionTagRoleArn) && StringUtils.isNotBlank(stsSessionTag)) {
             log.debug("Assume role with temporary credentials {}", tokens);
             return super.assumeRole(bookmark.getCredentials().setTokens(tokens)
                     .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", stsSessionTag, vaultId)), stsSessionTagRoleArn);
