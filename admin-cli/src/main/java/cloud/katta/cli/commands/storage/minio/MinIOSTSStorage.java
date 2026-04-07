@@ -61,16 +61,16 @@ public class MinIOSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--createBucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}createbucketpolicy.")
     String createBucketPolicyName;
 
-    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}accessbucketpolicy.")
-    String accessbucketPolicyName;
+    @CommandLine.Option(names = {"--accessBucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}accessbucketpolicy.")
+    String accessBucketPolicyName;
 
     @Override
     public Void call() throws Exception {
         if(createBucketPolicyName == null) {
             createBucketPolicyName = String.format("%screatebucketpolicy", roleNamePrefix);
         }
-        if(accessbucketPolicyName == null) {
-            accessbucketPolicyName = String.format("%saccessbucketpolicy", roleNamePrefix);
+        if(accessBucketPolicyName == null) {
+            accessBucketPolicyName = String.format("%saccessbucketpolicy", roleNamePrefix);
         }
 
         final MinioAdminClient minioAdminClient = new MinioAdminClient.Builder()
@@ -118,8 +118,8 @@ public class MinIOSTSStorage implements Callable<Void> {
                             .addAction("s3:AbortMultipartUpload")
                             .addResource(String.format("arn:aws:s3:::%s${jwt:client_id}/*", bucketPrefix)))
                     .build();
-            minioAdminClient.addCannedPolicy(accessbucketPolicyName, minioAccessBucketPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()));
-            System.out.println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
+            minioAdminClient.addCannedPolicy(accessBucketPolicyName, minioAccessBucketPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()));
+            System.out.println(minioAdminClient.listCannedPolicies().get(accessBucketPolicyName));
         }
 
         final String json = IOUtils.toString(URI.create(hubUrl + "/api/config"), StandardCharsets.UTF_8);
@@ -156,8 +156,8 @@ public class MinIOSTSStorage implements Callable<Void> {
                         %n""",
                 minioAlias, endpointUrl, accessKey, secretKey,
                 minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createBucketPolicyName,
-                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
-                minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessBucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessBucketPolicyName,
                 minioAlias
         );
         return null;
