@@ -11,12 +11,14 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.times;
 
 class MinIOSTSStorageProfileTest {
@@ -59,7 +61,7 @@ class MinIOSTSStorageProfileTest {
     }
 
     @Test
-    public void testCallDefaultPortHttps() throws ApiException {
+    public void testCallDefaultPortHttps() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID profileId = UUID.randomUUID();
         final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile(null, profileId.toString(), "MinIO STS", "us-east-1", null,
@@ -92,5 +94,6 @@ class MinIOSTSStorageProfileTest {
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);
         dto.setStsSessionTag(null);
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
+        assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }
 }

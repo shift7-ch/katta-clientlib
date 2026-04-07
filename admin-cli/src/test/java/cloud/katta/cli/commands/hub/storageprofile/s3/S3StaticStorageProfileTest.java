@@ -10,19 +10,20 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.UUID;
 
-import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.times;
 
 class S3StaticStorageProfileTest {
 
     @Test
-    public void testCall() throws ApiException {
+    public void testCall() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final S3StaticStorageProfile cli = new S3StaticStorageProfile(vaultId.toString(), vaultId.toString(), "S3 static", "us-east-1", null,
@@ -49,5 +50,6 @@ class S3StaticStorageProfileTest {
         dto.stsRoleCreateBucketHub("");
         dto.stsEndpoint(null);
         Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(dto);
+        assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }
 }

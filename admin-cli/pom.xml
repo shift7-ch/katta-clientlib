@@ -251,10 +251,16 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <argLine>@{argLine}</argLine>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
-                        <extensions>true</extensions>
                         <executions>
                             <execution>
                                 <id>build-native</id>
@@ -263,13 +269,45 @@
                                 </goals>
                                 <phase>package</phase>
                             </execution>
+                            <execution>
+                                <id>metadata-copy</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>metadata-copy</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>add-reachability-metadata</id>
+                                <goals>
+                                    <goal>add-reachability-metadata</goal>
+                                </goals>
+                            </execution>
                         </executions>
                         <configuration>
+                            <agent>
+                                <enabled>true</enabled>
+                                <defaultMode>standard</defaultMode>
+                                <options>
+                                    <accessFilterFiles>
+                                        <filterFile>${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json</filterFile>
+                                    </accessFilterFiles>
+                                    <builtinCallerFilter>true</builtinCallerFilter>
+                                    <builtinHeuristicFilter>true</builtinHeuristicFilter>
+                                </options>
+                                <metadataCopy>
+                                    <merge>true</merge>
+                                    <disabledStages>
+                                        <stage>main</stage>
+                                    </disabledStages>
+                                    <outputDirectory>${project.basedir}/src/main/resources/META-INF/native-image</outputDirectory>
+                                </metadataCopy>
+                            </agent>
                             <fallback>false</fallback>
                             <mainClass>cloud.katta.cli.Katta</mainClass>
                             <imageName>katta</imageName>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <skipNativeTests>true</skipNativeTests>
+                            <skipBaseSBOM>true</skipBaseSBOM>
                             <metadataRepository>
                                 <enabled>true</enabled>
                             </metadataRepository>

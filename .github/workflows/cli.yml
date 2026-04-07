@@ -43,7 +43,7 @@ jobs:
         run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}
       - name: Build native image
         run: >
-          mvn --batch-mode clean package -pl admin-cli -am -Pnative -DskipTests -DskipITs
+          mvn --batch-mode clean package -pl admin-cli -am -Pnative
       - name: Upload executable
         uses: actions/upload-artifact@v7
         with:
