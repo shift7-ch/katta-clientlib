@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class AdminCLIIntegrationTestSetupListener implements TestExecutionListener {
     private static final Logger log = LogManager.getLogger(AdminCLIIntegrationTestSetupListener.class);
-    private static ComposeContainer<?> compose;
+    private static ComposeContainer compose;
 
 
     @Override
