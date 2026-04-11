@@ -23,7 +23,7 @@ public abstract class JWEPayload {
     }
 
     public static <T extends JWEPayload> T fromJson(final byte[] jwe, final Class<T> valueType) throws JsonProcessingException {
-        return fromJson(new String(jwe, StandardCharsets.US_ASCII), valueType);
+        return fromJson(new String(jwe, StandardCharsets.UTF_8), valueType);
     }
 
     public static <T extends JWEPayload> T fromJson(final String jwe, final Class<T> valueType) throws JsonProcessingException {
