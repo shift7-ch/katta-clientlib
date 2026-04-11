@@ -4,23 +4,22 @@
 
 package cloud.katta.crypto.uvf;
 
-import ch.cyberduck.core.AbstractPath;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.Host;
-import ch.cyberduck.core.Path;
 import ch.cyberduck.core.cryptomator.impl.uvf.UVFVault;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
+import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 
 import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -28,6 +27,7 @@ import cloud.katta.protocols.hub.HubProtocol;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import cloud.katta.workflows.exceptions.SecurityFailure;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JWEHeader;
 import com.nimbusds.jose.JWEObjectJSON;
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UVFMetadataPayloadTest {
 
     @Test
-    void encryptDecrypt() throws Exception {
+    void testEncryptDecrypt() throws Exception {
         final byte[] rawMasterKey = new byte[32];
         FastSecureRandomProvider.get().provide().nextBytes(rawMasterKey);
         final HashMap<String, String> keys = new HashMap<String, String>() {{
@@ -75,26 +75,33 @@ class UVFMetadataPayloadTest {
         final ECKey recoveryKey = ((ECKey) jwks.serialize().getKeyByKeyId(String.format(HubVaultKeys.KID_RECOVERY_KEY_PREFIX, thumbprint)));
 
         final UUID vaultId = UUID.randomUUID();
-        final String encrypted = orig.encrypt("https://example.com/gateway/api/", vaultId, jwks.serialize());
+
+        final String encrypted = new String(new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId, jwks.serialize()).encrypt(),
+                StandardCharsets.US_ASCII);
 
         // decrypt with memberKey
         {
-            final UVFMetadataPayload decrypted = UVFMetadataPayload.decrypt(encrypted, memberKey);
-            assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
+            final UVFMetadataPayload decrypted = new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId,
+                    new JWKSet(memberKey)).getPayload();
+            assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId),
+                    JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
         // decrypt with recoveryKey
         {
-            final UVFMetadataPayload decrypted = UVFMetadataPayload.decrypt(encrypted, recoveryKey);
-            assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId), JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
+            final UVFMetadataPayload decrypted = new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId,
+                    new JWKSet(recoveryKey)).getPayload();
+            assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId),
+                    JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
             assertEquals(orig, decrypted);
         }
 
         // decryption fails with wrong key
         {
             final ECKey fake = new ECKey.Builder(recoveryKey).keyID("kiddo").build();
-            assertThrows(SecurityFailure.class, () -> UVFMetadataPayload.decrypt(encrypted, fake));
+            assertThrows(SecurityFailure.class, () -> new HubVaultMetadataUVFProvider(JWEObjectJSON.parse(encrypted),
+                    new JWKSet(fake)).getPayload());
         }
     }
 
@@ -106,7 +113,7 @@ class UVFMetadataPayloadTest {
         final String protectedDecode = new String(Base64.getDecoder().decode("eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJjbG91ZC5rYXR0YS5vcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2dhdGV3YXkvYXBpL3ZhdWx0cy9iNjhiMDQ3My1lOTI0LTRlM2UtYWVhOS0zMTEzYmIzOWY1MDYvdXZmL3ZhdWx0LnV2ZiJ9"), StandardCharsets.UTF_8);
         assertEquals("{\"uvf.spec.version\":1,\"cty\":\"json\",\"enc\":\"A256GCM\",\"crit\":[\"uvf.spec.version\"],\"jku\":\"jwks.json\",\"cloud.katta.origin\":\"https://example.com/gateway/api/vaults/b68b0473-e924-4e3e-aea9-3113bb39f506/uvf/vault.uvf\"}", protectedDecode);
         for(JWK key : jwks.getKeys()) {
-            final UVFMetadataPayload meta = UVFMetadataPayload.decrypt(jwe, key);
+            final UVFMetadataPayload meta = new HubVaultMetadataUVFProvider(JWEObjectJSON.parse(jwe), new JWKSet(key)).getPayload();
             assertEquals("AES-256-GCM-32k", meta.fileFormat());
             assertEquals("AES-SIV-512-B64URL", meta.nameFormat());
             assertEquals(1, meta.seeds().size());
@@ -133,9 +140,8 @@ class UVFMetadataPayloadTest {
         });
         final JWEObjectJSON builder = new JWEObjectJSON(header, payload);
         builder.encrypt(new MultiEncrypter(jwks));
-        String jwe = builder.serializeGeneral();
-        final SecurityFailure exc = assertThrows(SecurityFailure.class, () -> UVFMetadataPayload.decrypt(jwe, jwks.getKeyByKeyId("org.cryptomator.hub.memberkey")));
-        assertEquals("Unexpected value for critical header uvf.spec.version: found null, expected \"1\"", exc.getMessage());
+        final SecurityFailure exc = assertThrows(SecurityFailure.class, () -> new HubVaultMetadataUVFProvider(builder, jwks.getKeyByKeyId("org.cryptomator.hub.memberkey")).getPayload());
+        assertEquals("Missing value for critical header uvf.spec.version.", exc.getMessage());
     }
 
     @Test
@@ -150,8 +156,10 @@ class UVFMetadataPayloadTest {
 
     @Test
     void testUVFMasterkeyFromUvfMetadataPayload() throws Exception {
-        final UVFMetadataPayload uvmetadataPayload = UVFMetadataPayload.create();
-        UVFMasterkey.fromDecryptedPayload(uvmetadataPayload.toJSON());
+        final UVFMetadataPayload uvfMetadataPayload = UVFMetadataPayload.create();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JsonNullableModule());
+        UVFMasterkey.fromDecryptedPayload(mapper.writeValueAsString(uvfMetadataPayload));
     }
 
     @Test
@@ -160,9 +168,9 @@ class UVFMetadataPayloadTest {
         final HubVaultKeys keys = HubVaultKeys.create();
         final UUID vaultId = UUID.randomUUID();
         final HubVaultMetadataUVFProvider provider = new HubVaultMetadataUVFProvider(
-                vaultMetadata.toJSON("https://example.net/api", vaultId), keys);
+                vaultMetadata, "https://example.net/api", vaultId, keys.serialize());
         assertEquals(provider.computeRootDirIdHash(), provider.computeRootDirIdHash());
-        final UVFVault vault = new UVFVault(new Path("/", EnumSet.of(AbstractPath.Type.directory)));
+        final UVFVault vault = new UVFVault(Home.root());
         final Host host = new Host(new HubProtocol());
         vault.load(new HubSession(host, new DisabledX509TrustManager(), new DefaultX509KeyManager()), provider);
     }

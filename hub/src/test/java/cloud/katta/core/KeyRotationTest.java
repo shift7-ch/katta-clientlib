@@ -26,9 +26,11 @@ import cloud.katta.client.model.Role;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
@@ -72,7 +74,8 @@ class KeyRotationTest extends AbstractHubTest {
                 final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
                 final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
                 final UVFAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessToken(UUID.fromString(vaultDto.getId().toString()), userKeys);
-                final UVFMetadataPayload metadataJWE = vaultService.decryptVaultMetadata(masterkeyJWE, vaultDto.getUvfMetadataFile());
+                final UVFMetadataPayload metadataJWE = new HubVaultMetadataUVFProvider(
+                        vaultService.getVaultMetadata(vaultDto.getId()), new HubVaultKeys(masterkeyJWE.key())).getPayload();
 
                 // TODO https://github.com/shift7-ch/cipherduck-hub/issues/37 change nickname for now - could be used to rotate of shared access key/secret key.
                 metadataJWE.storage().nickname(String.format("ZZZZ %s", vaultDto.getName()));

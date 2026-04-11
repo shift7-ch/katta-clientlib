@@ -63,6 +63,7 @@ import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.STSChainedAssumeRoleRequestInterceptor;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.SecurityFailure;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class HubUVFVaultProvider implements VaultProvider {
     private static final Logger log = LogManager.getLogger(HubUVFVaultProvider.class);
@@ -160,7 +161,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
                 final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
-                        payload.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId), keys);
+                        payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize());
                 log.debug("Create vault with ID {}", vaultId);
                 final VaultDto vaultDto = new VaultDto()
                         .id(vaultId)
@@ -206,14 +207,16 @@ public class HubUVFVaultProvider implements VaultProvider {
     public Vault load(final Session<?> session, final Path id, final VaultVersion metadata, final VaultCredentials passphrase) throws BackgroundException {
         try {
             final UUID vaultId = UUID.fromString(id.getName());
-            final String vaultMetadataFile = new VaultResourceApi(HubSession.coerce(session).getClient()).apiVaultsVaultIdUvfVaultUvfGet(vaultId);
             // Find storage configuration in vault metadata
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             final VaultServiceImpl vaultService = new VaultServiceImpl(HubSession.coerce(session));
             final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, HubSession.coerce(session).getUserKeys(setup));
             log.debug("Retrieved vault access token for vault {}", vaultId);
-            final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vaultMetadataFile);
-            log.debug("Decrypted vault metadata {} for vault {}", vaultMetadataFile, vaultId);
+            final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
+                    vaultService.getVaultMetadata(vaultId), new HubVaultKeys(accessToken.key()));
+            final UVFMetadataPayload vaultMetadata = UVFMetadataPayload.fromJson(
+                    new String(vaultMetadataProvider.decrypt(), StandardCharsets.US_ASCII), UVFMetadataPayload.class);
+            log.debug("Decrypted vault metadata {} for vault {}", vaultMetadata, vaultId);
             final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
             log.debug("Determined storage location {} for vault {}", location, vaultId);
@@ -282,8 +285,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             log.debug("Connected to {}", storage);
             final HubUVFVault vault = new HubUVFVault(storage, bucket);
             try {
-                vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
-                        new HubVaultKeys(accessToken.key())));
+                vault.load(session, vaultMetadataProvider);
             }
             catch(BackgroundException e) {
                 storage.close();
@@ -291,7 +293,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             }
             return vault;
         }
-        catch(SecurityFailure e) {
+        catch(SecurityFailure | JsonProcessingException e) {
             throw new VaultException(e.getMessage(), e);
         }
         catch(ApiException e) {

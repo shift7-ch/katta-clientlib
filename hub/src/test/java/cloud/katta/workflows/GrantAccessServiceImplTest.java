@@ -7,19 +7,20 @@ package cloud.katta.workflows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.UUID;
 
-import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataAutomaticAccessGrantDto;
-import cloud.katta.workflows.exceptions.AccessException;
-import cloud.katta.workflows.exceptions.SecurityFailure;
+import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
+import com.nimbusds.jose.JWEObjectJSON;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -35,7 +36,7 @@ class GrantAccessServiceImplTest {
             "true,2,2,1",   // maxWotDepth == bobTrustLevel -> 1 upload
             "true,1,2,0",   // maxWotDepth < bobTrustLevel -> no upload
     })
-    void testGrantAccess(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws ApiException, AccessException, SecurityFailure {
+    void testGrantAccess(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws Exception {
         final VaultResourceApi vaults = mock(VaultResourceApi.class);
         final VaultService vaultServiceMock = mock(VaultService.class);
         final WoTService wotServiceMock = mock(WoTService.class);
@@ -48,10 +49,14 @@ class GrantAccessServiceImplTest {
                 .ecdhPublicKey(bobKeys.encodedEcdhPublicKey())
                 .ecdsaPublicKey(bobKeys.encodedEcdsaPublicKey());
 
-        when(vaults.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId).uvfMetadataFile("m"));
+        when(vaults.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
         when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
-        when(vaultServiceMock.getVaultAccessToken(vaultId, aliceKeys)).thenReturn(new UVFAccessTokenPayload());
-        when(vaultServiceMock.decryptVaultMetadata(any(), any())).thenReturn(new UVFMetadataPayload().withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)));
+        final HubVaultKeys vaultKeys = HubVaultKeys.create();
+        when(vaultServiceMock.getVaultAccessToken(vaultId, aliceKeys)).thenReturn(new UVFAccessTokenPayload(vaultKeys.memberKey()));
+        when(vaultServiceMock.getVaultMetadata(vaultId)).thenReturn(
+                JWEObjectJSON.parse(new String(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
+                        .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)),
+                        "apiUrl", vaultId, vaultKeys.serialize()).encrypt(), StandardCharsets.US_ASCII)));
         when(wotServiceMock.getTrustLevelsPerUserId(aliceKeys)).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 
         final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, vaultServiceMock, wotServiceMock);
