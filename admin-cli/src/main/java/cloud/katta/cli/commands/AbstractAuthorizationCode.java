@@ -4,9 +4,10 @@
 
 package cloud.katta.cli.commands;
 
+import ch.cyberduck.core.Factory;
+
 import org.apache.commons.lang3.StringUtils;
 
-import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -69,19 +70,35 @@ public class AbstractAuthorizationCode {
                     .authorizationCodeGrant(URI.create(authUrl))
                     .authorize(HttpClient.newHttpClient(), uri -> {
                         System.out.println("Please login on " + uri);
-                        if(Desktop.isDesktopSupported()) {
-                            try {
-                                Desktop.getDesktop().browse(uri);
-                            }
-                            catch(IOException e) {
-                                // Ignore
-                            }
-                        }
+                        this.open(uri);
                     });
             return extractAccessToken(authResponse);
         }
         else {
             return accessToken;
+        }
+    }
+
+    private boolean open(final URI uri) {
+        String[] command;
+        switch(Factory.Platform.getDefault()) {
+            case mac:
+                command = new String[]{"open", uri.toString()};
+                break;
+            case windows:
+                command = new String[]{"cmd", "/c", "start", uri.toString()};
+                break;
+            case linux:
+                command = new String[]{"xdg-open", uri.toString()};
+                break;
+            default:
+                return false;
+        }
+        try {
+            return new ProcessBuilder(command).start().exitValue() == 0;
+        }
+        catch(IOException e) {
+            return false;
         }
     }
 
