@@ -202,7 +202,7 @@ public class UserKeys implements Destroyable {
      */
     public UVFAccessTokenPayload decryptAccessToken(final String vaultAccessTokenPayload) throws SecurityFailure {
         try {
-            return UVFAccessTokenPayload.fromJson(JWE.decryptEcdhEs(vaultAccessTokenPayload, this.ecdhKeyPair().getPrivate()).toString(), UVFAccessTokenPayload.class);
+            return UVFAccessTokenPayload.fromJSON(JWE.decryptEcdhEs(vaultAccessTokenPayload, this.ecdhKeyPair().getPrivate()).toString(), UVFAccessTokenPayload.class);
         }
         catch(JOSEException | ParseException | JsonProcessingException e) {
             throw new SecurityFailure(e);

@@ -22,11 +22,11 @@ public abstract class JWEPayload {
         mapper.registerModule(new JsonNullableModule());
     }
 
-    public static <T extends JWEPayload> T fromJson(final byte[] jwe, final Class<T> valueType) throws JsonProcessingException {
-        return fromJson(new String(jwe, StandardCharsets.UTF_8), valueType);
+    public static <T extends JWEPayload> T fromJSON(final byte[] jwe, final Class<T> valueType) throws JsonProcessingException {
+        return fromJSON(new String(jwe, StandardCharsets.UTF_8), valueType);
     }
 
-    public static <T extends JWEPayload> T fromJson(final String jwe, final Class<T> valueType) throws JsonProcessingException {
+    public static <T extends JWEPayload> T fromJSON(final String jwe, final Class<T> valueType) throws JsonProcessingException {
         return mapper.readValue(jwe, valueType);
     }
 
