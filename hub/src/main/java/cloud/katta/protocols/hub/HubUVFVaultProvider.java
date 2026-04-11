@@ -63,7 +63,6 @@ import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.STSChainedAssumeRoleRequestInterceptor;
 import cloud.katta.workflows.VaultServiceImpl;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class HubUVFVaultProvider implements VaultProvider {
     private static final Logger log = LogManager.getLogger(HubUVFVaultProvider.class);
@@ -214,8 +213,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             log.debug("Retrieved vault access token for vault {}", vaultId);
             final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
                     vaultService.getVaultMetadata(vaultId), new HubVaultKeys(accessToken.key()));
-            final UVFMetadataPayload vaultMetadata = UVFMetadataPayload.fromJson(
-                    new String(vaultMetadataProvider.decrypt(), StandardCharsets.US_ASCII), UVFMetadataPayload.class);
+            final UVFMetadataPayload vaultMetadata = vaultMetadataProvider.getPayload();
             log.debug("Decrypted vault metadata {} for vault {}", vaultMetadata, vaultId);
             final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
@@ -293,7 +291,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             }
             return vault;
         }
-        catch(SecurityFailure | JsonProcessingException e) {
+        catch(SecurityFailure e) {
             throw new VaultException(e.getMessage(), e);
         }
         catch(ApiException e) {
