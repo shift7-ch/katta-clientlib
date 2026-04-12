@@ -29,11 +29,12 @@ public interface VaultService {
     UVFAccessTokenPayload getVaultAccessToken(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
+     * Retrieve JSON Web Encryption (JWE) object containing the metadata of the vault.
      *
      * @param vaultId Vault ID
-     * @return Vault metadata payload as key value JSON
-     * @throws ApiException    Error retrieving vault.uvf file from the server
-     * @throws SecurityFailure Failure parsing vault.uvf file
+     * @return Encrypted vault.uvf JWE
+     * @throws ApiException    If an error occurs while retrieving the vault metadata from the server.
+     * @throws SecurityFailure If there is a failure related to security, such as decryption errors.
      */
     JWEObjectJSON getVaultMetadata(UUID vaultId) throws ApiException, SecurityFailure;
 }
