@@ -34,7 +34,7 @@ public interface VaultService {
      * @param vaultId Vault ID
      * @return Encrypted vault.uvf JWE
      * @throws ApiException    If an error occurs while retrieving the vault metadata from the server.
-     * @throws SecurityFailure If there is a failure related to security, such as decryption errors.
+     * @throws SecurityFailure If the returned JWE metadata cannot be parsed.
      */
     JWEObjectJSON getVaultMetadata(UUID vaultId) throws ApiException, SecurityFailure;
 }
