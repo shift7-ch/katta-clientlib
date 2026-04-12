@@ -26,6 +26,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider {
 
     private static final String UVF_SPEC_VERSION_KEY_PARAM = "uvf.spec.version";
+    private static final String UVF_VAULT_METADATA_ORIGIN_HEADER = "cloud.katta.origin";
 
     /**
      *
@@ -39,7 +40,8 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
         this(new JWEObjectJSON(
                 new JWEHeader.Builder(EncryptionMethod.A256GCM)
                         // kid goes into recipient-specific header
-                        .customParam("cloud.katta.origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
+                        .customParam(UVF_VAULT_METADATA_ORIGIN_HEADER, URI.create(String.format("%s/vaults/%s/uvf/vault.uvf",
+                                apiURL, vaultId.toString())).normalize().toString())
                         .jwkURL(URI.create("jwks.json"))
                         .contentType("json")
                         .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
