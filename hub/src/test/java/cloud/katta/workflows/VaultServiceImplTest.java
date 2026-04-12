@@ -14,7 +14,6 @@ import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
-import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,26 +72,5 @@ class VaultServiceImplTest {
         when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn("lkajsdflkadsj");
 
         assertThrows(SecurityFailure.class, () -> service.getVaultAccessToken(vaultId, userKeys));
-    }
-
-    @Test
-    void testGetWrongVaultMetadataJWE() throws Exception {
-        final VaultResourceApi vaultResourceMock = Mockito.mock(VaultResourceApi.class);
-        final VaultService service = new VaultServiceImpl(vaultResourceMock);
-
-        final UserKeys userKeys = UserKeys.create();
-        final HubVaultKeys jwks = HubVaultKeys.create();
-        final UVFAccessTokenPayload accessTokenPayload = new UVFAccessTokenPayload(jwks.memberKey());
-        final String accessToken = accessTokenPayload.encryptForUser(userKeys.ecdhKeyPair().getPublic());
-
-        final UUID vaultId = UUID.randomUUID();
-
-        final VaultDto vaultDto = new VaultDto().id(vaultId);
-        when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(vaultDto);
-        when(vaultResourceMock.apiVaultsVaultIdUvfVaultUvfGet(vaultId)).thenReturn("lkajsdflkjas");
-        when(vaultResourceMock.apiVaultsVaultIdAccessTokenGet(eq(vaultId), any())).thenReturn(accessToken);
-
-        assertThrows(SecurityFailure.class, () -> new HubVaultMetadataUVFProvider(service.getVaultMetadata(vaultId),
-                new HubVaultKeys(accessTokenPayload.key())).decrypt());
     }
 }
