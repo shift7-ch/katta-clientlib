@@ -6,7 +6,6 @@ package cloud.katta.crypto;
 
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,10 +19,6 @@ public abstract class JWEPayload {
 
     static {
         mapper.registerModule(new JsonNullableModule());
-    }
-
-    public static <T extends JWEPayload> T fromJSON(final byte[] jwe, final Class<T> valueType) throws JsonProcessingException {
-        return fromJSON(new String(jwe, StandardCharsets.UTF_8), valueType);
     }
 
     public static <T extends JWEPayload> T fromJSON(final String jwe, final Class<T> valueType) throws JsonProcessingException {
