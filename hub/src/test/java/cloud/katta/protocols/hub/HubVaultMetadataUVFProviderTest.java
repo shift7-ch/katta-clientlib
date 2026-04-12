@@ -6,7 +6,6 @@ package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.cryptomator.impl.uvf.UVFVault;
-import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DisabledX509TrustManager;
@@ -42,8 +41,6 @@ class HubVaultMetadataUVFProviderTest {
 
     @Test
     void testEncryptDecrypt() throws Exception {
-        final byte[] rawMasterKey = new byte[32];
-        FastSecureRandomProvider.get().provide().nextBytes(rawMasterKey);
         final HashMap<String, String> keys = new HashMap<String, String>() {{
             put("key01", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
             put("key02", Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8)));
