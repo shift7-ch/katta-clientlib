@@ -23,7 +23,7 @@ public interface VaultService {
      * @param vaultId  Vault ID
      * @param userKeys EC key pair
      * @return User-specific access token
-     * @throws ApiException    Error accessing retrieving the vault key, encrypted for the current user, from the server
+     * @throws ApiException    Error retrieving the vault key, encrypted for the current user, from the server
      * @throws SecurityFailure Decryption failure
      */
     UVFAccessTokenPayload getVaultAccessToken(UUID vaultId, UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
@@ -32,7 +32,7 @@ public interface VaultService {
      *
      * @param vaultId Vault ID
      * @return Vault metadata payload as key value JSON
-     * @throws ApiException    Error accessing vault.uvf file from the server
+     * @throws ApiException    Error retrieving vault.uvf file from the server
      * @throws SecurityFailure Failure parsing vault.uvf file
      */
     JWEObjectJSON getVaultMetadata(UUID vaultId) throws ApiException, SecurityFailure;
