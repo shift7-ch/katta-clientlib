@@ -213,7 +213,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
                     vaultService.getVaultMetadata(vaultId), new HubVaultKeys(accessToken.key()));
             final UVFMetadataPayload vaultMetadata = vaultMetadataProvider.getPayload();
-            log.debug("Decrypted vault metadata {} for vault {}", vaultMetadata, vaultId);
+            log.debug("Decrypted vault metadata for vault {}", vaultId);
             final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
             log.debug("Determined storage location {} for vault {}", location, vaultId);
