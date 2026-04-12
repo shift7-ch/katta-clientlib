@@ -7,7 +7,6 @@ package cloud.katta.workflows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -54,9 +53,9 @@ class GrantAccessServiceImplTest {
         final HubVaultKeys vaultKeys = HubVaultKeys.create();
         when(vaultServiceMock.getVaultAccessToken(vaultId, aliceKeys)).thenReturn(new UVFAccessTokenPayload(vaultKeys.memberKey()));
         when(vaultServiceMock.getVaultMetadata(vaultId)).thenReturn(
-                JWEObjectJSON.parse(new String(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
+                JWEObjectJSON.parse(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
                         .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)),
-                        "apiUrl", vaultId, vaultKeys.serialize()).encrypt(), StandardCharsets.US_ASCII)));
+                        "apiUrl", vaultId, vaultKeys.serialize()).encrypt()));
         when(wotServiceMock.getTrustLevelsPerUserId(aliceKeys)).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 
         final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, vaultServiceMock, wotServiceMock);

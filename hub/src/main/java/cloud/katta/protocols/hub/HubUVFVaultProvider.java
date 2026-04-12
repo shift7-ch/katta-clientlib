@@ -42,7 +42,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -168,7 +167,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                         .description(null)
                         .archived(false)
                         .creationTime(DateTime.now())
-                        .uvfMetadataFile(new String(vaultMetadataProvider.encrypt(), StandardCharsets.US_ASCII))
+                        .uvfMetadataFile(vaultMetadataProvider.encrypt())
                         .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
                 // Create vault in Hub
                 final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());

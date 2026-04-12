@@ -72,8 +72,7 @@ class HubVaultMetadataUVFProviderTest {
 
         final UUID vaultId = UUID.randomUUID();
 
-        final String encrypted = new String(new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId, jwks.serialize()).encrypt(),
-                StandardCharsets.US_ASCII);
+        final String encrypted = new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId, jwks.serialize()).encrypt();
 
         // decrypt with memberKey
         {
