@@ -43,6 +43,7 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
                         .customParam(UVF_VAULT_METADATA_ORIGIN_HEADER, URI.create(String.format("%s/vaults/%s/uvf/vault.uvf",
                                 apiURL, vaultId.toString())).normalize().toString())
                         .jwkURL(URI.create("jwks.json"))
+                        // Omit an "application/" prefix of a media type value in a "cty" Header Parameter
                         .contentType("json")
                         .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
                         .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
