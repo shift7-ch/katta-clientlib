@@ -26,6 +26,10 @@ public abstract class JWEPayload {
     }
 
     public Map<String, Object> toMap() throws JsonProcessingException {
-        return mapper.readValue(mapper.writeValueAsString(this), HashMap.class);
+        return mapper.readValue(this.toJSON(), HashMap.class);
+    }
+
+    public String toJSON() throws JsonProcessingException {
+        return mapper.writeValueAsString(this);
     }
 }
