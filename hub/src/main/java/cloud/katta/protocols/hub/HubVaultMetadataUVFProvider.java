@@ -9,7 +9,7 @@ import ch.cyberduck.core.vault.VaultException;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import cloud.katta.crypto.uvf.HubVaultKeys;
@@ -35,7 +35,7 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
      * @param keys    Member key and recovery key
      * @see <a href="https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header">UVF Specification of JWE Header</a>
      */
-    public HubVaultMetadataUVFProvider(final UVFMetadataPayload payload, final String apiURL, final UUID vaultId, final JWKSet keys) {
+    public HubVaultMetadataUVFProvider(final UVFMetadataPayload payload, final String apiURL, final UUID vaultId, final JWKSet keys) throws SecurityFailure {
         this(new JWEObjectJSON(
                 new JWEHeader.Builder(EncryptionMethod.A256GCM)
                         // kid goes into recipient-specific header
@@ -45,19 +45,7 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
                         .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
                         .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
                         .build(), new Payload(
-                new HashMap<String, Object>() {
-                    {
-                        put("fileFormat", payload.fileFormat());
-                        put("nameFormat", payload.nameFormat());
-                        put("seeds", payload.seeds());
-                        put("initialSeed", payload.initialSeed());
-                        put("latestSeed", payload.latestSeed());
-                        put("kdf", payload.kdf());
-                        put("kdfSalt", payload.kdfSalt());
-                        put("org.cryptomator.automaticAccessGrant", payload.automaticAccessGrant());
-                        put("cloud.katta.storage", payload.storage());
-                    }
-                }
+                toMap(payload)
         )), keys);
     }
 
@@ -77,6 +65,15 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
 
     public HubVaultMetadataUVFProvider(final JWEObjectJSON vaultMetadata, final JWKSet keys) {
         super(vaultMetadata, keys);
+    }
+
+    private static Map<String, Object> toMap(final UVFMetadataPayload payload) throws SecurityFailure {
+        try {
+            return payload.toJSONObject();
+        }
+        catch(JsonProcessingException e) {
+            throw new SecurityFailure(e);
+        }
     }
 
     public UVFMetadataPayload getPayload() throws SecurityFailure {
