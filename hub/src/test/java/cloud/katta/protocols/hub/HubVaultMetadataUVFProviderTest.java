@@ -49,8 +49,8 @@ class HubVaultMetadataUVFProviderTest {
                 .withFileFormat("AES-256-GCM-32k")
                 .withNameFormat("AES-256-SIV")
                 .withSeeds(keys)
-                .withLatestSeed("key0")
-                .withinitialSeed("key1")
+                .withLatestSeed("key01")
+                .withinitialSeed("key02")
                 .withKdf("1STEP-HMAC-SHA512")
                 .withStorage(
                         new VaultMetadataStorageDto()
