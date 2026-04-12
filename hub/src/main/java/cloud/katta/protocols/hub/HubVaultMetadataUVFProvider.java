@@ -47,9 +47,7 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
                         .contentType("json")
                         .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
                         .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
-                        .build(), new Payload(
-                toMap(payload)
-        )), keys);
+                        .build(), new Payload(toMap(payload))), keys);
     }
 
     /**
