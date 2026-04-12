@@ -31,7 +31,7 @@ class JWETest {
         final Map<String, Object> orig = Collections.singletonMap("hello", "world");
         final String jwe = JWE.ecdhEsEncrypt(new JWEPayload() {
             @Override
-            public Map<String, Object> toJSONObject() {
+            public Map<String, Object> toMap() {
                 return orig;
             }
         }, "newkids", keyPair.getPublic());
@@ -44,7 +44,7 @@ class JWETest {
         final String setupCode = "topsecret";
         final JWEPayload payload = new JWEPayload() {
             @Override
-            public Map<String, Object> toJSONObject() {
+            public Map<String, Object> toMap() {
                 return Collections.singletonMap("hello", "world");
             }
         };
@@ -60,7 +60,7 @@ class JWETest {
         FastSecureRandomProvider.get().provide().nextBytes(kek);
         final String jwe = JWE.a256kwEncrypt(new JWEPayload() {
             @Override
-            public Map<String, Object> toJSONObject() {
+            public Map<String, Object> toMap() {
                 return Collections.singletonMap("hello", "world");
             }
         }, "kiddy", kek);

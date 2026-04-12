@@ -25,7 +25,7 @@ public abstract class JWEPayload {
         return mapper.readValue(jwe, valueType);
     }
 
-    public Map<String, Object> toJSONObject() throws JsonProcessingException {
+    public Map<String, Object> toMap() throws JsonProcessingException {
         return mapper.readValue(mapper.writeValueAsString(this), HashMap.class);
     }
 }

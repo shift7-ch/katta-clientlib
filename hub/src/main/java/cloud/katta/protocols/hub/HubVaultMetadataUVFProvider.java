@@ -70,7 +70,7 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
 
     private static Map<String, Object> toMap(final UVFMetadataPayload payload) throws SecurityFailure {
         try {
-            return payload.toJSONObject();
+            return payload.toMap();
         }
         catch(JsonProcessingException e) {
             throw new SecurityFailure(e);

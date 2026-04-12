@@ -71,7 +71,7 @@ public class JWE {
                 .agreementPartyVInfo(Base64URL.encode(apv))
                 .build();
 
-        final JWEObject jwe = new JWEObject(header, new Payload(payload.toJSONObject()));
+        final JWEObject jwe = new JWEObject(header, new Payload(payload.toMap()));
         jwe.encrypt(jweEncrypter);
         return jwe.serialize();
     }
@@ -106,7 +106,7 @@ public class JWE {
                 .agreementPartyVInfo(Base64URL.encode(apv))
                 .build();
 
-        final JWEObject jwe = new JWEObject(header, new Payload(payload.toJSONObject()));
+        final JWEObject jwe = new JWEObject(header, new Payload(payload.toMap()));
         jwe.encrypt(jweEncrypter);
         return jwe.serialize();
     }
@@ -139,7 +139,7 @@ public class JWE {
                 .agreementPartyUInfo(Base64URL.encode(apu))
                 .agreementPartyVInfo(Base64URL.encode(apv))
                 .build();
-        final JWEObject jwe = new JWEObject(header, new Payload(payload.toJSONObject()));
+        final JWEObject jwe = new JWEObject(header, new Payload(payload.toMap()));
         jwe.encrypt(jweEncrypter);
         return jwe.serialize();
     }
