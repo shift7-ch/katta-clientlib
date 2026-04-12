@@ -76,6 +76,11 @@ public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider 
         }
     }
 
+    /**
+     * Decrypt and deserialize the payload.
+     *
+     * @throws SecurityFailure Failure during decryption or deserialization.
+     */
     public UVFMetadataPayload getPayload() throws SecurityFailure {
         try {
             return UVFMetadataPayload.fromJSON(this.decrypt(), UVFMetadataPayload.class);
