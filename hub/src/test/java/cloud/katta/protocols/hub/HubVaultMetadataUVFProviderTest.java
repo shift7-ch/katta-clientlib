@@ -76,7 +76,7 @@ class HubVaultMetadataUVFProviderTest {
 
         // decrypt with memberKey
         {
-            final UVFMetadataPayload decrypted = new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId,
+            final UVFMetadataPayload decrypted = new HubVaultMetadataUVFProvider(JWEObjectJSON.parse(encrypted),
                     new JWKSet(memberKey)).getPayload();
             assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId),
                     JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
@@ -85,7 +85,7 @@ class HubVaultMetadataUVFProviderTest {
 
         // decrypt with recoveryKey
         {
-            final UVFMetadataPayload decrypted = new HubVaultMetadataUVFProvider(orig, "https://example.com/gateway/api/", vaultId,
+            final UVFMetadataPayload decrypted = new HubVaultMetadataUVFProvider(JWEObjectJSON.parse(encrypted),
                     new JWKSet(recoveryKey)).getPayload();
             assertEquals(String.format("https://example.com/gateway/api/vaults/%s/uvf/vault.uvf", vaultId),
                     JWEObjectJSON.parse(encrypted).getHeader().getCustomParams().get("cloud.katta.origin"));
