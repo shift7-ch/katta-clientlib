@@ -6,7 +6,6 @@ package cloud.katta.crypto.uvf;
 
 
 import org.cryptomator.cryptolib.common.P384KeyPair;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import javax.annotation.Nullable;
 import java.security.interfaces.ECPublicKey;
@@ -18,7 +17,6 @@ import cloud.katta.crypto.JWEPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 
@@ -45,12 +43,6 @@ public class UVFAccessTokenPayload extends JWEPayload {
     @JsonProperty("recoveryKey")
     @Nullable
     String recoveryKey;
-
-    public static UVFAccessTokenPayload fromJWE(final String jwe) throws JsonProcessingException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
-        return mapper.readValue(jwe, UVFAccessTokenPayload.class);
-    }
 
     public UVFAccessTokenPayload() {
         this.memberKey = null;

@@ -42,7 +42,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -160,7 +159,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
                 final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
-                        payload.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId), keys);
+                        payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize());
                 log.debug("Create vault with ID {}", vaultId);
                 final VaultDto vaultDto = new VaultDto()
                         .id(vaultId)
@@ -168,7 +167,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                         .description(null)
                         .archived(false)
                         .creationTime(DateTime.now())
-                        .uvfMetadataFile(new String(vaultMetadataProvider.encrypt(), StandardCharsets.US_ASCII))
+                        .uvfMetadataFile(vaultMetadataProvider.encrypt())
                         .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
                 // Create vault in Hub
                 final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());
@@ -206,14 +205,15 @@ public class HubUVFVaultProvider implements VaultProvider {
     public Vault load(final Session<?> session, final Path id, final VaultVersion metadata, final VaultCredentials passphrase) throws BackgroundException {
         try {
             final UUID vaultId = UUID.fromString(id.getName());
-            final String vaultMetadataFile = new VaultResourceApi(HubSession.coerce(session).getClient()).apiVaultsVaultIdUvfVaultUvfGet(vaultId);
             // Find storage configuration in vault metadata
             final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
             final VaultServiceImpl vaultService = new VaultServiceImpl(HubSession.coerce(session));
             final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, HubSession.coerce(session).getUserKeys(setup));
             log.debug("Retrieved vault access token for vault {}", vaultId);
-            final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vaultMetadataFile);
-            log.debug("Decrypted vault metadata {} for vault {}", vaultMetadataFile, vaultId);
+            final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
+                    vaultService.getVaultMetadata(vaultId), new HubVaultKeys(accessToken.key()));
+            final UVFMetadataPayload vaultMetadata = vaultMetadataProvider.getPayload();
+            log.debug("Decrypted vault metadata for vault {}", vaultId);
             final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
             final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
             log.debug("Determined storage location {} for vault {}", location, vaultId);
@@ -282,8 +282,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             log.debug("Connected to {}", storage);
             final HubUVFVault vault = new HubUVFVault(storage, bucket);
             try {
-                vault.load(session, new HubVaultMetadataUVFProvider(vaultMetadata.toJSON(HubSession.coerce(session).getClient().getBasePath(), vaultId),
-                        new HubVaultKeys(accessToken.key())));
+                vault.load(session, vaultMetadataProvider);
             }
             catch(BackgroundException e) {
                 storage.close();

@@ -4,6 +4,8 @@
 
 package cloud.katta.crypto;
 
+import org.openapitools.jackson.nullable.JsonNullableModule;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,9 +15,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class JWEPayload {
 
-    private static final ObjectMapper objectMapper = new JSON().getMapper();
+    private static final ObjectMapper mapper = new JSON().getMapper();
 
-    public Map<String, Object> toJSONObject() throws JsonProcessingException {
-        return objectMapper.readValue(objectMapper.writeValueAsString(this), HashMap.class);
+    static {
+        mapper.registerModule(new JsonNullableModule());
+    }
+
+    public static <T extends JWEPayload> T fromJSON(final String jwe, final Class<T> valueType) throws JsonProcessingException {
+        return mapper.readValue(jwe, valueType);
+    }
+
+    public Map<String, Object> toMap() throws JsonProcessingException {
+        return mapper.readValue(this.toJSON(), HashMap.class);
+    }
+
+    public String toJSON() throws JsonProcessingException {
+        return mapper.writeValueAsString(this);
     }
 }

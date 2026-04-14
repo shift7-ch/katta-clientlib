@@ -8,33 +8,15 @@ package cloud.katta.crypto.uvf;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 
-import org.openapitools.jackson.nullable.JsonNullableModule;
-
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import cloud.katta.crypto.JWEPayload;
-import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEHeader;
-import com.nimbusds.jose.JWEObjectJSON;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.MultiDecrypter;
-import com.nimbusds.jose.crypto.MultiEncrypter;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
 
 /**
  * Represents payload of <a href="https://github.com/encryption-alliance/unified-vault-format/blob/develop/vault%20metadata/README.md"><code>vault.uvf</code> metadata</a>.
@@ -53,7 +35,6 @@ import com.nimbusds.jose.jwk.JWKSet;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UVFMetadataPayload extends JWEPayload {
-    private static final String UVF_SPEC_VERSION_KEY_PARAM = "uvf.spec.version";
 
     private static final String UVF_FILEFORMAT = "AES-256-GCM-32k";
     private static final String UVF_NAME_FORMAT = "AES-SIV-512-B64URL";
@@ -155,7 +136,6 @@ public class UVFMetadataPayload extends JWEPayload {
         return this;
     }
 
-
     public String kdf() {
         return kdf;
     }
@@ -190,75 +170,6 @@ public class UVFMetadataPayload extends JWEPayload {
     public UVFMetadataPayload withStorage(final VaultMetadataStorageDto backend) {
         this.storage = backend;
         return this;
-    }
-
-    /**
-     * Decrypt for recipient.
-     *
-     * @param jwe The jwe
-     * @param jwk The jwk
-     */
-    public static UVFMetadataPayload decrypt(final String jwe, final JWK jwk) throws SecurityFailure {
-        try {
-            final JWEObjectJSON jweObject = JWEObjectJSON.parse(jwe);
-            // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.11
-            // Recipients MAY consider the JWS to be invalid if the critical
-            // list contains any Header Parameter names defined by this
-            // specification or [JWA] for use with JWS or if any other constraints on its use are violated.
-            final Object uvfSpecVersion = jweObject.getHeader().getCustomParams().get(UVF_SPEC_VERSION_KEY_PARAM);
-            if(null == uvfSpecVersion || !uvfSpecVersion.equals(1L)) {
-                throw new SecurityFailure(String.format("Unexpected value for critical header %s: found %s, expected \"1\"", UVF_SPEC_VERSION_KEY_PARAM, uvfSpecVersion));
-            }
-            jweObject.decrypt(new MultiDecrypter(jwk, Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM)));
-            final Payload payload = jweObject.getPayload();
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JsonNullableModule());
-            return mapper.readValue(payload.toString(), UVFMetadataPayload.class);
-        }
-        catch(ParseException | JOSEException | JsonProcessingException e) {
-            throw new SecurityFailure(e);
-        }
-    }
-
-    public String encrypt(final String apiURL, final UUID vaultId, final JWKSet keys) throws JOSEException {
-        final JWEObjectJSON json = this.toJSON(apiURL, vaultId);
-        json.encrypt(new MultiEncrypter(keys));
-        return json.serializeGeneral();
-    }
-
-    /**
-     *
-     * @param apiURL  api URL that goes into custom header param "cloud.katta.origin"
-     * @param vaultId the vault ID that goes into custom header param "cloud.katta.origin"
-     * @see <a href="https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header">UVF Specification of JWE Header</a>
-     */
-    public JWEObjectJSON toJSON(final String apiURL, final UUID vaultId) {
-        final JWEHeader header = new JWEHeader.Builder(EncryptionMethod.A256GCM)
-                // kid goes into recipient-specific header
-                .customParam("cloud.katta.origin", URI.create(String.format("%s/vaults/%s/uvf/vault.uvf", apiURL, vaultId.toString())).normalize().toString())
-                .jwkURL(URI.create("jwks.json"))
-                .contentType("json")
-                .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
-                .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
-                .build();
-        final Payload payload = new Payload(new HashMap<String, Object>() {{
-            put("fileFormat", fileFormat);
-            put("nameFormat", nameFormat);
-            put("seeds", seeds);
-            put("initialSeed", initialSeed);
-            put("latestSeed", latestSeed);
-            put("kdf", kdf);
-            put("kdfSalt", kdfSalt);
-            put("org.cryptomator.automaticAccessGrant", automaticAccessGrant);
-            put("cloud.katta.storage", storage);
-        }});
-        return new JWEObjectJSON(header, payload);
-    }
-
-    public String toJSON() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
-        return mapper.writeValueAsString(this);
     }
 
     @Override

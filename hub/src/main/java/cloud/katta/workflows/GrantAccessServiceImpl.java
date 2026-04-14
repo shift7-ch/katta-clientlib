@@ -16,11 +16,12 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
-import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.protocols.hub.HubSession;
+import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
@@ -50,9 +51,9 @@ public class GrantAccessServiceImpl implements GrantAccessService {
 
     @Override
     public void grantAccessToUsersRequiringAccessGrant(final UUID vaultId, final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
-        final VaultDto vault = vaultResourceApi.apiVaultsVaultIdGet(vaultId);
         final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, userKeys);
-        final UVFMetadataPayload vaultMetadata = vaultService.decryptVaultMetadata(accessToken, vault.getUvfMetadataFile());
+        final UVFMetadataPayload vaultMetadata = new HubVaultMetadataUVFProvider(vaultService.getVaultMetadata(vaultId),
+                new HubVaultKeys(accessToken.key())).getPayload();
         if(vaultMetadata.automaticAccessGrant() == null || !ofNullable(vaultMetadata.automaticAccessGrant().getEnabled()).orElse(false)) {
             log.debug("Ignoring vault {} - automatic access grant disabled", vaultId);
             return;
