@@ -20,7 +20,7 @@ import picocli.CommandLine;
 
 public class AbstractAuthorizationCode {
 
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.default.katta.cloud/\"", required = false)
+    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.default.katta.cloud/\"", required = true)
     protected String hubUrl;
 
     @CommandLine.Option(names = {"--tokenUrl"}, description = "Keycloak token endpoint URL. Fetched from --hubUrl if not provided.", required = false)
