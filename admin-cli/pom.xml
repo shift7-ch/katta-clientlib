@@ -211,7 +211,6 @@
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
-                        <extensions>true</extensions>
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
@@ -234,7 +233,6 @@
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
-                        <extensions>true</extensions>
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
@@ -254,24 +252,27 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
-                            <argLine>@{argLine}</argLine>
+                            <argLine>
+                                -agentlib:native-image-agent=config-output-dir=${project.build.directory}/native/agent-output/integration-test,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
+                            </argLine>
                         </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
+                        <extensions>true</extensions>
                         <executions>
                             <execution>
                                 <id>build-native</id>
                                 <goals>
                                     <goal>compile-no-fork</goal>
                                 </goals>
-                                <phase>package</phase>
+                                <phase>verify</phase>
                             </execution>
                             <execution>
                                 <id>metadata-copy</id>
-                                <phase>test</phase>
+                                <phase>post-integration-test</phase>
                                 <goals>
                                     <goal>metadata-copy</goal>
                                 </goals>
