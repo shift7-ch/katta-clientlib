@@ -61,8 +61,16 @@ public class AbstractAuthorizationCode {
                         throw new IOException("Failed to fetch config from %s/api/config. HTTP status: %d".formatted(hubUrl, response.statusCode()));
                     }
                     var rootNode = new ObjectMapper().reader().readTree(response.body());
-                    this.tokenUrl = rootNode.get("keycloakTokenEndpoint").asText();
-                    this.authUrl = rootNode.get("keycloakAuthEndpoint").asText();
+                    var tokenEndpointNode = rootNode.get("keycloakTokenEndpoint");
+                    if(null == tokenEndpointNode || tokenEndpointNode.isNull()) {
+                        throw new IOException("Missing 'keycloakTokenEndpoint' in response from %s/api/config".formatted(hubUrl));
+                    }
+                    var authEndpointNode = rootNode.get("keycloakAuthEndpoint");
+                    if(null == authEndpointNode || authEndpointNode.isNull()) {
+                        throw new IOException("Missing 'keycloakAuthEndpoint' in response from %s/api/config".formatted(hubUrl));
+                    }
+                    this.tokenUrl = tokenEndpointNode.asText();
+                    this.authUrl = authEndpointNode.asText();
                 }
             }
             var authResponse = TinyOAuth2.client(clientId)
