@@ -26,7 +26,7 @@ class S3StaticStorageProfileTest {
     public void testCall() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
-        final S3StaticStorageProfile cli = new S3StaticStorageProfile(vaultId.toString(), vaultId.toString(), "S3 static", "us-east-1", null,
+        final S3StaticStorageProfile cli = new S3StaticStorageProfile("https://hub.example.com", vaultId.toString(), "S3 static", "us-east-1", null,
                 "https://s3.example.com", "katta-");
         cli.call(api);
 
