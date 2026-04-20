@@ -253,7 +253,7 @@
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <argLine>
-                                -agentlib:native-image-agent=config-output-dir=${project.build.directory}/native/agent-output/integration-test,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
+                                -agentlib:native-image-agent=config-merge-dir=${project.build.directory}/META-INF/native-image,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
                             </argLine>
                         </configuration>
                     </plugin>
@@ -271,13 +271,6 @@
                                 <phase>verify</phase>
                             </execution>
                             <execution>
-                                <id>metadata-copy</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>metadata-copy</goal>
-                                </goals>
-                            </execution>
-                            <execution>
                                 <id>add-reachability-metadata</id>
                                 <goals>
                                     <goal>add-reachability-metadata</goal>
@@ -287,7 +280,12 @@
                         <configuration>
                             <agent>
                                 <enabled>true</enabled>
-                                <defaultMode>standard</defaultMode>
+                                <defaultMode>direct</defaultMode>
+                                <modes>
+                                    <direct>
+                                        config-merge-dir=${project.build.directory}/META-INF/native-image,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
+                                    </direct>
+                                </modes>
                                 <options>
                                     <accessFilterFiles>
                                         <filterFile>${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json</filterFile>
@@ -295,13 +293,6 @@
                                     <builtinCallerFilter>true</builtinCallerFilter>
                                     <builtinHeuristicFilter>true</builtinHeuristicFilter>
                                 </options>
-                                <metadataCopy>
-                                    <merge>true</merge>
-                                    <disabledStages>
-                                        <stage>main</stage>
-                                    </disabledStages>
-                                    <outputDirectory>${project.basedir}/src/main/resources/META-INF/native-image</outputDirectory>
-                                </metadataCopy>
                             </agent>
                             <fallback>false</fallback>
                             <mainClass>cloud.katta.cli.Katta</mainClass>
@@ -312,6 +303,9 @@
                             <metadataRepository>
                                 <enabled>true</enabled>
                             </metadataRepository>
+                            <configFiles>
+                                <configFile>${project.build.directory}/META-INF/native-image</configFile>
+                            </configFiles>
                         </configuration>
                         <dependencies>
                             <dependency>
