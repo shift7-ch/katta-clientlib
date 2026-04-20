@@ -25,7 +25,7 @@ public class Local {
         final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
         if(false) {
             final UUID storageProfileId = UUID.randomUUID();
-            final String[] storageProfileMinIOStsArgs = {
+            final String[] options = {
                     "storageprofile", "minio", "sts",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -41,15 +41,13 @@ public class Local {
                     "--region", region,
                     "--regions", region
             };
-            System.out.println(String.format("katta \"%s\"", String.join("\" \"", storageProfileMinIOStsArgs)));
-            int rc = new CommandLine(new Katta()).execute(
-                    storageProfileMinIOStsArgs
-            );
+            System.out.println(String.format("katta \"%s\"", String.join("\" \"", options)));
+            int rc = new CommandLine(new Katta()).execute(options);
             assertEquals(0, rc);
         }
         if(true) {
             final UUID storageProfileId = UUID.randomUUID();
-            final String[] storageProfileAwsStaticArgs = {
+            final String[] options = {
                     "storageprofile", "s3", "static",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
@@ -62,10 +60,8 @@ public class Local {
                     "--regions", "eu-west-1",
                     "--regions", "eu-west-2",
                     "--regions", "eu-west-3"};
-            System.out.println(String.format("katta \"%s\"", String.join("\" \"", storageProfileAwsStaticArgs)));
-            int rc = new CommandLine(new Katta()).execute(
-                    storageProfileAwsStaticArgs
-            );
+            System.out.println(String.format("katta \"%s\"", String.join("\" \"", options)));
+            int rc = new CommandLine(new Katta()).execute(options);
             assertEquals(0, rc);
         }
     }
