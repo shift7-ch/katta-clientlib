@@ -4,6 +4,7 @@
 
 package cloud.katta.protocols.hub;
 
+import ch.cyberduck.core.Acl;
 import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.ListProgressListener;
 import ch.cyberduck.core.ListService;
@@ -24,9 +25,11 @@ import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
 import java.util.EnumSet;
+import java.util.List;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 
@@ -59,7 +62,18 @@ public class HubVaultListService implements ListService {
                                 new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
                         log.info("Loaded vault {}", vault);
                         registry.add(vault);
-                        vaults.add(vault.getHome());
+                        final Path home = vault.getHome();
+                        try {
+                            final List<MemberDto> members = new VaultResourceApi(session.getClient()).apiVaultsVaultIdMembersGet(vaultDto.getId());
+                            log.debug("Retrieved {} members for vault {}", members.size(), vaultDto.getId());
+                            // Owner of vault
+                            home.attributes().setAcl(new Acl(new Acl.EmailUser(session.getMe().getEmail()), new Acl.Role(Acl.Role.FULL, false)));
+                        }
+                        catch(ApiException e) {
+                            // Not owner but only member
+                            home.attributes().setAcl(new Acl(new Acl.EmailUser(session.getMe().getEmail()), new Acl.Role(Acl.Role.WRITE, false)));
+                        }
+                        vaults.add(home);
                         listener.chunk(directory, vaults);
                     }
                     catch(VaultUnlockCancelException e) {

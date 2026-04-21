@@ -4,7 +4,9 @@
 
 package cloud.katta.protocols.hub;
 
+import ch.cyberduck.core.Acl;
 import ch.cyberduck.core.DescriptiveUrl;
+import ch.cyberduck.core.DirectoryDelimiterPathContainerService;
 import ch.cyberduck.core.PasswordCallback;
 import ch.cyberduck.core.Path;
 import ch.cyberduck.core.exception.BackgroundException;
@@ -36,8 +38,9 @@ public class HubVaultShareFeature implements Share<Void, Void> {
         switch(type) {
             case download:
                 // Only when owner
-                if(file.isDirectory()) {
-                    return file.getParent().isRoot();
+                if(new DirectoryDelimiterPathContainerService().isContainer(file)) {
+                    return file.attributes().getAcl().values().stream()
+                            .anyMatch(roles -> roles.contains(new Acl.Role(Acl.Role.FULL)));
                 }
         }
         return false;
@@ -78,7 +81,7 @@ public class HubVaultShareFeature implements Share<Void, Void> {
     }
 
     @Override
-    public DescriptiveUrl toUploadUrl(final Path file, final Sharee sharee, final Void options, final PasswordCallback callback) throws BackgroundException {
+    public DescriptiveUrl toUploadUrl(final Path file, final Sharee sharee, final Void options, final PasswordCallback callback) {
         return DescriptiveUrl.EMPTY;
     }
 }
