@@ -258,7 +258,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     new VaultCredentials());
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
-            assertFalse(vaults.isEmpty());
+            assertEquals(vaults.length, 1);
             for(Path vault : vaults) {
                 assertNotEquals(Acl.EMPTY, vault.attributes().getAcl());
                 // verify we are owner (FULL) and not only member (WRITE) of the new vault
