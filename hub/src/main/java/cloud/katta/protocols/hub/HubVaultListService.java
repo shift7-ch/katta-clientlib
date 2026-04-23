@@ -70,8 +70,13 @@ public class HubVaultListService implements ListService {
                             home.attributes().setAcl(new Acl(new Acl.EmailUser(session.getMe().getEmail()), new Acl.Role(Acl.Role.FULL, false)));
                         }
                         catch(ApiException e) {
-                            // Not owner but only member
-                            home.attributes().setAcl(new Acl(new Acl.EmailUser(session.getMe().getEmail()), new Acl.Role(Acl.Role.WRITE, false)));
+                            if(new HubExceptionMappingService().map(e) instanceof AccessDeniedException) {
+                                // Not owner but only member
+                                home.attributes().setAcl(new Acl(new Acl.EmailUser(session.getMe().getEmail()), new Acl.Role(Acl.Role.WRITE, false)));
+                            }
+                            else {
+                                throw e;
+                            }
                         }
                         vaults.add(home);
                         listener.chunk(directory, vaults);
