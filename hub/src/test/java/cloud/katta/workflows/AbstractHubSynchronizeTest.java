@@ -261,6 +261,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertFalse(vaults.isEmpty());
             for(Path vault : vaults) {
                 assertNotEquals(Acl.EMPTY, vault.attributes().getAcl());
+                // verify we are owner (FULL) and not only member (WRITE) of the new vault
                 assertTrue(vault.attributes().getAcl().values().stream().anyMatch(roles -> roles.contains(new Acl.Role(Acl.Role.FULL))));
             }
 
