@@ -28,7 +28,7 @@ docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml
 
 For integration tests:
 ```bash
-docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local --env-file hub/src/test/resources/.local.env up  --wait
+docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local --env-file test/src/test/resources/.local.env up  --wait
 docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
 ```
 
@@ -39,7 +39,7 @@ The following diagram shows the docker services:
 ```mermaid
 architecture-beta
     group dockernetwork(internet)[Docker Network]
-    
+
     service miniosetup(server)[MinIO setup] in dockernetwork
     service minio(server)[MinIO] in dockernetwork
     service keycloak(server)[Keycloak] in dockernetwork
