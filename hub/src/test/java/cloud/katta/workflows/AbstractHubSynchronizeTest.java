@@ -76,11 +76,11 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void test01Bootstrapping(final HubTestConfig hubTestConfig) throws Exception {
-        log.info("M01 {}", hubTestConfig);
-        final String profile = hubTestConfig.setup.dockerConfig.profile;
+    void test01Bootstrapping(final HubTestConfig testConfig) throws Exception {
+        log.info("M01 {}", testConfig);
+        final String profile = testConfig.setup.dockerConfig.profile;
         final Properties props = new Properties();
-        props.load(this.getClass().getResourceAsStream(hubTestConfig.setup.dockerConfig.envFile));
+        props.load(this.getClass().getResourceAsStream(testConfig.setup.dockerConfig.envFile));
         final HashMap<String, String> env = props.entrySet().stream().collect(
                 Collectors.toMap(
                         e -> String.valueOf(e.getKey()),
@@ -88,10 +88,10 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         (prev, next) -> next, HashMap::new
                 ));
 
-        final HubSession hubSession = setupConnection(hubTestConfig);
+        final HubSession hubSession = setupConnection(testConfig);
         try {
 
-            final ApiClient adminApiClient = getAdminApiClient(hubTestConfig.setup);
+            final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
 
             final ObjectMapper mapper = new ObjectMapper();
