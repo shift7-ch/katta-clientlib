@@ -4,10 +4,12 @@
 
 package cloud.katta.client.model;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +26,8 @@ class ObjectMapperTest {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
 
-        final StorageProfileS3StaticDto awsStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/hybrid/aws_static/storage_profile.json"), StorageProfileS3StaticDto.class);
+        final StorageProfileS3StaticDto awsStaticProfile = mapper.readValue(this.getClass().getResourceAsStream(
+                "/setup/hybrid/aws_static/storage_profile.json"), StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, awsStaticProfile.getProtocol());
         assertEquals("https", awsStaticProfile.getScheme());
         assertNull(awsStaticProfile.getHostname());
@@ -41,7 +44,8 @@ class ObjectMapperTest {
         mapper.registerModule(new JsonNullableModule());
 
 
-        final StorageProfileS3STSDto awsSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/hybrid/aws_sts/storage_profile.json"), StorageProfileS3STSDto.class);
+        final StorageProfileS3STSDto awsSTSProfile = mapper.readValue(this.getClass().getResourceAsStream(
+                "/setup/hybrid/aws_sts/storage_profile.json"), StorageProfileS3STSDto.class);
         assertEquals("katta-test-", awsSTSProfile.getBucketPrefix());
         assertEquals("eu-west-1", awsSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), awsSTSProfile.getRegions());
@@ -63,8 +67,11 @@ class ObjectMapperTest {
     void testMinioStatic() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
-
-        final StorageProfileS3StaticDto minioStaticProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/local/minio_static/storage_profile.json"), StorageProfileS3StaticDto.class);
+        final String minioStaticJson = IOUtils.toString(this.getClass().getResourceAsStream(
+                        "/setup/local/minio_static/storage_profile.json"), StandardCharsets.UTF_8)
+                .replace("MINIO_HOSTNAME", "minio")
+                .replace("MINIO_PORT", "9000");
+        final StorageProfileS3StaticDto minioStaticProfile = mapper.readValue(minioStaticJson, StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, minioStaticProfile.getProtocol());
         assertEquals("http", minioStaticProfile.getScheme());
         assertEquals("minio", minioStaticProfile.getHostname());
@@ -79,7 +86,11 @@ class ObjectMapperTest {
     void testMinioSTS() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonNullableModule());
-        final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(this.getClass().getResourceAsStream("/setup/local/minio_sts/storage_profile.json"), StorageProfileS3STSDto.class);
+        final String minioSTSJson = IOUtils.toString(this.getClass().getResourceAsStream(
+                        "/setup/local/minio_sts/storage_profile.json"), StandardCharsets.UTF_8)
+                .replace("MINIO_HOSTNAME", "minio")
+                .replace("MINIO_PORT", "9000");
+        final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(minioSTSJson, StorageProfileS3STSDto.class);
         assertEquals("katta-test-", minioSTSProfile.getBucketPrefix());
         assertEquals("eu-central-1", minioSTSProfile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), minioSTSProfile.getRegions());
