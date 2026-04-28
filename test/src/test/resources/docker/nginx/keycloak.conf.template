@@ -1,5 +1,5 @@
 server {
-    listen       ${KEYCLOAK_HTTP_PORT};
+    listen       ${HUB_KEYCLOAK_HTTP_PORT};
 
     # set DNS resolver as Docker internal DNS
     # https://forums.docker.com/t/nginx-swarm-redeploy-timeouts/68904/4
@@ -8,7 +8,7 @@ server {
 
     location / {
         # docker internal port!
-        proxy_pass http://keycloak:${KEYCLOAK_HTTP_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
+        proxy_pass http://keycloak:${HUB_KEYCLOAK_HTTP_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
     }
 
     access_log  /var/log/nginx/host.access.log;

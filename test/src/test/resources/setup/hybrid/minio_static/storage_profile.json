@@ -9,8 +9,8 @@
     "storageClass": "STANDARD",
     "archived": "false",
     "bucketPrefix": "katta-test-",
-    "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
-    "stsRoleCreateBucketClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
-    "stsEndpoint": "https://minio.testing.katta.cloud",
+    "stsRoleCreateBucketHub": "",
+    "stsRoleCreateBucketClient": "",
+    "stsEndpoint": "",
     "bucketEncryption": "NONE"
 }

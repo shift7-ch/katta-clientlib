@@ -28,8 +28,8 @@ docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml
 
 For integration tests:
 ```bash
-docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local --env-file test/src/test/resources/.local.env up  --wait
-docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
+docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile hybrid --env-file test/src/test/resources/.hybrid.env up --wait
+docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile hybrid down
 ```
 
 ### Architecture
