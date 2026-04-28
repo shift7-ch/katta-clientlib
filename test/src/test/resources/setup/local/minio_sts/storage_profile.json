@@ -16,7 +16,7 @@
     "withPathStyleAccessEnabled": "true",
     "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
     "stsRoleCreateBucketClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
-    "stsEndpoint": "http://MINIO_HOSTNAME:9000",
+    "stsEndpoint": "http://MINIO_HOSTNAME:MINIO_PORT",
     "protocol": "S3STS",
     "scheme": "http",
     "hostname": "MINIO_HOSTNAME",

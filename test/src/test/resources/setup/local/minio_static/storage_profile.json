@@ -11,6 +11,6 @@
     "bucketPrefix": "katta-test-",
     "stsRoleCreateBucketHub": "",
     "stsRoleCreateBucketClient": "",
-    "stsEndpoint": "http://MINIO_HOSTNAME:MINIO_PORT",
+    "stsEndpoint": "",
     "bucketEncryption": "NONE"
 }
