@@ -21,7 +21,7 @@ import picocli.CommandLine;
 
 /**
  * Uploads a storage profile to Katta Server for use with a generic S3-compatible provider using static access tokens.
- * Unlike STS-based profiles, no temporary credentials are requested; the server uses static access key credentials.
+ * Unlike STS-based profiles, no temporary credentials are requested; we use static access key credentials to access S3 storage.
  * <p>
  * See also: <a href="https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#storage-profiles">katta docs</a>.
  */
