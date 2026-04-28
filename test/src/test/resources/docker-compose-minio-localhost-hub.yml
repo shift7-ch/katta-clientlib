@@ -4,8 +4,8 @@ services:
     image: "ghcr.io/shift7-ch/keycloak:26.5.5"
     pull_policy: missing
     ports:
-      - "${KEYCLOAK_HTTP_PORT:-1}:${KEYCLOAK_HTTP_PORT:-1}"
-      - "${KEYCLOAK_HTTPS_PORT:-1}:8443"
+      - "${HUB_KEYCLOAK_HTTP_PORT:-1}:${HUB_KEYCLOAK_HTTP_PORT:-1}"
+      - "${HUB_KEYCLOAK_HTTPS_PORT:-1}:8443"
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
@@ -21,9 +21,9 @@ services:
       - ./keycloak/dev-realm.json:/opt/keycloak/data/import/keycloak.json
       - ./certs:/opt/keycloak/dev/certs
     # hub to Keycloak communication inside Docker network (http://keycloak:8180) goes to the container internal port! Therefore, we need to start keycloak with the same port `--http-port 8180`
-    command: start-dev --import-realm --db=dev-mem --health-enabled=true --hostname ${KEYCLOAK_HOSTNAME} --http-port ${KEYCLOAK_HTTP_PORT}
+    command: start-dev --import-realm --db=dev-mem --health-enabled=true --hostname ${HUB_KEYCLOAK_HOSTNAME} --http-port ${HUB_KEYCLOAK_HTTP_PORT}
     healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" ]
+      test: [ "CMD", "bash", "-c", "curl -v --fail http://127.0.0.1:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" ]
       interval: 5s
       timeout: 10s
       retries: 15
@@ -39,17 +39,17 @@ services:
         set -euxo pipefail
 
         # fix for Docker Desktop 4.42.1 based on https://github.com/keycloak/keycloak/discussions/12155
-        /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm master --user admin --password admin realms/master -s sslRequired=NONE
-        /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin realms/cryptomator -s sslRequired=NONE
+        /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm master --user admin --password admin realms/master -s sslRequired=NONE
+        /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin realms/cryptomator -s sslRequired=NONE
 
         # enable direct access grants in client cryptomator and cryptomatorhub for integration testing and manual exploration
-        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
-        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
+        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
+        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
         # allow redirect URI from localhost for "attended" mode for client cryptomatorhub, i.e. dev wants to interact directly with the running setup
-        CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s 'redirectUris=["http://localhost:${HUB_PORT}/*"]'
+        CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s 'redirectUris=["${HUB_URL}/*"]'
 
     depends_on:
       keycloak:
@@ -67,9 +67,9 @@ services:
 
         apt-get update && apt-get install -y wget
 
-        if [ -n "${KEYCLOAK_HOSTNAME}" ]; then
+        if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
-          export KEYCLOAK_HTTP_PORT=${KEYCLOAK_HTTP_PORT}
+          export HUB_KEYCLOAK_HTTP_PORT=${HUB_KEYCLOAK_HTTP_PORT}
           # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
           # see https://www.baeldung.com/linux/envsubst-command
           # https://stackoverflow.com/questions/24963705/is-there-an-escape-character-for-envsubst
@@ -125,12 +125,12 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
       # Restrict global CORS instead of using wildcard '*' default, see https://docs.min.io/enterprise/aistor-object-store/reference/aistor-server/settings/core/?tab=cors-allow-origin-configuration-setting
       # and https://github.com/minio/minio/blob/master/docs/config/README.md
       # CORS relevant when using Web frontend local for development, not when using Java client.
       # Note: per bucket CORS not supported in MinIO Community Edition: https://github.com/minio/minio/discussions/20841
-      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:${HUB_PORT}"
+      MINIO_API_CORS_ALLOW_ORIGIN: "${HUB_URL}"
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${MINIO_PORT}/minio/health/ready" ]
       interval: 5s
@@ -143,7 +143,7 @@ services:
       - |
         set -euxo pipefail
 
-        if [ -n "${KEYCLOAK_HOSTNAME}" ]; then
+        if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
           # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
           # see https://www.baeldung.com/linux/envsubst-command
@@ -155,8 +155,8 @@ services:
           # start reverse proxy to keycloak
           systemctl start nginx.service
           # verify reverse proxy
-          curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
-          curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+          curl --fail http://localhost:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+          curl --fail http://127.0.0.1:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
         fi
 
         /minio server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
@@ -174,14 +174,14 @@ services:
       - ./setup:/setup
       - ./docker/nginx/keycloak.conf.template:/etc/nginx/conf.d/keycloak.conf.template:ro
     environment:
-      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
-      KEYCLOAK_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+      HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_HOSTNAME: ${HUB_KEYCLOAK_HOSTNAME}
     entrypoint: [ "/bin/bash","-c" ]
     command:
       - |
         set -euxo pipefail
 
-        if [ -n "${KEYCLOAK_HOSTNAME}" ]; then
+        if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
           # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
           # see https://www.baeldung.com/linux/envsubst-command
@@ -193,8 +193,8 @@ services:
           # start reverse proxy to keycloak
           systemctl start nginx.service
           # verify reverse proxy
-          curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
-          curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+          curl --fail http://localhost:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+          curl --fail http://127.0.0.1:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
         fi
 
         ls /setup
@@ -257,7 +257,7 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${HUB_PORT}/api/config" ]
+      test: [ "CMD", "bash", "-c", "curl -v --fail ${HUB_URL}/api/config" ]
       interval: 5s
       timeout: 1s
       retries: 5
@@ -297,9 +297,9 @@ services:
       - |
         set -euxo pipefail
 
-        if [ -n "${KEYCLOAK_HOSTNAME}" ]; then
+        if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
-          export KEYCLOAK_HTTP_PORT=${KEYCLOAK_HTTP_PORT}
+          export HUB_KEYCLOAK_HTTP_PORT=${HUB_KEYCLOAK_HTTP_PORT}
 
           # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
           # see https://www.baeldung.com/linux/envsubst-command
@@ -311,8 +311,8 @@ services:
           # start reverse proxy to keycloak and minio
           nginx
           # verify reverse proxy
-          curl --fail http://localhost:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
-          curl --fail http://127.0.0.1:${KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+          curl --fail http://localhost:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
+          curl --fail http://127.0.0.1:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration
         fi
 
         # inject ports
@@ -349,13 +349,13 @@ services:
       - ./docker/nginx/hub.conf.template:/etc/nginx/conf.d/hub.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
     environment:
-      KEYCLOAK_HTTP_PORT: ${KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
       HUB_PORT: ${HUB_PORT}
     command:
       - |
         set -euxo pipefail
 
-        if [ -n "${KEYCLOAK_HOSTNAME}" ]; then
+        if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
           # see https://stackoverflow.com/questions/56649582/substitute-environment-variables-in-nginx-config-from-docker-compose
           # see https://www.baeldung.com/linux/envsubst-command
@@ -395,14 +395,17 @@ services:
 
         echo $$ACCESS_TOKEN
 
-        cat /setup/local/minio_sts/storage_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/storage_profile.json
-        cat /setup/local/minio_static/storage_profile.json | sed -e 's/9000/${MINIO_PORT}/g' | sed -e 's/"minio"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://minio|http://${MINIO_HOSTNAME}|g'  > /tmp/storage_profile.json
+        # MinIO Storage Profiles
+        cat /setup/local/minio_sts/storage_profile.json | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_sts_storage_profile.json
+        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        cat /setup/local/minio_static/storage_profile.json | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_static_storage_profile.json
+        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @/tmp/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @/tmp/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3sts -d @setup/local/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT http://localhost:${HUB_PORT}/api/storageprofile/s3 -d @setup/local/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail http://localhost:${HUB_PORT}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
+        # AWS Storage Profiles
+        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @setup/local/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @setup/local/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+
+        curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 
 

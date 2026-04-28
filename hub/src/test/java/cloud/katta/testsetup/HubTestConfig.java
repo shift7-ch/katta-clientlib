@@ -64,18 +64,21 @@ public class HubTestConfig {
             public final String composeFile;
             public final String envFile;
             public final String profile;
-            public final String hubAdminUser;
-            public final String hubAdminPassword;
-            public final String hubKeycloakSystemClientSecret;
 
-
-            public DockerConfig(final String composeFile, final String envFile, final String profile, final String hubAdminUser, final String hubAdminPassword, final String hubKeycloakSystemClientSecret) {
+            public DockerConfig(final String composeFile, final String envFile, final String profile) {
                 this.composeFile = composeFile;
                 this.envFile = envFile;
                 this.profile = profile;
-                this.hubAdminUser = hubAdminUser;
-                this.hubAdminPassword = hubAdminPassword;
-                this.hubKeycloakSystemClientSecret = hubKeycloakSystemClientSecret;
+            }
+
+            @Override
+            public String toString() {
+                final StringBuilder sb = new StringBuilder("DockerConfig{");
+                sb.append("composeFile='").append(composeFile).append('\'');
+                sb.append(", envFile='").append(envFile).append('\'');
+                sb.append(", profile='").append(profile).append('\'');
+                sb.append('}');
+                return sb.toString();
             }
         }
 
@@ -92,7 +95,7 @@ public class HubTestConfig {
 
             @Override
             public String toString() {
-                final StringBuilder sb = new StringBuilder("HubTestSetupUserConfig{");
+                final StringBuilder sb = new StringBuilder("UserConfig{");
                 sb.append("username='").append(username).append('\'');
                 sb.append(", password='").append(password).append('\'');
                 sb.append(", setupCode='").append(setupCode).append('\'');
@@ -115,6 +118,18 @@ public class HubTestConfig {
             this.username = username;
             this.password = password;
             this.region = region;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("VaultSpec{");
+            sb.append("storageProfileName='").append(storageProfileName).append('\'');
+            sb.append(", storageProfileId='").append(storageProfileId).append('\'');
+            sb.append(", username='").append(username).append('\'');
+            sb.append(", password='").append(password).append('\'');
+            sb.append(", region='").append(region).append('\'');
+            sb.append('}');
+            return sb.toString();
         }
     }
 }

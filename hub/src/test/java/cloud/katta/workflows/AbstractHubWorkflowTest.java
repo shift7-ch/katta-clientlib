@@ -18,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
@@ -64,8 +65,11 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             final HubTestConfig.Setup setup = testConfig.setup;
             final ApiClient adminApiClient = getAdminApiClient(setup);
-            final Properties props = new Properties();
-            props.load(this.getClass().getResourceAsStream(testConfig.setup.dockerConfig.envFile));
+            final Properties configuration = new Properties();
+            final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
+            try (InputStream in = this.getClass().getResourceAsStream(dockerConfig.envFile)) {
+                configuration.load(in);
+            }
 
             log.info("S00 admin uploads storage profile");
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
@@ -75,11 +79,11 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             {
                 final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/storage_profile.json"), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
-                final String minioPort = props.getProperty("MINIO_PORT");
+                final String minioPort = configuration.getProperty("MINIO_PORT");
                 if(minioPort != null) {
                     storageProfile.setPort(Integer.valueOf(minioPort));
                 }
-                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
+                final String minioHostname = configuration.getProperty("MINIO_HOSTNAME");
                 if(minioHostname != null) {
                     storageProfile.setHostname(minioHostname);
                 }
@@ -89,14 +93,12 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/storage_profile.json"), StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-                final String minioPort = props.getProperty("MINIO_PORT");
+                final String minioPort = configuration.getProperty("MINIO_PORT");
                 if(minioPort != null) {
                     storageProfile.setPort(Integer.valueOf(minioPort));
-                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("9000", minioPort));
                 }
-                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
+                final String minioHostname = configuration.getProperty("MINIO_HOSTNAME");
                 if(minioHostname != null) {
-                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("minio", minioHostname));
                     storageProfile.setHostname(minioHostname);
                 }
                 adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
