@@ -56,6 +56,7 @@ services:
         condition: service_healthy
 
   keycloak-ready:
+    profiles: [ local, hybrid ]
     image: nginx
     volumes:
       - ./docker/nginx/keycloak.conf.template:/etc/nginx/conf.d/keycloak.conf.template:ro
@@ -88,6 +89,7 @@ services:
       retries: 15
 
   postgres:
+    profiles: [ local, hybrid ]
     image:
       docker.io/postgres:14
     environment:
@@ -110,6 +112,7 @@ services:
       retries: 3
 
   minio:
+    profiles: [ local, hybrid ]
     build:
       dockerfile: docker/minio/Dockerfile
     depends_on:
@@ -159,6 +162,7 @@ services:
         /minio server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
 
   minio_setup:
+    profiles: [ local, hybrid ]
     build:
       dockerfile: docker/minio_setup/Dockerfile
     depends_on:
@@ -240,6 +244,7 @@ services:
         echo "Completed MinIO Setup"
 
   hub:
+    profiles: [ local, hybrid ]
     build:
       dockerfile: docker/hub/Dockerfile
       args:
