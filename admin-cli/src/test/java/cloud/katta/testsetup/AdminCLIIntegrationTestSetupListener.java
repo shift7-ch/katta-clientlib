@@ -35,9 +35,6 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
             final String composeFile = "/docker-compose-minio-localhost-hub.yml";
             final String envFile = "/.local.env";
             final String profile = "local";
-            final String hubAdminUser = "admin";
-            final String hubAdminPassword = "admin";
-            final String hubKeycloakSystemClientSecret = "top-secret";
             final Properties props = new Properties();
             try {
                 props.load(AbstractAdminCLIIT.class.getResourceAsStream(envFile));
@@ -51,9 +48,6 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                             e -> String.valueOf(e.getValue()),
                             (prev, next) -> next, HashMap::new
                     ));
-            env.put("HUB_ADMIN_USER", hubAdminUser);
-            env.put("HUB_ADMIN_PASSWORD", hubAdminPassword);
-            env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", hubKeycloakSystemClientSecret);
             try {
                 compose = new ComposeContainer(
                         new File(AbstractAdminCLIIT.class.getResource(composeFile).toURI()))
