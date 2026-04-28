@@ -21,15 +21,10 @@ public class Local {
         final String realmUrl = String.format("http://localhost:8180/realms/cryptomator");
         final String hubUrl = String.format("http://localhost:8080");
         final String region = "eu-central-1";
-        final String tokenUrl = String.format("%s/protocol/openid-connect/token", realmUrl);
-        final String authUrl = String.format("%s/protocol/openid-connect/auth", realmUrl);
-        if(false) {
+        if(true) {
             final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "minio", "sts",
-                    "--tokenUrl", tokenUrl,
-                    "--authUrl", authUrl,
-                    "--clientId", "cryptomator",
                     "--hubUrl", hubUrl,
                     "--uuid", storageProfileId.toString(),
                     "--name", "MinIO S3 STS",
@@ -45,13 +40,10 @@ public class Local {
             int rc = new CommandLine(new Katta()).execute(options);
             assertEquals(0, rc);
         }
-        if(true) {
+        if(false) {
             final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "s3", "static",
-                    "--tokenUrl", tokenUrl,
-                    "--authUrl", authUrl,
-                    "--clientId", "cryptomator",
                     "--hubUrl", hubUrl,
                     "--uuid", storageProfileId.toString(),
                     "--name", "MinIO S3 Static",
