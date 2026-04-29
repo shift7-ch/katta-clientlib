@@ -155,7 +155,6 @@ public abstract class AbstractHubTest {
                 super.configureLogging(level);
             }
         });
-        preferences.setLogging("debug");
         preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
         preferences.setProperty("cryptomator.vault.autodetect", "false");
         preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
