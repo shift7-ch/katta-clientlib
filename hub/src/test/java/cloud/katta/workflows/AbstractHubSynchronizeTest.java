@@ -88,9 +88,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
 
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            mapper.registerModule(new JsonNullableModule());
+            final ObjectMapper mapper = new JSON().getMapper();
             try {
                 adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/storage_profile.json",
                                 dockerConfig.profile)), StorageProfileS3StaticDto.class)

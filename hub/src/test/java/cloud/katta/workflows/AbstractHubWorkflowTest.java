@@ -73,9 +73,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             log.info("S00 admin uploads storage profile");
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            mapper.registerModule(new JsonNullableModule());
+            final ObjectMapper mapper = new JSON().getMapper();
             {
                 final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/storage_profile.json"), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
