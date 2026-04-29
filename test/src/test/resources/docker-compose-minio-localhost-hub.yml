@@ -241,8 +241,6 @@ services:
         /mc admin policy attach myminio testuser_accesspolicy --user testuser
         /mc admin policy attach myminio testuser_createpolicy --user testuser
 
-        echo "Completed MinIO Setup"
-
   hub:
     profiles: [ local, hybrid ]
     build:
@@ -254,8 +252,8 @@ services:
         condition: service_completed_successfully
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+      minio_setup:
+        condition: service_completed_successfully
         required: false
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail ${HUB_URL}/api/config" ]
@@ -334,8 +332,6 @@ services:
 
 
         java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
-
-        echo "Completed Hub Setup"
 
   hub_setup_storage_profile:
     profiles: [ demo ]

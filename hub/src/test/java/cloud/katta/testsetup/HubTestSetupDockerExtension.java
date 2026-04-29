@@ -10,13 +10,12 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Properties;
@@ -59,10 +58,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(dockerConfig.profile == null ? "" : String.format("--profile=%s", dockerConfig.profile))
-                .waitingFor("hub", new LogMessageWaitStrategy().withRegEx(".*Completed Hub Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
-        if("local".equals(dockerConfig.profile)) {
-            compose.waitingFor("minio_setup", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
-        }
+                .waitingFor("hub", new DockerHealthcheckWaitStrategy());
         compose.start();
         log.info("Done setup docker {}", dockerConfig);
     }
