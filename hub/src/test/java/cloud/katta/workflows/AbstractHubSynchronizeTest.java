@@ -141,18 +141,20 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(hubSession.getClient())
                     .apiStorageprofileGet(false);
+            assertFalse(storageProfileDtos.isEmpty());
+
             // aws static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("72736c19-283c-49d3-80a5-ab74b5202543")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("72736C19-283C-49D3-80A5-AB74B5202549"))));
             // aws sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("844bd517-96d4-4787-bcfa-238e103149f6")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("844BD517-96D4-4787-BCFA-238E103149F6"))));
             // minio static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("71b910e0-2ecc-46de-a871-8db28549677e")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("71B910E0-2ECC-46DE-A871-8DB28549677E"))));
             // minio sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .equals("732d43fa-3716-46c4-b931-66ea5405ef1c")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("732D43FA-3716-46C4-B931-66EA5405EF1C"))));
         }
         catch(ApiException e) {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
