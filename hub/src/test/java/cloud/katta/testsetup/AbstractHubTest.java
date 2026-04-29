@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Function;
 
@@ -48,7 +49,7 @@ public abstract class AbstractHubTest {
     private static final Properties LOCAL_PROPERTIES = new Properties();
 
     static {
-        try (InputStream in = AbstractHubTest.class.getResourceAsStream(LOCAL_DOCKER_CONFIG.envFile)) {
+        try (InputStream in = Objects.requireNonNull(AbstractHubTest.class.getResourceAsStream(LOCAL_DOCKER_CONFIG.envFile))) {
             LOCAL_PROPERTIES.load(in);
         }
         catch(IOException e) {
@@ -94,7 +95,7 @@ public abstract class AbstractHubTest {
     private static final Properties HYBRID_PROPERTIES = new Properties();
 
     static {
-        try (InputStream in = AbstractHubTest.class.getResourceAsStream(HYBRID_DOCKER_CONFIG.envFile)) {
+        try (InputStream in = Objects.requireNonNull(AbstractHubTest.class.getResourceAsStream(HYBRID_DOCKER_CONFIG.envFile))) {
             HYBRID_PROPERTIES.load(in);
         }
         catch(IOException e) {

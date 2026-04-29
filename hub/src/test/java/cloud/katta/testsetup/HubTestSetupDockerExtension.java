@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     protected void setupDocker(final HubTestConfig.Setup.DockerConfig dockerConfig) throws URISyntaxException, IOException {
         log.info("Setup docker {}", dockerConfig);
         final Properties configuration = new Properties();
-        try (InputStream in = this.getClass().getResourceAsStream(dockerConfig.envFile)) {
+        try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
             configuration.load(in);
         }
         final HashMap<String, String> env = configuration.entrySet().stream().collect(

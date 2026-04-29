@@ -69,7 +69,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final ApiClient adminApiClient = getAdminApiClient(setup);
             final Properties configuration = new Properties();
             final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
-            try (InputStream in = this.getClass().getResourceAsStream(dockerConfig.envFile)) {
+            try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
                 configuration.load(in);
             }
 
