@@ -30,8 +30,7 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
     public void testPlanExecutionStarted(TestPlan testPlan) {
         if(testPlan.getRoots().stream()
                 .flatMap(root -> testPlan.getChildren(root).stream())
-                .filter(ti -> ti.getTags().contains(TestTag.create("cli")))
-                .findAny().isPresent()) {
+                .anyMatch(ti -> ti.getTags().contains(TestTag.create("cli")))) {
 
             final String composeFile = "/docker-compose-minio-localhost-hub.yml";
             final String envFile = "/.local.env";
