@@ -28,7 +28,9 @@ jobs:
           java-version: 21
           cache: maven
       - name: Write env
-        run: echo "${{ secrets.HYBRID_ENV }}" > test/src/test/resources/.hybrid.env
+        env:
+          HYBRID_ENV: ${{ secrets.HYBRID_ENV }}
+        run: printf '%s' "$HYBRID_ENV" > test/src/test/resources/.hybrid.env
       - name: Build with Maven
         run: mvn --no-transfer-progress --batch-mode verify -U
         env:
