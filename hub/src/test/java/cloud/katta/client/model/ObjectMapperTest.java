@@ -66,9 +66,9 @@ class ObjectMapperTest {
         final ObjectMapper mapper = new JSON().getMapper();
         final String minioStaticJson = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
                         "/setup/minio_static/storage_profile.json")), StandardCharsets.UTF_8)
-                .replace("MINIO_SCHEME", "http")
-                .replace("MINIO_HOSTNAME", "minio")
-                .replace("MINIO_PORT", "9000");
+                .replace("${MINIO_SCHEME}", "http")
+                .replace("${MINIO_HOSTNAME}", "minio")
+                .replace("${MINIO_PORT}", "9000");
         final StorageProfileS3StaticDto profile = mapper.readValue(minioStaticJson, StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, profile.getProtocol());
         assertEquals("http", profile.getScheme());
@@ -85,9 +85,9 @@ class ObjectMapperTest {
         final ObjectMapper mapper = new JSON().getMapper();
         final String minioSTSJson = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
                         "/setup/minio_sts/storage_profile.json")), StandardCharsets.UTF_8)
-                .replace("MINIO_SCHEME", "http")
-                .replace("MINIO_HOSTNAME", "minio")
-                .replace("MINIO_PORT", "9000");
+                .replace("${MINIO_SCHEME}", "http")
+                .replace("${MINIO_HOSTNAME}", "minio")
+                .replace("${MINIO_PORT}", "9000");
         final StorageProfileS3STSDto profile = mapper.readValue(minioSTSJson, StorageProfileS3STSDto.class);
         assertEquals("katta-test-", profile.getBucketPrefix());
         assertEquals("eu-central-1", profile.getRegion());

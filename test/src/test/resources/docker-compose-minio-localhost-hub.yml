@@ -349,6 +349,9 @@ services:
     environment:
       HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
       HUB_PORT: ${HUB_PORT}
+      MINIO_SCHEME: ${MINIO_SCHEME}
+      MINIO_HOSTNAME: ${MINIO_HOSTNAME}
+      MINIO_PORT: ${MINIO_PORT}
     command:
       - |
         set -euxo pipefail
@@ -394,9 +397,9 @@ services:
         echo $$ACCESS_TOKEN
 
         # MinIO Storage Profiles
-        cat /setup/minio_sts/storage_profile.json | sed -e 's/MINIO_SCHEME/${MINIO_SCHEME}/g' | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_sts_storage_profile.json
+        envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_sts/storage_profile.json > /tmp/minio_sts_storage_profile.json
         curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        cat /setup/minio_static/storage_profile.json | sed -e 's/MINIO_SCHEME/${MINIO_SCHEME}/g' | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_static_storage_profile.json
+        envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
         curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
         # AWS Storage Profiles
