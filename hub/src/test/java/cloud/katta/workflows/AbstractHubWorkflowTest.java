@@ -11,22 +11,25 @@ import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultVersion;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
@@ -47,7 +50,6 @@ import cloud.katta.protocols.hub.HubStorageLocationService;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
@@ -75,30 +77,22 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
             final ObjectMapper mapper = new JSON().getMapper();
             {
-                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/storage_profile.json"), StorageProfileS3StaticDto.class)
+                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
+                                String.format("/setup/%s/minio_static/storage_profile.json", dockerConfig.profile))), StandardCharsets.UTF_8)
+                        .replace("MINIO_HOSTNAME", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("MINIO_PORT", configuration.getProperty("MINIO_PORT"));
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
-                final String minioPort = configuration.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                }
-                final String minioHostname = configuration.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setHostname(minioHostname);
-                }
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/storage_profile.json"), StorageProfileS3STSDto.class)
+                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
+                                String.format("/setup/%s/minio_sts/storage_profile.json", dockerConfig.profile))), StandardCharsets.UTF_8)
+                        .replace("MINIO_HOSTNAME", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("MINIO_PORT", configuration.getProperty("MINIO_PORT"));
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-                final String minioPort = configuration.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                }
-                final String minioHostname = configuration.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setHostname(minioHostname);
-                }
                 adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
 
