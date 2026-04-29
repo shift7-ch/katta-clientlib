@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -37,7 +38,7 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
             final String profile = "local";
             final Properties props = new Properties();
             try {
-                props.load(AbstractAdminCLIIT.class.getResourceAsStream(envFile));
+                props.load(Objects.requireNonNull(AbstractAdminCLIIT.class.getResourceAsStream(envFile)));
             }
             catch(IOException e) {
                 throw new RuntimeException(e);

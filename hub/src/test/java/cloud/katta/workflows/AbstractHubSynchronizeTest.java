@@ -81,7 +81,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         log.info("M01 {}", testConfig);
         final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
         final Properties configuration = new Properties();
-        try (InputStream in = this.getClass().getResourceAsStream(dockerConfig.envFile)) {
+        try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
             configuration.load(in);
         }
         final HubSession hubSession = setupConnection(testConfig);
@@ -93,9 +93,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(
+                adminStorageProfileApi.apiStorageprofileS3staticPost(Objects.requireNonNull(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(
                                 String.format("/setup/%s/aws_static/storage_profile.json",
-                                        dockerConfig.profile)), StorageProfileS3StaticDto.class)
+                                        dockerConfig.profile)), StorageProfileS3StaticDto.class))
                         .storageClass(S3STORAGECLASSES.STANDARD)
                 );
             }
@@ -109,9 +109,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
 
             try {
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(
+                adminStorageProfileApi.apiStorageprofileS3stsPost(Objects.requireNonNull(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(
                                 String.format("/setup/%s/aws_sts/storage_profile.json",
-                                        dockerConfig.profile)), StorageProfileS3STSDto.class)
+                                        dockerConfig.profile)), StorageProfileS3STSDto.class))
                         .storageClass(S3STORAGECLASSES.STANDARD).bucketEncryption(S3SERVERSIDEENCRYPTION.NONE));
             }
             catch(ApiException e) {
