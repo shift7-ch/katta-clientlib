@@ -112,7 +112,7 @@ services:
       retries: 3
 
   minio:
-    profiles: [ local, hybrid ]
+    profiles: [ local ]
     build:
       dockerfile: docker/minio/Dockerfile
     depends_on:
@@ -162,7 +162,7 @@ services:
         /minio server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
 
   minio_setup:
-    profiles: [ local, hybrid ]
+    profiles: [ local ]
     build:
       dockerfile: docker/minio_setup/Dockerfile
     depends_on:
@@ -256,6 +256,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+        required: false
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail ${HUB_URL}/api/config" ]
       interval: 5s
@@ -333,6 +334,8 @@ services:
 
 
         java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
+
+        echo "Completed Hub Setup"
 
   hub_setup_storage_profile:
     profiles: [ demo ]
