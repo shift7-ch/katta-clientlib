@@ -6,8 +6,8 @@
     "archived": false,
     "scheme": "https",
     "port": 443,
+    "region": "eu-central-1",
     "bucketPrefix": "katta-test-",
-    "region": "eu-north-1",
     "stsRoleCreateBucketHub": "",
     "stsRoleCreateBucketClient": "",
     "bucketEncryption": "NONE"

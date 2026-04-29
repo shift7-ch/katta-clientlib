@@ -54,10 +54,10 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                         (prev, next) -> next, HashMap::new
                 ));
         compose = new ComposeContainer(
-                new File(HubTestSetupDockerExtension.class.getResource(dockerConfig.composeFile).toURI()))
+                new File(Objects.requireNonNull(HubTestSetupDockerExtension.class.getResource(dockerConfig.composeFile)).toURI()))
                 .withPull(true)
                 .withEnv(env)
-                .withOptions(dockerConfig.profile == null ? "" : String.format("--profile=%s", dockerConfig.profile))
+                .withOptions(String.format("--profile=%s", dockerConfig.profile))
                 .waitingFor("hub", new DockerHealthcheckWaitStrategy());
         compose.start();
         log.info("Done setup docker {}", dockerConfig);

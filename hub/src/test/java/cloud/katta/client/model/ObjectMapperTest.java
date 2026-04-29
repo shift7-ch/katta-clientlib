@@ -25,80 +25,85 @@ class ObjectMapperTest {
     @Test
     void testAWSStatic() throws IOException {
         final ObjectMapper mapper = new JSON().getMapper();
-        final StorageProfileS3StaticDto awsStaticProfile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
-                "/setup/hybrid/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class);
-        assertEquals(Protocol.S3_STATIC, awsStaticProfile.getProtocol());
-        assertEquals("https", awsStaticProfile.getScheme());
-        assertNull(awsStaticProfile.getHostname());
-        assertEquals(443, awsStaticProfile.getPort());
+        final StorageProfileS3StaticDto profile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
+                "/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class);
+        assertEquals(Protocol.S3_STATIC, profile.getProtocol());
+        assertEquals("https", profile.getScheme());
+        assertNull(profile.getHostname());
+        assertEquals(443, profile.getPort());
         // default STANDARD from backend
-        assertEquals(S3STORAGECLASSES.STANDARD, awsStaticProfile.getStorageClass());
-        assertFalse(awsStaticProfile.getArchived());
-        assertFalse(awsStaticProfile.getWithPathStyleAccessEnabled());
+        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertFalse(profile.getArchived());
+        assertFalse(profile.getWithPathStyleAccessEnabled());
     }
 
     @Test
     void testAWSSTS() throws IOException {
         final ObjectMapper mapper = new JSON().getMapper();
-        final StorageProfileS3STSDto awsSTSProfile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
-                "/setup/hybrid/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class);
-        assertEquals("katta-test-", awsSTSProfile.getBucketPrefix());
-        assertEquals("eu-west-1", awsSTSProfile.getRegion());
-        assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), awsSTSProfile.getRegions());
-        assertFalse(awsSTSProfile.getWithPathStyleAccessEnabled());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", awsSTSProfile.getStsRoleCreateBucketHub());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", awsSTSProfile.getStsRoleCreateBucketClient());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-web-identity", awsSTSProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
-        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-tagged-session", awsSTSProfile.getStsRoleAccessBucketAssumeRoleTaggedSession());
-        assertEquals(Protocol.S3_STS, awsSTSProfile.getProtocol());
-        assertNull(awsSTSProfile.getScheme());
-        assertNull(awsSTSProfile.getHostname());
-        assertNull(awsSTSProfile.getPort());
+        final StorageProfileS3STSDto profile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
+                "/setup/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class);
+        assertEquals("katta-test-", profile.getBucketPrefix());
+        assertEquals("eu-west-1", profile.getRegion());
+        assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), profile.getRegions());
+        assertFalse(profile.getWithPathStyleAccessEnabled());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", profile.getStsRoleCreateBucketHub());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", profile.getStsRoleCreateBucketClient());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-web-identity", profile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
+        assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-tagged-session", profile.getStsRoleAccessBucketAssumeRoleTaggedSession());
+        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertNull(profile.getArchived());
+        assertEquals(Protocol.S3_STS, profile.getProtocol());
+        assertNull(profile.getScheme());
+        assertNull(profile.getHostname());
+        assertNull(profile.getPort());
         // default NONE from backend
-        assertEquals(S3SERVERSIDEENCRYPTION.NONE, awsSTSProfile.getBucketEncryption());
-        assertNull(awsSTSProfile.getBucketAcceleration());
+        assertEquals(S3SERVERSIDEENCRYPTION.NONE, profile.getBucketEncryption());
+        assertNull(profile.getBucketAcceleration());
     }
 
     @Test
     void testMinioStatic() throws IOException {
         final ObjectMapper mapper = new JSON().getMapper();
         final String minioStaticJson = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
-                        "/setup/local/minio_static/storage_profile.json")), StandardCharsets.UTF_8)
+                        "/setup/minio_static/storage_profile.json")), StandardCharsets.UTF_8)
+                .replace("MINIO_SCHEME", "http")
                 .replace("MINIO_HOSTNAME", "minio")
                 .replace("MINIO_PORT", "9000");
-        final StorageProfileS3StaticDto minioStaticProfile = mapper.readValue(minioStaticJson, StorageProfileS3StaticDto.class);
-        assertEquals(Protocol.S3_STATIC, minioStaticProfile.getProtocol());
-        assertEquals("http", minioStaticProfile.getScheme());
-        assertEquals("minio", minioStaticProfile.getHostname());
-        assertEquals(9000, minioStaticProfile.getPort());
+        final StorageProfileS3StaticDto profile = mapper.readValue(minioStaticJson, StorageProfileS3StaticDto.class);
+        assertEquals(Protocol.S3_STATIC, profile.getProtocol());
+        assertEquals("http", profile.getScheme());
+        assertEquals("minio", profile.getHostname());
+        assertEquals(9000, profile.getPort());
         // default STANDARD from backend
-        assertEquals(S3STORAGECLASSES.STANDARD, minioStaticProfile.getStorageClass());
-        assertFalse(minioStaticProfile.getArchived());
-        assertTrue(minioStaticProfile.getWithPathStyleAccessEnabled());
+        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertFalse(profile.getArchived());
+        assertTrue(profile.getWithPathStyleAccessEnabled());
     }
 
     @Test
     void testMinioSTS() throws IOException {
         final ObjectMapper mapper = new JSON().getMapper();
         final String minioSTSJson = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
-                        "/setup/local/minio_sts/storage_profile.json")), StandardCharsets.UTF_8)
+                        "/setup/minio_sts/storage_profile.json")), StandardCharsets.UTF_8)
+                .replace("MINIO_SCHEME", "http")
                 .replace("MINIO_HOSTNAME", "minio")
                 .replace("MINIO_PORT", "9000");
-        final StorageProfileS3STSDto minioSTSProfile = mapper.readValue(minioSTSJson, StorageProfileS3STSDto.class);
-        assertEquals("katta-test-", minioSTSProfile.getBucketPrefix());
-        assertEquals("eu-central-1", minioSTSProfile.getRegion());
-        assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), minioSTSProfile.getRegions());
-        assertTrue(minioSTSProfile.getWithPathStyleAccessEnabled());
-        assertEquals("arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE", minioSTSProfile.getStsRoleCreateBucketHub());
-        assertEquals("arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE", minioSTSProfile.getStsRoleCreateBucketClient());
-        assertEquals("arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94", minioSTSProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
-        assertNull(minioSTSProfile.getStsRoleAccessBucketAssumeRoleTaggedSession());
-        assertEquals(Protocol.S3_STS, minioSTSProfile.getProtocol());
-        assertEquals("http", minioSTSProfile.getScheme());
-        assertEquals("minio", minioSTSProfile.getHostname());
-        assertEquals(9000, minioSTSProfile.getPort());
+        final StorageProfileS3STSDto profile = mapper.readValue(minioSTSJson, StorageProfileS3STSDto.class);
+        assertEquals("katta-test-", profile.getBucketPrefix());
+        assertEquals("eu-central-1", profile.getRegion());
+        assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), profile.getRegions());
+        assertTrue(profile.getWithPathStyleAccessEnabled());
+        assertEquals("arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE", profile.getStsRoleCreateBucketHub());
+        assertEquals("arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE", profile.getStsRoleCreateBucketClient());
+        assertEquals("arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94", profile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
+        assertNull(profile.getStsRoleAccessBucketAssumeRoleTaggedSession());
+        assertEquals(Protocol.S3_STS, profile.getProtocol());
+        assertEquals("http", profile.getScheme());
+        assertEquals("minio", profile.getHostname());
+        assertEquals(9000, profile.getPort());
         // default NONE from backend
-        assertEquals(S3SERVERSIDEENCRYPTION.NONE, minioSTSProfile.getBucketEncryption());
-        assertNull(minioSTSProfile.getBucketAcceleration());
+        assertEquals(S3SERVERSIDEENCRYPTION.NONE, profile.getBucketEncryption());
+        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertNull(profile.getBucketAcceleration());
     }
 }

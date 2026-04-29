@@ -132,7 +132,7 @@ services:
       # Note: per bucket CORS not supported in MinIO Community Edition: https://github.com/minio/minio/discussions/20841
       MINIO_API_CORS_ALLOW_ORIGIN: "${HUB_URL}"
     healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail 127.0.0.1:${MINIO_PORT}/minio/health/ready" ]
+      test: [ "CMD", "bash", "-c", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
       interval: 5s
       timeout: 1s
       retries: 5
@@ -198,10 +198,10 @@ services:
         fi
 
         ls /setup
-        /mc config host add myminio http://minio:${MINIO_PORT} minioadmin minioadmin
+        /mc config host add myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
 
-        /mc admin policy create myminio katta_create_bucket_policy /setup/local/minio_sts/create_bucket_policy.json
-        /mc admin policy create myminio katta_access_bucket_policy /setup/local/minio_sts/access_bucket_policy.json
+        /mc admin policy create myminio katta_create_bucket_policy /setup/minio_sts/create_bucket_policy.json
+        /mc admin policy create myminio katta_access_bucket_policy /setup/minio_sts/access_bucket_policy.json
 
 
         /mc idp openid add myminio cryptomator \
@@ -236,8 +236,8 @@ services:
         /mc idp openid info myminio
 
         /mc admin user add myminio testuser top-secret
-        /mc admin policy create myminio testuser_accesspolicy /setup/local/minio_static/access_bucket_policy.json
-        /mc admin policy create myminio testuser_createpolicy /setup/local/minio_static/create_bucket_policy.json
+        /mc admin policy create myminio testuser_accesspolicy /setup/minio_static/access_bucket_policy.json
+        /mc admin policy create myminio testuser_createpolicy /setup/minio_static/create_bucket_policy.json
         /mc admin policy attach myminio testuser_accesspolicy --user testuser
         /mc admin policy attach myminio testuser_createpolicy --user testuser
 
@@ -327,8 +327,7 @@ services:
         # start reverse proxy to keycloak and minio
         nginx -s reload || nginx
         # skip verify reverse proxy (MinIO might not be up yet).
-        #        curl --fail http://localhost:${MINIO_PORT}/minio/health/ready
-        #        curl --fail http://127.0.0.1:${MINIO_PORT}/minio/health/ready
+        #        curl --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready
 
 
         java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
@@ -395,14 +394,14 @@ services:
         echo $$ACCESS_TOKEN
 
         # MinIO Storage Profiles
-        cat /setup/local/minio_sts/storage_profile.json | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_sts_storage_profile.json
+        cat /setup/minio_sts/storage_profile.json | sed -e 's/MINIO_SCHEME/${MINIO_SCHEME}/g' | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g'  | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_sts_storage_profile.json
         curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        cat /setup/local/minio_static/storage_profile.json | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_static_storage_profile.json
+        cat /setup/minio_static/storage_profile.json | sed -e 's/MINIO_SCHEME/${MINIO_SCHEME}/g' | sed -e 's/MINIO_PORT/${MINIO_PORT}/g' | sed -e 's/"MINIO_HOSTNAME"/"${MINIO_HOSTNAME}"/g' | sed -e 's|http://MINIO_HOSTNAME|http://${MINIO_HOSTNAME}|g' > /tmp/minio_static_storage_profile.json
         curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
         # AWS Storage Profiles
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @setup/local/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @setup/local/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @setup/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @setup/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
