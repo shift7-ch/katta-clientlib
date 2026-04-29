@@ -54,12 +54,15 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                         e -> String.valueOf(e.getValue()),
                         (prev, next) -> next, HashMap::new
                 ));
-        this.compose = new ComposeContainer(
+        compose = new ComposeContainer(
                 new File(HubTestSetupDockerExtension.class.getResource(dockerConfig.composeFile).toURI()))
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(dockerConfig.profile == null ? "" : String.format("--profile=%s", dockerConfig.profile))
-                .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
+                .waitingFor("hub", new LogMessageWaitStrategy().withRegEx(".*Completed Hub Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
+        if("local".equals(dockerConfig.profile)) {
+            compose.waitingFor("minio_setup", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
+        }
         compose.start();
         log.info("Done setup docker {}", dockerConfig);
     }
