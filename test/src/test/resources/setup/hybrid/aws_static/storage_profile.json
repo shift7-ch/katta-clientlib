@@ -3,7 +3,7 @@
     "name": "AWS S3 static",
     "protocol": "S3STATIC",
     "storageClass": "STANDARD",
-    "archived": "false",
+    "archived": false,
     "scheme": "https",
     "port": 443,
     "bucketPrefix": "katta-test-",
