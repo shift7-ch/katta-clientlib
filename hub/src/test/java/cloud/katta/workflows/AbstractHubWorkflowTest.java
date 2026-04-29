@@ -77,8 +77,8 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
             final ObjectMapper mapper = new JSON().getMapper();
             {
-                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
-                                String.format("/setup/%s/minio_static/storage_profile.json", dockerConfig.profile))), StandardCharsets.UTF_8)
+                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/minio_static/storage_profile.json")), StandardCharsets.UTF_8)
+                        .replace("MINIO_SCHEME", configuration.getProperty("MINIO_SCHEME"))
                         .replace("MINIO_HOSTNAME", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("MINIO_PORT", configuration.getProperty("MINIO_PORT"));
                 final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
@@ -86,8 +86,8 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             {
-                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
-                                String.format("/setup/%s/minio_sts/storage_profile.json", dockerConfig.profile))), StandardCharsets.UTF_8)
+                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/minio_sts/storage_profile.json")), StandardCharsets.UTF_8)
+                        .replace("MINIO_SCHEME", configuration.getProperty("MINIO_SCHEME"))
                         .replace("MINIO_HOSTNAME", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("MINIO_PORT", configuration.getProperty("MINIO_PORT"));
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)

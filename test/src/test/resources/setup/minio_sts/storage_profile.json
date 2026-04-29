@@ -16,11 +16,12 @@
     "withPathStyleAccessEnabled": true,
     "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
     "stsRoleCreateBucketClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
-    "stsEndpoint": "http://MINIO_HOSTNAME:MINIO_PORT",
+    "stsEndpoint": "MINIO_SCHEME://MINIO_HOSTNAME:MINIO_PORT",
     "protocol": "S3STS",
-    "scheme": "http",
+    "scheme": "MINIO_SCHEME",
     "hostname": "MINIO_HOSTNAME",
     "port": MINIO_PORT,
     "stsRoleAccessBucketAssumeRoleWithWebIdentity": "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94",
+    "storageClass": "STANDARD",
     "bucketEncryption": "NONE"
 }

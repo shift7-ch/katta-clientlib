@@ -36,7 +36,7 @@ server {
         chunked_transfer_encoding off;
 
         # docker internal port!
-        proxy_pass http://minio:${MINIO_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
+        proxy_pass ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}$${my_empty_variable}uri$${my_empty_variable}is_args$${my_empty_variable}args;
     }
 
     access_log  /var/log/nginx/host.access.log;

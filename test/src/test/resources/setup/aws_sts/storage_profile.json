@@ -13,6 +13,7 @@
     "protocol": "S3STS",
     "stsRoleAccessBucketAssumeRoleWithWebIdentity": "arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-web-identity",
     "stsRoleAccessBucketAssumeRoleTaggedSession": "arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-tagged-session",
+    "storageClass": "STANDARD",
     "bucketEncryption": "NONE",
     "stsSessionTag": "Vault"
 }

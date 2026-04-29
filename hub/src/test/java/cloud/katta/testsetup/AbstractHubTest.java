@@ -124,13 +124,13 @@ public abstract class AbstractHubTest {
 
 
     public static final Arguments HYBRID_MINIO_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB285496779",
+            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
             HYBRID_PROPERTIES.getProperty("MINIO_USER_ACCESS_KEY"),
             HYBRID_PROPERTIES.getProperty("MINIO_USER_SECRET_KEY"),
             "us-east-1"
     ));
     public static final Arguments HYBRID_MINIO_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF19",
+            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
             null, null, "eu-central-1"
     ));
 
@@ -141,7 +141,7 @@ public abstract class AbstractHubTest {
             "eu-north-1"
     ));
     public static final Arguments HYBRID_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F9",
+            "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
             null, null, "eu-west-1"
     ));
 
