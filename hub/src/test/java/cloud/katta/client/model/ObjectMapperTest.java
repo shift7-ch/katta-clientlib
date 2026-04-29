@@ -6,13 +6,13 @@ package cloud.katta.client.model;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 
+import cloud.katta.client.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,8 +24,7 @@ class ObjectMapperTest {
 
     @Test
     void testAWSStatic() throws IOException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
+        final ObjectMapper mapper = new JSON().getMapper();
         final StorageProfileS3StaticDto awsStaticProfile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
                 "/setup/hybrid/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, awsStaticProfile.getProtocol());
@@ -40,8 +39,7 @@ class ObjectMapperTest {
 
     @Test
     void testAWSSTS() throws IOException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
+        final ObjectMapper mapper = new JSON().getMapper();
         final StorageProfileS3STSDto awsSTSProfile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
                 "/setup/hybrid/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class);
         assertEquals("katta-test-", awsSTSProfile.getBucketPrefix());
@@ -63,8 +61,7 @@ class ObjectMapperTest {
 
     @Test
     void testMinioStatic() throws IOException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
+        final ObjectMapper mapper = new JSON().getMapper();
         final String minioStaticJson = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
                         "/setup/local/minio_static/storage_profile.json")), StandardCharsets.UTF_8)
                 .replace("MINIO_HOSTNAME", "minio")
@@ -82,8 +79,7 @@ class ObjectMapperTest {
 
     @Test
     void testMinioSTS() throws IOException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
+        final ObjectMapper mapper = new JSON().getMapper();
         final String minioSTSJson = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
                         "/setup/local/minio_sts/storage_profile.json")), StandardCharsets.UTF_8)
                 .replace("MINIO_HOSTNAME", "minio")
