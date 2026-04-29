@@ -13,14 +13,14 @@
         "eu-central-1",
         "eu-central-2"
     ],
-    "withPathStyleAccessEnabled": "true",
+    "withPathStyleAccessEnabled": true,
     "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
     "stsRoleCreateBucketClient": "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
     "stsEndpoint": "http://MINIO_HOSTNAME:MINIO_PORT",
     "protocol": "S3STS",
     "scheme": "http",
     "hostname": "MINIO_HOSTNAME",
-    "port": "MINIO_PORT",
+    "port": MINIO_PORT,
     "stsRoleAccessBucketAssumeRoleWithWebIdentity": "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94",
     "bucketEncryption": "NONE"
 }
