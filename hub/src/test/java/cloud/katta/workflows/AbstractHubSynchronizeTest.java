@@ -28,6 +28,7 @@ import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultVersion;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,17 +36,19 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
@@ -60,7 +63,6 @@ import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestUtilities;
 import cloud.katta.testsetup.MethodIgnorableSource;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
@@ -87,94 +89,70 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+            assertTrue(new StorageProfileResourceApi(hubSession.getClient()).apiStorageprofileGet(true).isEmpty());
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/storage_profile.json",
-                                dockerConfig.profile)), StorageProfileS3StaticDto.class)
+                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(
+                                String.format("/setup/%s/aws_static/storage_profile.json",
+                                        dockerConfig.profile)), StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                 );
             }
             catch(ApiException e) {
-                if(e.getCode() == 409) {
-                    log.warn(e);
-                }
-                else {
-                    throw e;
-                }
+                fail(e);
             }
+
             try {
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_sts/storage_profile.json",
-                                dockerConfig.profile)), StorageProfileS3STSDto.class)
+                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(
+                                String.format("/setup/%s/aws_sts/storage_profile.json",
+                                        dockerConfig.profile)), StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD).bucketEncryption(S3SERVERSIDEENCRYPTION.NONE));
             }
             catch(ApiException e) {
-                if(e.getCode() == 409) {
-                    log.warn(e);
-                }
-                else {
-                    throw e;
-                }
+                fail(e);
             }
+
             try {
-                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_static/storage_profile.json",
-                                dockerConfig.profile)), StorageProfileS3StaticDto.class)
+                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
+                                String.format("/setup/%s/minio_static/storage_profile.json", dockerConfig.profile))), StandardCharsets.UTF_8)
+                        .replace("MINIO_HOSTNAME", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("MINIO_PORT", configuration.getProperty("MINIO_PORT"));
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
-                final String minioPort = configuration.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                }
-                final String minioHostname = configuration.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setHostname(minioHostname);
-                }
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             catch(ApiException e) {
-                if(e.getCode() == 409) {
-                    log.warn(e);
-                }
-                else {
-                    throw e;
-                }
+                fail(e);
             }
+
             try {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_sts/storage_profile.json",
-                                dockerConfig.profile)), StorageProfileS3STSDto.class)
+                final String json = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(
+                                String.format("/setup/%s/minio_sts/storage_profile.json", dockerConfig.profile))), StandardCharsets.UTF_8)
+                        .replace("MINIO_HOSTNAME", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("MINIO_PORT", configuration.getProperty("MINIO_PORT"));
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-                final String minioPort = configuration.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                }
-                final String minioHostname = configuration.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setHostname(minioHostname);
-                }
                 adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
             catch(ApiException e) {
-                if(e.getCode() == 409) {
-                    log.warn(e);
-                }
-                else {
-                    throw e;
-                }
+                fail(e);
             }
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(hubSession.getClient())
                     .apiStorageprofileGet(false);
             // aws static
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("72736c19-283c-49d3-80a5-ab74b520254")));
+                    .equals("72736c19-283c-49d3-80a5-ab74b5202543")));
             // aws sts
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("844bd517-96d4-4787-bcfa-238e103149f")));
+                    .equals("844bd517-96d4-4787-bcfa-238e103149f6")));
             // minio static
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("71b910e0-2ecc-46de-a871-8db28549677")));
+                    .equals("71b910e0-2ecc-46de-a871-8db28549677e")));
             // minio sts
             assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("732d43fa-3716-46c4-b931-66ea5405ef1")));
+                    .equals("732d43fa-3716-46c4-b931-66ea5405ef1c")));
         }
         catch(ApiException e) {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
