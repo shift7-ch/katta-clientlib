@@ -100,7 +100,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 );
             }
             catch(ApiException e) {
-                fail(e);
+                if(e.getCode() == 409) {
+                    log.warn(e);
+                }
+                else {
+                    throw e;
+                }
             }
 
             try {
@@ -110,7 +115,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .storageClass(S3STORAGECLASSES.STANDARD).bucketEncryption(S3SERVERSIDEENCRYPTION.NONE));
             }
             catch(ApiException e) {
-                fail(e);
+                if(e.getCode() == 409) {
+                    log.warn(e);
+                }
+                else {
+                    throw e;
+                }
             }
 
             try {
@@ -123,7 +133,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             catch(ApiException e) {
-                fail(e);
+                if(e.getCode() == 409) {
+                    log.warn(e);
+                }
+                else {
+                    throw e;
+                }
             }
 
             try {
@@ -137,7 +152,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
             catch(ApiException e) {
-                fail(e);
+                if(e.getCode() == 409) {
+                    log.warn(e);
+                }
+                else {
+                    throw e;
+                }
             }
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(hubSession.getClient())
                     .apiStorageprofileGet(false);
