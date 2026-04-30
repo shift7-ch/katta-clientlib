@@ -32,7 +32,7 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                 .flatMap(root -> testPlan.getChildren(root).stream())
                 .anyMatch(ti -> ti.getTags().contains(TestTag.create("cli")))) {
 
-            final String composeFile = "/docker-compose-minio-localhost-hub.yml";
+            final String composeFile = "/docker-compose-hub-keycloak-minio.yml";
             final String envFile = "/.local.env";
             final String profile = "local";
             final Properties props = new Properties();
