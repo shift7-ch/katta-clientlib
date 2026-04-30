@@ -250,6 +250,9 @@ services:
     depends_on:
       keycloak-ready:
         condition: service_completed_successfully
+      keycloak-enable-direct-access-grant:
+        condition: service_completed_successfully
+        required: false
       postgres:
         condition: service_healthy
       minio_setup:
