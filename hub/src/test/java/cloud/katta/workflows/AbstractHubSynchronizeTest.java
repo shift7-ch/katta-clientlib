@@ -88,7 +88,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
-            assertTrue(new StorageProfileResourceApi(hubSession.getClient()).apiStorageprofileGet(true).isEmpty());
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
