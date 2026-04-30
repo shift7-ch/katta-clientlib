@@ -134,7 +134,7 @@ services:
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
       interval: 5s
-      timeout: 1s
+      timeout: 5s
       retries: 5
     volumes:
       - ./docker/nginx/keycloak.conf.template:/etc/nginx/conf.d/keycloak.conf.template:ro
