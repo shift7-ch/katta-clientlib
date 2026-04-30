@@ -81,7 +81,7 @@ services:
           nginx
         fi
 
-        until wget -q -O- ${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration >/dev/null 2>&1; do sleep 1; done
+        until curl -sf ${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration >/dev/null 2>&1; do sleep 1; done
     healthcheck:
       test: [ "CMD-SHELL", "exit 0" ]
       interval: 10s
