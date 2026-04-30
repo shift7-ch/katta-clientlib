@@ -39,3 +39,5 @@ jobs:
       - name: Publish Test Report
         if: ${{ always() }}
         uses: scacap/action-surefire-report@v1.9.1
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
