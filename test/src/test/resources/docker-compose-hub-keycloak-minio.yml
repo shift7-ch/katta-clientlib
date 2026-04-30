@@ -260,7 +260,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 60s
     environment:
       QUARKUS_PROFILE: dev
       QUARKUS_HTTP_PORT: ${HUB_PORT}
