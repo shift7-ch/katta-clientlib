@@ -183,9 +183,16 @@ public class HubUVFVaultProvider implements VaultProvider {
                 // Share vault with myself including admin access with recovery key
                 vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
                         new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
-                // Upload metadata to bucket
-                vault.create(session, location.getRegion(), vaultMetadataProvider);
-                return vault;
+                try {
+                    // Upload metadata to bucket
+                    vault.create(session, location.getRegion(), vaultMetadataProvider);
+                    return vault;
+                }
+                catch(BackgroundException e) {
+                    log.warn("Delete vault {} after failure {} to setup in storage", vaultId, e);
+
+                    throw e;
+                }
             }
             catch(SecurityFailure | ApiException e) {
                 storage.close();
