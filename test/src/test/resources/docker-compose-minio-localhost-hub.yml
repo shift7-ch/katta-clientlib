@@ -38,18 +38,24 @@ services:
       - |
         set -euxo pipefail
 
+        # healthcheck only verifies OIDC endpoint; wait for admin API to be ready before running kcadm.sh
+        until /opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm master --user admin --password admin 2>/dev/null; do
+          echo "Waiting for Keycloak admin API..."
+          sleep 2
+        done
+
         # fix for Docker Desktop 4.42.1 based on https://github.com/keycloak/keycloak/discussions/12155
         /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm master --user admin --password admin realms/master -s sslRequired=NONE
         /opt/keycloak/bin/kcadm.sh update --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin realms/cryptomator -s sslRequired=NONE
 
         # enable direct access grants in client cryptomator and cryptomatorhub for integration testing and manual exploration
-        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
         /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
-        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true"
+        CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin -s "directAccessGrantsEnabled=true"
         # allow redirect URI from localhost for "attended" mode for client cryptomatorhub, i.e. dev wants to interact directly with the running setup
-        CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin   --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s 'redirectUris=["${HUB_URL}/*"]'
+        CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin -s 'redirectUris=["${HUB_URL}/*"]'
 
     depends_on:
       keycloak:
