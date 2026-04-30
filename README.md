@@ -21,14 +21,19 @@ Features:
 
 ## One-Stop Shop Demo with Docker Compose
 
+### Local Profile
+Running full stack consisting of Katta Server, Keycloak and MinIO locally with Docker Compose.
+
 ```bash
 docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local up --wait
 docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
 ```
 
-For integration tests:
+### Test Environment
+For integration tests with deployed Keycloak, MinIO on `testing.katta.cloud` and AWS S3.
+
 ```bash
-docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile hybrid --env-file test/src/test/resources/.hybrid.env up --wait
+docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile hybrid --env-file test/src/test/resources/.chipotle.env up --wait
 docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile hybrid down
 ```
 

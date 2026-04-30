@@ -86,17 +86,17 @@ public abstract class AbstractHubTest {
             null, null, "eu-central-1"));
 
 
-    public static final HubTestConfig.Setup.DockerConfig HYBRID_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
+    public static final HubTestConfig.Setup.DockerConfig CHIPOTLE_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
             "/docker-compose-minio-localhost-hub.yml",
-            "/.hybrid.env",
+            "/.chipotle.env",
             "hybrid"
     );
 
-    private static final Properties HYBRID_PROPERTIES = new Properties();
+    private static final Properties CHIPOTLE_PROPERTIES = new Properties();
 
     static {
-        try (InputStream in = Objects.requireNonNull(AbstractHubTest.class.getResourceAsStream(HYBRID_DOCKER_CONFIG.envFile))) {
-            HYBRID_PROPERTIES.load(in);
+        try (InputStream in = Objects.requireNonNull(AbstractHubTest.class.getResourceAsStream(CHIPOTLE_DOCKER_CONFIG.envFile))) {
+            CHIPOTLE_PROPERTIES.load(in);
         }
         catch(IOException e) {
             fail(e);
@@ -106,41 +106,41 @@ public abstract class AbstractHubTest {
     /**
      * local hub (testcontainers+docker-compose) against AWS/MinIO/Keycloak remote.
      */
-    public static final HubTestConfig.Setup HYBRID_TEST_CONFIG = new HubTestConfig.Setup()
-            .withHubURL(HYBRID_PROPERTIES.getProperty("HUB_URL"))
+    public static final HubTestConfig.Setup CHIPOTLE_TEST_CONFIG = new HubTestConfig.Setup()
+            .withHubURL(CHIPOTLE_PROPERTIES.getProperty("HUB_URL"))
             .withUserConfig(new HubTestConfig.Setup.UserConfig(
-                    HYBRID_PROPERTIES.getProperty("HUB_USER"),
-                    HYBRID_PROPERTIES.getProperty("HUB_PASSWORD"),
+                    CHIPOTLE_PROPERTIES.getProperty("HUB_USER"),
+                    CHIPOTLE_PROPERTIES.getProperty("HUB_PASSWORD"),
                     staticSetupCode()))
             .withAdminConfig(new HubTestConfig.Setup.UserConfig(
-                    HYBRID_PROPERTIES.getProperty("HUB_ADMIN_USER"),
-                    HYBRID_PROPERTIES.getProperty("HUB_ADMIN_PASSWORD"),
+                    CHIPOTLE_PROPERTIES.getProperty("HUB_ADMIN_USER"),
+                    CHIPOTLE_PROPERTIES.getProperty("HUB_ADMIN_PASSWORD"),
                     staticSetupCode()))
-            .withDockerConfig(HYBRID_DOCKER_CONFIG);
+            .withDockerConfig(CHIPOTLE_DOCKER_CONFIG);
 
     private static final Function<HubTestConfig.VaultSpec, Arguments> prepareArgumentsHybrid = vs -> Arguments.of(Named.of(
-            String.format("%s %s", vs.storageProfileName, HYBRID_TEST_CONFIG.hubURL),
-            new HubTestConfig(HYBRID_TEST_CONFIG, vs)));
+            String.format("%s %s", vs.storageProfileName, CHIPOTLE_TEST_CONFIG.hubURL),
+            new HubTestConfig(CHIPOTLE_TEST_CONFIG, vs)));
 
 
-    public static final Arguments HYBRID_MINIO_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+    public static final Arguments CHIPOTLE_MINIO_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
             "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
-            HYBRID_PROPERTIES.getProperty("MINIO_USER_ACCESS_KEY"),
-            HYBRID_PROPERTIES.getProperty("MINIO_USER_SECRET_KEY"),
+            CHIPOTLE_PROPERTIES.getProperty("MINIO_USER_ACCESS_KEY"),
+            CHIPOTLE_PROPERTIES.getProperty("MINIO_USER_SECRET_KEY"),
             "us-east-1"
     ));
-    public static final Arguments HYBRID_MINIO_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+    public static final Arguments CHIPOTLE_MINIO_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
             "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
             null, null, "eu-central-1"
     ));
 
-    public static final Arguments HYBRID_AWS_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+    public static final Arguments CHIPOTLE_AWS_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
             "AWS static", "72736C19-283C-49D3-80A5-AB74B5202549",
-            HYBRID_PROPERTIES.getProperty("AWS_USER_ACCESS_KEY"),
-            HYBRID_PROPERTIES.getProperty("AWS_USER_SECRET_KEY"),
+            CHIPOTLE_PROPERTIES.getProperty("AWS_USER_ACCESS_KEY"),
+            CHIPOTLE_PROPERTIES.getProperty("AWS_USER_SECRET_KEY"),
             "eu-north-1"
     ));
-    public static final Arguments HYBRID_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
+    public static final Arguments CHIPOTLE_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
             "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
             null, null, "eu-west-1"
     ));
