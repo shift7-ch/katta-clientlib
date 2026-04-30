@@ -112,7 +112,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     public static class HybridTesting extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
-            this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
+            this.setupDocker(AbstractHubTest.CHIPOTLE_DOCKER_CONFIG);
         }
 
         @Override
@@ -125,7 +125,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     public static class HybridTestingKeepRunning extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
-            this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
+            this.setupDocker(AbstractHubTest.CHIPOTLE_DOCKER_CONFIG);
         }
 
         @Override
