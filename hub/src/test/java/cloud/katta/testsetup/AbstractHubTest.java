@@ -5,6 +5,8 @@
 package cloud.katta.testsetup;
 
 import ch.cyberduck.core.*;
+import ch.cyberduck.core.exception.ConnectionCanceledException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.preferences.MemoryPreferences;
 import ch.cyberduck.core.preferences.Preferences;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -200,6 +202,11 @@ public abstract class AbstractHubTest {
             @Override
             public Credentials prompt(final Host bookmark, final String username, final String title, final String reason, final LoginOptions options) {
                 return new Credentials(config.vault.username, config.vault.password);
+            }
+
+            @Override
+            public void warn(final Host bookmark, final String title, final String message, final String continueButton, final String disconnectButton, final String preference) throws ConnectionCanceledException {
+                throw new LoginCanceledException();
             }
 
             @SuppressWarnings("unchecked")
