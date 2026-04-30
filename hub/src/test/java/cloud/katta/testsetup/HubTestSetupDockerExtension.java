@@ -12,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 
-import java.time.Duration;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,7 +58,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
                 .withPull(true)
                 .withEnv(env)
                 .withOptions(String.format("--profile=%s", dockerConfig.profile))
-                .waitingFor("hub-1", new DockerHealthcheckWaitStrategy().withStartupTimeout(Duration.ofMinutes(5)));
+                .waitingFor("hub-1", new DockerHealthcheckWaitStrategy());
         compose.start();
         log.info("Done setup docker {}", dockerConfig);
     }
