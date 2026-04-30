@@ -258,8 +258,9 @@ services:
     healthcheck:
       test: [ "CMD", "bash", "-c", "curl -v --fail ${HUB_URL}/api/config" ]
       interval: 5s
-      timeout: 1s
-      retries: 5
+      timeout: 5s
+      retries: 20
+      start_period: 60s
     environment:
       QUARKUS_PROFILE: dev
       QUARKUS_HTTP_PORT: ${HUB_PORT}
