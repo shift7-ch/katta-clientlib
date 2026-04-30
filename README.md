@@ -25,7 +25,7 @@ Features:
 Running full stack consisting of Katta Server, Keycloak and MinIO locally with Docker Compose.
 
 ```bash
-docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local up --wait
+docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local --env-file test/src/test/resources/.local.env up --wait
 docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local down
 ```
 
