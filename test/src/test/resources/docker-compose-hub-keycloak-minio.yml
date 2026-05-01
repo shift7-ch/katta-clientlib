@@ -44,12 +44,12 @@ services:
 
         # enable direct access grants in client cryptomator and cryptomatorhub for integration testing and manual exploration
         CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin --fields id -q clientId=cryptomator | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true" -s 'redirectUris=["http://localhost:${HUB_PORT}/*", "http://127.0.0.1:${HUB_PORT}/*" "x-katta-action:oauth"]'
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin  -s "directAccessGrantsEnabled=true" -s 'redirectUris=["http://localhost:${HUB_PORT}/*", "http://127.0.0.1:${HUB_PORT}/*", "x-katta-action:oauth"]'
         CLIENT_ID=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin -s "directAccessGrantsEnabled=true" -s 'redirectUris=["http://localhost:${HUB_PORT}/*", "http://127.0.0.1:${HUB_PORT}/*" "x-katta-action:oauth"]'
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin -s "directAccessGrantsEnabled=true" -s 'redirectUris=["http://localhost:${HUB_PORT}/*", "http://127.0.0.1:${HUB_PORT}/*", "x-katta-action:oauth"]'
         # allow redirect URI from localhost for "attended" mode for client cryptomatorhub, i.e. dev wants to interact directly with the running setup
         CLIENT_ID_CRYPTOMATORHUB=`/opt/keycloak/bin/kcadm.sh get clients --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin --fields id -q clientId=cryptomatorhub | grep "id" | sed -e 's/.*"id" : //g' | sed -e 's/"//g'`
-        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin -s 'redirectUris=["${HUB_URL}/*", "http://127.0.0.1:${HUB_PORT}/*" "x-katta-action:oauth"]'
+        /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID_CRYPTOMATORHUB --server http://keycloak:${HUB_KEYCLOAK_HTTP_PORT} --realm cryptomator --user admin --password admin -s 'redirectUris=["${HUB_URL}/*", "http://127.0.0.1:${HUB_PORT}/*", "x-katta-action:oauth"]'
 
     depends_on:
       keycloak-ready:
