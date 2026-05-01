@@ -86,8 +86,9 @@ katta storageprofile s3 static \
 
 Uploads a storage profile to Katta Server for use with MinIO STS. Requires MinIO STS setup with an OIDC provider.
 
-Unlike AWS, MinIO does not support role chaining, so the same role ARN is used for both bucket creation and hub access.
-MinIO uses the `${jwt:client_id}` policy variable to scope bucket access per vault.
+Unlike AWS, MinIO does not support role chaining or tagged-session `AssumeRole`, so `stsRoleAccessBucketAssumeRoleTaggedSession`
+and `stsSessionTag` are not used for MinIO storage profiles. MinIO uses the `${jwt:client_id}` policy variable to scope bucket
+access per vault.
 
 See also: [MinIO setup documentation](https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio).
 
