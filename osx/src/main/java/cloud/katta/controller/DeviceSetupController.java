@@ -16,6 +16,8 @@ import ch.cyberduck.binding.application.NSView;
 import ch.cyberduck.binding.application.SheetCallback;
 import ch.cyberduck.binding.foundation.NSNotification;
 import ch.cyberduck.binding.foundation.NSNotificationCenter;
+import ch.cyberduck.core.BookmarkNameProvider;
+import ch.cyberduck.core.Host;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.preferences.PreferencesFactory;
@@ -25,8 +27,11 @@ import org.rococoa.Foundation;
 
 import cloud.katta.core.DeviceSetupCallback;
 
+import java.text.MessageFormat;
+
 public class DeviceSetupController extends AlertController {
 
+    private final Host bookmark;
     private final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName;
 
     @Outlet
@@ -35,7 +40,8 @@ public class DeviceSetupController extends AlertController {
     @Outlet
     private final NSTextField deviceNameField = NSTextField.textFieldWithString(StringUtils.EMPTY);
 
-    public DeviceSetupController(final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName) {
+    public DeviceSetupController(final Host bookmark, final DeviceSetupCallback.AccountKeyAndDeviceName accountKeyAndDeviceName) {
+        this.bookmark = bookmark;
         this.accountKeyAndDeviceName = accountKeyAndDeviceName;
     }
 
@@ -45,7 +51,8 @@ public class DeviceSetupController extends AlertController {
         alert.setAlertStyle(NSAlert.NSInformationalAlertStyle);
         alert.setMessageText(LocaleFactory.localizedString("Authorization Required", "Hub"));
         alert.setInformativeText(new StringAppender()
-                .append(LocaleFactory.localizedString("This is your first login on this device.", "Hub"))
+                .append(MessageFormat.format(LocaleFactory.localizedString("This is your first login to {0} on this device.", "Hub"),
+                        BookmarkNameProvider.toHostname(bookmark)))
                 .append(LocaleFactory.localizedString("Your Account Key is required to link this browser to your account.", "Hub")).toString());
         alert.addButtonWithTitle(LocaleFactory.localizedString("Finish Setup", "Hub"));
         alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
