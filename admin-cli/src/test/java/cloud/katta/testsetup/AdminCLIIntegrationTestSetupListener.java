@@ -10,6 +10,7 @@ import org.junit.platform.engine.TestTag;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.testcontainers.containers.ComposeContainer;
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                         .withPull(true)
                         .withEnv(env)
                         .withOptions(String.format("--profile=%s", profile))
-                        .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
+                        .waitingFor("hub", new DockerHealthcheckWaitStrategy());
             }
             catch(URISyntaxException e) {
                 throw new RuntimeException(e);
