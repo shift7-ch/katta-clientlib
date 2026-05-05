@@ -10,6 +10,7 @@ import org.junit.platform.engine.TestTag;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.testcontainers.containers.ComposeContainer;
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 
 import java.io.File;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -29,18 +31,14 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
     public void testPlanExecutionStarted(TestPlan testPlan) {
         if(testPlan.getRoots().stream()
                 .flatMap(root -> testPlan.getChildren(root).stream())
-                .filter(ti -> ti.getTags().contains(TestTag.create("cli")))
-                .findAny().isPresent()) {
+                .anyMatch(ti -> ti.getTags().contains(TestTag.create("cli")))) {
 
-            final String composeFile = "/docker-compose-minio-localhost-hub.yml";
+            final String composeFile = "/docker-compose-hub-keycloak-minio.yml";
             final String envFile = "/.local.env";
             final String profile = "local";
-            final String hubAdminUser = "admin";
-            final String hubAdminPassword = "admin";
-            final String hubKeycloakSystemClientSecret = "top-secret";
             final Properties props = new Properties();
             try {
-                props.load(AbstractAdminCLIIT.class.getResourceAsStream(envFile));
+                props.load(Objects.requireNonNull(AbstractAdminCLIIT.class.getResourceAsStream(envFile)));
             }
             catch(IOException e) {
                 throw new RuntimeException(e);
@@ -51,16 +49,13 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                             e -> String.valueOf(e.getValue()),
                             (prev, next) -> next, HashMap::new
                     ));
-            env.put("HUB_ADMIN_USER", hubAdminUser);
-            env.put("HUB_ADMIN_PASSWORD", hubAdminPassword);
-            env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", hubKeycloakSystemClientSecret);
             try {
                 compose = new ComposeContainer(
                         new File(AbstractAdminCLIIT.class.getResource(composeFile).toURI()))
                         .withPull(true)
                         .withEnv(env)
                         .withOptions(String.format("--profile=%s", profile))
-                        .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
+                        .waitingFor("hub", new DockerHealthcheckWaitStrategy());
             }
             catch(URISyntaxException e) {
                 throw new RuntimeException(e);

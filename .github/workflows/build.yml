@@ -9,6 +9,7 @@ concurrency:
 
 jobs:
   build:
+    timeout-minutes: 30
     permissions:
       checks: write
       contents: read
@@ -27,6 +28,10 @@ jobs:
           distribution: 'temurin'
           java-version: 21
           cache: maven
+      - name: Write env
+        env:
+          HYBRID_ENV: ${{ secrets.HYBRID_ENV }}
+        run: printf '%s' "$HYBRID_ENV" > test/src/test/resources/.chipotle.env
       - name: Build with Maven
         run: mvn --no-transfer-progress --batch-mode verify -U
         env:
@@ -35,3 +40,5 @@ jobs:
       - name: Publish Test Report
         if: ${{ always() }}
         uses: scacap/action-surefire-report@v1.10.0
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096

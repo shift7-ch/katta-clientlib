@@ -28,6 +28,7 @@ import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultVersion;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,20 +36,20 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
@@ -61,7 +62,6 @@ import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestUtilities;
 import cloud.katta.testsetup.MethodIgnorableSource;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
@@ -76,31 +76,23 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void test01Bootstrapping(final HubTestConfig hubTestConfig) throws Exception {
-        log.info("M01 {}", hubTestConfig);
-        final String profile = hubTestConfig.setup.dockerConfig.profile;
-        final Properties props = new Properties();
-        props.load(this.getClass().getResourceAsStream(hubTestConfig.setup.dockerConfig.envFile));
-        final HashMap<String, String> env = props.entrySet().stream().collect(
-                Collectors.toMap(
-                        e -> String.valueOf(e.getKey()),
-                        e -> String.valueOf(e.getValue()),
-                        (prev, next) -> next, HashMap::new
-                ));
-
-        final HubSession hubSession = setupConnection(hubTestConfig);
+    void test01Bootstrapping(final HubTestConfig testConfig) throws Exception {
+        log.info("M01 {}", testConfig);
+        final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
+        final Properties configuration = new Properties();
+        try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
+            configuration.load(in);
+        }
+        final HubSession hubSession = setupConnection(testConfig);
         try {
 
-            final ApiClient adminApiClient = getAdminApiClient(hubTestConfig.setup);
+            final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
 
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            mapper.registerModule(new JsonNullableModule());
+            final ObjectMapper mapper = new JSON().getMapper();
             try {
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_static/storage_profile.json", profile)), StorageProfileS3StaticDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD)
-                );
+                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(
+                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -110,9 +102,10 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     throw e;
                 }
             }
+
             try {
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/aws_sts/storage_profile.json", profile)), StorageProfileS3STSDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD).bucketEncryption(S3SERVERSIDEENCRYPTION.NONE));
+                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(
+                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class).storageClass(S3STORAGECLASSES.STANDARD));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -122,18 +115,13 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     throw e;
                 }
             }
-            try {
-                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_static/storage_profile.json", profile)), StorageProfileS3StaticDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD);
-                final String minioPort = props.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                }
-                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setHostname(minioHostname);
-                }
-                adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
+
+            try (InputStream in = this.getClass().getResourceAsStream("/setup/minio_static/storage_profile.json")) {
+                final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
+                        .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
+                        .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
+                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(json, StorageProfileS3StaticDto.class));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -143,21 +131,13 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     throw e;
                 }
             }
-            try {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubSynchronizeTest.class.getResourceAsStream(String.format("/setup/%s/minio_sts/storage_profile.json", profile)), StorageProfileS3STSDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD)
-                        .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-                final String minioPort = props.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("9000", minioPort));
-                }
-                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("minio", minioHostname));
-                    storageProfile.setHostname(minioHostname);
-                }
-                adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
+
+            try (InputStream in = this.getClass().getResourceAsStream("/setup/minio_sts/storage_profile.json")) {
+                final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
+                        .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
+                        .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
+                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(json, StorageProfileS3STSDto.class));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -169,18 +149,20 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             final List<StorageProfileDto> storageProfileDtos = new StorageProfileResourceApi(hubSession.getClient())
                     .apiStorageprofileGet(false);
+            assertFalse(storageProfileDtos.isEmpty());
+
             // aws static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("72736c19-283c-49d3-80a5-ab74b520254")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("72736C19-283C-49D3-80A5-AB74B5202549"))));
             // aws sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("844bd517-96d4-4787-bcfa-238e103149f")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("844BD517-96D4-4787-BCFA-238E103149F6"))));
             // minio static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("71b910e0-2ecc-46de-a871-8db28549677")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("71B910E0-2ECC-46DE-A871-8DB28549677E"))));
             // minio sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()
-                    .startsWith("732d43fa-3716-46c4-b931-66ea5405ef1")));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
+                    .equals(UUID.fromString("732D43FA-3716-46C4-B931-66EA5405EF1C"))));
         }
         catch(ApiException e) {
             log.error("{} {}", e.getCode(), e.getMessage(), e);

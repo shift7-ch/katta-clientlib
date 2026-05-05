@@ -11,21 +11,25 @@ import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultVersion;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
@@ -46,7 +50,6 @@ import cloud.katta.protocols.hub.HubStorageLocationService;
 import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.MethodIgnorableSource;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
@@ -57,48 +60,39 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void testHubWorkflow(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config);
+    void testHubWorkflow(final HubTestConfig testConfig) throws Exception {
+        final HubSession hubSession = setupConnection(testConfig);
         try {
-            checkNumberOfVaults(hubSession, config, null, 0, 0, 0, 0, -1);
+            checkNumberOfVaults(hubSession, testConfig, null, 0, 0, 0, 0, -1);
 
-            final HubTestConfig.Setup setup = config.setup;
+            final HubTestConfig.Setup setup = testConfig.setup;
             final ApiClient adminApiClient = getAdminApiClient(setup);
-            final Properties props = new Properties();
-            props.load(this.getClass().getResourceAsStream(config.setup.dockerConfig.envFile));
+            final Properties configuration = new Properties();
+            final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
+            try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
+                configuration.load(in);
+            }
 
             log.info("S00 admin uploads storage profile");
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            mapper.registerModule(new JsonNullableModule());
-            {
-                final StorageProfileS3StaticDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_static/storage_profile.json"), StorageProfileS3StaticDto.class)
+            final ObjectMapper mapper = new JSON().getMapper();
+            try (InputStream in = this.getClass().getResourceAsStream("/setup/minio_static/storage_profile.json")) {
+                final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
+                        .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
+                        .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
+                final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD);
-                final String minioPort = props.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                }
-                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setHostname(minioHostname);
-                }
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
-            {
-                final StorageProfileS3STSDto storageProfile = mapper.readValue(AbstractHubWorkflowTest.class.getResourceAsStream("/setup/local/minio_sts/storage_profile.json"), StorageProfileS3STSDto.class)
+            try (InputStream in = this.getClass().getResourceAsStream("/setup/minio_sts/storage_profile.json")) {
+                final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
+                        .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
+                        .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
+                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
+                final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)
                         .storageClass(S3STORAGECLASSES.STANDARD)
                         .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-                final String minioPort = props.getProperty("MINIO_PORT");
-                if(minioPort != null) {
-                    storageProfile.setPort(Integer.valueOf(minioPort));
-                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("9000", minioPort));
-                }
-                final String minioHostname = props.getProperty("MINIO_HOSTNAME");
-                if(minioHostname != null) {
-                    storageProfile.setStsEndpoint(storageProfile.getStsEndpoint().replace("minio", minioHostname));
-                    storageProfile.setHostname(minioHostname);
-                }
                 adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
 
@@ -106,7 +100,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+                    .filter(p -> p.getId().toString().equals(testConfig.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             final Path vaultName = new Path(String.format("Vault %s", new AlphanumericRandomStringService().random()), EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
@@ -116,18 +110,18 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
 
             final UUID vaultId = UUID.fromString(StringUtils.removeStart(cryptomator.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
-            checkNumberOfVaults(hubSession, config, vaultId, 0, 0, 1, 0, 0);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 0, 0, 1, 0, 0);
 
             log.info("S02 {} alice shares vault with admin as owner", setup);
             final List<UserDto> userDtos = new UsersResourceApi(adminApiClient).apiUsersGet().stream().map(UserKeysServiceImpl::withCountsToUserDto).collect(Collectors.toList());
             String adminId = userDtos.stream().filter(u -> "admin".equals(u.getName())).findFirst().get().getId();
 
             new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultId, Role.OWNER);
-            checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 1, 0, 1, 0, 0);
 
             log.info("S03 {} admin uploads user keys", setup);
             final UserKeys adminKeys = UserKeys.create();
-            final String adminAccountKey = config.setup.adminConfig.setupCode;
+            final String adminAccountKey = testConfig.setup.adminConfig.setupCode;
             final UsersResourceApi users = new UsersResourceApi(adminApiClient);
 
             final UserDto admin = users.apiUsersMeGet(false, false)
@@ -136,7 +130,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .privateKey(adminKeys.encryptWithAccountKey(adminAccountKey))
                     .setupCode(new AccountKeyPayload(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
             users.apiUsersMePut(admin);
-            checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 1);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 1, 0, 1, 0, 1);
 
             log.info("S04 {} alice adds trust to admin", setup);
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
@@ -146,7 +140,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             log.info("S04 {} alice grants access to admin", setup);
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
 
-            checkNumberOfVaults(hubSession, config, vaultId, 1, 0, 1, 0, 0);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 1, 0, 1, 0, 0);
         }
         finally {
             hubSession.close();

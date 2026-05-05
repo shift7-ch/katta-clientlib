@@ -32,6 +32,10 @@ jobs:
           distribution: 'temurin'
           java-version: 21
           cache: maven
+      - name: Write env
+        env:
+          HYBRID_ENV: ${{ secrets.HYBRID_ENV }}
+        run: printf '%s' "$HYBRID_ENV" > test/src/test/resources/.chipotle.env
       - name: Build with Maven
         run: mvn --no-transfer-progress --batch-mode verify -U
         env:

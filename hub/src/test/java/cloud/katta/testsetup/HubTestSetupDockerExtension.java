@@ -10,13 +10,14 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -40,29 +41,26 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     protected ComposeContainer compose;
 
-    protected void setupDocker(final HubTestConfig.Setup.DockerConfig configuration) throws URISyntaxException, IOException {
-        log.info("Setup docker {}", configuration);
-        final Properties props = new Properties();
-        props.load(this.getClass().getResourceAsStream(configuration.envFile));
-        final HashMap<String, String> env = props.entrySet().stream().collect(
+    protected void setupDocker(final HubTestConfig.Setup.DockerConfig dockerConfig) throws URISyntaxException, IOException {
+        log.info("Setup docker {}", dockerConfig);
+        final Properties configuration = new Properties();
+        try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
+            configuration.load(in);
+        }
+        final HashMap<String, String> env = configuration.entrySet().stream().collect(
                 Collectors.toMap(
                         e -> String.valueOf(e.getKey()),
                         e -> String.valueOf(e.getValue()),
                         (prev, next) -> next, HashMap::new
                 ));
-        env.put("HUB_ADMIN_USER", configuration.hubAdminUser);
-        env.put("HUB_ADMIN_PASSWORD", configuration.hubAdminPassword);
-        env.put("HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET", configuration.hubKeycloakSystemClientSecret);
-        env.put("HUB_KEYCLOAK_OIDC_CRYPTOMATOR_VAULTS_CLIENT_SECRET", configuration.hubKeycloakSystemClientSecret);
-
-        this.compose = new ComposeContainer(
-                new File(HubTestSetupDockerExtension.class.getResource(configuration.composeFile).toURI()))
+        compose = new ComposeContainer(
+                new File(Objects.requireNonNull(HubTestSetupDockerExtension.class.getResource(dockerConfig.composeFile)).toURI()))
                 .withPull(true)
                 .withEnv(env)
-                .withOptions(configuration.profile == null ? "" : String.format("--profile=%s", configuration.profile))
-                .waitingFor("minio_setup-1", new LogMessageWaitStrategy().withRegEx(".*Completed MinIO Setup.*").withStartupTimeout(Duration.ofMinutes(2)));
+                .withOptions(String.format("--profile=%s", dockerConfig.profile))
+                .waitingFor("hub", new DockerHealthcheckWaitStrategy());
         compose.start();
-        log.info("Done setup docker {}", configuration);
+        log.info("Done setup docker {}", dockerConfig);
     }
 
     /**
@@ -112,7 +110,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     public static class HybridTesting extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
-            this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
+            this.setupDocker(AbstractHubTest.CHIPOTLE_DOCKER_CONFIG);
         }
 
         @Override
@@ -125,7 +123,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     public static class HybridTestingKeepRunning extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
-            this.setupDocker(AbstractHubTest.HYBRID_DOCKER_CONFIG);
+            this.setupDocker(AbstractHubTest.CHIPOTLE_DOCKER_CONFIG);
         }
 
         @Override
