@@ -104,7 +104,7 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio-admin</artifactId>
-            <version>8.5.17</version>
+            <version>9.0.0</version>
         </dependency>
     </dependencies>
 
