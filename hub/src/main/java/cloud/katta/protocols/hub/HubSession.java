@@ -19,6 +19,7 @@ import ch.cyberduck.core.features.Location;
 import ch.cyberduck.core.features.Move;
 import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Scheduler;
+import ch.cyberduck.core.features.Share;
 import ch.cyberduck.core.features.Timestamp;
 import ch.cyberduck.core.features.Touch;
 import ch.cyberduck.core.features.Write;
@@ -239,6 +240,9 @@ public class HubSession extends HttpSession<HubApiClient> {
         }
         if(type == Scheduler.class) {
             return (T) access;
+        }
+        if(type == Share.class) {
+            return (T) new HubVaultShareFeature(this);
         }
         if(type == Home.class) {
             return (T) (Home) Home::root;

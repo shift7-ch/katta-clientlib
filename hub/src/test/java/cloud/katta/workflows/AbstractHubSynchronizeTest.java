@@ -4,6 +4,7 @@
 
 package cloud.katta.workflows;
 
+import ch.cyberduck.core.Acl;
 import ch.cyberduck.core.AlphanumericRandomStringService;
 import ch.cyberduck.core.AttributedList;
 import ch.cyberduck.core.DisabledConnectionCallback;
@@ -239,7 +240,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     new VaultCredentials());
 
             final AttributedList<Path> vaults = hubSession.getFeature(ListService.class).list(Home.root(), new DisabledListProgressListener());
-            assertFalse(vaults.isEmpty());
+            assertEquals(vaults.length, 1);
+            for(Path vault : vaults) {
+                assertNotEquals(Acl.EMPTY, vault.attributes().getAcl());
+                // verify we are owner (FULL) and not only member (WRITE) of the new vault
+                assertTrue(vault.attributes().getAcl().values().stream().anyMatch(roles -> roles.contains(new Acl.Role(Acl.Role.FULL))));
+            }
 
             final VaultRegistry vaultRegistry = hubSession.getRegistry();
             assertInstanceOf(HubVaultRegistry.class, vaultRegistry);
