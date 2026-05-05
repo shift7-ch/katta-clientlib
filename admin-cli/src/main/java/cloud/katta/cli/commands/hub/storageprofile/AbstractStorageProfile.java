@@ -10,13 +10,12 @@ import java.util.concurrent.Callable;
 import cloud.katta.cli.commands.AbstractAuthorizationCode;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.model.StorageProfileDto;
 import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--hubUrl"}, description = "Hub URL. Example: \"https://hub.default.katta.cloud/\"", required = true)
-    protected String hubUrl;
-
     @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
     protected String uuid;
 
@@ -28,6 +27,9 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
 
     @CommandLine.Option(names = {"--regions"}, description = "Bucket regions, e.g. \"--regions eu-west-1  --regions eu-west-2 --regions eu-west-3\".", required = false)
     protected List<String> regions;
+
+    @CommandLine.Option(names = {"--debug"}, description = "Print HTTP request and response headers.", defaultValue = "false")
+    protected boolean debug;
 
     public AbstractStorageProfile() {
     }
@@ -45,9 +47,11 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
         final ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(hubUrl);
         apiClient.addDefaultHeader("Authorization", "Bearer %s".formatted(this.login()));
-        this.call(new StorageProfileResourceApi(apiClient));
+        apiClient.setDebugging(debug);
+        final StorageProfileDto response = this.call(new StorageProfileResourceApi(apiClient));
+        System.out.println(new JSON().getContext(null).writeValueAsString(response));
         return null;
     }
 
-    protected abstract void call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException;
+    protected abstract StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException;
 }

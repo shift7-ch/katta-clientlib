@@ -5,12 +5,12 @@
 package cloud.katta.cli.commands.storage;
 
 import cloud.katta.cli.commands.storage.aws.AWSSTSStorage;
-import cloud.katta.cli.commands.storage.minio.MinioSTSStorage;
+import cloud.katta.cli.commands.storage.minio.MinIOSTSStorage;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "setup", subcommands = {
         AWSSTSStorage.class,
-        MinioSTSStorage.class,
+        MinIOSTSStorage.class,
         CommandLine.HelpCommand.class
 },
         description = "Setup Storage Provider Integration", mixinStandardHelpOptions = true)

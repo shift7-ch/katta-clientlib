@@ -1,0 +1,19 @@
+{
+    "rules": [
+        {
+            "excludeClasses": "net.bytebuddy.**"
+        },
+        {
+            "excludeClasses": "org.mockito.**"
+        },
+        {
+            "excludeClasses": "org.objenesis.**"
+        },
+        {
+            "excludeClasses": "org.junit.**"
+        },
+        {
+            "excludeClasses": "org.opentest4j.**"
+        }
+    ]
+}

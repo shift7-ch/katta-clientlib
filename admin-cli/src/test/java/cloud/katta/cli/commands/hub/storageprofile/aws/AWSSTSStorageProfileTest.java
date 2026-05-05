@@ -10,20 +10,20 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.UUID;
 
-import cloud.katta.client.ApiException;
+import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.times;
 
 class AWSSTSStorageProfileTest {
 
     @Test
-    public void testCall() throws ApiException {
+    public void testCall() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
         final UUID vaultId = UUID.randomUUID();
         final AWSSTSStorageProfile cli = new AWSSTSStorageProfile(null, vaultId.toString(), "AWS S3 STS", "eu-west-1", Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"),
@@ -48,6 +48,6 @@ class AWSSTSStorageProfileTest {
         dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-web-identity-role");
         dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-tagged-session-role");
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(any());
+        assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }
 }

@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-self-hosted ]
     steps:
       - uses: actions/checkout@v6
       - uses: graalvm/setup-graalvm@v1
@@ -41,9 +41,12 @@ jobs:
       - name: Ensure to use tagged version
         if: startsWith(github.ref, 'refs/tags/')
         run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}
+      - name: Build dependencies
+        run: >
+          mvn --batch-mode install -pl admin-cli -am -DskipTests
       - name: Build native image
         run: >
-          mvn --batch-mode clean package -pl admin-cli -am -Pnative -DskipTests -DskipITs
+          mvn --batch-mode verify -pl admin-cli -Pnative
       - name: Upload executable
         uses: actions/upload-artifact@v7
         with:

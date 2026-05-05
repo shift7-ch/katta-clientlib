@@ -35,8 +35,7 @@ import software.amazon.awssdk.policybuilder.iam.IamPolicyWriter;
         description = "Setup/update OIDC provider and roles for STS in MinIO.",
         showDefaultValues = true,
         mixinStandardHelpOptions = true)
-@Deprecated
-public class MinioSTSStorage implements Callable<Void> {
+public class MinIOSTSStorage implements Callable<Void> {
 
     @CommandLine.Option(names = {"--endpointUrl"}, description = "MinIO URL. Example: \"http://localhost:9000\"", required = true)
     String endpointUrl;
@@ -47,7 +46,6 @@ public class MinioSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--minioAlias"}, description = "MinIO alias to use.", defaultValue = "myminio")
     String minioAlias;
 
-    // TODO offer to use predefined minio alias only?
     @CommandLine.Option(names = {"--accessKey"}, description = "Access Key for administering MinIO if no profile is used.", required = true)
     String accessKey;
 
@@ -60,19 +58,19 @@ public class MinioSTSStorage implements Callable<Void> {
     @CommandLine.Option(names = {"--bucketPrefix"}, description = "Bucket Prefix for STS vaults.", defaultValue = "katta-")
     String bucketPrefix;
 
-    @CommandLine.Option(names = {"--createbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}createbucketpolicy.")
-    String createbucketPolicyName;
+    @CommandLine.Option(names = {"--createBucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}createbucketpolicy.")
+    String createBucketPolicyName;
 
-    @CommandLine.Option(names = {"--accessbucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}accessbucketpolicy.")
-    String accessbucketPolicyName;
+    @CommandLine.Option(names = {"--accessBucketPolicyName"}, description = "Policy name for accessing Katta STS buckets. Defaults to {roleNamePrefix}accessbucketpolicy.")
+    String accessBucketPolicyName;
 
     @Override
     public Void call() throws Exception {
-        if(createbucketPolicyName == null) {
-            createbucketPolicyName = String.format("%screatebucketpolicy", roleNamePrefix);
+        if(createBucketPolicyName == null) {
+            createBucketPolicyName = String.format("%screatebucketpolicy", roleNamePrefix);
         }
-        if(accessbucketPolicyName == null) {
-            accessbucketPolicyName = String.format("%saccessbucketpolicy", roleNamePrefix);
+        if(accessBucketPolicyName == null) {
+            accessBucketPolicyName = String.format("%saccessbucketpolicy", roleNamePrefix);
         }
 
         final MinioAdminClient minioAdminClient = new MinioAdminClient.Builder()
@@ -95,10 +93,10 @@ public class MinioSTSStorage implements Callable<Void> {
                             .addResource(String.format("arn:aws:s3:::%s*/*/", bucketPrefix))
                             .addResource(String.format("arn:aws:s3:::%s*/*.uvf", bucketPrefix)))
                     .build();
-            minioAdminClient.addCannedPolicy(createbucketPolicyName, miniocreatebucketpolicy.toJson(IamPolicyWriter.builder()
+            minioAdminClient.addCannedPolicy(createBucketPolicyName, miniocreatebucketpolicy.toJson(IamPolicyWriter.builder()
                     .prettyPrint(true)
                     .build()));
-            System.out.println(minioAdminClient.listCannedPolicies().get(createbucketPolicyName));
+            System.out.println(minioAdminClient.listCannedPolicies().get(createBucketPolicyName));
         }
         // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
         {
@@ -120,8 +118,8 @@ public class MinioSTSStorage implements Callable<Void> {
                             .addAction("s3:AbortMultipartUpload")
                             .addResource(String.format("arn:aws:s3:::%s${jwt:client_id}/*", bucketPrefix)))
                     .build();
-            minioAdminClient.addCannedPolicy(accessbucketPolicyName, minioAccessBucketPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()));
-            System.out.println(minioAdminClient.listCannedPolicies().get(accessbucketPolicyName));
+            minioAdminClient.addCannedPolicy(accessBucketPolicyName, minioAccessBucketPolicy.toJson(IamPolicyWriter.builder().prettyPrint(true).build()));
+            System.out.println(minioAdminClient.listCannedPolicies().get(accessBucketPolicyName));
         }
 
         final String json = IOUtils.toString(URI.create(hubUrl + "/api/config"), StandardCharsets.UTF_8);
@@ -132,38 +130,36 @@ public class MinioSTSStorage implements Callable<Void> {
         final String keycloakClientIdHub = apiConfig.getString("keycloakClientIdHub");
         final String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
 
-        // TODO should we run mc cli tool instead of prompting command?
-        System.out.println(String.format("""
+        System.out.printf("""
                         # The MinIO Client API is incomplete (https://github.com/minio/minio/issues/16151).
                         # Please execute the following commands on the command line.
                         # Further info: https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio
 
                         mc alias set %s %s %s %s
 
-                        mc idp openid add %s %s \\
-                            config_url="%s" \\
-                            client_id="%s" \\
-                            client_secret="ignore-me" \\
+                        mc idp openid add %s %s \
+                            config_url="%s" \
+                            client_id="%s" \
+                            client_secret="ignore-me" \
                             role_policy="%s"
-                        mc idp openid add %s %s \\
-                            config_url="%s" \\
-                            client_id="%s" \\
-                            client_secret="ignore-me" \\
-                            role_policy="%s"   \s
-                        mc idp openid add %s %s \\
-                            config_url="%s" \\
-                            client_id="%s" \\
-                            client_secret="ignore-me" \\
-                            role_policy="%s"   \s
+                        mc idp openid add %s %s \
+                            config_url="%s" \
+                            client_id="%s" \
+                            client_secret="ignore-me" \
+                            role_policy="%s"
+                        mc idp openid add %s %s \
+                            config_url="%s" \
+                            client_id="%s" \
+                            client_secret="ignore-me" \
+                            role_policy="%s"
                         mc admin service restart %s
-                        """,
+                        %n""",
                 minioAlias, endpointUrl, accessKey, secretKey,
-                minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createbucketPolicyName,
-                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessbucketPolicyName,
-                minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessbucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createBucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessBucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessBucketPolicyName,
                 minioAlias
-        ));
-
+        );
         return null;
     }
 }

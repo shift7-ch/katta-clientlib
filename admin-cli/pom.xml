@@ -211,7 +211,6 @@
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
-                        <extensions>true</extensions>
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
@@ -234,7 +233,6 @@
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
-                        <extensions>true</extensions>
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
@@ -251,6 +249,15 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <argLine>
+                                -agentlib:native-image-agent=config-merge-dir=${project.build.directory}/META-INF/native-image,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
+                            </argLine>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>${native-maven-plugin.version}</version>
@@ -261,18 +268,44 @@
                                 <goals>
                                     <goal>compile-no-fork</goal>
                                 </goals>
-                                <phase>package</phase>
+                                <phase>verify</phase>
+                            </execution>
+                            <execution>
+                                <id>add-reachability-metadata</id>
+                                <goals>
+                                    <goal>add-reachability-metadata</goal>
+                                </goals>
                             </execution>
                         </executions>
                         <configuration>
+                            <agent>
+                                <enabled>true</enabled>
+                                <defaultMode>direct</defaultMode>
+                                <modes>
+                                    <direct>
+                                        config-merge-dir=${project.build.directory}/META-INF/native-image,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
+                                    </direct>
+                                </modes>
+                                <options>
+                                    <accessFilterFiles>
+                                        <filterFile>${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json</filterFile>
+                                    </accessFilterFiles>
+                                    <builtinCallerFilter>true</builtinCallerFilter>
+                                    <builtinHeuristicFilter>true</builtinHeuristicFilter>
+                                </options>
+                            </agent>
                             <fallback>false</fallback>
                             <mainClass>cloud.katta.cli.Katta</mainClass>
                             <imageName>katta</imageName>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <skipNativeTests>true</skipNativeTests>
+                            <skipBaseSBOM>true</skipBaseSBOM>
                             <metadataRepository>
                                 <enabled>true</enabled>
                             </metadataRepository>
+                            <configFiles>
+                                <configFile>${project.build.directory}/META-INF/native-image</configFile>
+                            </configFiles>
                         </configuration>
                         <dependencies>
                             <dependency>
