@@ -90,7 +90,7 @@ public class UserKeysServiceImpl implements UserKeysService {
         // Setup existing device with account key
         final DeviceSetupCallback.AccountKeyAndDeviceName input = prompt.askForAccountKeyAndDeviceName(bookmark);
         try {
-            final UserKeys userKeys = UserKeys.recoverWithAccountKey(me.getPrivateKey(), input.accountKey(),
+            final UserKeys userKeys = UserKeys.recoverWithAccountKey(me.getPrivateKeys(), input.accountKey(),
                     me.getEcdhPublicKey(), me.getEcdsaPublicKey());
             this.uploadDeviceKeys(input.deviceName(), userKeys, deviceKeyPair);
             return userKeys;
@@ -127,7 +127,7 @@ public class UserKeysServiceImpl implements UserKeysService {
     }
 
     private static boolean validate(final UserDto me) {
-        return me.getEcdhPublicKey() != null && me.getPrivateKey() != null;
+        return me.getEcdhPublicKey() != null && me.getPrivateKeys() != null;
     }
 
     public static UserDto withCountsToUserDto(WithCounts withCounts) {
