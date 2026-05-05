@@ -384,10 +384,6 @@ services:
         envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
         curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
-        # AWS Storage Profiles
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @setup/aws_sts/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @setup/aws_static/storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 
