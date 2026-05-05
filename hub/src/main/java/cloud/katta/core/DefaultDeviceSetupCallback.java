@@ -4,6 +4,7 @@
 
 package cloud.katta.core;
 
+import ch.cyberduck.core.BookmarkNameProvider;
 import ch.cyberduck.core.Controller;
 import ch.cyberduck.core.Credentials;
 import ch.cyberduck.core.Host;
@@ -15,6 +16,8 @@ import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.exception.LoginCanceledException;
 
 import cloud.katta.workflows.exceptions.AccessException;
+
+import java.text.MessageFormat;
 
 public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
 
@@ -55,7 +58,8 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
             final Credentials input = prompt.prompt(bookmark, AccountKeyAndDeviceName.COMPUTER_NAME,
                     LocaleFactory.localizedString("Authorization Required", "Hub"),
                     new StringAppender()
-                            .append(LocaleFactory.localizedString("This is your first login on this device.", "Hub"))
+                            .append(MessageFormat.format(LocaleFactory.localizedString("This is your first login to {0} on this device.", "Hub"),
+                                    BookmarkNameProvider.toHostname(bookmark)))
                             .append(LocaleFactory.localizedString("Your Account Key is required to link this browser to your account.", "Hub")).toString(),
                     new LoginOptions()
                             .usernamePlaceholder(LocaleFactory.localizedString("Device Name", "Hub"))

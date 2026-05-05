@@ -47,7 +47,7 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
             log.debug(String.format("Ask for Account Key for %s", bookmark));
         }
         final AccountKeyAndDeviceName accountKeyAndDeviceName = new AccountKeyAndDeviceName(StringUtils.EMPTY, AccountKeyAndDeviceName.COMPUTER_NAME);
-        final DeviceSetupController sheet = new DeviceSetupController(accountKeyAndDeviceName);
+        final DeviceSetupController sheet = new DeviceSetupController(bookmark, accountKeyAndDeviceName);
         switch(controller.alert(sheet)) {
             case SheetCallback.CANCEL_OPTION:
             case SheetCallback.ALTERNATE_OPTION:
