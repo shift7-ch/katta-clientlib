@@ -1,7 +1,7 @@
 services:
   keycloak:
     profiles: [ local ]
-    image: "ghcr.io/shift7-ch/keycloak:26.5.5"
+    image: "ghcr.io/shift7-ch/keycloak:26.5.6"
     pull_policy: missing
     ports:
       - "${HUB_KEYCLOAK_HTTP_PORT:-1}:${HUB_KEYCLOAK_HTTP_PORT:-1}"
@@ -31,7 +31,7 @@ services:
 
   keycloak-enable-direct-access-grant:
     profiles: [ local ]
-    image: "ghcr.io/shift7-ch/keycloak:26.5.5"
+    image: "ghcr.io/shift7-ch/keycloak:26.5.6"
     pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]
     command:
@@ -237,7 +237,7 @@ services:
     build:
       dockerfile: docker/hub/Dockerfile
       args:
-        KATTA_SERVER_IMAGE: "ghcr.io/shift7-ch/katta-server:1.5.0-SNAPSHOT-ci@sha256:3a6548e7e2a88c3ab25f15cd39c8cba847e06ecaa1b1f93ce62522b78fa34218"
+        KATTA_SERVER_IMAGE: "ghcr.io/shift7-ch/katta-server:1.5.0-SNAPSHOT-ci@sha256:a24a7ca8d9bc55099cb25debf3f6b60c9024bb36df8b58319788cb05bd444666"
     depends_on:
       keycloak-ready:
         condition: service_completed_successfully
