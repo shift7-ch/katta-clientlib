@@ -73,6 +73,7 @@ public class HubVaultShareFeature implements Share<Void, Void> {
         try {
             new VaultResourceApi(session.getClient()).apiVaultsVaultIdUsersUserIdPut(sharee.getIdentifier(),
                     UUID.fromString(file.attributes().getFileId()), Role.MEMBER);
+            new VaultResourceApi(session.getClient()).apiVaultsVaultIdAccessTokensPost();
             return DescriptiveUrl.EMPTY;
         }
         catch(ApiException e) {
