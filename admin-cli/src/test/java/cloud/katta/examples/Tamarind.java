@@ -68,7 +68,7 @@ public class Tamarind {
             new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
                     "storageprofile", "s3", "static",
                     "--hubUrl", "https://testing.katta.cloud/tamarind",
-                    "--name", "MinIO S3 Static noch neuer",
+                    "--name", "MinIO S3 Static",
                     "--endpointUrl", "https://tamarind.minio.testing.katta.cloud",
                     "--bucketPrefix", "katta-test-tamarind-",
                     "--region", "eu-west-1",
