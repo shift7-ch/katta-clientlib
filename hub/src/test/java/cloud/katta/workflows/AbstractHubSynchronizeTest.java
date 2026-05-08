@@ -14,12 +14,14 @@ import ch.cyberduck.core.Path;
 import ch.cyberduck.core.SimplePathPredicate;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.NotfoundException;
+import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
 import ch.cyberduck.core.features.Delete;
 import ch.cyberduck.core.features.Directory;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Home;
 import ch.cyberduck.core.features.Move;
+import ch.cyberduck.core.features.Read;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.transfer.TransferStatus;
@@ -43,6 +45,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -243,17 +246,14 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final VaultRegistry vaultRegistry = hubSession.getRegistry();
             assertInstanceOf(HubVaultRegistry.class, vaultRegistry);
-            {
-                assertNotNull(vaults.find(new SimplePathPredicate(cryptomator.getHome())));
-                assertTrue(hubSession.getFeature(Find.class).find(cryptomator.getHome()));
-                assertEquals(location.getRegion(), hubSession.getFeature(AttributesFinder.class).find(cryptomator.getHome()).getRegion());
-
-                assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, cryptomator.getHome()));
-                assertTrue(vaultRegistry.contains(cryptomator.getHome()));
-            }
-
+            assertNotSame(Vault.DISABLED, vaultRegistry.find(hubSession, cryptomator.getHome()));
+            assertTrue(vaultRegistry.contains(cryptomator.getHome()));
             final Path vault = vaults.find(new SimplePathPredicate(cryptomator.getHome()));
+            assertNotNull(vault);
             {
+                assertTrue(hubSession.getFeature(Find.class).find(vault));
+                assertEquals(location.getRegion(), hubSession.getFeature(AttributesFinder.class).find(vault).getRegion());
+                assertThrows(UnsupportedException.class, () -> hubSession.getFeature(Move.class).preflight(vault, Optional.empty()));
                 // decrypted file listing
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertTrue(list.isEmpty());
@@ -262,10 +262,17 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 // encrypted file upload
                 final Path file = new Path(vault, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
                 final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(234));
+                assertTrue(hubSession.getFeature(Find.class).find(file));
+                assertEquals(content.length, hubSession.getFeature(AttributesFinder.class).find(file).getSize());
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertEquals(1, list.size());
                 assertEquals(file.getName(), list.get(0).getName());
                 assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
+                // Assert preflight checks
+                hubSession.getFeature(Read.class).preflight(file);
+                hubSession.getFeature(Write.class).preflight(file);
+                hubSession.getFeature(Delete.class).preflight(file);
+                hubSession.getFeature(Move.class).preflight(file, Optional.empty());
             }
             {
                 // directory creation and listing
