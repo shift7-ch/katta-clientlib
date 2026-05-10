@@ -255,6 +255,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 assertTrue(hubSession.getFeature(Find.class).find(vault));
                 assertEquals(location.getRegion(), hubSession.getFeature(AttributesFinder.class).find(vault).getRegion());
                 assertThrows(UnsupportedException.class, () -> hubSession.getFeature(Move.class).preflight(vault, Optional.empty()));
+                assertThrows(UnsupportedException.class, () -> hubSession.getFeature(Delete.class).preflight(vault));
                 // decrypted file listing
                 final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
                 assertTrue(list.isEmpty());

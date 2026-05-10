@@ -10,6 +10,7 @@ import ch.cyberduck.core.cryptomator.impl.uvf.UVFVault;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.UnsupportedException;
 import ch.cyberduck.core.features.AttributesFinder;
+import ch.cyberduck.core.features.Delete;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.shared.DefaultAttributesFinderFeature;
 import ch.cyberduck.core.shared.DefaultFindFeature;
@@ -61,7 +62,11 @@ public class HubUVFVault extends UVFVault {
             log.warn("No feature {} available for {}", type, storage);
             throw new UnsupportedException();
         }
-        return super.getFeature(storage, type, feature);
+        final T impl = super.getFeature(storage, type, feature);
+        if(type == Delete.class) {
+            return (T) new HubVaultDeleteFeature((Delete) impl);
+        }
+        return impl;
     }
 
     @Override
