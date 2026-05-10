@@ -250,6 +250,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertTrue(vaultRegistry.contains(cryptomator.getHome()));
             final Path vault = vaults.find(new SimplePathPredicate(cryptomator.getHome()));
             assertNotNull(vault);
+            assertTrue(vault.getType().contains(Path.Type.vault));
             {
                 assertTrue(hubSession.getFeature(Find.class).find(vault));
                 assertEquals(location.getRegion(), hubSession.getFeature(AttributesFinder.class).find(vault).getRegion());
