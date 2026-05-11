@@ -289,7 +289,7 @@ public class HubSession extends HttpSession<HubApiClient> {
                 }
 
                 @Override
-                public void preflight(final Path workdir, final String filename) throws BackgroundException {
+                public void preflight(final Path workdir, final Optional<String> filename) throws BackgroundException {
                     throw new UnsupportedException().withFile(workdir);
                 }
             };
@@ -303,7 +303,7 @@ public class HubSession extends HttpSession<HubApiClient> {
                 }
 
                 @Override
-                public void preflight(final Path workdir, final String filename) throws BackgroundException {
+                public void preflight(final Path workdir, final Optional<String> filename) throws BackgroundException {
                     throw new UnsupportedException().withFile(workdir);
                 }
             };
