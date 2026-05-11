@@ -91,7 +91,7 @@ class WoTServiceImplTest {
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
         final AuthorityResourceApi authoritiesMock = Mockito.mock(AuthorityResourceApi.class);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock, authoritiesMock);
-        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(withCountsToUserDto(alice));
+        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(withCountsToUserDto(alice));
         Mockito.when(authoritiesMock.apiAuthoritiesGet(Stream.of(bob, bob).map(WithCounts::getId).collect(Collectors.toList()))).thenReturn(Arrays.asList(
                 new AuthorityDto(withCountsToUserDto(alice)), new AuthorityDto(withCountsToUserDto(bob)), new AuthorityDto(withCountsToUserDto(oscar))));
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
@@ -130,7 +130,7 @@ class WoTServiceImplTest {
         final UserKeys aliceKeys = previousKeys;
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(alice);
+        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
 
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         wot.verify(aliceKeys, signatureChain, SignedKeys.fromUser(bob));
@@ -151,7 +151,7 @@ class WoTServiceImplTest {
         final String expectedSignature = WoT.sign(aliceKeys.ecdsaKeyPair().getPrivate(), alice.getId(), bob);
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        Mockito.when(usersMock.apiUsersMeGet(true, false)).thenReturn(alice);
+        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(alice);
         final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
         final TrustedUserDto expectedTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(Collections.singletonList(expectedSignature));
         Mockito.when(usersMock.apiUsersTrustedUserIdGet(bob.getId())).thenReturn(expectedTrust);

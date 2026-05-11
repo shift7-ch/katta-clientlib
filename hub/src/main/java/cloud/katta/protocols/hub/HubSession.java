@@ -192,7 +192,7 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
 
     public UserDto getMe() throws BackgroundException {
         try {
-            final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
+            final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true);
             log.debug("Retrieved user {}", me.getId());
             return me;
         }

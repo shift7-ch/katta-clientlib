@@ -13,8 +13,8 @@ import java.util.UUID;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
+import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -30,26 +30,20 @@ class S3StaticStorageProfileTest {
                 "https://s3.example.com", "katta-");
         cli.call(api);
 
-        final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto();
-        dto.setId(vaultId);
+        final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto(vaultId);
         dto.setName("S3 static");
         dto.setProtocol(Protocol.S3_STATIC);
         dto.setArchived(false);
-        dto.setScheme("https");
-        dto.setHostname("s3.example.com");
-        dto.setPort(443);
-        dto.setWithPathStyleAccessEnabled(true);
-        dto.setStorageClass(S3STORAGECLASSES.STANDARD);
+        dto.endpoint("https://s3.example.com");
+        dto.pathStyleAccessEnabled(true);
+        dto.setStorageClass(S3StorageClass.STANDARD);
         dto.setRegion("us-east-1");
         dto.setRegions(List.of("us-east-1"));
         dto.setBucketPrefix("katta-");
-        dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-        dto.setBucketVersioning(false);
-        dto.setBucketAcceleration(null);
-        dto.stsRoleCreateBucketClient("");
-        dto.stsRoleCreateBucketHub("");
-        dto.stsEndpoint(null);
-        Mockito.verify(api, times(1)).apiStorageprofileS3staticPost(dto);
+        // TODO missing dto - required for bucket creation
+//        dto.setBucketVersioning(false);
+//        dto.setBucketAcceleration(null);
+        Mockito.verify(api, times(1)).apiStorageprofilePost(new StorageProfileDto(dto));
         assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }
 }

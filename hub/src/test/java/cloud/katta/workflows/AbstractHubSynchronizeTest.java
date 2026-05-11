@@ -57,7 +57,7 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.Role;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -97,8 +97,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(
-                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(
+                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -110,8 +110,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
 
             try {
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(
-                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class).storageClass(S3STORAGECLASSES.STANDARD));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(
+                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class).storageClass(S3StorageClass.STANDARD)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -127,7 +127,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(json, StorageProfileS3StaticDto.class));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(json, StorageProfileS3StaticDto.class)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -143,7 +143,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(json, StorageProfileS3STSDto.class));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(json, StorageProfileS3STSDto.class)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -158,17 +158,17 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertFalse(storageProfileDtos.isEmpty());
 
             // aws static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
-                    .equals(UUID.fromString("72736C19-283C-49D3-80A5-AB74B5202549"))));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getName()
+                    .equals("AWS S3 static")));
             // aws sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
-                    .equals(UUID.fromString("844BD517-96D4-4787-BCFA-238E103149F6"))));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getName()
+                    .equals("AWS S3 STS")));
             // minio static
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
-                    .equals(UUID.fromString("71B910E0-2ECC-46DE-A871-8DB28549677E"))));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getName()
+                    .equals("MinIO S3 static")));
             // minio sts
-            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getId()
-                    .equals(UUID.fromString("732D43FA-3716-46C4-B931-66EA5405EF1C"))));
+            assertTrue(storageProfileDtos.stream().anyMatch(storageProfileDto -> StorageProfileDtoWrapper.coerce(storageProfileDto).getName()
+                    .equals("MinIO S3 STS")));
         }
         catch(ApiException e) {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
@@ -187,19 +187,15 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
             final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
 
-            final UUID uuid = UUID.randomUUID();
-
             final StorageProfileDto storageProfile = storageProfiles.get(0);
             // client-generated code is not subclassed...
             if(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto) {
                 final StorageProfileS3STSDto profile = (StorageProfileS3STSDto) storageProfile.getActualInstance();
-                profile.setId(uuid);
-                adminStorageProfileApi.apiStorageprofileS3stsPost(profile);
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(profile));
             }
             else if(storageProfile.getActualInstance() instanceof StorageProfileS3StaticDto) {
                 final StorageProfileS3StaticDto profile = (StorageProfileS3StaticDto) storageProfile.getActualInstance();
-                profile.setId(uuid);
-                adminStorageProfileApi.apiStorageprofileS3staticPost(profile);
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(profile));
             }
             else {
                 fail();
@@ -352,7 +348,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         log.info("M05 {}", config);
         try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault); final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final WithCounts alice = new UsersResourceApi(adminHubSession.getClient()).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
-            final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
+            final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false);
             final UUID vaultId;
             final String name;
             {
