@@ -13,8 +13,8 @@ import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
@@ -87,14 +87,14 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
                 .scheme(scheme)
                 .hostname(hostname)
                 .port(port)
-                .storageClass(S3STORAGECLASSES.STANDARD)
+                .storageClass(S3StorageClass.STANDARD)
                 .withPathStyleAccessEnabled(true) // Required for MinIO
 
                 // -- (2) bucket creation
                 .bucketPrefix(bucketPrefix)
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                .bucketEncryption(S3ServersideEncryption.NONE)
                 .bucketVersioning(false) // MinIO versioning is optional
                 .bucketAcceleration(null) // Not supported by MinIO
 

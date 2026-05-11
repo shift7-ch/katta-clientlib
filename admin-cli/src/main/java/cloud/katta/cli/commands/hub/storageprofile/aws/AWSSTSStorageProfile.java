@@ -11,8 +11,8 @@ import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
@@ -63,14 +63,14 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 // -- (1) bucket creation, template upload and client profile
                 .scheme("https")
                 .port(443)
-                .storageClass(S3STORAGECLASSES.STANDARD)
+                .storageClass(S3StorageClass.STANDARD)
                 .withPathStyleAccessEnabled(false)
 
                 // -- (2) bucket creation only (only relevant for Desktop client)
                 .bucketPrefix(bucketPrefix)
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                .bucketEncryption(S3ServersideEncryption.NONE)
                 .bucketVersioning(true)
 
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-create-bucket

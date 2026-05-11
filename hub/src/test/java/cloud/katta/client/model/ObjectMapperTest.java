@@ -32,7 +32,7 @@ class ObjectMapperTest {
         assertNull(profile.getHostname());
         assertEquals(443, profile.getPort());
         // default STANDARD from backend
-        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertFalse(profile.getArchived());
         assertFalse(profile.getWithPathStyleAccessEnabled());
     }
@@ -50,14 +50,14 @@ class ObjectMapperTest {
         assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", profile.getStsRoleCreateBucketClient());
         assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-web-identity", profile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
         assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-tagged-session", profile.getStsRoleAccessBucketAssumeRoleTaggedSession());
-        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertNull(profile.getArchived());
         assertEquals(Protocol.S3_STS, profile.getProtocol());
         assertNull(profile.getScheme());
         assertNull(profile.getHostname());
         assertNull(profile.getPort());
         // default NONE from backend
-        assertEquals(S3SERVERSIDEENCRYPTION.NONE, profile.getBucketEncryption());
+        assertEquals(S3ServersideEncryption.NONE, profile.getBucketEncryption());
         assertNull(profile.getBucketAcceleration());
     }
 
@@ -75,7 +75,7 @@ class ObjectMapperTest {
         assertEquals("minio", profile.getHostname());
         assertEquals(9000, profile.getPort());
         // default STANDARD from backend
-        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertFalse(profile.getArchived());
         assertTrue(profile.getWithPathStyleAccessEnabled());
     }
@@ -102,8 +102,8 @@ class ObjectMapperTest {
         assertEquals("minio", profile.getHostname());
         assertEquals(9000, profile.getPort());
         // default NONE from backend
-        assertEquals(S3SERVERSIDEENCRYPTION.NONE, profile.getBucketEncryption());
-        assertEquals(S3STORAGECLASSES.STANDARD, profile.getStorageClass());
+        assertEquals(S3ServersideEncryption.NONE, profile.getBucketEncryption());
+        assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertNull(profile.getBucketAcceleration());
     }
 }

@@ -10,6 +10,7 @@ import ch.cyberduck.core.serializer.Deserializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,11 +74,11 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case DEFAULT_NICKNAME_KEY:
                 return dto.getName();
             case SCHEME_KEY:
-                return dto.getScheme();
+                return URI.create(dto.getEndpoint()).getScheme();
             case DEFAULT_HOSTNAME_KEY:
-                return dto.getHostname();
+                return URI.create(dto.getEndpoint()).getHost();
             case DEFAULT_PORT_KEY:
-                return String.valueOf(dto.getPort());
+                return String.valueOf(URI.create(dto.getEndpoint()).getPort());
             case STS_ENDPOINT_KEY:
                 return dto.getStsEndpoint();
             case REGION_KEY:
@@ -114,13 +115,13 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         if(dto.getName() != null) {
             keys.add(DEFAULT_NICKNAME_KEY);
         }
-        if(dto.getScheme() != null) {
+        if(URI.create(dto.getEndpoint()).getScheme() != null) {
             keys.add(SCHEME_KEY);
         }
-        if(dto.getHostname() != null) {
+        if(URI.create(dto.getEndpoint()).getHost() != null) {
             keys.add(DEFAULT_HOSTNAME_KEY);
         }
-        if(dto.getPort() != null) {
+        if(URI.create(dto.getEndpoint()).getPort() != -1) {
             keys.add(DEFAULT_PORT_KEY);
         }
         if(dto.getStsEndpoint() != null) {

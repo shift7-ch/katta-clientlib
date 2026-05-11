@@ -13,8 +13,8 @@ import java.util.UUID;
 
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
@@ -37,14 +37,14 @@ class ArchiveStorageProfileIT extends AbstractAdminCLIIT {
                     .name("S3 static")
                     .protocol(Protocol.S3_STATIC)
                     .archived(false)
-                    .storageClass(S3STORAGECLASSES.STANDARD)
+                    .storageClass(S3StorageClass.STANDARD)
                     .region("eu-west-1")
                     .regions(Arrays.asList("eu-west-1"))
                     .bucketPrefix("katta-test")
                     .stsRoleCreateBucketClient("")
                     .stsRoleCreateBucketHub("")
                     .bucketVersioning(true)
-                    .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                    .bucketEncryption(S3ServersideEncryption.NONE)
             );
 
             final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p -> StorageProfileDtoWrapper.coerce(p).getId().toString().toLowerCase().equals(storageProfileId))

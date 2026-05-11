@@ -13,8 +13,8 @@ import java.util.UUID;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -39,11 +39,11 @@ class S3StaticStorageProfileTest {
         dto.setHostname("s3.example.com");
         dto.setPort(443);
         dto.setWithPathStyleAccessEnabled(true);
-        dto.setStorageClass(S3STORAGECLASSES.STANDARD);
+        dto.setStorageClass(S3StorageClass.STANDARD);
         dto.setRegion("us-east-1");
         dto.setRegions(List.of("us-east-1"));
         dto.setBucketPrefix("katta-");
-        dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
+        dto.setBucketEncryption(S3ServersideEncryption.NONE);
         dto.setBucketVersioning(false);
         dto.setBucketAcceleration(null);
         dto.stsRoleCreateBucketClient("");

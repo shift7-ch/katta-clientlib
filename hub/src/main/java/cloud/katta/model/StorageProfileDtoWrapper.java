@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -61,35 +61,17 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public String getHostname() {
+    public String getEndpoint() {
         if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
-            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getHostname();
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getEndpoint();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getHostname();
+            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getEndpoint();
         }
         return null;
     }
 
-    public String getScheme() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
-            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getScheme();
-        }
-        else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getScheme();
-        }
-        return null;
-    }
 
-    public Integer getPort() {
-        if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
-            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getPort();
-        }
-        else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getPort();
-        }
-        return null;
-    }
 
     public String getStsEndpoint() {
         if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
@@ -208,7 +190,7 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public S3STORAGECLASSES getStorageClass() {
+    public S3StorageClass getStorageClass() {
         if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
             return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getStorageClass();
         }

@@ -13,8 +13,8 @@ import java.util.UUID;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -38,13 +38,13 @@ class AWSSTSStorageProfileTest {
         dto.setScheme("https");
         dto.setPort(443);
         dto.setWithPathStyleAccessEnabled(false);
-        dto.setStorageClass(S3STORAGECLASSES.STANDARD);
+        dto.setStorageClass(S3StorageClass.STANDARD);
         dto.setRegion("eu-west-1");
         dto.setRegions(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"));
         dto.bucketPrefix("fancy-");
         dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
         dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
-        dto.setBucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
+        dto.setBucketEncryption(S3ServersideEncryption.NONE);
         dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-web-identity-role");
         dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-tagged-session-role");
         Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);

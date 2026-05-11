@@ -11,8 +11,8 @@ import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
@@ -51,11 +51,11 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
 
                 .scheme("https")
                 .port(443)
-                .storageClass(S3STORAGECLASSES.STANDARD)
+                .storageClass(S3StorageClass.STANDARD)
                 .withPathStyleAccessEnabled(false)
 
                 .bucketPrefix(bucketPrefix)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                .bucketEncryption(S3ServersideEncryption.NONE)
                 .bucketVersioning(true)
                 .bucketAcceleration(null)
 

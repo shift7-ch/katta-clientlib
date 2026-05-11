@@ -35,8 +35,8 @@ import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.Role;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -81,7 +81,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
                 final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD);
+                        .storageClass(S3StorageClass.STANDARD);
                 adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
             }
             try (InputStream in = this.getClass().getResourceAsStream("/setup/minio_sts/storage_profile.json")) {
@@ -90,8 +90,8 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD)
-                        .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
+                        .storageClass(S3StorageClass.STANDARD)
+                        .bucketEncryption(S3ServersideEncryption.NONE);
                 adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
             }
 

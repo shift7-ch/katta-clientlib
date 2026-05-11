@@ -13,8 +13,8 @@ import java.util.UUID;
 import cloud.katta.cli.Katta;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.testsetup.AbstractAdminCLIIT;
@@ -56,7 +56,7 @@ class AWSSTSStorageProfileIT extends AbstractAdminCLIIT {
         assertNull(dto.getHostname());
         assertEquals(443, dto.getPort());
         assertFalse(dto.getWithPathStyleAccessEnabled());
-        assertEquals(S3STORAGECLASSES.STANDARD, dto.getStorageClass());
+        assertEquals(S3StorageClass.STANDARD, dto.getStorageClass());
         assertEquals("eu-west-1", dto.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), dto.getRegions());
         assertEquals("katta-", dto.getBucketPrefix());
@@ -65,7 +65,7 @@ class AWSSTSStorageProfileIT extends AbstractAdminCLIIT {
         assertNull(dto.getStsEndpoint());
         assertTrue(dto.getBucketVersioning());
         assertNull(dto.getBucketAcceleration());
-        assertEquals(S3SERVERSIDEENCRYPTION.NONE, dto.getBucketEncryption());
+        assertEquals(S3ServersideEncryption.NONE, dto.getBucketEncryption());
         assertEquals("arn:aws:iam::linguine:role/farfalle-access-bucket-web-identity-role",
                 dto.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
         assertEquals("arn:aws:iam::linguine:role/farfalle-access-bucket-tagged-session-role",

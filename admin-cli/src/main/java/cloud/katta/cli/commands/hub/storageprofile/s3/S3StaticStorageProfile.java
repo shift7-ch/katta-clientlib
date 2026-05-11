@@ -13,8 +13,8 @@ import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3ServersideEncryption;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
@@ -69,11 +69,11 @@ public class S3StaticStorageProfile extends AbstractStorageProfile {
                 .scheme(scheme)
                 .hostname(hostname)
                 .port(port)
-                .storageClass(S3STORAGECLASSES.STANDARD)
+                .storageClass(S3StorageClass.STANDARD)
                 .withPathStyleAccessEnabled(true) // Required for generic S3-compatible providers
 
                 .bucketPrefix(bucketPrefix)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
+                .bucketEncryption(S3ServersideEncryption.NONE)
                 .bucketVersioning(false)
                 .bucketAcceleration(null) // Not supported by generic S3 providers
 
