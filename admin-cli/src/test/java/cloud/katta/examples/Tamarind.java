@@ -13,7 +13,6 @@ import picocli.CommandLine;
  * Tamarind example.
  */
 public class Tamarind {
-
     public static void main(String[] args) {
         if(false) {
             new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
@@ -41,19 +40,55 @@ public class Tamarind {
                     "--roleNamePrefix", "testing.katta.cloud-kc-realms-tamarind-"
             );
         }
-
-        if(true) {
+        if(false) {
             new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
                     "setup", "minio",
-                    "--endpointUrl", "https://minio.testing.katta.cloud",
+                    // N.B. only one idp per client - separate MinIO instances.
+                    "--endpointUrl", "https://tamarind.minio.testing.katta.cloud",
                     "--hubUrl", "https://testing.katta.cloud/tamarind",
                     "--roleNamePrefix", "testing.katta.cloud-tamarind-",
                     "--bucketPrefix", "katta-test-tamarind-",
-                    "--minioAlias", "minio_testing_katta_cloud",
+                    "--minioAlias", "tamarind_minio_testing_katta_cloud",
                     "--accessKey", "key",
                     "--secretKey", "secret"
+            );
+            // mc idp openid ls tamarind_minio_testing_katta_cloud
+            //╭───────────────────────────────────────────────────────────────────────────────────────────────────────╮
+            //│ On?                       Name                                           RoleARN                      │
+            //│ 🔴                                        (default)                                                   │
+            //│ 🟢         testing.katta.cloud-tamarind-cryptomator  arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE │
+            //│ 🟢      testing.katta.cloud-tamarind-cryptomatorhub  arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE │
+            //│ 🟢   testing.katta.cloud-tamarind-cryptomatorvaults  arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94 │
+            //╰───────────────────────────────────────────────────────────────────────────────────────────────────────╯
+            // mc idp openid info tamarind_minio_testing_katta_cloud  testing.katta.cloud-tamarind-cryptomator
+            // mc idp openid info tamarind_minio_testing_katta_cloud  testing.katta.cloud-tamarind-cryptomatorhub
+            // mc idp openid info tamarind_minio_testing_katta_cloud  testing.katta.cloud-tamarind-cryptomatorvaults
+        }
+        if(false) {
+            new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
+                    "storageprofile", "s3", "static",
+                    "--hubUrl", "https://testing.katta.cloud/tamarind",
+                    "--name", "MinIO S3 Static",
+                    "--endpointUrl", "https://tamarind.minio.testing.katta.cloud",
+                    "--bucketPrefix", "katta-test-tamarind-",
+                    "--region", "eu-west-1",
+                    "--regions", "eu-west-1",
+                    "--regions", "eu-west-2",
+                    "--regions", "eu-west-3"
+            );
+        }
+        if(false) {
+            new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
+                    "storageprofile", "minio", "sts",
+                    "--endpointUrl", "https://tamarind.minio.testing.katta.cloud",
+                    "--hubUrl", "https://testing.katta.cloud/tamarind",
+                    "--bucketPrefix", "katta-test-tamarind-",
+                    "--region", "eu-west-3",
+                    "--regions", "eu-west-3",
+                    "--stsRoleCreateBucketClient", "arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE",
+                    "--stsRoleCreateBucketHub", "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
+                    "--stsRoleAccessBucket", "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94"
             );
         }
     }
 }
-

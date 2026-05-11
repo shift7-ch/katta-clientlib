@@ -156,7 +156,7 @@ public class MinIOSTSStorage implements Callable<Void> {
                         %n""",
                 minioAlias, endpointUrl, accessKey, secretKey,
                 minioAlias, roleNamePrefix + keycloakClientIdCryptomator, wellKnown, keycloakClientIdCryptomator, createBucketPolicyName,
-                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, accessBucketPolicyName,
+                minioAlias, roleNamePrefix + keycloakClientIdHub, wellKnown, keycloakClientIdHub, createBucketPolicyName,
                 minioAlias, roleNamePrefix + keycloakClientIdCryptomatorVaults, wellKnown, keycloakClientIdCryptomatorVaults, accessBucketPolicyName,
                 minioAlias
         );
