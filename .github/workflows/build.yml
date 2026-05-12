@@ -39,6 +39,6 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: true
       - name: Publish Test Report
         if: ${{ always() }}
-        uses: scacap/action-surefire-report@v1.10.0
+        uses: ScalableCapital/action-surefire-report@v2
         env:
           NODE_OPTIONS: --max-old-space-size=4096
