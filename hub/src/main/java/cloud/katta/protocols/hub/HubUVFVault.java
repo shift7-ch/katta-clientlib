@@ -42,7 +42,7 @@ public class HubUVFVault extends UVFVault {
 
     @Override
     public <T> T getFeature(final Session<?> hub, final Class<T> type, final T delegate) throws UnsupportedException {
-        log.debug("Delegate to storage backend for feature {}", type);
+        log.debug("Delegate to storage backend for feature {} in vault {}", type, this.getHome());
         // Ignore feature implementation but delegate to storage backend
         T feature = null;
         if(type == AttributesFinder.class) {
@@ -72,7 +72,7 @@ public class HubUVFVault extends UVFVault {
     @Override
     public synchronized void close() {
         try {
-            log.debug("Close storage backend connection");
+            log.debug("Close storage backend connection for vault {}", this.getHome());
             storage.close();
         }
         catch(BackgroundException e) {

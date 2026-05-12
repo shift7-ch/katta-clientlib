@@ -63,7 +63,7 @@ public class HubVaultListService implements ListService {
                         listener.chunk(directory, vaults);
                     }
                     catch(VaultUnlockCancelException e) {
-                        log.warn("Skip vault {} with failure {} loading", vaultDto.getId(), e.getClass().getSimpleName());
+                        log.warn("Skip vault {} with failure {} loading", vaultDto.getId(), e.getMessage());
                     }
                 }
                 return vaults;
