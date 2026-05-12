@@ -84,7 +84,7 @@ public class HubUVFVault extends UVFVault {
     @Override
     public void create(final Session<?> session, final String region, final VaultMetadataProvider metadata) throws BackgroundException {
         // Upload vault template to storage
-        log.debug("Upload vault template to storage backend");
+        log.debug("Upload vault template to storage backend for vault {}", this.getHome());
         super.create(storage, region, metadata);
     }
 
@@ -95,7 +95,7 @@ public class HubUVFVault extends UVFVault {
      */
     @Override
     public void load(final Session<?> session, final VaultMetadataProvider metadata) throws BackgroundException {
-        log.debug("Initialize vault");
+        log.debug("Initialize vault {}", this.getHome());
         // Initialize cryptors
         super.load(storage, metadata);
     }
