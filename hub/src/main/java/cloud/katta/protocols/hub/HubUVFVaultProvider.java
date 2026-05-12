@@ -158,34 +158,35 @@ public class HubUVFVaultProvider implements VaultProvider {
             try {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
-                final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
-                        payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize());
-                log.debug("Create vault with ID {}", vaultId);
-                final VaultDto vaultDto = new VaultDto()
-                        .id(vaultId)
-                        .name(name.getName())
-                        .description(null)
-                        .archived(false)
-                        .creationTime(DateTime.now())
-                        .uvfMetadataFile(vaultMetadataProvider.encrypt())
-                        .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
-                // Create vault in Hub
-                final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());
-                log.debug("Create vault request for ID {}", vaultId);
-                vaultResourceApi.apiVaultsVaultIdPut(vaultId, vaultDto,
-                        storage.getHost().getProtocol().isRoleConfigurable() && !S3Session.isAwsHostname(storage.getHost().getHostname()),
-                        storage.getHost().getProtocol().isRoleConfigurable() && S3Session.isAwsHostname(storage.getHost().getHostname()));
-                // Upload JWE
-                log.debug("Grant access to vault {}", vaultId);
-                final UserDto userDto = HubSession.coerce(session).getMe();
-                final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-                final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
-                // Share vault with myself including admin access with recovery key
-                vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
-                        new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
-                // Upload metadata to bucket
-                vault.create(session, location.getRegion(), vaultMetadataProvider);
-                return vault;
+                try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
+                        payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize())) {
+                    log.debug("Create vault with ID {}", vaultId);
+                    final VaultDto vaultDto = new VaultDto()
+                            .id(vaultId)
+                            .name(name.getName())
+                            .description(null)
+                            .archived(false)
+                            .creationTime(DateTime.now())
+                            .uvfMetadataFile(vaultMetadataProvider.encrypt())
+                            .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
+                    // Create vault in Hub
+                    final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());
+                    log.debug("Create vault request for ID {}", vaultId);
+                    vaultResourceApi.apiVaultsVaultIdPut(vaultId, vaultDto,
+                            storage.getHost().getProtocol().isRoleConfigurable() && !S3Session.isAwsHostname(storage.getHost().getHostname()),
+                            storage.getHost().getProtocol().isRoleConfigurable() && S3Session.isAwsHostname(storage.getHost().getHostname()));
+                    // Upload JWE
+                    log.debug("Grant access to vault {}", vaultId);
+                    final UserDto userDto = HubSession.coerce(session).getMe();
+                    final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+                    final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
+                    // Share vault with myself including admin access with recovery key
+                    vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
+                            new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                    // Upload metadata to bucket
+                    vault.create(session, location.getRegion(), vaultMetadataProvider);
+                    return vault;
+                }
             }
             catch(SecurityFailure | ApiException e) {
                 storage.close();
@@ -210,85 +211,86 @@ public class HubUVFVaultProvider implements VaultProvider {
             final VaultServiceImpl vaultService = new VaultServiceImpl(HubSession.coerce(session));
             final UVFAccessTokenPayload accessToken = vaultService.getVaultAccessToken(vaultId, HubSession.coerce(session).getUserKeys(setup));
             log.debug("Retrieved vault access token for vault {}", vaultId);
-            final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
-                    vaultService.getVaultMetadata(vaultId), new HubVaultKeys(accessToken.key()));
-            final UVFMetadataPayload vaultMetadata = vaultMetadataProvider.getPayload();
-            log.debug("Decrypted vault metadata for vault {}", vaultId);
-            final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
-            final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
-            log.debug("Determined storage location {} for vault {}", location, vaultId);
-            final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(new StorageProfileResourceApi(HubSession.coerce(session).getClient())
-                    .apiStorageprofileProfileIdGet(UUID.fromString(location.getProfile())));
-            log.debug("Retrieved storage profile for vault {} with protocol {}", vaultId, storageProfile.getProtocol());
-            final S3Session storage;
-            switch(storageProfile.getProtocol()) {
-                case S3_STATIC: {
-                    final Credentials credentials = new Credentials(vaultStorageMetadata.getUsername(), vaultStorageMetadata.getPassword());
-                    storage = new S3Session(new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()),
-                            session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
-                    log.debug("Use static S3 credentials from vault metadata for vault {}", vaultId);
-                    break;
-                }
-                case S3_STS:
-                    // OAuth Tokens shared with request interceptor of Hub connection
-                    final Credentials oauthCredentials = session.getHost().getCredentials();
-                    final Credentials stsCredentials = new Credentials().setOauth(oauthCredentials.getOauth());
-                    final Host host = new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), stsCredentials) {
-                        @Override
-                        public String getProperty(final String key) {
-                            if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
-                                final String arn = storageProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity();
-                                log.debug("Use STS role ARN {} for vault {}", arn, vaultId);
-                                return arn;
-                            }
-                            return super.getProperty(key);
-                        }
-                    }.setRegion(location.getRegion());
-                    storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
-                        @Override
-                        protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
-                            final OAuth2RequestInterceptor interceptor = session.getFeature(OAuth2RequestInterceptor.class);
-                            log.debug("Configure with shared OAuth interceptor for vault {}", vaultId);
-                            configuration.addInterceptorLast(interceptor);
-                            return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), interceptor, vaultId,
-                                    storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
-                                @Override
-                                public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
-                                    return super.refresh(oauthCredentials);
+            try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
+                    vaultService.getVaultMetadata(vaultId), new HubVaultKeys(accessToken.key()))) {
+                final UVFMetadataPayload vaultMetadata = vaultMetadataProvider.getPayload();
+                log.debug("Decrypted vault metadata for vault {}", vaultId);
+                final VaultMetadataStorageDto vaultStorageMetadata = vaultMetadata.storage();
+                final HubStorageLocationService.StorageLocation location = HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata);
+                log.debug("Determined storage location {} for vault {}", location, vaultId);
+                final StorageProfileDtoWrapper storageProfile = StorageProfileDtoWrapper.coerce(new StorageProfileResourceApi(HubSession.coerce(session).getClient())
+                        .apiStorageprofileProfileIdGet(UUID.fromString(location.getProfile())));
+                log.debug("Retrieved storage profile for vault {} with protocol {}", vaultId, storageProfile.getProtocol());
+                final S3Session storage;
+                switch(storageProfile.getProtocol()) {
+                    case S3_STATIC: {
+                        final Credentials credentials = new Credentials(vaultStorageMetadata.getUsername(), vaultStorageMetadata.getPassword());
+                        storage = new S3Session(new Host(new HubStorageProfile(
+                                new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()),
+                                session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
+                        log.debug("Use static S3 credentials from vault metadata for vault {}", vaultId);
+                        break;
+                    }
+                    case S3_STS:
+                        // OAuth Tokens shared with request interceptor of Hub connection
+                        final Credentials oauthCredentials = session.getHost().getCredentials();
+                        final Credentials stsCredentials = new Credentials().setOauth(oauthCredentials.getOauth());
+                        final Host host = new Host(new HubStorageProfile(
+                                new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), stsCredentials) {
+                            @Override
+                            public String getProperty(final String key) {
+                                if(Profile.STS_ROLE_ARN_PROPERTY_KEY.equals(key)) {
+                                    final String arn = storageProfile.getStsRoleAccessBucketAssumeRoleWithWebIdentity();
+                                    log.debug("Use STS role ARN {} for vault {}", arn, vaultId);
+                                    return arn;
                                 }
-                            };
-                        }
-                    };
-                    break;
-                default:
-                    log.error("Unsupported storage configuration {} for vault {}", storageProfile.getProtocol(), vaultId);
-                    throw new VaultException(storageProfile.getProtocol().toString());
+                                return super.getProperty(key);
+                            }
+                        }.setRegion(location.getRegion());
+                        storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
+                            @Override
+                            protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
+                                final OAuth2RequestInterceptor interceptor = session.getFeature(OAuth2RequestInterceptor.class);
+                                log.debug("Configure with shared OAuth interceptor for vault {}", vaultId);
+                                configuration.addInterceptorLast(interceptor);
+                                return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), interceptor, vaultId,
+                                        storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
+                                        host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
+                                    @Override
+                                    public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
+                                        return super.refresh(oauthCredentials);
+                                    }
+                                };
+                            }
+                        };
+                        break;
+                    default:
+                        log.error("Unsupported storage configuration {} for vault {}", storageProfile.getProtocol(), vaultId);
+                        throw new VaultException(storageProfile.getProtocol().toString());
+                }
+                log.debug("Configured storage backend for vault {}", vaultId);
+                final Path bucket = new Path(vaultStorageMetadata.getDefaultPath() /*Bucket Name*/, EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault),
+                        new DefaultPathAttributes()
+                                .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
+                                .setDisplayname(vaultStorageMetadata.getNickname())
+                );
+                try {
+                    storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
+                }
+                catch(BackgroundException e) {
+                    throw new VaultUnlockCancelException(bucket, e);
+                }
+                log.debug("Connected to storage backend for vault {}", vaultId);
+                final HubUVFVault vault = new HubUVFVault(storage, bucket);
+                try {
+                    vault.load(session, vaultMetadataProvider);
+                }
+                catch(BackgroundException e) {
+                    storage.close();
+                    throw e;
+                }
+                return vault;
             }
-            log.debug("Configured storage backend for vault {}", vaultId);
-            final Path bucket = new Path(vaultStorageMetadata.getDefaultPath() /*Bucket Name*/, EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault),
-                    new DefaultPathAttributes()
-                            .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
-                            .setDisplayname(vaultStorageMetadata.getNickname())
-            );
-            try {
-                storage.open(proxy, HostKeyCallback.noop, prompt, CancelCallback.noop);
-            }
-            catch(BackgroundException e) {
-                throw new VaultUnlockCancelException(bucket, e);
-            }
-            log.debug("Connected to storage backend for vault {}", vaultId);
-            final HubUVFVault vault = new HubUVFVault(storage, bucket);
-            try {
-                vault.load(session, vaultMetadataProvider);
-            }
-            catch(BackgroundException e) {
-                storage.close();
-                throw e;
-            }
-            return vault;
         }
         catch(SecurityFailure e) {
             throw new VaultException(e.getMessage(), e);
