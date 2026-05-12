@@ -42,7 +42,7 @@ public class HubUVFVault extends UVFVault {
 
     @Override
     public <T> T getFeature(final Session<?> hub, final Class<T> type, final T delegate) throws UnsupportedException {
-        log.debug("Delegate to {} for feature {}", storage, type);
+        log.debug("Delegate to storage backend for feature {}", type);
         // Ignore feature implementation but delegate to storage backend
         T feature = null;
         if(type == AttributesFinder.class) {
@@ -59,7 +59,7 @@ public class HubUVFVault extends UVFVault {
             feature = storage._getFeature(type);
         }
         if(null == feature) {
-            log.warn("No feature {} available for {}", type, storage);
+            log.warn("No feature {} available for storage backend", type);
             throw new UnsupportedException();
         }
         final T impl = super.getFeature(storage, type, feature);
@@ -72,7 +72,7 @@ public class HubUVFVault extends UVFVault {
     @Override
     public synchronized void close() {
         try {
-            log.debug("Close connection {}", storage);
+            log.debug("Close storage backend connection");
             storage.close();
         }
         catch(BackgroundException e) {
@@ -84,7 +84,7 @@ public class HubUVFVault extends UVFVault {
     @Override
     public void create(final Session<?> session, final String region, final VaultMetadataProvider metadata) throws BackgroundException {
         // Upload vault template to storage
-        log.debug("Upload vault template to {}", storage);
+        log.debug("Upload vault template to storage backend");
         super.create(storage, region, metadata);
     }
 
@@ -95,7 +95,7 @@ public class HubUVFVault extends UVFVault {
      */
     @Override
     public void load(final Session<?> session, final VaultMetadataProvider metadata) throws BackgroundException {
-        log.debug("Initialize vault {}", this);
+        log.debug("Initialize vault");
         // Initialize cryptors
         super.load(storage, metadata);
     }

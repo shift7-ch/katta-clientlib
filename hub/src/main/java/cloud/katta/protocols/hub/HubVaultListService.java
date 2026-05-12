@@ -49,21 +49,21 @@ public class HubVaultListService implements ListService {
                 final AttributedList<Path> vaults = new AttributedList<>();
                 for(final VaultDto vaultDto : new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(null)) {
                     if(Boolean.TRUE.equals(vaultDto.getArchived())) {
-                        log.debug("Skip archived vault {}", vaultDto);
+                        log.debug("Skip archived vault {}", vaultDto.getId());
                         continue;
                     }
-                    log.debug("Load vault {}", vaultDto);
+                    log.debug("Load vault {}", vaultDto.getId());
                     try {
                         final Vault vault = provider.load(session,
                                 new Path(directory, vaultDto.getId().toString(), EnumSet.of(Path.Type.directory, Path.Type.volume)),
                                 new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
-                        log.info("Loaded vault {}", vault);
+                        log.info("Loaded vault {}", vault.getHome());
                         registry.add(vault);
                         vaults.add(vault.getHome());
                         listener.chunk(directory, vaults);
                     }
                     catch(VaultUnlockCancelException e) {
-                        log.warn("Skip vault {} with failure {} loading", vaultDto, e);
+                        log.warn("Skip vault {} with failure {} loading", vaultDto.getId(), e.getClass().getSimpleName());
                     }
                 }
                 return vaults;
