@@ -1,6 +1,6 @@
 services:
   keycloak:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     image: "ghcr.io/shift7-ch/keycloak:26.5.6"
     pull_policy: missing
     ports:
@@ -30,7 +30,7 @@ services:
 
 
   keycloak-enable-direct-access-grant:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     image: "ghcr.io/shift7-ch/keycloak:26.5.6"
     pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]
@@ -56,7 +56,7 @@ services:
         condition: service_completed_successfully
 
   keycloak-ready:
-    profiles: [ local, hybrid ]
+    profiles: [ local, demo, hybrid ]
     image: nginx
     volumes:
       - ./docker/nginx/keycloak.conf.template:/etc/nginx/conf.d/keycloak.conf.template:ro
@@ -86,7 +86,7 @@ services:
       retries: 15
 
   postgres:
-    profiles: [ local, hybrid ]
+    profiles: [ local, demo, hybrid ]
     image:
       docker.io/postgres:14
     environment:
@@ -109,7 +109,7 @@ services:
       retries: 3
 
   minio:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     build:
       dockerfile: docker/minio/Dockerfile
     depends_on:
@@ -156,7 +156,7 @@ services:
         /minio server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
 
   minio_setup:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     build:
       dockerfile: docker/minio_setup/Dockerfile
     depends_on:
@@ -233,7 +233,7 @@ services:
         /mc admin policy attach myminio testuser_createpolicy --user testuser
 
   hub:
-    profiles: [ local, hybrid ]
+    profiles: [ local, demo, hybrid ]
     build:
       dockerfile: docker/hub/Dockerfile
       args:

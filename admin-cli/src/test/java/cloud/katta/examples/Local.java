@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Example to use with
- * <code>docker compose -f test/src/test/resources/docker-compose-minio-localhost-hub.yml --profile local --profile demo up --wait</code>.
+ * <code>docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo --env-file test/src/test/resources/.local.env up  --wait</code>.
  */
 public class Local {
     public static void main(String[] args) {
