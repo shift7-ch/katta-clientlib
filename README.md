@@ -21,7 +21,10 @@ Features:
 
 ## One-Stop Shop Demo with Docker Compose
 
-### Local Profile
+### Profiles
+
+#### Local
+
 Running full stack consisting of Katta Server, Keycloak and MinIO locally with Docker Compose.
 
 ```bash
@@ -29,7 +32,8 @@ docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml 
 docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile local down
 ```
 
-### Test Environment
+#### Hybrid (testing)
+
 For integration tests with deployed Keycloak, MinIO on `testing.katta.cloud` and AWS S3.
 
 ```bash
@@ -37,28 +41,17 @@ docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml 
 docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile hybrid down
 ```
 
-### Architecture
+#### Demo
 
-The following diagram shows the docker services:
+Also deploys storage profiles for local MinIO (static+STS):
 
-```mermaid
-architecture-beta
-    group dockernetwork(internet)[Docker Network]
-
-    service miniosetup(server)[MinIO setup] in dockernetwork
-    service minio(server)[MinIO] in dockernetwork
-    service keycloak(server)[Keycloak] in dockernetwork
-    service kattaweb(server)[Katta Web] in dockernetwork
-    service kattaserver(server)[Katta Server] in dockernetwork
-    service kattaserversetup(server)[Katta Server Setup] in dockernetwork
-    service postgres(database)[postgres] in dockernetwork
-    miniosetup:B --> T:minio
-    minio:R --> L:keycloak
-    kattaserver:T --> B:keycloak
-    kattaweb:R --> L:kattaserver
-    kattaserversetup:T --> B:kattaserver
-    kattaserver:R --> L:postgres
 ```
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo --env-file test/src/test/resources/.local.env up --wait
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo down
+```
+
+To access through desktop client, add [Katta Server.cyberduckprofile](test/src/test/resources/Katta Server.cyberduckprofile) to
+`~/Library/Group Containers/KD9X6Y7KA2.cloud.katta.desktop/Library/Application Support/Katta/Profiles`.
 
 ### Users
 
@@ -75,11 +68,33 @@ architecture-beta
 
 ### Endpoints
 
-| Component       | URL                                  | Discovery                                                                |   |
-|-----------------|--------------------------------------|--------------------------------------------------------------------------|---|
-| Katta Web       | http://localhost:8080                | http://localhost:8080/api/config                                         |   |
-| Keycloak        | http://keycloak:8081                 | http://keycloak:8180/realms/cryptomator/.well-known/openid-configuration |   |
-| Swagger OpenAPI | http://localhost:8080/q/swagger-ui// | http://localhost:8080//q/openapi.json                                    |   |
+| Component       | URL                                             | Discovery                                                                                                                                              |
+|-----------------|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Katta Web       | http://localhost:8280                           | http://localhost:8280/api/config                                                                                                                       |
+| Keycloak        | http://localhost:8380  / https://localhost:8443 | http://localhost:8380/realms/cryptomator/.well-known/openid-configuration / https://localhost:8443/realms/cryptomator/.well-known/openid-configuration |
+| Swagger OpenAPI | http://localhost:8280/q/swagger-ui/             | http://localhost:8280/q/openapi.json                                                                                                                   |
 
 You can use SecurityScheme (OAuth2, password)  with `client_id = cryptomatorhub` for Swagger UI.
 
+### Architecture
+
+The following diagram shows the docker services:
+
+```mermaid
+architecture-beta
+group dockernetwork(internet)[Docker Network]
+
+service miniosetup(server)[MinIO setup] in dockernetwork
+service minio(server)[MinIO] in dockernetwork
+service keycloak(server)[Keycloak] in dockernetwork
+service kattaweb(server)[Katta Web] in dockernetwork
+service kattaserver(server)[Katta Server] in dockernetwork
+service kattaserversetup(server)[Katta Server Setup] in dockernetwork
+service postgres(database)[postgres] in dockernetwork
+miniosetup:B --> T:minio
+minio:R --> L:keycloak
+kattaserver:T --> B:keycloak
+kattaweb:R --> L:kattaserver
+kattaserversetup:T --> B:kattaserver
+kattaserver:R --> L:postgres
+```
