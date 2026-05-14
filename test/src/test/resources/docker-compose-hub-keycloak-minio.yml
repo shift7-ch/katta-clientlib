@@ -199,17 +199,17 @@ services:
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomator" \
           client_secret="ignore-me" \
-          role_policy="katta_create_bucket_policy"
+          role_policy="katta_create_bucket_policy" || echo "Could not add idp - probably already defined"
         /mc idp openid add myminio cryptomatorhub \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomatorhub" \
           client_secret="ignore-me" \
-          role_policy="katta_create_bucket_policy"
+          role_policy="katta_create_bucket_policy" || echo "Could not add idp - probably already defined"
         /mc idp openid add myminio cryptomatorvaults \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomatorvaults" \
           client_secret="ignore-me" \
-          role_policy="katta_access_bucket_policy"
+          role_policy="katta_access_bucket_policy" || echo "Could not add idp - probably already defined"
 
         # see https://github.com/bitnami/charts/pull/28118
         /mc admin service restart myminio --wait --json
@@ -335,6 +335,7 @@ services:
       - ./docker/nginx/hub.conf.template:/etc/nginx/conf.d/hub.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
     environment:
+      HUB_URL: ${HUB_URL}
       HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
       HUB_PORT: ${HUB_PORT}
       MINIO_SCHEME: ${MINIO_SCHEME}
@@ -379,10 +380,13 @@ services:
         echo $$ACCESS_TOKEN
 
         # MinIO Storage Profiles
-        envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_sts/storage_profile.json > /tmp/minio_sts_storage_profile.json
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        envsubst < /setup/minio_sts/storage_profile.json > /tmp/minio_sts_storage_profile.json
+        cat /tmp/minio_sts_storage_profile.json
+        curl -v --fail -X POST ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+
+        envsubst < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
+        cat /tmp/minio_static_storage_profile.json
+        curl -v --fail -X POST ${HUB_URL}/api/storageprofile/s3static -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
