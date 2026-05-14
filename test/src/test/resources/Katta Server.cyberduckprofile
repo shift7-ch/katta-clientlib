@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2025 shift7 GmbH. All rights reserved.
+  -->
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Description</key>
+        <string>Katta (http)</string>
+        <key>Protocol</key>
+        <string>hub</string>
+        <key>Vendor</key>
+        <string>katta-http</string>
+        <key>Scheme</key>
+        <string>http</string>
+        <key>Schemes</key>
+        <array>
+            <string>http</string>
+            <string>https</string>
+            <string>katta</string>
+        </array>
+        <key>Hostname Configurable</key>
+        <true/>
+        <key>Authorization</key>
+        <string>AuthorizationCode</string>
+        <key>Scopes</key>
+        <array>
+            <string>openid</string>
+            <string>offline_access</string>
+        </array>
+        <key>OAuth Redirect Url</key>
+        <string>${oauth.handler.scheme}:oauth</string>
+        <key>OAuth Client Secret</key>
+        <string/>
+        <key>OAuth PKCE</key>
+        <true/>
+        <key>Password Configurable</key>
+        <false/>
+        <key>Username Configurable</key>
+        <false/>
+        <key>Properties</key>
+        <dict>
+            <key>katta.userkeys.ttl</key>
+            <string>60000</string>
+            <key>katta.user.ttl</key>
+            <string>60000</string>
+        </dict>
+    </dict>
+</plist>

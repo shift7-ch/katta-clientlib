@@ -1,6 +1,6 @@
 services:
   keycloak:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     image: "ghcr.io/shift7-ch/keycloak:26.5.6"
     pull_policy: missing
     ports:
@@ -30,7 +30,7 @@ services:
 
 
   keycloak-enable-direct-access-grant:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     image: "ghcr.io/shift7-ch/keycloak:26.5.6"
     pull_policy: missing
     entrypoint: [ "/bin/bash","-c" ]
@@ -56,7 +56,7 @@ services:
         condition: service_completed_successfully
 
   keycloak-ready:
-    profiles: [ local, hybrid ]
+    profiles: [ local, demo, hybrid ]
     image: nginx
     volumes:
       - ./docker/nginx/keycloak.conf.template:/etc/nginx/conf.d/keycloak.conf.template:ro
@@ -86,7 +86,7 @@ services:
       retries: 15
 
   postgres:
-    profiles: [ local, hybrid ]
+    profiles: [ local, demo, hybrid ]
     image:
       docker.io/postgres:14
     environment:
@@ -109,7 +109,7 @@ services:
       retries: 3
 
   minio:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     build:
       dockerfile: docker/minio/Dockerfile
     depends_on:
@@ -156,7 +156,7 @@ services:
         /minio server /data --address :${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT}
 
   minio_setup:
-    profiles: [ local ]
+    profiles: [ local, demo ]
     build:
       dockerfile: docker/minio_setup/Dockerfile
     depends_on:
@@ -199,17 +199,17 @@ services:
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomator" \
           client_secret="ignore-me" \
-          role_policy="katta_create_bucket_policy"
+          role_policy="katta_create_bucket_policy" || echo "Could not add idp - probably already defined"
         /mc idp openid add myminio cryptomatorhub \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomatorhub" \
           client_secret="ignore-me" \
-          role_policy="katta_create_bucket_policy"
+          role_policy="katta_create_bucket_policy" || echo "Could not add idp - probably already defined"
         /mc idp openid add myminio cryptomatorvaults \
           config_url="${HUB_KEYCLOAK_URL}${HUB_KEYCLOAK_BASEPATH}/realms/${HUB_KEYCLOAK_REALM}/.well-known/openid-configuration" \
           client_id="cryptomatorvaults" \
           client_secret="ignore-me" \
-          role_policy="katta_access_bucket_policy"
+          role_policy="katta_access_bucket_policy" || echo "Could not add idp - probably already defined"
 
         # see https://github.com/bitnami/charts/pull/28118
         /mc admin service restart myminio --wait --json
@@ -232,8 +232,30 @@ services:
         /mc admin policy attach myminio testuser_accesspolicy --user testuser
         /mc admin policy attach myminio testuser_createpolicy --user testuser
 
+  minio_trace:
+    profiles: [ local, demo ]
+    build:
+      dockerfile: docker/minio_setup/Dockerfile
+    depends_on:
+      minio_setup:
+        condition: service_completed_successfully
+    environment:
+      HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_HOSTNAME: ${HUB_KEYCLOAK_HOSTNAME}
+    entrypoint: [ "/bin/bash","-c" ]
+    command:
+      - |
+        set -euxo pipefail
+        /mc config host add myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
+        /mc admin trace -v myminio
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   hub:
-    profiles: [ local, hybrid ]
+    profiles: [ local, demo, hybrid ]
     build:
       dockerfile: docker/hub/Dockerfile
       args:
@@ -280,6 +302,9 @@ services:
       HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: cryptomator
       HUB_KEYCLOAK_OIDC_CRYPTOMATOR_VAULTS_CLIENT_SECRET: ${HUB_KEYCLOAK_OIDC_CRYPTOMATOR_VAULTS_CLIENT_SECRET}
       AWS_REGION: us-east-1
+      MINIO_SCHEME: ${MINIO_SCHEME}
+      MINIO_HOSTNAME: ${MINIO_HOSTNAME}
+      MINIO_PORT: ${MINIO_PORT}
     ports:
       - "${HUB_PORT}:${HUB_PORT}"
     volumes:
@@ -335,6 +360,7 @@ services:
       - ./docker/nginx/hub.conf.template:/etc/nginx/conf.d/hub.conf.template:ro
     entrypoint: [ "/bin/bash","-c" ]
     environment:
+      HUB_URL: ${HUB_URL}
       HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
       HUB_PORT: ${HUB_PORT}
       MINIO_SCHEME: ${MINIO_SCHEME}
@@ -379,10 +405,13 @@ services:
         echo $$ACCESS_TOKEN
 
         # MinIO Storage Profiles
-        envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_sts/storage_profile.json > /tmp/minio_sts_storage_profile.json
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
-        envsubst '$MINIO_SCHEME $MINIO_HOSTNAME $MINIO_PORT' < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
-        curl -v --fail -X PUT ${HUB_URL}/api/storageprofile/s3 -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+        envsubst < /setup/minio_sts/storage_profile.json > /tmp/minio_sts_storage_profile.json
+        cat /tmp/minio_sts_storage_profile.json
+        curl -v --fail -X POST ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
+
+        envsubst < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
+        cat /tmp/minio_static_storage_profile.json
+        curl -v --fail -X POST ${HUB_URL}/api/storageprofile/s3static -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN"
 
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
