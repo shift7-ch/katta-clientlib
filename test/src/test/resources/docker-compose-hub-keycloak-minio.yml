@@ -232,6 +232,28 @@ services:
         /mc admin policy attach myminio testuser_accesspolicy --user testuser
         /mc admin policy attach myminio testuser_createpolicy --user testuser
 
+  minio_trace:
+    profiles: [ local, demo ]
+    build:
+      dockerfile: docker/minio_setup/Dockerfile
+    depends_on:
+      minio_setup:
+        condition: service_completed_successfully
+    environment:
+      HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
+      HUB_KEYCLOAK_HOSTNAME: ${HUB_KEYCLOAK_HOSTNAME}
+    entrypoint: [ "/bin/bash","-c" ]
+    command:
+      - |
+        set -euxo pipefail
+        /mc config host add myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
+        /mc admin trace -v myminio
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   hub:
     profiles: [ local, demo, hybrid ]
     build:
