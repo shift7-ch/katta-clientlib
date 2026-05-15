@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.workflows;
@@ -310,9 +310,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         }
     }
 
+    /**
+     * List all vaults for {MinIO S3,}x{STS,static}, and create directories and files in them and delete them again
+     */
     @ParameterizedTest
     @MethodSource("arguments")
-    void test04SetupCode(final HubTestConfig config) throws Exception {
+    void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config);
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
@@ -329,7 +332,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             for(Path d : list.filter(Path::isDirectory)) {
                 {
-                    // New file
+                    // New file: create, read and delete
                     final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
                     final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
                     assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
@@ -337,7 +340,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     assertFalse(hubSession.getFeature(Find.class).find(file));
                 }
                 {
-                    // New directory
+                    // New directory: create and delete
                     final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
                     hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
                     hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), PasswordCallback.noop, new Delete.DisabledCallback());
