@@ -65,13 +65,9 @@ jobs:
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
           files: |
             admin-cli/target/katta-cli-*.tar.gz
-
-  homebrew:
-    name: Update Homebrew tap
-    needs: cli
-    runs-on: ubuntu-latest
-    steps:
-      - uses: mislav/bump-homebrew-formula-action@v3
+      - name: Update Homebrew tap
+        if: runner.os == 'macOS'
+        uses: mislav/bump-homebrew-formula-action@v3
         with:
           formula-name: katta-cli
           homebrew-tap: shift7-ch/homebrew-katta
