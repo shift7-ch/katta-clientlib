@@ -54,10 +54,14 @@ jobs:
           path: |
             admin-cli/target/katta
           if-no-files-found: error
+      - name: Package executable
+        run: |
+          cd admin-cli/target
+          tar czf katta-cli-${{ runner.os == 'Linux' && 'linux' || 'macos' }}.tar.gz katta
       - name: Publish executable on Github Releases
         uses: softprops/action-gh-release@v3
         with:
           fail_on_unmatched_files: true
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
           files: |
-            admin-cli/target/katta
+            admin-cli/target/katta-cli-*.tar.gz
