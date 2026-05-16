@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.workflows;
@@ -104,7 +104,7 @@ public class UserKeysServiceImpl implements UserKeysService {
 
     private void uploadUserKeys(final UserDto me, final UserKeys userKeys, final String accountKey) throws ApiException, SecurityFailure {
         try {
-            usersResourceApi.apiUsersMePut(me.ecdhPublicKey(userKeys.encodedEcdhPublicKey())
+            usersResourceApi.apiUsersMePut(cloneUserDto(me).ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
                     .privateKey(userKeys.encryptWithAccountKey(accountKey))
                     .setupCode(new AccountKeyPayload(accountKey).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
@@ -144,8 +144,27 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .realmRoles(withCounts.getRealmRoles())
                 .pictureUrl(withCounts.getPictureUrl())
                 .privateKeys(withCounts.getPrivateKeys())
+                .privateKey(withCounts.getPrivateKey())
                 .setupCode(withCounts.getSetupCode())
                 .type(withCounts.getType());
     }
 
+    public static UserDto cloneUserDto(UserDto userDto) {
+        return new UserDto()
+                .id(userDto.getId())
+                .firstName(userDto.getFirstName())
+                .lastName(userDto.getLastName())
+                .name(userDto.getName())
+                .ecdhPublicKey(userDto.getEcdhPublicKey())
+                .ecdsaPublicKey(userDto.getEcdsaPublicKey())
+                .devices(userDto.getDevices())
+                .language(userDto.getLanguage())
+                .email(userDto.getEmail())
+                .realmRoles(userDto.getRealmRoles())
+                .pictureUrl(userDto.getPictureUrl())
+                .privateKeys(userDto.getPrivateKeys())
+                .privateKey(userDto.getPrivateKey())
+                .setupCode(userDto.getSetupCode())
+                .type(userDto.getType());
+    }
 }

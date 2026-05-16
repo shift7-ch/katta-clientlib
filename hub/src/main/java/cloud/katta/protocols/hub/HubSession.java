@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.protocols.hub;
@@ -171,6 +171,8 @@ public class HubSession extends HttpSession<HubApiClient> {
             log.debug("Retrieved device keys {}", deviceKeys);
             // Setup parameter allows generating account and user keys or prompt for account key and device name
             final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
+            // Fetch me again upon next access with user keys uploaded if first login
+            userDtoHolder.expire();
             log.debug("Retrieved user keys {}", userKeys);
             return userKeys;
         }
