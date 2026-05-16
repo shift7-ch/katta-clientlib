@@ -162,6 +162,7 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .email(userDto.getEmail())
                 .realmRoles(userDto.getRealmRoles())
                 .pictureUrl(userDto.getPictureUrl())
+                .publicKey(userDto.getPublicKey())
                 .privateKeys(userDto.getPrivateKeys())
                 .privateKey(userDto.getPrivateKey())
                 .setupCode(userDto.getSetupCode())
