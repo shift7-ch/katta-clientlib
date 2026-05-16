@@ -106,7 +106,7 @@ public class UserKeysServiceImpl implements UserKeysService {
         try {
             usersResourceApi.apiUsersMePut(cloneUserDto(me).ecdhPublicKey(userKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(userKeys.encodedEcdsaPublicKey())
-                    .privateKey(userKeys.encryptWithAccountKey(accountKey))
+                    .privateKeys(userKeys.encryptWithAccountKey(accountKey))
                     .setupCode(new AccountKeyPayload(accountKey).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
         }
         catch(JOSEException | JsonProcessingException e) {
