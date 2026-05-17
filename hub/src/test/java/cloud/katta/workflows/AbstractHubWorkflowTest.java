@@ -127,7 +127,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final UserDto admin = users.apiUsersMeGet(false, false)
                     .ecdhPublicKey(adminKeys.encodedEcdhPublicKey())
                     .ecdsaPublicKey(adminKeys.encodedEcdsaPublicKey())
-                    .privateKey(adminKeys.encryptWithAccountKey(adminAccountKey))
+                    .privateKeys(adminKeys.encryptWithAccountKey(adminAccountKey))
                     .setupCode(new AccountKeyPayload(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
             users.apiUsersMePut(admin);
             checkNumberOfVaults(hubSession, testConfig, vaultId, 1, 0, 1, 0, 1);

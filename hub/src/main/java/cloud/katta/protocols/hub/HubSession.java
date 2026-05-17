@@ -86,9 +86,6 @@ public class HubSession extends HttpSession<HubApiClient> {
 
     private ConfigDto config;
 
-    private final ExpiringObjectHolder<UserDto> userDtoHolder
-            = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.user.ttl") ? 60000 : preferences.getLong("katta.user.ttl"));
-
     private final ExpiringObjectHolder<UserKeys> userKeysHolder
             = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
 
@@ -171,8 +168,6 @@ public class HubSession extends HttpSession<HubApiClient> {
             log.debug("Retrieved device keys {}", deviceKeys);
             // Setup parameter allows generating account and user keys or prompt for account key and device name
             final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
-            // Fetch me again upon next access with user keys uploaded if first login
-            userDtoHolder.expire();
             log.debug("Retrieved user keys {}", userKeys);
             return userKeys;
         }
@@ -195,18 +190,11 @@ public class HubSession extends HttpSession<HubApiClient> {
         client.getHttpClient().close();
     }
 
-    /**
-     *
-     * @return Null prior login
-     */
     public UserDto getMe() throws BackgroundException {
         try {
-            if(userDtoHolder.get() == null) {
-                final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
-                log.debug("Retrieved user {}", me);
-                userDtoHolder.set(me);
-            }
-            return userDtoHolder.get();
+            final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
+            log.debug("Retrieved user {}", me);
+            return me;
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);

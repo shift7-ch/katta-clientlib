@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import cloud.katta.client.api.AuthorityResourceApi;
-import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.AuthorityDto;
 import cloud.katta.client.model.MemberDto;
@@ -54,10 +53,8 @@ class KeyRotationTest extends AbstractHubTest {
     void testKeyRotation(final HubTestConfig hubTestConfig) throws Exception {
         final HubSession hubSession = setupConnection(hubTestConfig);
         try {
-            final UsersResourceApi usersResourceApi = new UsersResourceApi(hubSession.getClient());
             final AuthorityResourceApi authoritiesApi = new AuthorityResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
-            final UserDto me = usersResourceApi.apiUsersMeGet(false, false);
 
             final List<VaultDto> vaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
 
@@ -71,7 +68,8 @@ class KeyRotationTest extends AbstractHubTest {
             for(final VaultDto vaultDto : vaults) {
                 final HashMap<String, String> tokens = new HashMap<>();
                 final UserKeysService service = new UserKeysServiceImpl(hubSession);
-                final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
+                final UserDto me = hubSession.getMe();
+                final UserKeys userKeys = service.getUserKeys(hubSession.getHost(), me, new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), me));
                 final VaultServiceImpl vaultService = new VaultServiceImpl(hubSession);
                 final UVFAccessTokenPayload masterkeyJWE = vaultService.getVaultAccessToken(UUID.fromString(vaultDto.getId().toString()), userKeys);
                 final UVFMetadataPayload metadataJWE = new HubVaultMetadataUVFProvider(
