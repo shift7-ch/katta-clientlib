@@ -67,7 +67,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
             // than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key (and optionally its recovery key):
             final Map<String, String> accessTokens = new HashMap<>();
             final List<MemberDto> usersRequiringAccessGrant = vaultResourceApi.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
-            log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
+            log.info("{} users requiring access grant for vault {}", usersRequiringAccessGrant.size(), vaultId);
             for(final MemberDto user : usersRequiringAccessGrant) {
                 if(user.getEcdhPublicKey() == null) {
                     log.debug("Ignoring user {} for vault {} - no user key yet", user.getId(), vaultId);
