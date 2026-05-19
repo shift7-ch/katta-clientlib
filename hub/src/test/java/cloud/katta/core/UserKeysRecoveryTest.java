@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.core;
@@ -37,14 +37,14 @@ class UserKeysRecoveryTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    void testFirstLoginAndUserKeyRecovery(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupConnection(hubTestConfig);
+    void testFirstLoginAndUserKeyRecovery(final HubTestConfig config) throws Exception {
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true, false);
 
         final SecurityFailure exception = assertThrows(SecurityFailure.class, () -> UserKeys.recoverWithAccountKey(me.getPrivateKeys(), new AlphanumericRandomStringService().random(), me.getEcdhPublicKey(), me.getEcdsaPublicKey()));
         assertInstanceOf(JOSEException.class, exception.getCause());
         assertInstanceOf(InvalidKeyException.class, exception.getCause().getCause());
-        assertNotNull(UserKeys.recoverWithAccountKey(me.getPrivateKeys(), hubTestConfig.setup.userConfig.setupCode, me.getEcdhPublicKey(), me.getEcdsaPublicKey()));
+        assertNotNull(UserKeys.recoverWithAccountKey(me.getPrivateKeys(), config.setup.userConfig.setupCode, me.getEcdhPublicKey(), me.getEcdsaPublicKey()));
     }
 }

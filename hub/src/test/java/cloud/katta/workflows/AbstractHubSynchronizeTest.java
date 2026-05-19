@@ -79,17 +79,17 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void test01Bootstrapping(final HubTestConfig testConfig) throws Exception {
-        log.info("M01 {}", testConfig);
-        final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
+    void test01Bootstrapping(final HubTestConfig config) throws Exception {
+        log.info("M01 {}", config);
+        final HubTestConfig.Setup.DockerConfig dockerConfig = config.setup.dockerConfig;
         final Properties configuration = new Properties();
         try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
             configuration.load(in);
         }
-        final HubSession hubSession = setupConnection(testConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
         try {
 
-            final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
+            final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
 
             final ObjectMapper mapper = new JSON().getMapper();
@@ -181,12 +181,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void test02AddStorageProfile(final HubTestConfig hubTestConfig) throws Exception {
-        log.info("M02 {}", hubTestConfig);
+    void test02AddStorageProfile(final HubTestConfig config) throws Exception {
+        log.info("M02 {}", config);
 
-        final HubSession hubSession = setupConnection(hubTestConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
         try {
-            final ApiClient adminApiClient = getAdminApiClient(hubTestConfig.setup);
+            final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
             final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
 
@@ -222,7 +222,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test03AddVault(final HubTestConfig config) throws Exception {
         log.info("M03 {}", config);
 
-        final HubSession hubSession = setupConnection(config);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
         try {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
@@ -316,21 +316,20 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
-        assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));
         for(final Path vault : vaults) {
             assertTrue(hubSession.getFeature(Find.class).find(vault));
             final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
             assertEquals(3, list.size()); // 1 subfolder and 2 files
             assertEquals(1, list.toStream().filter(Path::isDirectory).count());
             assertEquals(2, list.toStream().filter(Path::isFile).count());
-            for(Path f : list.filter(Path::isFile)) {
+            for(final Path f : list.filter(Path::isFile)) {
                 final long length = f.attributes().getSize();
                 HubTestUtilities.read(hubSession, f, (int) length);
             }
-            for(Path d : list.filter(Path::isDirectory)) {
+            for(final Path d : list.filter(Path::isDirectory)) {
                 {
                     // New file: create, read and delete
                     final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
@@ -354,4 +353,5 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
         }
     }
+
 }

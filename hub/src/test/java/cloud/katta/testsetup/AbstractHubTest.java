@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.testsetup;
@@ -178,7 +178,7 @@ public abstract class AbstractHubTest {
         return "setupcode";
     }
 
-    protected static HubSession setupConnection(final HubTestConfig config) throws Exception {
+    protected static HubSession setupConnection(final String hubURL, final HubTestConfig.Setup.UserConfig userConfig) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
         // Register parent protocol definitions
         for(Protocol p : new AnnotationAutoServiceLoader<Protocol>().load(Protocol.class)) {
@@ -188,7 +188,7 @@ public abstract class AbstractHubTest {
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
         assertNotNull(factory.forName("hub:katta"));
 
-        final Host hub = new HostParser(factory).get(config.setup.hubURL).setCredentials(new Credentials(config.setup.userConfig.username, config.setup.userConfig.password));
+        final Host hub = new HostParser(factory).get(hubURL).setCredentials(new Credentials(userConfig.username, userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
         final LoginConnectionService login = new LoginConnectionService(loginCallback(config), new DisabledHostKeyCallback(),

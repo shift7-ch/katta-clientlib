@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.core;
@@ -50,8 +50,8 @@ class KeyRotationTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    void testKeyRotation(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupConnection(hubTestConfig);
+    void testKeyRotation(final HubTestConfig config) throws Exception {
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
         try {
             final AuthorityResourceApi authoritiesApi = new AuthorityResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
