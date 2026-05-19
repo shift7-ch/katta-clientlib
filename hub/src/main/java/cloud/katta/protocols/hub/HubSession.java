@@ -155,7 +155,7 @@ public class HubSession extends HttpSession<HubApiClient> {
         // Ensure device key is available
         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
         log.debug("Configured with setup prompt {}", setup);
-        final UserKeys userKeys = this.getUserKeys(setup);
+        userKeysHolder.set(this.pair(setup));
         log.debug("Retrieved user keys for host {}", host.getHostname());
         access = new HubGrantAccessSchedulerService(this);
     }
