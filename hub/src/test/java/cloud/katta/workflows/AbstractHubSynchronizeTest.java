@@ -374,7 +374,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         final HubApiClient adminApiClient = adminHubSession.getClient();
 
-        final WithCounts alice = new UsersResourceApi(adminApiClient).apiUsersGet().stream().filter(wc -> wc.getName().equals("alice")).findFirst().get();
+        final WithCounts alice = new UsersResourceApi(adminApiClient).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
         final UserDto admin = new UsersResourceApi(adminApiClient).apiUsersMeGet(false, false);
         try {
             final UUID vaultId;
