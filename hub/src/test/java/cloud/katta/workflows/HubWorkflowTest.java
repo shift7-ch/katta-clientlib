@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.workflows;
@@ -17,8 +17,6 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 /**
  * Create vault and share vault. Serves as hub API integration/regression test.
- * Local context (profiles, hub host collection) etc. is for user alice only.
- * Only remote hub calls are done for admin user.
  */
 class HubWorkflowTest {
 
