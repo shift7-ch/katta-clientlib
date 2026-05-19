@@ -70,18 +70,18 @@ public class GrantAccessServiceImpl implements GrantAccessService {
             log.info("Users requiring access grant for vault {}: {}", vaultId, usersRequiringAccessGrant);
             for(final MemberDto user : usersRequiringAccessGrant) {
                 if(user.getEcdhPublicKey() == null) {
-                    log.debug("Ignoring user {} for vault {} - no user key yet", user, vaultId);
+                    log.debug("Ignoring user {} for vault {} - no user key yet", user.getId(), vaultId);
                     continue;
                 }
                 if(maxWotDepth >= 0) {
                     final Integer trustLevel = verifiedTrustedUsers.get(user.getId());
                     if(trustLevel == null) {
-                        log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
+                        log.warn("Ignoring user {} for vault {} - no trust level", user.getId(), vaultId);
                         continue;
                     }
                     // trustLevel must be <= maxWotDepth for automatic access grant
                     if(trustLevel > maxWotDepth) {
-                        log.warn("Ignoring user {} for vault {} - not verified", user, vaultId);
+                        log.warn("Ignoring user {} for vault {} - not verified (trust level {} > maxWotDepth {})", user.getId(), vaultId, trustLevel, maxWotDepth);
                         continue;
                     }
                 }
