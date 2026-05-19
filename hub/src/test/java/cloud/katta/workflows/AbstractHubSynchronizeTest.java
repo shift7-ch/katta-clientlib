@@ -32,6 +32,7 @@ import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.MethodOrderer;
@@ -44,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -51,12 +53,19 @@ import java.util.UUID;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
+import cloud.katta.client.HubApiClient;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.api.UsersResourceApi;
+import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.Role;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
+import cloud.katta.client.model.UserDto;
+import cloud.katta.client.model.WithCounts;
+import cloud.katta.crypto.UserKeys;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubStorageLocationService;
@@ -351,6 +360,80 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     HubTestUtilities.read(hubSession, f, (int) length);
                 }
             }
+        }
+    }
+
+
+    @ParameterizedTest
+    @MethodIgnorableSource(value = "arguments")
+    void test05AddVaultAndShareWithAlice(final HubTestConfig config) throws Exception {
+        log.info("M05 {}", config);
+
+
+        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
+        final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+        final HubApiClient adminApiClient = adminHubSession.getClient();
+
+        final WithCounts alice = new UsersResourceApi(adminApiClient).apiUsersGet().stream().filter(wc -> wc.getName().equals("alice")).findFirst().get();
+        final UserDto admin = new UsersResourceApi(adminApiClient).apiUsersMeGet(false, false);
+        try {
+            final UUID vaultId;
+            final String name;
+            {
+                // admin creates vault
+                final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
+                log.info("Coercing storage profiles {}", storageProfiles);
+                final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
+                        .map(StorageProfileDtoWrapper::coerce)
+                        .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+
+                log.info("Creating vault in {}", adminHubSession);
+
+                final Path vaultName = new Path(String.format("Vault %s", new AlphanumericRandomStringService().random()), EnumSet.of(Path.Type.volume, Path.Type.directory));
+                final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
+                        storageProfileWrapper.getName());
+                final VaultProvider vaultProvider = adminHubSession.getFeature(VaultProvider.class);
+                final Vault vault = vaultProvider.create(adminHubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF),
+                        new VaultCredentials());
+                vaultId = UUID.fromString(StringUtils.removeStart(vault.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
+                name = vault.getHome().getName();
+
+
+                // admin share new vault with alice without granting access
+                final Map<String, Role> members = new java.util.HashMap<>();
+                members.put(alice.getId(), Role.MEMBER);
+                members.put(admin.getId(), Role.OWNER);
+                new VaultResourceApi(adminApiClient).apiVaultsVaultIdMembersPut(vaultId, members);
+            }
+            {
+                // vault not listed for alice
+                final ListService feature = aliceHubSession.getFeature(ListService.class);
+                final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
+                assertFalse(vaults.toStream().anyMatch(path -> path.getName().equals(name)));
+            }
+            {
+                // before granting access
+                assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size(), 1);
+                assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).get(0).getId(), alice.getId());
+
+                // admin grants access to alice
+                final UserKeys userKeys = new UserKeysServiceImpl(adminHubSession).getUserKeys(adminHubSession.getHost(), adminHubSession.getMe(),
+                        new DeviceKeysServiceImpl().getDeviceKeys(adminHubSession.getHost(), adminHubSession.getMe()));
+                new GrantAccessServiceImpl(
+                        new VaultResourceApi(adminHubSession.getClient()),
+                        new UsersResourceApi(adminHubSession.getClient())).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
+                assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size(), 0);
+            }
+            {
+                // vault listed for alice
+                final ListService feature = aliceHubSession.getFeature(ListService.class);
+                final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
+                assertTrue(vaults.toStream().anyMatch(path -> path.getName().equals(name)));
+            }
+        }
+        finally {
+            adminHubSession.close();
+            aliceHubSession.close();
         }
     }
 }
