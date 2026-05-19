@@ -86,7 +86,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
             configuration.load(in);
         }
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         try {
 
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
@@ -184,7 +184,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test02AddStorageProfile(final HubTestConfig config) throws Exception {
         log.info("M02 {}", config);
 
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         try {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
@@ -222,7 +222,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test03AddVault(final HubTestConfig config) throws Exception {
         log.info("M03 {}", config);
 
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         try {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
@@ -316,7 +316,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
         for(final Path vault : vaults) {
@@ -353,5 +353,4 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
         }
     }
-
 }

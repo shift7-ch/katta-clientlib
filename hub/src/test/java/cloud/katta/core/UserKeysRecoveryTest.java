@@ -38,7 +38,7 @@ class UserKeysRecoveryTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testFirstLoginAndUserKeyRecovery(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
         final UserDto me = usersApi.apiUsersMeGet(true, false);
 

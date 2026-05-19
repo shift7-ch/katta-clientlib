@@ -51,7 +51,7 @@ class KeyRotationTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testKeyRotation(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         try {
             final AuthorityResourceApi authoritiesApi = new AuthorityResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());

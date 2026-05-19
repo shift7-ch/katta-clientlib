@@ -61,7 +61,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     void testHubWorkflow(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         try {
             checkNumberOfVaults(hubSession, config, null, 0, 0, 0, 0, -1);
 

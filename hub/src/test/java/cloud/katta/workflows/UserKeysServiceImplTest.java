@@ -44,16 +44,16 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
 
-        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup));
+        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup.userConfig));
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // N.B. DeviceKeysServiceImpl does not override device keys in keychain, so compare remote
         final int numDevicesBeforeRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
 
         // setting up new device w/ Account Key for existing user keys and correct setup code
-        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(config.setup));
+        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(config.setup.userConfig));
         assertEquals(expecteduserKeys, userKeys);
 
         final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
@@ -63,10 +63,10 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testFailSetupNewDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
 
         final AtomicReference<DeviceSetupCallback.AccountKeyAndDeviceName> input = new AtomicReference<>();
-        final DeviceSetupCallback setup = deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")));
+        final DeviceSetupCallback setup = deviceSetupCallback(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"));
         // Setting up new device w/ Account Key for existing user keys with erroneous setup code
         assertThrows(AccessException.class, () -> new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(
                 hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(),
@@ -90,9 +90,9 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testSetupExistingDeviceWithAccountKeyForExistingUserKeys(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
 
-        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup));
+        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup.userConfig));
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // delete devices remote in order to simplify checking new device uploaded
@@ -102,7 +102,7 @@ class UserKeysServiceImplTest extends AbstractHubTest {
         assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size());
 
         // setting up existing device w/ Account Key for existing user keys (if device keys from keychain not present in hub)
-        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(config.setup));
+        final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(config.setup.userConfig));
         assertEquals(expecteduserKeys, userKeys);
 
         final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
@@ -112,10 +112,10 @@ class UserKeysServiceImplTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testSetupNewUserKeysAndAccountKey(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig);
+        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
         final UserDto me = hubSession.getMe();
 
-        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup));
+        final DeviceKeys existingDeviceKeys = new DeviceKeysServiceImpl(PasswordStoreFactory.get()).getOrCreateDeviceKeys(hubSession.getHost(), hubSession.getMe(), deviceSetupCallback(config.setup.userConfig));
         final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
         // delete devices remote in order to simplify checking new device uploaded
@@ -134,7 +134,7 @@ class UserKeysServiceImplTest extends AbstractHubTest {
 
         // setting up new user keys and account key
         final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(),
-                deviceSetupCallback(new HubTestConfig.Setup().withUserConfig(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in"))));
+                deviceSetupCallback(new HubTestConfig.Setup.UserConfig("alice", "wonderland", "in")));
 
         assertNotEquals(expecteduserKeys, userKeys);
 

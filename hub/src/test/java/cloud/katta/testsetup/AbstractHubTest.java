@@ -178,7 +178,7 @@ public abstract class AbstractHubTest {
         return "setupcode";
     }
 
-    protected static HubSession setupConnection(final String hubURL, final HubTestConfig.Setup.UserConfig userConfig) throws Exception {
+    protected static HubSession setupConnection(final String hubURL, final HubTestConfig.Setup.UserConfig userConfig, final HubTestConfig.VaultSpec vaultSpec) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
         // Register parent protocol definitions
         for(Protocol p : new AnnotationAutoServiceLoader<Protocol>().load(Protocol.class)) {
@@ -191,17 +191,17 @@ public abstract class AbstractHubTest {
         final Host hub = new HostParser(factory).get(hubURL).setCredentials(new Credentials(userConfig.username, userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
-        final LoginConnectionService login = new LoginConnectionService(loginCallback(config), new DisabledHostKeyCallback(),
+        final LoginConnectionService login = new LoginConnectionService(loginCallback(vaultSpec, userConfig), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, CancelCallback.noop);
         return session;
     }
 
-    protected static LoginCallback loginCallback(HubTestConfig config) {
+    protected static LoginCallback loginCallback(final HubTestConfig.VaultSpec vault, final HubTestConfig.Setup.UserConfig userConfig) {
         return new DisabledLoginCallback() {
             @Override
             public Credentials prompt(final Host bookmark, final String username, final String title, final String reason, final LoginOptions options) {
-                return new Credentials(config.vault.username, config.vault.password);
+                return new Credentials(vault.username, vault.password);
             }
 
             @Override
@@ -213,24 +213,24 @@ public abstract class AbstractHubTest {
             @Override
             public <T> T getFeature(final Class<T> type) {
                 if(DeviceSetupCallback.class == type) {
-                    return (T) deviceSetupCallback(config.setup);
+                    return (T) deviceSetupCallback(userConfig);
                 }
                 return null;
             }
         };
     }
 
-    protected static DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
+    protected static DeviceSetupCallback deviceSetupCallback(final HubTestConfig.Setup.UserConfig userConfig) {
         return new DeviceSetupCallback() {
             @Override
             public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) {
-                return new AccountKeyAndDeviceName(setup.userConfig.setupCode, String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                return new AccountKeyAndDeviceName(userConfig.setupCode, String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                         .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
             public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) {
-                return new AccountKeyAndDeviceName(setup.userConfig.setupCode,
+                return new AccountKeyAndDeviceName(userConfig.setupCode,
                         String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                                 .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
