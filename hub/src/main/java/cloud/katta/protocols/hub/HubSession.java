@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.protocols.hub;
@@ -85,9 +85,6 @@ public class HubSession extends HttpSession<HubApiClient> {
     private VaultProvider provider;
 
     private ConfigDto config;
-
-    private final ExpiringObjectHolder<UserDto> userDtoHolder
-            = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.user.ttl") ? 60000 : preferences.getLong("katta.user.ttl"));
 
     private final ExpiringObjectHolder<UserKeys> userKeysHolder
             = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
@@ -193,18 +190,11 @@ public class HubSession extends HttpSession<HubApiClient> {
         client.getHttpClient().close();
     }
 
-    /**
-     *
-     * @return Null prior login
-     */
     public UserDto getMe() throws BackgroundException {
         try {
-            if(userDtoHolder.get() == null) {
-                final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
-                log.debug("Retrieved user {}", me);
-                userDtoHolder.set(me);
-            }
-            return userDtoHolder.get();
+            final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
+            log.debug("Retrieved user {}", me);
+            return me;
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
