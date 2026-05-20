@@ -92,9 +92,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
             configuration.load(in);
         }
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
-        try {
+        try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault); final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
 
             final ObjectMapper mapper = new JSON().getMapper();
@@ -176,10 +174,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
             throw e;
         }
-        finally {
-            hubSession.close();
-            adminHubSession.close();
-        }
     }
 
     /**
@@ -189,10 +183,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @MethodIgnorableSource(value = "arguments")
     void test02AddStorageProfile(final HubTestConfig config) throws Exception {
         log.info("M02 {}", config);
-
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
-        try {
+        try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault)) {
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
             final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
 
@@ -215,10 +206,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             assertEquals(storageProfiles.size() + 1, adminStorageProfileApi.apiStorageprofileGet(null).size());
         }
-        finally {
-            hubSession.close();
-            adminHubSession.close();
-        }
     }
 
     /**
@@ -229,9 +216,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test03AddVault(final HubTestConfig config) throws Exception {
         log.info("M03 {}", config);
 
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
-        try {
+        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+             final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault)) {
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
             log.info("Coercing storage profiles {}", storageProfiles);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
@@ -312,10 +298,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertThrows(AccessDeniedException.class, () -> hubSession.getFeature(ListService.class).preflight(vault));
             assertThrows(NotfoundException.class, () -> hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener()));
         }
-        finally {
-            hubSession.close();
-            adminHubSession.close();
-        }
     }
 
     /**
@@ -372,11 +354,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @MethodIgnorableSource(value = "arguments")
     void test05AddVaultAndShareWithAlice(final HubTestConfig config) throws Exception {
         log.info("M05 {}", config);
-
-
-        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
-        final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        try {
+        try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault); final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final WithCounts alice = new UsersResourceApi(adminHubSession.getClient()).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
             final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
             final UUID vaultId;
@@ -399,7 +377,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         new VaultCredentials());
                 vaultId = UUID.fromString(StringUtils.removeStart(vault.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
                 name = vault.getHome().getName();
-
 
                 // admin share new vault with alice without granting access
                 final Map<String, Role> members = new java.util.HashMap<>();
@@ -432,10 +409,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
                 assertTrue(vaults.toStream().anyMatch(path -> path.getName().equals(name)));
             }
-        }
-        finally {
-            adminHubSession.close();
-            aliceHubSession.close();
         }
     }
 }

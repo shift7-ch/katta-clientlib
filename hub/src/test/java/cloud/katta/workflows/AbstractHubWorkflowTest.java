@@ -59,10 +59,8 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     void testHubWorkflow(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
-
-        try {
+        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+             final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault)) {
             checkNumberOfVaults(hubSession, adminHubSession, config, null, 0, 0, 0, 0, -1);
 
             final HubTestConfig.Setup setup = config.setup;
@@ -140,10 +138,6 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
 
             checkNumberOfVaults(hubSession, adminHubSession, config, vaultId, 1, 0, 1, 0, 0);
-        }
-        finally {
-            hubSession.close();
-            adminHubSession.close();
         }
     }
 
