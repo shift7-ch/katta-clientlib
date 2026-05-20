@@ -51,9 +51,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
-import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
-import cloud.katta.client.HubApiClient;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
@@ -76,7 +74,6 @@ import cloud.katta.testsetup.HubTestUtilities;
 import cloud.katta.testsetup.MethodIgnorableSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.MethodName.class)
@@ -96,10 +93,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             configuration.load(in);
         }
         final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
         try {
-
-            final ApiClient adminApiClient = getAdminApiClient(config.setup);
-            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
@@ -194,9 +190,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         log.info("M02 {}", config);
 
         final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
         try {
-            final ApiClient adminApiClient = getAdminApiClient(config.setup);
-            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
             final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
 
             final UUID uuid = UUID.randomUUID();
@@ -232,9 +228,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         log.info("M03 {}", config);
 
         final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
         try {
-            final ApiClient adminApiClient = getAdminApiClient(config.setup);
-            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
+            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
             log.info("Coercing storage profiles {}", storageProfiles);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
@@ -326,6 +322,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @MethodSource("arguments")
     void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
         final ListService feature = hubSession.getFeature(ListService.class);
         final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
         for(final Path vault : vaults) {
@@ -372,16 +369,15 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
         final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
         final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        final HubApiClient adminApiClient = adminHubSession.getClient();
 
-        final WithCounts alice = new UsersResourceApi(adminApiClient).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
-        final UserDto admin = new UsersResourceApi(adminApiClient).apiUsersMeGet(false, false);
+        final WithCounts alice = new UsersResourceApi(adminHubSession.getClient()).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
+        final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
         try {
             final UUID vaultId;
             final String name;
             {
                 // admin creates vault
-                final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
+                final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
                 log.info("Coercing storage profiles {}", storageProfiles);
                 final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                         .map(StorageProfileDtoWrapper::coerce)
@@ -403,7 +399,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final Map<String, Role> members = new java.util.HashMap<>();
                 members.put(alice.getId(), Role.MEMBER);
                 members.put(admin.getId(), Role.OWNER);
-                new VaultResourceApi(adminApiClient).apiVaultsVaultIdMembersPut(vaultId, members);
+                new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdMembersPut(vaultId, members);
             }
             {
                 // vault not listed for alice
