@@ -157,20 +157,22 @@ public abstract class AbstractHubTest {
                 super.configureLogging(level);
             }
         });
-        preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
-        preferences.setProperty("cryptomator.vault.autodetect", "false");
-        preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
+
+        // we use unsecure host password store in support directory to store device keys and oauth tokens in tests
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
+        preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
+
+        preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
+        preferences.setProperty("cryptomator.vault.autodetect", "false");
+        preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
         preferences.setProperty("hub.protocol.scheduler.period", 30);
         preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
         preferences.setProperty("cloud.katta.min_api_level", 4);
-
-        preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
     }
 
     private static String staticSetupCode() {
