@@ -159,6 +159,8 @@ public abstract class AbstractHubTest {
         });
 
         // we use unsecure host password store in support directory to store device keys and oauth tokens in tests
+        // notice that bookmarks for vaults are kept in memory only and are not persisted to the support directory any more
+        // therefore, multiple hub sessions can live in parallel using the same support directory
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
