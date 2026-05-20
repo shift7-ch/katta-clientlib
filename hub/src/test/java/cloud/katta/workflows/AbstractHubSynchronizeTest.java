@@ -325,41 +325,45 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @MethodSource("arguments")
     void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
         final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
-        final ListService feature = hubSession.getFeature(ListService.class);
-        final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
-        for(final Path vault : vaults) {
-            assertTrue(hubSession.getFeature(Find.class).find(vault));
-            final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
-            assertEquals(3, list.size()); // 1 subfolder and 2 files
-            assertEquals(1, list.toStream().filter(Path::isDirectory).count());
-            assertEquals(2, list.toStream().filter(Path::isFile).count());
-            for(final Path f : list.filter(Path::isFile)) {
-                final long length = f.attributes().getSize();
-                HubTestUtilities.read(hubSession, f, (int) length);
-            }
-            for(final Path d : list.filter(Path::isDirectory)) {
-                {
-                    // New file: create, read and delete
-                    final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
-                    final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
-                    assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
-                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), PasswordCallback.noop, new Delete.DisabledCallback());
-                    assertFalse(hubSession.getFeature(Find.class).find(file));
-                }
-                {
-                    // New directory: create and delete
-                    final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
-                    hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
-                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), PasswordCallback.noop, new Delete.DisabledCallback());
-                    assertFalse(hubSession.getFeature(Find.class).find(folder));
-                }
-                final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(d, new DisabledListProgressListener());
-                for(Path f : sublist.filter(Path::isFile)) {
+        try {
+            final ListService feature = hubSession.getFeature(ListService.class);
+            final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
+            for(final Path vault : vaults) {
+                assertTrue(hubSession.getFeature(Find.class).find(vault));
+                final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
+                assertEquals(3, list.size()); // 1 subfolder and 2 files
+                assertEquals(1, list.toStream().filter(Path::isDirectory).count());
+                assertEquals(2, list.toStream().filter(Path::isFile).count());
+                for(final Path f : list.filter(Path::isFile)) {
                     final long length = f.attributes().getSize();
                     HubTestUtilities.read(hubSession, f, (int) length);
                 }
+                for(final Path d : list.filter(Path::isDirectory)) {
+                    {
+                        // New file: create, read and delete
+                        final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
+                        final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
+                        assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
+                        hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), PasswordCallback.noop, new Delete.DisabledCallback());
+                        assertFalse(hubSession.getFeature(Find.class).find(file));
+                    }
+                    {
+                        // New directory: create and delete
+                        final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
+                        hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
+                        hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), PasswordCallback.noop, new Delete.DisabledCallback());
+                        assertFalse(hubSession.getFeature(Find.class).find(folder));
+                    }
+                    final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(d, new DisabledListProgressListener());
+                    for(Path f : sublist.filter(Path::isFile)) {
+                        final long length = f.attributes().getSize();
+                        HubTestUtilities.read(hubSession, f, (int) length);
+                    }
+                }
             }
+        }
+        finally {
+            hubSession.close();
         }
     }
 
