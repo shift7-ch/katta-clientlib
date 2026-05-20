@@ -63,15 +63,15 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void testHubWorkflowShareVaultWithGroup(final HubTestConfig config) throws Exception {
-        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)
-        ) {
-            final ApiClient adminApiClient = getAdminApiClient(config.setup);
-            checkNumberOfVaults(hubSession, adminApiClient, config, null, 0, 0, 0, 0, -1);
+    void testHubWorkflowShareVaultWithGroup(final HubTestConfig testConfig) throws Exception {
+        final HubSession hubSession = setupConnection(testConfig.setup.hubURL, testConfig.setup.userConfig, testConfig.vault);
+        try {
+            checkNumberOfVaults(hubSession, testConfig, null, 0, 0, 0, 0, -1);
 
-            final HubTestConfig.Setup setup = config.setup;
+            final HubTestConfig.Setup setup = testConfig.setup;
+            final ApiClient adminApiClient = getAdminApiClient(setup);
             final Properties configuration = new Properties();
-            final HubTestConfig.Setup.DockerConfig dockerConfig = config.setup.dockerConfig;
+            final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
             try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
                 configuration.load(in);
             }
@@ -103,7 +103,7 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+                    .filter(p -> p.getId().toString().equals(testConfig.vault.storageProfileId.toLowerCase())).findFirst().get();
 
             final Path vaultName = new Path(String.format("Vault %s", new AlphanumericRandomStringService().random()), EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
@@ -113,7 +113,7 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             final Vault cryptomator = vaultProvider.create(hubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
 
             final UUID vaultId = UUID.fromString(StringUtils.removeStart(cryptomator.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 0, 1, 0, 0);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 0, 0, 1, 0, 0);
 
             log.info("S02 {} admin creates group and adds admin user to it", setup);
             final UsersResourceApi usersApi = new UsersResourceApi(adminApiClient);
@@ -133,11 +133,11 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             log.info("S03 {} alice shares vault with group as MEMBER", setup);
             final VaultResourceApi aliceVaultApi = new VaultResourceApi(hubSession.getClient());
             aliceVaultApi.apiVaultsVaultIdGroupsGroupIdPut(groupId, vaultId, Role.MEMBER);
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 1, 1, 0, 0);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 0, 1, 1, 0, 0);
 
             log.info("S04 {} admin uploads user keys", setup);
             final UserKeys adminKeys = UserKeys.create();
-            final String adminAccountKey = config.setup.adminConfig.setupCode;
+            final String adminAccountKey = testConfig.setup.adminConfig.setupCode;
 
             final UserDto admin = usersApi.apiUsersMeGet(false, false)
                     .ecdhPublicKey(adminKeys.encodedEcdhPublicKey())
@@ -145,7 +145,7 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
                     .privateKey(adminKeys.encryptWithAccountKey(adminAccountKey))
                     .setupCode(new AccountKeyPayload(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
             usersApi.apiUsersMePut(admin);
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 1, 1, 0, 1);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 0, 1, 1, 0, 1);
 
             log.info("S05 {} alice adds trust to admin", setup);
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
@@ -155,11 +155,14 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             log.info("S06 {} alice grants access to admin", setup);
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
 
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 1, 1, 0, 0);
+            checkNumberOfVaults(hubSession, testConfig, vaultId, 0, 1, 1, 0, 0);
+        }
+        finally {
+            hubSession.close();
         }
     }
 
-    private static void checkNumberOfVaults(final HubSession hubSession, final ApiClient adminApiClient, final HubTestConfig hubTestSetup, final UUID vaultIdSharedWithGroup,
+    private static void checkNumberOfVaults(final HubSession hubSession, final HubTestConfig hubTestSetup, final UUID vaultIdSharedWithGroup,
                                             final int adminOwner, final int adminMember, final int aliceOwner, final int aliceMember, final int nbUsersRequiringAccessGrant) throws ApiException, IOException {
         final VaultResourceApi vaultResourceApiAlice = new VaultResourceApi(hubSession.getClient());
         final List<VaultDto> vaultAliceOwned = vaultResourceApiAlice.apiVaultsAccessibleGet(Role.OWNER);
@@ -174,6 +177,7 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
         }
         assertEquals(aliceMember, vaultAliceMember.size(), "alice MEMBER");
 
+        final ApiClient adminApiClient = getAdminApiClient(hubTestSetup.setup);
         final VaultResourceApi vaultResourceApiAdmin = new VaultResourceApi(adminApiClient);
         final List<VaultDto> vaultsAdminOwned = vaultResourceApiAdmin.apiVaultsAccessibleGet(Role.OWNER);
         for(final VaultDto vaultDto : vaultsAdminOwned) {
