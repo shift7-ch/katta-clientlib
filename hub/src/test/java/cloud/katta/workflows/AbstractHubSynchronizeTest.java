@@ -178,6 +178,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         }
         finally {
             hubSession.close();
+            adminHubSession.close();
         }
     }
 
@@ -216,6 +217,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         }
         finally {
             hubSession.close();
+            adminHubSession.close();
         }
     }
 
@@ -312,6 +314,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
         }
         finally {
             hubSession.close();
+            adminHubSession.close();
         }
     }
 
@@ -369,10 +372,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
         final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault);
         final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-
-        final WithCounts alice = new UsersResourceApi(adminHubSession.getClient()).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
-        final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
         try {
+            final WithCounts alice = new UsersResourceApi(adminHubSession.getClient()).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
+            final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
             final UUID vaultId;
             final String name;
             {

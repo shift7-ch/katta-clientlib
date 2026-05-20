@@ -143,6 +143,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
         }
         finally {
             hubSession.close();
+            adminHubSession.close();
         }
     }
 
