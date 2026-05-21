@@ -19,6 +19,14 @@ Features:
 * `S3` and `S3STS` Cyberduck protocols for Katta (see [Katta S3 Modes](https://github.com/shift7-ch/katta-docs/blob/main/OVERVIEW.md#katta-s3-modes)) incl.
   token exchange and AWS role chaining. Cyberduck handles OAuth 2.0 token management (authorization code grant and token refresh).
 
+## Dev Setup
+
+In order to run the tests with debug logging, use
+
+```shell
+-Dlog4j.configurationFile=./hub/src/test/resources/log4j-test.xml
+```
+
 ## One-Stop Shop Demo with Docker Compose
 
 ### Profiles
