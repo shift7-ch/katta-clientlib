@@ -238,6 +238,7 @@ services:
       dockerfile: docker/minio_setup/Dockerfile
     depends_on:
       minio_setup:
+        # restarts during minio setup!
         condition: service_completed_successfully
     environment:
       HUB_KEYCLOAK_HTTP_PORT: ${HUB_KEYCLOAK_HTTP_PORT}
@@ -248,11 +249,6 @@ services:
         set -euxo pipefail
         /mc config host add myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
         /mc admin trace -v myminio
-    healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   hub:
     profiles: [ local, demo, hybrid ]
@@ -415,5 +411,19 @@ services:
 
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
+  
+  # last service must not exit for up --wait to succeed...
+  wait:
+    profiles: [ local, demo ]
+    image: nginx
+    depends_on:
+      minio_trace:
+        condition: service_started
 
-
+  # last service must not exit for up --wait to succeed...
+  wait_demo:
+    profiles: [ demo ]
+    image: nginx
+    depends_on:
+      hub_setup_storage_profile:
+        condition: service_completed_successfully
