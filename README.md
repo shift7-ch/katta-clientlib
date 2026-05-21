@@ -72,6 +72,7 @@ To access through desktop client, add [Katta Server.cyberduckprofile](test/src/t
 |-----------------|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Katta Web       | http://localhost:8280                           | http://localhost:8280/api/config                                                                                                                       |
 | Keycloak        | http://localhost:8380  / https://localhost:8443 | http://localhost:8380/realms/cryptomator/.well-known/openid-configuration / https://localhost:8443/realms/cryptomator/.well-known/openid-configuration |
+| MinIO Console   | http://localhost:9101                           |                                                                                                                                                        |
 | Swagger OpenAPI | http://localhost:8280/q/swagger-ui/             | http://localhost:8280/q/openapi.json                                                                                                                   |
 
 You can use SecurityScheme (OAuth2, password)  with `client_id = cryptomatorhub` for Swagger UI.
