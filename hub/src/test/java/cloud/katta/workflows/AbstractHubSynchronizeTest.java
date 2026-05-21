@@ -306,8 +306,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
-        try {
+        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final ListService feature = hubSession.getFeature(ListService.class);
             final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
             for(final Path vault : vaults) {
@@ -343,9 +342,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                     }
                 }
             }
-        }
-        finally {
-            hubSession.close();
         }
     }
 
