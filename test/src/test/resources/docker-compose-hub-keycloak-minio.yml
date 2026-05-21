@@ -414,7 +414,7 @@ services:
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
         echo "createbuckets successful"
 
-  # last service must not exit for up --wait to succeed...
+  # last service(s) must not exit for up --wait to succeed...
   wait:
     profiles: [ local, demo ]
     image: nginx
@@ -422,7 +422,7 @@ services:
       minio_trace:
         condition: service_started
 
-  # last service must not exit for up --wait to succeed...
+  # last service(s) must not exit for up --wait to succeed...
   wait_demo:
     profiles: [ demo ]
     image: nginx
