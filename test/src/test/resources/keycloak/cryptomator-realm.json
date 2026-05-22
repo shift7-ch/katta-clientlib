@@ -1,8 +1,8 @@
 {
     "id": "cryptomator",
     "realm": "cryptomator",
-    "displayName": "Cryptomator Hub",
-    "loginTheme": "cryptomator",
+    "displayName": "Katta",
+    "loginTheme": "katta",
     "enabled": true,
     "sslRequired": "external",
     "defaultRole": {
@@ -41,13 +41,14 @@
     },
     "users": [
         {
+            "id": "admin",
             "username": "admin",
             "firstName": "admin",
             "lastName": "admin",
             "email": "admin@localhost",
             "enabled": true,
             "attributes": {
-                "picture": "https://cryptomator.org/img/logo.svg"
+                "picture": "/logo.png"
             },
             "credentials": [
                 {
@@ -60,6 +61,7 @@
             ]
         },
         {
+            "id": "alice",
             "username": "alice",
             "firstName": "alice",
             "lastName": "alice",
@@ -77,6 +79,7 @@
             ]
         },
         {
+            "id": "bob",
             "username": "bob",
             "firstName": "bob",
             "lastName": "bob",
@@ -94,6 +97,7 @@
             ]
         },
         {
+            "id": "carol",
             "username": "carol",
             "firstName": "carol",
             "lastName": "carol",
@@ -113,6 +117,7 @@
             ]
         },
         {
+            "id": "dave",
             "username": "dave",
             "firstName": "dave",
             "lastName": "dave",
@@ -132,6 +137,7 @@
             ]
         },
         {
+            "id": "erin",
             "username": "erin",
             "firstName": "erin",
             "lastName": "erin",
@@ -151,20 +157,23 @@
             ]
         },
         {
+            "id": "system",
             "username": "system",
             "email": "system@localhost",
             "enabled": true,
             "serviceAccountClientId": "cryptomatorhub-system",
             "attributes": {
-                "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9IiMwMDAiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KCTxtYXNrIGlkPSJjbGlwIj4KCQk8Y2lyY2xlIGZpbGw9IiNGRkYiIHI9IjUwIiBjeD0iNTAiIGN5PSI1MCIvPgoJCTxnIGZpbGw9IiMwMDAiPgoJCTxjaXJjbGUgcj0iMjUiIGN4PSI1MCIgY3k9IjUwIiAvPgoJCTxjaXJjbGUgcj0iMTIiIGN4PSIwIiBjeT0iNTAiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9IjUwIiBjeT0iMCIgLz4KCQk8Y2lyY2xlIHI9IjEyIiBjeD0iODUiIGN5PSIxNSIgLz4KCQk8Y2lyY2xlIHI9IjEyIiBjeD0iMTAwIiBjeT0iNTAiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9Ijg1IiBjeT0iODUiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9IjUwIiBjeT0iMTAwIiAvPgoJCTxjaXJjbGUgcj0iMTIiIGN4PSIxNSIgY3k9Ijg1IiAvPgoJCTxjaXJjbGUgcj0iMTIiIGN4PSIwIiBjeT0iNTAiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9IjE1IiBjeT0iMTUiIC8+CgkJPC9nPgoJPC9tYXNrPgoJPGNpcmNsZSByPSI1MCIgY3g9IjUwIiBjeT0iNTAiIG1hc2s9InVybCgjY2xpcCkiIC8+Cjwvc3ZnPg=="
+                "picture": "/logo.png"
             },
             "clientRoles": {
                 "realm-management": [
-                    "realm-admin"
+                    "realm-admin",
+                    "view-system"
                 ]
             }
         },
         {
+            "id": "cli",
             "username": "cli",
             "email": "cli@localhost",
             "enabled": true,
@@ -189,7 +198,11 @@
             "name": "groupies",
             "path": "/groupies",
             "subGroups": [],
-            "attributes": {},
+            "attributes": {
+                "picture": [
+                    "https://cryptomator.org/img/logo.svg"
+                ]
+            },
             "realmRoles": [],
             "clientRoles": {}
         }
@@ -225,6 +238,19 @@
             },
             "protocolMappers": [
                 {
+                    "name": "aud",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "cryptomator",
+                        "id.token.claim": "false",
+                        "access.token.claim": "true",
+                        "userinfo.token.claim": "false",
+                        "multivalued": "true"
+                    }
+                },
+                {
                     "name": "realm roles",
                     "protocol": "openid-connect",
                     "protocolMapper": "oidc-usermodel-realm-role-mapper",
@@ -235,20 +261,21 @@
                         "jsonType.label": "String",
                         "multivalued": "true"
                     }
-                },
-                {
-                    "name": "client roles",
-                    "protocol": "openid-connect",
-                    "protocolMapper": "oidc-usermodel-client-role-mapper",
-                    "consentRequired": false,
-                    "config": {
-                        "access.token.claim": "true",
-                        "claim.name": "resource_access.${client_id}.roles",
-                        "jsonType.label": "String",
-                        "multivalued": "true",
-                        "usermodel.clientRoleMapping.clientId": "cryptomatorhub"
-                    }
                 }
+            ],
+            "defaultClientScopes": [
+                "web-origins",
+                "phone",
+                "profile",
+                "basic",
+                "email"
+            ],
+            "optionalClientScopes": [
+                "acr",
+                "address",
+                "roles",
+                "offline_access",
+                "microprofile-jwt"
             ]
         },
         {
@@ -386,5 +413,18 @@
     ],
     "browserSecurityHeaders": {
         "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self' http://localhost:*; object-src 'none';"
+    },
+    "components": {
+        "org.keycloak.userprofile.UserProfileProvider": [
+            {
+                "providerId": "declarative-user-profile",
+                "subComponents": {},
+                "config": {
+                    "kc.user.profile.config": [
+                        "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"picture\",\"displayName\":\"\",\"validations\":{},\"annotations\":{},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
+                    ]
+                }
+            }
+        ]
     }
 }
