@@ -64,8 +64,7 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     void testHubWorkflowShareVaultWithGroup(final HubTestConfig testConfig) throws Exception {
-        final HubSession hubSession = setupConnection(testConfig);
-        try {
+        try (final HubSession hubSession = setupConnection(testConfig.setup.hubURL, testConfig.setup.userConfig, testConfig.vault)) {
             checkNumberOfVaults(hubSession, testConfig, null, 0, 0, 0, 0, -1);
 
             final HubTestConfig.Setup setup = testConfig.setup;
@@ -156,9 +155,6 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
 
             checkNumberOfVaults(hubSession, testConfig, vaultId, 0, 1, 1, 0, 0);
-        }
-        finally {
-            hubSession.close();
         }
     }
 

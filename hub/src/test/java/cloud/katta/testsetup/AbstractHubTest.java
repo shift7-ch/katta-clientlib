@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.testsetup;
@@ -157,20 +157,24 @@ public abstract class AbstractHubTest {
                 super.configureLogging(level);
             }
         });
-        preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
-        preferences.setProperty("cryptomator.vault.autodetect", "false");
-        preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
+
+        // we use unsecure host password store in support directory to store device keys and oauth tokens in tests
+        // notice that bookmarks for vaults are kept in memory only and are not persisted to the support directory any more
+        // therefore, multiple hub sessions can live in parallel using the same support directory
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
+        preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
+
+        preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
+        preferences.setProperty("cryptomator.vault.autodetect", "false");
+        preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
         preferences.setProperty("hub.protocol.scheduler.period", 30);
         preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
         preferences.setProperty("cloud.katta.min_api_level", 4);
-
-        preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
     }
 
     private static String staticSetupCode() {
@@ -178,7 +182,7 @@ public abstract class AbstractHubTest {
         return "setupcode";
     }
 
-    protected static HubSession setupConnection(final HubTestConfig config) throws Exception {
+    protected static HubSession setupConnection(final String hubURL, final HubTestConfig.Setup.UserConfig userConfig, final HubTestConfig.VaultSpec vaultSpec) throws Exception {
         final ProtocolFactory factory = ProtocolFactory.get();
         // Register parent protocol definitions
         for(Protocol p : new AnnotationAutoServiceLoader<Protocol>().load(Protocol.class)) {
@@ -188,20 +192,20 @@ public abstract class AbstractHubTest {
         factory.load(new LocalProfilesFinder(factory, new Local(AbstractHubTest.class.getResource("/").toURI().getPath())));
         assertNotNull(factory.forName("hub:katta"));
 
-        final Host hub = new HostParser(factory).get(config.setup.hubURL).setCredentials(new Credentials(config.setup.userConfig.username, config.setup.userConfig.password));
+        final Host hub = new HostParser(factory).get(hubURL).setCredentials(new Credentials(userConfig.username, userConfig.password));
         final HubSession session = (HubSession) SessionFactory.create(hub, new DefaultX509TrustManager(), new DefaultX509KeyManager())
                 .withRegistry(VaultRegistryFactory.get(new DisabledPasswordCallback()));
-        final LoginConnectionService login = new LoginConnectionService(loginCallback(config), new DisabledHostKeyCallback(),
+        final LoginConnectionService login = new LoginConnectionService(loginCallback(vaultSpec, userConfig), new DisabledHostKeyCallback(),
                 PasswordStoreFactory.get(), new DisabledProgressListener());
         login.check(session, CancelCallback.noop);
         return session;
     }
 
-    protected static LoginCallback loginCallback(HubTestConfig config) {
+    protected static LoginCallback loginCallback(final HubTestConfig.VaultSpec vault, final HubTestConfig.Setup.UserConfig userConfig) {
         return new DisabledLoginCallback() {
             @Override
             public Credentials prompt(final Host bookmark, final String username, final String title, final String reason, final LoginOptions options) {
-                return new Credentials(config.vault.username, config.vault.password);
+                return new Credentials(vault.username, vault.password);
             }
 
             @Override
@@ -213,24 +217,24 @@ public abstract class AbstractHubTest {
             @Override
             public <T> T getFeature(final Class<T> type) {
                 if(DeviceSetupCallback.class == type) {
-                    return (T) deviceSetupCallback(config.setup);
+                    return (T) deviceSetupCallback(userConfig);
                 }
                 return null;
             }
         };
     }
 
-    protected static DeviceSetupCallback deviceSetupCallback(HubTestConfig.Setup setup) {
+    protected static DeviceSetupCallback deviceSetupCallback(final HubTestConfig.Setup.UserConfig userConfig) {
         return new DeviceSetupCallback() {
             @Override
             public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) {
-                return new AccountKeyAndDeviceName(setup.userConfig.setupCode, String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                return new AccountKeyAndDeviceName(userConfig.setupCode, String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                         .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }
 
             @Override
             public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) {
-                return new AccountKeyAndDeviceName(setup.userConfig.setupCode,
+                return new AccountKeyAndDeviceName(userConfig.setupCode,
                         String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                                 .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
             }

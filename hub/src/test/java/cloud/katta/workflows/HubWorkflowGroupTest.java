@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 /**
  * Create vault and share vault with a group. Serves as hub API integration/regression test.
- * Local context (profiles, hub host collection) etc. is for user alice only.
- * Only remote hub calls are done for admin user.
+ * As we want to simulate admin's first login only after a vault is created by alice and shared with admin via group,
+ * we do not start a hub session for admin.
  */
 class HubWorkflowGroupTest {
 

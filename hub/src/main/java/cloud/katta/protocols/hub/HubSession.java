@@ -68,7 +68,7 @@ import cloud.katta.workflows.exceptions.SecurityFailure;
 /**
  * Providing Katta Server client for accessing its REST API
  */
-public class HubSession extends HttpSession<HubApiClient> {
+public class HubSession extends HttpSession<HubApiClient> implements AutoCloseable {
     private static final Logger log = LogManager.getLogger(HubSession.class);
 
     private final HostPasswordStore keychain = PasswordStoreFactory.get();

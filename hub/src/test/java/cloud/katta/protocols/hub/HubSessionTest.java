@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.protocols.hub;
@@ -33,7 +33,7 @@ class HubSessionTest extends AbstractHubTest {
     @MethodSource("arguments")
     void testMinApiLevel(final HubTestConfig config) {
         PreferencesFactory.get().setProperty("cloud.katta.min_api_level", 5);
-        final InteroperabilityException exception = assertThrows(InteroperabilityException.class, () -> setupConnection(config));
+        final InteroperabilityException exception = assertThrows(InteroperabilityException.class, () -> setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault));
         assertTrue(exception.getDetail().startsWith("Client requires API level at least 5, found 4, for"));
     }
 }

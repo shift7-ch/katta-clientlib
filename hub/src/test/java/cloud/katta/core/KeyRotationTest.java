@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.core;
@@ -50,16 +50,16 @@ class KeyRotationTest extends AbstractHubTest {
 
     @ParameterizedTest
     @MethodSource("arguments")
-    void testKeyRotation(final HubTestConfig hubTestConfig) throws Exception {
-        final HubSession hubSession = setupConnection(hubTestConfig);
-        try {
+    void testKeyRotation(final HubTestConfig config) throws Exception {
+
+        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final AuthorityResourceApi authoritiesApi = new AuthorityResourceApi(hubSession.getClient());
             final VaultResourceApi vaultResourceApi = new VaultResourceApi(hubSession.getClient());
 
             final List<VaultDto> vaults = vaultResourceApi.apiVaultsAccessibleGet(Role.OWNER);
 
             // open to all users - does not require admin privileges in Cryptomator hub!
-            final List<UserDto> userDtos = authoritiesApi.apiAuthoritiesSearchGet("%", false).stream().filter((a)->a.getActualInstance() instanceof UserDto).map(AuthorityDto::getUserDto).collect(Collectors.toList());
+            final List<UserDto> userDtos = authoritiesApi.apiAuthoritiesSearchGet("%", false).stream().filter((a) -> a.getActualInstance() instanceof UserDto).map(AuthorityDto::getUserDto).collect(Collectors.toList());
 
             final Map<String, String> userPublicKeys = userDtos.stream()
                     .filter(u -> u.getEcdhPublicKey() != null)
@@ -85,9 +85,6 @@ class KeyRotationTest extends AbstractHubTest {
                 }
                 vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), tokens);
             }
-        }
-        finally {
-            hubSession.close();
         }
     }
 }

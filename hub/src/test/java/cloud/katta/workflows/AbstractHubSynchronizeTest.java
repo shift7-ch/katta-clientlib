@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.workflows;
@@ -32,6 +32,7 @@ import ch.cyberduck.core.vault.VaultVersion;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.MethodOrderer;
@@ -44,19 +45,25 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
-import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.api.UsersResourceApi;
+import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.Role;
 import cloud.katta.client.model.S3STORAGECLASSES;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
+import cloud.katta.client.model.UserDto;
+import cloud.katta.client.model.WithCounts;
+import cloud.katta.crypto.UserKeys;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubStorageLocationService;
@@ -67,7 +74,6 @@ import cloud.katta.testsetup.HubTestUtilities;
 import cloud.katta.testsetup.MethodIgnorableSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.MethodName.class)
@@ -79,18 +85,15 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void test01Bootstrapping(final HubTestConfig testConfig) throws Exception {
-        log.info("M01 {}", testConfig);
-        final HubTestConfig.Setup.DockerConfig dockerConfig = testConfig.setup.dockerConfig;
+    void test01Bootstrapping(final HubTestConfig config) throws Exception {
+        log.info("M01 {}", config);
+        final HubTestConfig.Setup.DockerConfig dockerConfig = config.setup.dockerConfig;
         final Properties configuration = new Properties();
         try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
             configuration.load(in);
         }
-        final HubSession hubSession = setupConnection(testConfig);
-        try {
-
-            final ApiClient adminApiClient = getAdminApiClient(testConfig.setup);
-            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+        try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault); final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
+            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
@@ -171,9 +174,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             log.error("{} {}", e.getCode(), e.getMessage(), e);
             throw e;
         }
-        finally {
-            hubSession.close();
-        }
     }
 
     /**
@@ -181,13 +181,10 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
      */
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
-    void test02AddStorageProfile(final HubTestConfig hubTestConfig) throws Exception {
-        log.info("M02 {}", hubTestConfig);
-
-        final HubSession hubSession = setupConnection(hubTestConfig);
-        try {
-            final ApiClient adminApiClient = getAdminApiClient(hubTestConfig.setup);
-            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
+    void test02AddStorageProfile(final HubTestConfig config) throws Exception {
+        log.info("M02 {}", config);
+        try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault)) {
+            final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminHubSession.getClient());
             final List<StorageProfileDto> storageProfiles = adminStorageProfileApi.apiStorageprofileGet(null);
 
             final UUID uuid = UUID.randomUUID();
@@ -209,9 +206,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             assertEquals(storageProfiles.size() + 1, adminStorageProfileApi.apiStorageprofileGet(null).size());
         }
-        finally {
-            hubSession.close();
-        }
     }
 
     /**
@@ -222,10 +216,9 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
     void test03AddVault(final HubTestConfig config) throws Exception {
         log.info("M03 {}", config);
 
-        final HubSession hubSession = setupConnection(config);
-        try {
-            final ApiClient adminApiClient = getAdminApiClient(config.setup);
-            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
+        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault);
+             final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault)) {
+            final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
             log.info("Coercing storage profiles {}", storageProfiles);
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
@@ -305,49 +298,112 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             assertThrows(AccessDeniedException.class, () -> hubSession.getFeature(ListService.class).preflight(vault));
             assertThrows(NotfoundException.class, () -> hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener()));
         }
-        finally {
-            hubSession.close();
-        }
     }
 
+    /**
+     * List all vaults for {MinIO S3,}x{STS,static}, and create directories and files in them and delete them again
+     */
     @ParameterizedTest
     @MethodSource("arguments")
-    void test04SetupCode(final HubTestConfig config) throws Exception {
-        final HubSession hubSession = setupConnection(config);
-        final ListService feature = hubSession.getFeature(ListService.class);
-        final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
-        assertEquals(vaults, feature.list(Home.root(), new DisabledListProgressListener()));
-        for(final Path vault : vaults) {
-            assertTrue(hubSession.getFeature(Find.class).find(vault));
-            final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
-            assertEquals(3, list.size()); // 1 subfolder and 2 files
-            assertEquals(1, list.toStream().filter(Path::isDirectory).count());
-            assertEquals(2, list.toStream().filter(Path::isFile).count());
-            for(Path f : list.filter(Path::isFile)) {
-                final long length = f.attributes().getSize();
-                HubTestUtilities.read(hubSession, f, (int) length);
-            }
-            for(Path d : list.filter(Path::isDirectory)) {
-                {
-                    // New file
-                    final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
-                    final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
-                    assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
-                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), PasswordCallback.noop, new Delete.DisabledCallback());
-                    assertFalse(hubSession.getFeature(Find.class).find(file));
-                }
-                {
-                    // New directory
-                    final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
-                    hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
-                    hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), PasswordCallback.noop, new Delete.DisabledCallback());
-                    assertFalse(hubSession.getFeature(Find.class).find(folder));
-                }
-                final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(d, new DisabledListProgressListener());
-                for(Path f : sublist.filter(Path::isFile)) {
+    void test04CreateReadDeleteFilesAndDirectoriesInAllVaults(final HubTestConfig config) throws Exception {
+        try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
+            final ListService feature = hubSession.getFeature(ListService.class);
+            final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
+            for(final Path vault : vaults) {
+                assertTrue(hubSession.getFeature(Find.class).find(vault));
+                final AttributedList<Path> list = hubSession.getFeature(ListService.class).list(vault, new DisabledListProgressListener());
+                assertEquals(3, list.size()); // 1 subfolder and 2 files
+                assertEquals(1, list.toStream().filter(Path::isDirectory).count());
+                assertEquals(2, list.toStream().filter(Path::isFile).count());
+                for(final Path f : list.filter(Path::isFile)) {
                     final long length = f.attributes().getSize();
                     HubTestUtilities.read(hubSession, f, (int) length);
                 }
+                for(final Path d : list.filter(Path::isDirectory)) {
+                    {
+                        // New file: create, read and delete
+                        final Path file = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.file));
+                        final byte[] content = HubTestUtilities.write(hubSession, file, RandomUtils.nextBytes(247));
+                        assertArrayEquals(content, HubTestUtilities.read(hubSession, file, content.length));
+                        hubSession.getFeature(Delete.class).delete(Collections.singletonList(file), PasswordCallback.noop, new Delete.DisabledCallback());
+                        assertFalse(hubSession.getFeature(Find.class).find(file));
+                    }
+                    {
+                        // New directory: create and delete
+                        final Path folder = new Path(d, new AlphanumericRandomStringService().random(), EnumSet.of(Path.Type.directory));
+                        hubSession.getFeature(Directory.class).mkdir(hubSession.getFeature(Write.class), folder, new TransferStatus());
+                        hubSession.getFeature(Delete.class).delete(Collections.singletonList(folder), PasswordCallback.noop, new Delete.DisabledCallback());
+                        assertFalse(hubSession.getFeature(Find.class).find(folder));
+                    }
+                    final AttributedList<Path> sublist = hubSession.getFeature(ListService.class).list(d, new DisabledListProgressListener());
+                    for(Path f : sublist.filter(Path::isFile)) {
+                        final long length = f.attributes().getSize();
+                        HubTestUtilities.read(hubSession, f, (int) length);
+                    }
+                }
+            }
+        }
+    }
+
+
+    @ParameterizedTest
+    @MethodIgnorableSource(value = "arguments")
+    void test05AddVaultAndShareWithAlice(final HubTestConfig config) throws Exception {
+        log.info("M05 {}", config);
+        try (final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault); final HubSession aliceHubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
+            final WithCounts alice = new UsersResourceApi(adminHubSession.getClient()).apiUsersGet().stream().filter(wc -> wc.getName().equals(config.setup.userConfig.username)).findFirst().get();
+            final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
+            final UUID vaultId;
+            final String name;
+            {
+                // admin creates vault
+                final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
+                log.info("Coercing storage profiles {}", storageProfiles);
+                final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
+                        .map(StorageProfileDtoWrapper::coerce)
+                        .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+
+                log.info("Creating vault in {}", adminHubSession);
+
+                final Path vaultName = new Path(String.format("Vault %s", new AlphanumericRandomStringService().random()), EnumSet.of(Path.Type.volume, Path.Type.directory));
+                final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
+                        storageProfileWrapper.getName());
+                final VaultProvider vaultProvider = adminHubSession.getFeature(VaultProvider.class);
+                final Vault vault = vaultProvider.create(adminHubSession, location.getIdentifier(), vaultName, new VaultVersion(VaultVersion.Type.UVF),
+                        new VaultCredentials());
+                vaultId = UUID.fromString(StringUtils.removeStart(vault.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
+                name = vault.getHome().getName();
+
+                // admin share new vault with alice without granting access
+                final Map<String, Role> members = new java.util.HashMap<>();
+                members.put(alice.getId(), Role.MEMBER);
+                members.put(admin.getId(), Role.OWNER);
+                new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdMembersPut(vaultId, members);
+            }
+            {
+                // vault not listed for alice
+                final ListService feature = aliceHubSession.getFeature(ListService.class);
+                final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
+                assertFalse(vaults.toStream().anyMatch(path -> path.getName().equals(name)));
+            }
+            {
+                // before granting access
+                assertEquals(1, new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size());
+                assertEquals(alice.getId(), new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).get(0).getId());
+
+                // admin grants access to alice
+                final UserKeys userKeys = new UserKeysServiceImpl(adminHubSession).getUserKeys(adminHubSession.getHost(), adminHubSession.getMe(),
+                        new DeviceKeysServiceImpl().getDeviceKeys(adminHubSession.getHost(), adminHubSession.getMe()));
+                new GrantAccessServiceImpl(
+                        new VaultResourceApi(adminHubSession.getClient()),
+                        new UsersResourceApi(adminHubSession.getClient())).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
+                assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size(), 0);
+            }
+            {
+                // vault listed for alice
+                final ListService feature = aliceHubSession.getFeature(ListService.class);
+                final AttributedList<Path> vaults = feature.list(Home.root(), new DisabledListProgressListener());
+                assertTrue(vaults.toStream().anyMatch(path -> path.getName().equals(name)));
             }
         }
     }
