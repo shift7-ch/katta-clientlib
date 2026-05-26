@@ -388,8 +388,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
             {
                 // before granting access
-                assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size(), 1);
-                assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).get(0).getId(), alice.getId());
+                assertEquals(1, new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size());
+                assertEquals(alice.getId(), new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).get(0).getId());
 
                 // admin grants access to alice
                 final UserKeys userKeys = new UserKeysServiceImpl(adminHubSession).getUserKeys(adminHubSession.getHost(), adminHubSession.getMe(),
