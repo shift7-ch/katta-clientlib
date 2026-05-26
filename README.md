@@ -21,10 +21,10 @@ Features:
 
 ## Dev Setup
 
-In order to run the tests with debug logging, use
+In order to run a single integration test with debug logging, use
 
 ```shell
--Dlog4j.configurationFile=./hub/src/test/resources/log4j-test.xml
+mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest -Dfailsafe.failIfNoSpecifiedTests=false -Dlog4j.configurationFile=./hub/src/test/resources/log4j-test.xml
 ```
 
 ## One-Stop Shop Demo with Docker Compose
