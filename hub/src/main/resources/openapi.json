@@ -39,6 +39,7 @@
                 }
             },
             "AuthorityDto": {
+                "type": "object",
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/UserDto"
@@ -59,7 +60,6 @@
                         "MEMBER": "#/components/schemas/MemberDto"
                     }
                 },
-                "type": "object",
                 "properties": {
                     "id": {
                         "type": "string"
@@ -243,6 +243,11 @@
             },
             "DeviceDto": {
                 "type": "object",
+                "required": [
+                    "name",
+                    "publicKey",
+                    "userPrivateKey"
+                ],
                 "properties": {
                     "id": {
                         "type": "string",
@@ -279,12 +284,7 @@
                     "legacyDevice": {
                         "type": "boolean"
                     }
-                },
-                "required": [
-                    "name",
-                    "publicKey",
-                    "userPrivateKey"
-                ]
+                }
             },
             "GroupDto": {
                 "type": "object",
@@ -463,10 +463,10 @@
                     },
                     "recoveredKeyShares": {
                         "type": "object",
+                        "minProperties": 1,
                         "additionalProperties": {
                             "$ref": "#/components/schemas/RecoveredKeyShareDto"
-                        },
-                        "minProperties": 1
+                        }
                     }
                 }
             },
@@ -500,6 +500,9 @@
             },
             "SettingsDto": {
                 "type": "object",
+                "required": [
+                    "emergencyCouncilMemberIds"
+                ],
                 "properties": {
                     "hubId": {
                         "type": "string"
@@ -538,12 +541,15 @@
                             "type": "string"
                         }
                     }
-                },
-                "required": [
-                    "emergencyCouncilMemberIds"
-                ]
+                }
             },
             "StorageProfileDto": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "protocol"
+                ],
                 "oneOf": [
                     {
                         "$ref": "#/components/schemas/StorageProfileS3StaticDto"
@@ -560,26 +566,20 @@
                         "S3STS": "#/components/schemas/StorageProfileS3STSDto"
                     }
                 },
-                "type": "object",
-                "required": [
-                    "id",
-                    "name",
-                    "protocol"
-                ],
                 "properties": {
                     "id": {
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
+                        "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "$ref": "#/components/schemas/UUID"
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS).",
+                        "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "$ref": "#/components/schemas/Protocol"
+                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -588,7 +588,6 @@
                 }
             },
             "StorageProfileS3STSDto": {
-                "title": "StorageProfileS3STSDto",
                 "type": "object",
                 "required": [
                     "id",
@@ -605,20 +604,21 @@
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity",
                     "stsSessionTag"
                 ],
+                "title": "StorageProfileS3STSDto",
                 "properties": {
                     "id": {
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
+                        "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "$ref": "#/components/schemas/UUID"
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS).",
+                        "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "$ref": "#/components/schemas/Protocol"
+                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -629,34 +629,34 @@
                             "string",
                             "null"
                         ],
-                        "description": "Full S3 endpoint URL for template upload/bucket creation. If unset, defaults to AWS SDK defaults.",
                         "examples": [
                             "https://s3-us-gov-west-1.amazonaws.com"
                         ],
-                        "pattern": ""
+                        "pattern": "",
+                        "description": "Full S3 endpoint URL for template upload/bucket creation. If unset, defaults to AWS SDK defaults."
                     },
                     "withPathStyleAccessEnabled": {
                         "type": "boolean",
-                        "description": "Whether to use path style for S3 endpoint for template upload/bucket creation.",
                         "examples": [
                             false
                         ],
+                        "description": "Whether to use path style for S3 endpoint for template upload/bucket creation.",
                         "default": false
                     },
                     "storageClass": {
-                        "description": "Storage class for upload. Defaults to STANDARD",
+                        "$ref": "#/components/schemas/S3StorageClass",
                         "type": "string",
                         "examples": [
                             "STANDARD"
                         ],
-                        "$ref": "#/components/schemas/S3StorageClass"
+                        "description": "Storage class for upload. Defaults to STANDARD"
                     },
                     "region": {
                         "type": "string",
-                        "description": "Default region selected in the frontend/client to create bucket in.",
                         "examples": [
                             "us-east-1"
                         ],
+                        "description": "Default region selected in the frontend/client to create bucket in.",
                         "default": "us-east-1"
                     },
                     "regions": {
@@ -668,24 +668,24 @@
                     },
                     "bucketPrefix": {
                         "type": "string",
-                        "description": "Buckets are created with name <bucket prefix><vault UUID>.",
                         "examples": [
                             "katta"
-                        ]
+                        ],
+                        "description": "Buckets are created with name <bucket prefix><vault UUID>."
                     },
                     "stsRoleCreateBucketClient": {
                         "type": "string",
-                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO.",
                         "examples": [
                             "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
-                        ]
+                        ],
+                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
                     },
                     "stsRoleCreateBucketHub": {
                         "type": "string",
-                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO.",
                         "examples": [
                             "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
-                        ]
+                        ],
+                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
                     },
                     "stsEndpoint": {
                         "type": [
@@ -707,26 +707,26 @@
                         "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
                     },
                     "bucketEncryption": {
-                        "description": "Enable bucket versioning upon bucket creation",
+                        "$ref": "#/components/schemas/S3ServersideEncryption",
                         "type": "string",
-                        "$ref": "#/components/schemas/S3ServersideEncryption"
+                        "description": "Enable bucket versioning upon bucket creation"
                     },
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity": {
                         "type": "string",
-                        "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)",
                         "examples": [
                             "arn:aws:iam::930717317329:role/katta_chain_01"
-                        ]
+                        ],
+                        "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)"
                     },
                     "stsRoleAccessBucketAssumeRoleTaggedSession": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "description": "roleArn to assume for STS AssumeRole in role chaining (AWS only, not MinIO)",
                         "examples": [
                             "arn:aws:iam::930717317329:role/katta_chain_02"
-                        ]
+                        ],
+                        "description": "roleArn to assume for STS AssumeRole in role chaining (AWS only, not MinIO)"
                     },
                     "stsDurationSeconds": {
                         "type": [
@@ -744,7 +744,6 @@
                 }
             },
             "StorageProfileS3StaticDto": {
-                "title": "StorageProfileS3StaticDto",
                 "type": "object",
                 "required": [
                     "id",
@@ -752,20 +751,21 @@
                     "protocol",
                     "storageClass"
                 ],
+                "title": "StorageProfileS3StaticDto",
                 "properties": {
                     "id": {
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark",
+                        "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "$ref": "#/components/schemas/UUID"
+                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
                     },
                     "name": {
                         "type": "string",
                         "description": "Displayed when choosing type of a new vault in dropdown."
                     },
                     "protocol": {
-                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS).",
+                        "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "$ref": "#/components/schemas/Protocol"
+                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -776,27 +776,27 @@
                             "string",
                             "null"
                         ],
-                        "description": "Full S3 endpoint URL for template upload/bucket creation. If unset, defaults to AWS SDK defaults.",
                         "examples": [
                             "https://s3-us-gov-west-1.amazonaws.com"
                         ],
-                        "pattern": ""
+                        "pattern": "",
+                        "description": "Full S3 endpoint URL for template upload/bucket creation. If unset, defaults to AWS SDK defaults."
                     },
                     "withPathStyleAccessEnabled": {
                         "type": "boolean",
-                        "description": "Whether to use path style for S3 endpoint for template upload/bucket creation.",
                         "examples": [
                             false
                         ],
+                        "description": "Whether to use path style for S3 endpoint for template upload/bucket creation.",
                         "default": false
                     },
                     "storageClass": {
-                        "description": "Storage class for upload. Defaults to STANDARD",
+                        "$ref": "#/components/schemas/S3StorageClass",
                         "type": "string",
                         "examples": [
                             "STANDARD"
                         ],
-                        "$ref": "#/components/schemas/S3StorageClass"
+                        "description": "Storage class for upload. Defaults to STANDARD"
                     }
                 }
             },
@@ -858,6 +858,9 @@
             },
             "UpdateUserDto": {
                 "type": "object",
+                "required": [
+                    "realmRoles"
+                ],
                 "properties": {
                     "email": {
                         "type": "string"
@@ -882,10 +885,7 @@
                             "$ref": "#/components/schemas/RealmRole"
                         }
                     }
-                },
-                "required": [
-                    "realmRoles"
-                ]
+                }
             },
             "UserDto": {
                 "type": "object",
@@ -3877,10 +3877,10 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "minProperties": 1,
                                 "additionalProperties": {
                                     "type": "string"
-                                },
-                                "minProperties": 1
+                                }
                             }
                         }
                     },
@@ -4225,10 +4225,10 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "minProperties": 1,
                                 "additionalProperties": {
                                     "$ref": "#/components/schemas/Role"
-                                },
-                                "minProperties": 1
+                                }
                             }
                         }
                     },
@@ -4541,15 +4541,5 @@
     "info": {
         "title": "hub-backend API",
         "version": "1.5.0-SNAPSHOT"
-    },
-    "servers": [
-        {
-            "url": "http://localhost:8080",
-            "description": "Auto generated value"
-        },
-        {
-            "url": "http://0.0.0.0:8080",
-            "description": "Auto generated value"
-        }
-    ]
+    }
 }
