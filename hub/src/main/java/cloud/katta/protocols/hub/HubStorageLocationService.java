@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.protocols.hub;
@@ -19,6 +19,7 @@ import java.util.Set;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
+import cloud.katta.client.model.SettingsDto;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataAutomaticAccessGrantDto;
@@ -120,16 +121,17 @@ public class HubStorageLocationService implements Location {
             return new StorageLocation(storage.getProvider(), storage.getRegion(), storage.getNickname());
         }
 
-        public UVFMetadataPayload toPayload(final Path bucket) {
-            return this.toPayload(bucket, new Credentials(null, null));
+        public UVFMetadataPayload toPayload(final Path bucket, final SettingsDto settings) {
+            return this.toPayload(bucket, new Credentials(null, null), settings);
         }
 
         /**
          * Create UVF Metadata Payload
          *
          * @param credentials Static credentials for storage access
+         * @param settings Katta Server settings
          */
-        public UVFMetadataPayload toPayload(final Path bucket, final Credentials credentials) {
+        public UVFMetadataPayload toPayload(final Path bucket, final Credentials credentials, final SettingsDto settings) {
             return UVFMetadataPayload.create()
                     .withStorage(new VaultMetadataStorageDto()
                             .username(credentials.getUsername()).password(credentials.getPassword())
@@ -138,8 +140,8 @@ public class HubStorageLocationService implements Location {
                             .region(region)
                             .nickname(bucket.attributes().getDisplayname()))
                     .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto()
-                            .enabled(true)
-                            .maxWotDepth(-1));
+                            .enabled(settings.getEnableAutomaticAccessGrant())
+                            .maxWotDepth(settings.getAutomaticAccessGrantTrustThreshold()));
         }
     }
 }

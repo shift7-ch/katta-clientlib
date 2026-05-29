@@ -47,8 +47,10 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
+import cloud.katta.client.api.SettingsResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
+import cloud.katta.client.model.SettingsDto;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
@@ -97,6 +99,8 @@ public class HubUVFVaultProvider implements VaultProvider {
                     new DefaultPathAttributes()
                             .setRegion(region)
                             .setDisplayname(name.getName()));
+            final SettingsResourceApi settingsResourceApi = new SettingsResourceApi(HubSession.coerce(session).getClient());
+            final SettingsDto settings = settingsResourceApi.apiSettingsGet();
             final UVFMetadataPayload payload;
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC: {
@@ -108,7 +112,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                                     .password(true)
                                     .save(false));
                     log.debug("Use static S3 credentials {}", credentials);
-                    payload = location.toPayload(bucket, credentials);
+                    payload = location.toPayload(bucket, credentials, settings);
                     storage = new S3Session(new Host(new HubStorageProfile(
                             new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()),
                             session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
@@ -130,7 +134,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             return super.getProperty(key);
                         }
                     }.setRegion(location.getRegion());
-                    payload = location.toPayload(bucket);
+                    payload = location.toPayload(bucket, settings);
                     storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
                         @Override
                         protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {

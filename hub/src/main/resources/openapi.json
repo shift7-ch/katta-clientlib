@@ -540,6 +540,18 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "enableAutomaticAccessGrant": {
+                        "type": "boolean"
+                    },
+                    "automaticAccessGrantTrustThreshold": {
+                        "type": "integer",
+                        "format": "int32",
+                        "maximum": 9,
+                        "minimum": -1
+                    },
+                    "allowAutomaticAccessGrantOverride": {
+                        "type": "boolean"
                     }
                 }
             },
@@ -691,21 +703,21 @@
                     "bucketPrefix": {
                         "type": "string",
                         "examples": [
-                            "cipherduck"
+                            "katta"
                         ],
                         "description": "Buckets are created with name <bucket prefix><vault UUID>."
                     },
                     "stsRoleCreateBucketClient": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                            "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
                         ],
                         "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
                     },
                     "stsRoleCreateBucketHub": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                            "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
                         ],
                         "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
                     },
@@ -736,7 +748,7 @@
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::930717317329:role/cipherduck_chain_01"
+                            "arn:aws:iam::930717317329:role/katta_chain_01"
                         ],
                         "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)"
                     },
@@ -746,7 +758,7 @@
                             "null"
                         ],
                         "examples": [
-                            "arn:aws:iam::930717317329:role/cipherduck_chain_02"
+                            "arn:aws:iam::930717317329:role/katta_chain_02"
                         ],
                         "description": "roleArn to assume for STS AssumeRole in role chaining (AWS only, not MinIO)"
                     },
@@ -866,21 +878,21 @@
                     "bucketPrefix": {
                         "type": "string",
                         "examples": [
-                            "cipherduck"
+                            "katta"
                         ],
                         "description": "Buckets are created with name <bucket prefix><vault UUID>."
                     },
                     "stsRoleCreateBucketClient": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                            "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
                         ],
                         "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
                     },
                     "stsRoleCreateBucketHub": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                            "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
                         ],
                         "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
                     },
@@ -1030,6 +1042,9 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "enabled": {
+                        "type": "boolean"
                     },
                     "devices": {
                         "type": "array",
@@ -1183,6 +1198,9 @@
                     "type": {
                         "$ref": "#/components/schemas/Type"
                     },
+                    "enabled": {
+                        "type": "boolean"
+                    },
                     "firstName": {
                         "type": "string"
                     },
@@ -1294,6 +1312,9 @@
                     },
                     "type": {
                         "$ref": "#/components/schemas/Type"
+                    },
+                    "enabled": {
+                        "type": "boolean"
                     },
                     "firstName": {
                         "type": "string"
@@ -1706,6 +1727,40 @@
                 ]
             }
         },
+        "/api/devices/has-legacy-devices": {
+            "get": {
+                "summary": "checks if any user has legacy devices",
+                "deprecated": true,
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Device Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/devices/legacy-devices": {
             "get": {
                 "summary": "lists all legacy devices matching the given ids",
@@ -1976,6 +2031,42 @@
                 },
                 "tags": [
                     "Device Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/emergency-access": {
+            "get": {
+                "summary": "finds all recovery processes for vaults recoverable by the current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RecoveryProcessDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
                 ],
                 "security": [
                     {
@@ -3574,6 +3665,52 @@
                 ]
             }
         },
+        "/api/users/{id}/enabled": {
+            "put": {
+                "summary": "enable or disable a user",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "user updated"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Users Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/vaults/accessible": {
             "get": {
                 "summary": "list all accessible vaults",
@@ -3745,6 +3882,59 @@
                 ]
             }
         },
+        "/api/vaults/users-requiring-access-grant": {
+            "get": {
+                "summary": "list pending access grants the caller could perform, grouped by vault",
+                "description": "Long-polling endpoint for the automatic access grant flow. Returns members without an access token on\nvaults the caller holds a token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision\nand the vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot\nsee them, and the recursive WoT view would be too costly to join here. Returns immediately if such\npending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty\nmap on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when\nonly such candidates remain). Best effort — events on other backend instances will not wake this call.",
+                "parameters": [
+                    {
+                        "name": "wait",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 25,
+                            "minimum": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "uniqueItems": true,
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/vaults/{vaultId}": {
             "get": {
                 "summary": "gets a vault",
@@ -3789,7 +3979,7 @@
             },
             "put": {
                 "summary": "creates or updates a vault",
-                "description": "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.",
+                "description": "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. The archived field is always ignored (use the dedicated endpoint). On creation, the current server time is used. On update, only the name and description fields are considered.",
                 "parameters": [
                     {
                         "description": "whether configuration for STS MinIO needs to be synched to Keycloak (defaults to false)",
@@ -3968,6 +4158,122 @@
                     },
                     "400": {
                         "description": "Bad Request"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/vaults/{vaultId}/access-tokens/auto": {
+            "post": {
+                "summary": "adds user-specific vault keys via the automatic access grant flow",
+                "description": "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).",
+                "parameters": [
+                    {
+                        "name": "vaultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "minProperties": 1,
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "all keys stored"
+                    },
+                    "400": {
+                        "description": "at least one target user is not awaiting an access grant for this vault"
+                    },
+                    "403": {
+                        "description": "not a vault member"
+                    },
+                    "404": {
+                        "description": "at least one user has not been found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/vaults/{vaultId}/archived": {
+            "put": {
+                "summary": "sets the archived flag of a vault",
+                "parameters": [
+                    {
+                        "name": "vaultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "archived flag updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VaultDto"
+                                }
+                            }
+                        }
+                    },
+                    "402": {
+                        "description": "number of licensed seats would be exceeded after unarchiving"
+                    },
+                    "403": {
+                        "description": "requesting user is neither a vault owner nor has the admin role"
+                    },
+                    "404": {
+                        "description": "vault not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
                     }
                 },
                 "tags": [
@@ -4543,6 +4849,16 @@
             }
         }
     },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Auto-added by management interface"
+        },
+        {
+            "url": "http://0.0.0.0:8080",
+            "description": "Auto-added by management interface"
+        }
+    ],
     "info": {
         "title": "hub-backend API",
         "version": "1.5.0-SNAPSHOT"
