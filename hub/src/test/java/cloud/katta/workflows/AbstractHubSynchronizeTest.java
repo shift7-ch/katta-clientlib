@@ -53,11 +53,13 @@ import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.JSON;
+import cloud.katta.client.api.SettingsResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.SettingsDto;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -355,6 +357,16 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             final UserDto admin = new UsersResourceApi(adminHubSession.getClient()).apiUsersMeGet(false, false);
             final UUID vaultId;
             final String name;
+
+            // enable automatic access grant, disable WoT verification
+            log.info("Enable automatic access grant and disable WoT in {}", adminHubSession);
+            final SettingsDto settings = new SettingsResourceApi(adminHubSession.getClient()).apiSettingsGet();
+            settings.setEnableAutomaticAccessGrant(true);
+            settings.setAllowAutomaticAccessGrantOverride(true);
+            settings.setAutomaticAccessGrantTrustThreshold(-1);
+            settings.setAllowAutomaticAccessGrantOverride(true);
+            new SettingsResourceApi(adminHubSession.getClient()).apiSettingsPut(settings);
+
             {
                 // admin creates vault
                 final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);

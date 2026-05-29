@@ -31,6 +31,7 @@ import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.GroupsResourceApi;
+import cloud.katta.client.api.SettingsResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
@@ -40,6 +41,7 @@ import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.Role;
 import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
 import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.SettingsDto;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -74,6 +76,15 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
                 configuration.load(in);
             }
+
+            // enable automatic access grant, disable WoT verification
+            log.info("Enable automatic access grant and disable WoT");
+            final SettingsDto settings = new SettingsResourceApi(adminApiClient).apiSettingsGet();
+            settings.setEnableAutomaticAccessGrant(true);
+            settings.setAllowAutomaticAccessGrantOverride(true);
+            settings.setAutomaticAccessGrantTrustThreshold(-1);
+            settings.setAllowAutomaticAccessGrantOverride(true);
+            new SettingsResourceApi(adminApiClient).apiSettingsPut(settings);
 
             log.info("S00 admin uploads storage profile");
             final StorageProfileResourceApi adminStorageProfileApi = new StorageProfileResourceApi(adminApiClient);
