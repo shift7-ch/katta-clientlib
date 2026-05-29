@@ -403,12 +403,12 @@ services:
         # MinIO Storage Profiles
         envsubst < /setup/minio_sts/storage_profile.json > /tmp/minio_sts_storage_profile.json
         cat /tmp/minio_sts_storage_profile.json
-        RESPONSE=$(curl -v -o /dev/null -w "%{http_code}" -X POST ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN")
+        RESPONSE=$$(curl -v -o /dev/null -w "%{http_code}" -X POST ${HUB_URL}/api/storageprofile/s3sts -d @/tmp/minio_sts_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN")
         if [ "$$RESPONSE" != "200" ] && [ "$$RESPONSE" != "201" ] && [ "$$RESPONSE" != "409" ]; then echo "Unexpected status $$RESPONSE for s3sts"; exit 1; fi
 
         envsubst < /setup/minio_static/storage_profile.json > /tmp/minio_static_storage_profile.json
         cat /tmp/minio_static_storage_profile.json
-        RESPONSE=$(curl -v -o /dev/null -w "%{http_code}" -X POST ${HUB_URL}/api/storageprofile/s3static -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN")
+        RESPONSE=$$(curl -v -o /dev/null -w "%{http_code}" -X POST ${HUB_URL}/api/storageprofile/s3static -d @/tmp/minio_static_storage_profile.json -H "Content-Type: application/json" -H "Authorization: Bearer $$ACCESS_TOKEN")
         if [ "$$RESPONSE" != "200" ] && [ "$$RESPONSE" != "201" ] && [ "$$RESPONSE" != "409" ]; then echo "Unexpected status $$RESPONSE for s3static"; exit 1; fi
 
         curl -v --fail -X GET ${HUB_URL}/api/storageprofile/ -H "Authorization: Bearer $$ACCESS_TOKEN"
