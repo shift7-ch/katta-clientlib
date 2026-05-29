@@ -4,8 +4,6 @@
     "protocol": "S3STATIC",
     "storageClass": "STANDARD",
     "archived": false,
-    "scheme": "https",
-    "port": 443,
     "region": "eu-central-1",
     "bucketPrefix": "katta-test-",
     "stsRoleCreateBucketHub": "",

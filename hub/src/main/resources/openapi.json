@@ -477,15 +477,7 @@
                     "OWNER"
                 ]
             },
-            "S3_SERVERSIDE_ENCRYPTION": {
-                "type": "string",
-                "enum": [
-                    "NONE",
-                    "SSE_AES256",
-                    "SSE_KMS_DEFAULT"
-                ]
-            },
-            "S3_STORAGE_CLASSES": {
+            "S3StorageClass": {
                 "type": "string",
                 "enum": [
                     "STANDARD",
@@ -540,16 +532,26 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "enableAutomaticAccessGrant": {
+                        "type": "boolean"
+                    },
+                    "automaticAccessGrantTrustThreshold": {
+                        "type": "integer",
+                        "format": "int32",
+                        "maximum": 9,
+                        "minimum": -1
+                    },
+                    "allowAutomaticAccessGrantOverride": {
+                        "type": "boolean"
                     }
                 }
             },
             "StorageProfileDto": {
                 "type": "object",
                 "required": [
-                    "id",
                     "name",
-                    "protocol",
-                    "archived"
+                    "protocol"
                 ],
                 "oneOf": [
                     {
@@ -571,7 +573,8 @@
                     "id": {
                         "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
+                        "readOnly": true,
+                        "description": "Technical identifier for a storage profile, assigned by the server on creation (read-only). Clients use this as vendor in profile and provider in vault bookmark."
                     },
                     "name": {
                         "type": "string",
@@ -580,7 +583,7 @@
                     "protocol": {
                         "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
+                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
@@ -591,10 +594,8 @@
             "StorageProfileS3STSDto": {
                 "type": "object",
                 "required": [
-                    "id",
                     "name",
                     "protocol",
-                    "archived",
                     "storageClass",
                     "region",
                     "regions",
@@ -602,7 +603,6 @@
                     "stsRoleCreateBucketClient",
                     "stsRoleCreateBucketHub",
                     "bucketVersioning",
-                    "bucketEncryption",
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity",
                     "stsSessionTag"
                 ],
@@ -611,7 +611,8 @@
                     "id": {
                         "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
+                        "readOnly": true,
+                        "description": "Technical identifier for a storage profile, assigned by the server on creation (read-only). Clients use this as vendor in profile and provider in vault bookmark."
                     },
                     "name": {
                         "type": "string",
@@ -620,44 +621,24 @@
                     "protocol": {
                         "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
+                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
                         "description": "For archived storage profiles, no vaults can be created any more."
                     },
-                    "scheme": {
+                    "endpoint": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "examples": [
-                            "https"
+                            "https://s3-us-gov-west-1.amazonaws.com"
                         ],
-                        "description": "Scheme of S3 endpoint for template upload/bucket creation. Defaults to default for protocol, i.e. https in most cases."
+                        "pattern": "",
+                        "description": "Full S3 endpoint URL for template upload/bucket creation. If unset, defaults to AWS SDK defaults."
                     },
-                    "hostname": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "examples": [
-                            "s3-us-gov-west-1.amazonaws.com"
-                        ],
-                        "description": "Hostname S3 endpoint for template upload/bucket creation. Defaults to AWS SDK default."
-                    },
-                    "port": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
-                        "format": "int32",
-                        "examples": [
-                            443
-                        ],
-                        "description": "Port S3 endpoint for template upload/bucket creation. Defaults to default port for scheme."
-                    },
-                    "withPathStyleAccessEnabled": {
+                    "pathStyleAccessEnabled": {
                         "type": "boolean",
                         "examples": [
                             false
@@ -666,7 +647,7 @@
                         "default": false
                     },
                     "storageClass": {
-                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES",
+                        "$ref": "#/components/schemas/S3StorageClass",
                         "type": "string",
                         "examples": [
                             "STANDARD"
@@ -691,21 +672,21 @@
                     "bucketPrefix": {
                         "type": "string",
                         "examples": [
-                            "cipherduck"
+                            "katta"
                         ],
                         "description": "Buckets are created with name <bucket prefix><vault UUID>."
                     },
                     "stsRoleCreateBucketClient": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                            "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
                         ],
                         "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
                     },
                     "stsRoleCreateBucketHub": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
+                            "arn:aws:iam::<ACCOUNT ID>:role/katta-createbucket"
                         ],
                         "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
                     },
@@ -728,15 +709,10 @@
                         ],
                         "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
                     },
-                    "bucketEncryption": {
-                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
-                        "type": "string",
-                        "description": "Enable bucket versioning upon bucket creation"
-                    },
                     "stsRoleAccessBucketAssumeRoleWithWebIdentity": {
                         "type": "string",
                         "examples": [
-                            "arn:aws:iam::930717317329:role/cipherduck_chain_01"
+                            "arn:aws:iam::930717317329:role/katta_chain_01"
                         ],
                         "description": "roleArn to for STS AssumeRoleWithWebIdentity (AWS and MinIO)"
                     },
@@ -746,7 +722,7 @@
                             "null"
                         ],
                         "examples": [
-                            "arn:aws:iam::930717317329:role/cipherduck_chain_02"
+                            "arn:aws:iam::930717317329:role/katta_chain_02"
                         ],
                         "description": "roleArn to assume for STS AssumeRole in role chaining (AWS only, not MinIO)"
                     },
@@ -768,25 +744,20 @@
             "StorageProfileS3StaticDto": {
                 "type": "object",
                 "required": [
-                    "id",
                     "name",
                     "protocol",
-                    "archived",
                     "storageClass",
                     "region",
                     "regions",
-                    "bucketPrefix",
-                    "stsRoleCreateBucketClient",
-                    "stsRoleCreateBucketHub",
-                    "bucketVersioning",
-                    "bucketEncryption"
+                    "bucketPrefix"
                 ],
                 "title": "StorageProfileS3StaticDto",
                 "properties": {
                     "id": {
                         "$ref": "#/components/schemas/UUID",
                         "type": "string",
-                        "description": "Technical identifier for a storage profile. Must be unique UUID. Clients will use this as vendor in profile and provider in vault bookmark"
+                        "readOnly": true,
+                        "description": "Technical identifier for a storage profile, assigned by the server on creation (read-only). Clients use this as vendor in profile and provider in vault bookmark."
                     },
                     "name": {
                         "type": "string",
@@ -795,44 +766,24 @@
                     "protocol": {
                         "$ref": "#/components/schemas/Protocol",
                         "type": "string",
-                        "description": "Storage protocol: S3 (permanent credentials) or S3STS (STS)."
+                        "description": "Storage protocol: S3STATIC (permanent credentials) or S3STS (STS)."
                     },
                     "archived": {
                         "type": "boolean",
                         "description": "For archived storage profiles, no vaults can be created any more."
                     },
-                    "scheme": {
+                    "endpoint": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "examples": [
-                            "https"
+                            "https://s3-us-gov-west-1.amazonaws.com"
                         ],
-                        "description": "Scheme of S3 endpoint for template upload/bucket creation. Defaults to default for protocol, i.e. https in most cases."
+                        "pattern": "",
+                        "description": "Full S3 endpoint URL for template upload/bucket creation. If unset, defaults to AWS SDK defaults."
                     },
-                    "hostname": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "examples": [
-                            "s3-us-gov-west-1.amazonaws.com"
-                        ],
-                        "description": "Hostname S3 endpoint for template upload/bucket creation. Defaults to AWS SDK default."
-                    },
-                    "port": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
-                        "format": "int32",
-                        "examples": [
-                            443
-                        ],
-                        "description": "Port S3 endpoint for template upload/bucket creation. Defaults to default port for scheme."
-                    },
-                    "withPathStyleAccessEnabled": {
+                    "pathStyleAccessEnabled": {
                         "type": "boolean",
                         "examples": [
                             false
@@ -841,7 +792,7 @@
                         "default": false
                     },
                     "storageClass": {
-                        "$ref": "#/components/schemas/S3_STORAGE_CLASSES",
+                        "$ref": "#/components/schemas/S3StorageClass",
                         "type": "string",
                         "examples": [
                             "STANDARD"
@@ -866,47 +817,9 @@
                     "bucketPrefix": {
                         "type": "string",
                         "examples": [
-                            "cipherduck"
+                            "katta"
                         ],
                         "description": "Buckets are created with name <bucket prefix><vault UUID>."
-                    },
-                    "stsRoleCreateBucketClient": {
-                        "type": "string",
-                        "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
-                        ],
-                        "description": "STS role for clients to assume to create buckets. Will be the same as stsRoleCreateBucketHub for AWS, different for MinIO."
-                    },
-                    "stsRoleCreateBucketHub": {
-                        "type": "string",
-                        "examples": [
-                            "arn:aws:iam::<ACCOUNT ID>:role/cipherduck-createbucket"
-                        ],
-                        "description": "STS role for frontend to assume to create buckets (used with inline policy and passed to hub storage). Will be the same as stsRoleCreateBucketClient for AWS, different for MinIO."
-                    },
-                    "stsEndpoint": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "STS endpoint to use for AssumeRoleWithWebIdentity and AssumeRole for getting a temporary access token passed to the storage. Defaults to AWS SDK default."
-                    },
-                    "bucketVersioning": {
-                        "type": "boolean",
-                        "description": "Enable bucket versioning upon bucket creation",
-                        "default": true
-                    },
-                    "bucketAcceleration": {
-                        "type": [
-                            "boolean",
-                            "null"
-                        ],
-                        "description": "Enable bucket versioning upon bucket creation (null for MinIO)"
-                    },
-                    "bucketEncryption": {
-                        "$ref": "#/components/schemas/S3_SERVERSIDE_ENCRYPTION",
-                        "type": "string",
-                        "description": "Enable bucket versioning upon bucket creation"
                     }
                 }
             },
@@ -1030,6 +943,9 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "enabled": {
+                        "type": "boolean"
                     },
                     "devices": {
                         "type": "array",
@@ -1183,6 +1099,9 @@
                     "type": {
                         "$ref": "#/components/schemas/Type"
                     },
+                    "enabled": {
+                        "type": "boolean"
+                    },
                     "firstName": {
                         "type": "string"
                     },
@@ -1294,6 +1213,9 @@
                     },
                     "type": {
                         "$ref": "#/components/schemas/Type"
+                    },
+                    "enabled": {
+                        "type": "boolean"
                     },
                     "firstName": {
                         "type": "string"
@@ -1706,6 +1628,40 @@
                 ]
             }
         },
+        "/api/devices/has-legacy-devices": {
+            "get": {
+                "summary": "checks if any user has legacy devices",
+                "deprecated": true,
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Device Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/devices/legacy-devices": {
             "get": {
                 "summary": "lists all legacy devices matching the given ids",
@@ -1976,6 +1932,42 @@
                 },
                 "tags": [
                     "Device Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/emergency-access": {
+            "get": {
+                "summary": "finds all recovery processes for vaults recoverable by the current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RecoveryProcessDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Emergency Access Resource"
                 ],
                 "security": [
                     {
@@ -2807,6 +2799,44 @@
             }
         },
         "/api/storageprofile": {
+            "post": {
+                "summary": "create a storage profile",
+                "description": "Polymorphic by `protocol` discriminator: S3STATIC or S3STS. The server assigns the profile id; any client-supplied id is ignored.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorageProfileDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "uploaded storage configuration"
+                    },
+                    "400": {
+                        "description": "Constraint violation"
+                    },
+                    "403": {
+                        "description": "not an admin"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    }
+                },
+                "tags": [
+                    "Storage Profile Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            },
             "get": {
                 "summary": "get configs for storage backends",
                 "description": "get list of configs for storage backends",
@@ -2847,90 +2877,6 @@
                     {
                         "SecurityScheme": [
                             "user",
-                            "admin"
-                        ]
-                    }
-                ]
-            }
-        },
-        "/api/storageprofile/s3static": {
-            "post": {
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/StorageProfileS3StaticDto"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "uploaded storage configuration"
-                    },
-                    "400": {
-                        "description": "Constraint violation"
-                    },
-                    "403": {
-                        "description": "not an admin"
-                    },
-                    "409": {
-                        "description": "Storage profile with ID already exists"
-                    },
-                    "401": {
-                        "description": "Not Authorized"
-                    }
-                },
-                "summary": "Upload Storage Profile",
-                "tags": [
-                    "Storage Profile Resource"
-                ],
-                "security": [
-                    {
-                        "SecurityScheme": [
-                            "admin"
-                        ]
-                    }
-                ]
-            }
-        },
-        "/api/storageprofile/s3sts": {
-            "post": {
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/StorageProfileS3STSDto"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "uploaded storage configuration"
-                    },
-                    "400": {
-                        "description": "Constraint violation"
-                    },
-                    "403": {
-                        "description": "not an admin"
-                    },
-                    "409": {
-                        "description": "Storage profile with ID already exists"
-                    },
-                    "401": {
-                        "description": "Not Authorized"
-                    }
-                },
-                "summary": "Upload Storage Profile",
-                "tags": [
-                    "Storage Profile Resource"
-                ],
-                "security": [
-                    {
-                        "SecurityScheme": [
                             "admin"
                         ]
                     }
@@ -2981,7 +2927,8 @@
                 ]
             },
             "put": {
-                "summary": "archive a storage profile",
+                "summary": "set the archived state of a storage profile",
+                "description": "Archives (archived=true) or unarchives (archived=false) the storage profile. While archived, no new vaults can be created for this profile.",
                 "parameters": [
                     {
                         "name": "profileId",
@@ -2997,6 +2944,9 @@
                         "application/x-www-form-urlencoded": {
                             "schema": {
                                 "type": "object",
+                                "required": [
+                                    "archived"
+                                ],
                                 "properties": {
                                     "archived": {
                                         "type": "boolean"
@@ -3009,7 +2959,7 @@
                 },
                 "responses": {
                     "204": {
-                        "description": "storage profile archived"
+                        "description": "archived state updated"
                     },
                     "403": {
                         "description": "not an admin"
@@ -3574,6 +3524,52 @@
                 ]
             }
         },
+        "/api/users/{id}/enabled": {
+            "put": {
+                "summary": "enable or disable a user",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "user updated"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Users Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "admin"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/vaults/accessible": {
             "get": {
                 "summary": "list all accessible vaults",
@@ -3745,6 +3741,59 @@
                 ]
             }
         },
+        "/api/vaults/users-requiring-access-grant": {
+            "get": {
+                "summary": "list pending access grants the caller could perform, grouped by vault",
+                "description": "Long-polling endpoint for the automatic access grant flow. Returns members without an access token on\nvaults the caller holds a token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision\nand the vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot\nsee them, and the recursive WoT view would be too costly to join here. Returns immediately if such\npending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty\nmap on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when\nonly such candidates remain). Best effort — events on other backend instances will not wake this call.",
+                "parameters": [
+                    {
+                        "name": "wait",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 25,
+                            "minimum": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "uniqueItems": true,
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    },
+                    "403": {
+                        "description": "Not Allowed"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
         "/api/vaults/{vaultId}": {
             "get": {
                 "summary": "gets a vault",
@@ -3789,7 +3838,7 @@
             },
             "put": {
                 "summary": "creates or updates a vault",
-                "description": "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.",
+                "description": "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. The archived field is always ignored (use the dedicated endpoint). On creation, the current server time is used. On update, only the name and description fields are considered.",
                 "parameters": [
                     {
                         "description": "whether configuration for STS MinIO needs to be synched to Keycloak (defaults to false)",
@@ -3968,6 +4017,122 @@
                     },
                     "400": {
                         "description": "Bad Request"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/vaults/{vaultId}/access-tokens/auto": {
+            "post": {
+                "summary": "adds user-specific vault keys via the automatic access grant flow",
+                "description": "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).",
+                "parameters": [
+                    {
+                        "name": "vaultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "minProperties": 1,
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "all keys stored"
+                    },
+                    "400": {
+                        "description": "at least one target user is not awaiting an access grant for this vault"
+                    },
+                    "403": {
+                        "description": "not a vault member"
+                    },
+                    "404": {
+                        "description": "at least one user has not been found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
+                    }
+                },
+                "tags": [
+                    "Vault Resource"
+                ],
+                "security": [
+                    {
+                        "SecurityScheme": [
+                            "user"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/vaults/{vaultId}/archived": {
+            "put": {
+                "summary": "sets the archived flag of a vault",
+                "parameters": [
+                    {
+                        "name": "vaultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UUID"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "archived flag updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VaultDto"
+                                }
+                            }
+                        }
+                    },
+                    "402": {
+                        "description": "number of licensed seats would be exceeded after unarchiving"
+                    },
+                    "403": {
+                        "description": "requesting user is neither a vault owner nor has the admin role"
+                    },
+                    "404": {
+                        "description": "vault not found"
+                    },
+                    "401": {
+                        "description": "Not Authorized"
                     }
                 },
                 "tags": [
@@ -4543,6 +4708,16 @@
             }
         }
     },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Auto-added by management interface"
+        },
+        {
+            "url": "http://0.0.0.0:8080",
+            "description": "Auto-added by management interface"
+        }
+    ],
     "info": {
         "title": "hub-backend API",
         "version": "1.5.0-SNAPSHOT"

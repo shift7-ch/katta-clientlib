@@ -13,8 +13,7 @@ import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
@@ -77,24 +76,20 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
         final String scheme = uri.getScheme();
         final String hostname = uri.getHost();
         final int port = uri.getPort() == -1 ? ("https".equals(scheme) ? 443 : 80) : uri.getPort();
-        storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
-                .id(uuid)
+        storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto(uuid)
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STS)
                 .archived(false)
 
                 // -- (1) S3 endpoint configuration for MinIO
-                .scheme(scheme)
-                .hostname(hostname)
-                .port(port)
-                .storageClass(S3STORAGECLASSES.STANDARD)
-                .withPathStyleAccessEnabled(true) // Required for MinIO
+                .endpoint(uri.toString())
+                .storageClass(S3StorageClass.STANDARD)
+                .pathStyleAccessEnabled(true) // Required for MinIO
 
                 // -- (2) bucket creation
                 .bucketPrefix(bucketPrefix)
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
                 .bucketVersioning(false) // MinIO versioning is optional
                 .bucketAcceleration(null) // Not supported by MinIO
 
@@ -109,7 +104,7 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
                 // -- (5) No role chaining for MinIO (AWS-only feature)
                 .stsRoleAccessBucketAssumeRoleTaggedSession(null)
                 .stsSessionTag(null)
-        );
+        ));
         return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 

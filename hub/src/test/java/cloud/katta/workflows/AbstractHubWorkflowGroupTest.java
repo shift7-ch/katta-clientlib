@@ -38,8 +38,7 @@ import cloud.katta.client.model.CreateGroupDto;
 import cloud.katta.client.model.GroupDto;
 import cloud.katta.client.model.MemberDto;
 import cloud.katta.client.model.Role;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -84,8 +83,8 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
                 final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD);
-                adminStorageProfileApi.apiStorageprofileS3staticPost(storageProfile);
+                        .storageClass(S3StorageClass.STANDARD);
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(storageProfile));
             }
             try (InputStream in = this.getClass().getResourceAsStream("/setup/minio_sts/storage_profile.json")) {
                 final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
@@ -93,9 +92,8 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)
-                        .storageClass(S3STORAGECLASSES.STANDARD)
-                        .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE);
-                adminStorageProfileApi.apiStorageprofileS3stsPost(storageProfile);
+                        .storageClass(S3StorageClass.STANDARD);
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(storageProfile));
             }
 
             log.info("S01 {} alice creates vault", setup);
