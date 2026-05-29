@@ -11,7 +11,6 @@ import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3ServersideEncryption;
 import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -43,29 +42,22 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
     @Override
     protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
         final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
-        storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
-                .id(uuid)
+        storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3StaticDto(uuid)
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STATIC)
                 .archived(false)
-
-                .scheme("https")
-                .port(443)
                 .storageClass(S3StorageClass.STANDARD)
-                .withPathStyleAccessEnabled(false)
+                .pathStyleAccessEnabled(false)
 
                 .bucketPrefix(bucketPrefix)
-                .bucketEncryption(S3ServersideEncryption.NONE)
-                .bucketVersioning(true)
-                .bucketAcceleration(null)
+
+                // TODO missing static - required for bucket creation
+//                .bucketVersioning(true)
+//                .bucketAcceleration(null)
 
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-
-                // Workaround https://github.com/shift7-ch/katta-server/issues/124
-                .stsRoleCreateBucketClient("")
-                .stsRoleCreateBucketHub("")
-        );
+        ));
         return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.protocols.hub.serializer;
@@ -45,7 +45,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case PROPERTIES_KEY:
                 // In format key=value
                 final List<String> properties = new ArrayList<>(super.listForKey(key));
-                if(dto.getWithPathStyleAccessEnabled()) {
+                if(dto.getPathStyleAccessEnabled()) {
                     properties.add(String.format("s3.bucket.virtualhost.disable=%s", true));
                 }
                 if(dto.getStorageClass() != null) {

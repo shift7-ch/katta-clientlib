@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.client.model;
@@ -28,13 +28,11 @@ class ObjectMapperTest {
         final StorageProfileS3StaticDto profile = mapper.readValue(Objects.requireNonNull(this.getClass().getResourceAsStream(
                 "/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, profile.getProtocol());
-        assertEquals("https", profile.getScheme());
-        assertNull(profile.getHostname());
-        assertEquals(443, profile.getPort());
+        assertNull(profile.getEndpoint());
         // default STANDARD from backend
         assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertFalse(profile.getArchived());
-        assertFalse(profile.getWithPathStyleAccessEnabled());
+        assertFalse(profile.getPathStyleAccessEnabled());
     }
 
     @Test
@@ -45,7 +43,7 @@ class ObjectMapperTest {
         assertEquals("katta-test-", profile.getBucketPrefix());
         assertEquals("eu-west-1", profile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), profile.getRegions());
-        assertFalse(profile.getWithPathStyleAccessEnabled());
+        assertFalse(profile.getPathStyleAccessEnabled());
         assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", profile.getStsRoleCreateBucketHub());
         assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-create-bucket", profile.getStsRoleCreateBucketClient());
         assertEquals("arn:aws:iam::430118840017:role/testing.katta.cloud-chipotle-access-bucket-a-role-web-identity", profile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
@@ -53,11 +51,8 @@ class ObjectMapperTest {
         assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertNull(profile.getArchived());
         assertEquals(Protocol.S3_STS, profile.getProtocol());
-        assertNull(profile.getScheme());
-        assertNull(profile.getHostname());
-        assertNull(profile.getPort());
+        assertNull(profile.getEndpoint());
         // default NONE from backend
-        assertEquals(S3ServersideEncryption.NONE, profile.getBucketEncryption());
         assertNull(profile.getBucketAcceleration());
     }
 
@@ -71,13 +66,11 @@ class ObjectMapperTest {
                 .replace("${MINIO_PORT}", "9000");
         final StorageProfileS3StaticDto profile = mapper.readValue(minioStaticJson, StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, profile.getProtocol());
-        assertEquals("http", profile.getScheme());
-        assertEquals("minio", profile.getHostname());
-        assertEquals(9000, profile.getPort());
+        assertEquals("http://minio:9000", profile.getEndpoint());
         // default STANDARD from backend
         assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertFalse(profile.getArchived());
-        assertTrue(profile.getWithPathStyleAccessEnabled());
+        assertTrue(profile.getPathStyleAccessEnabled());
     }
 
     @Test
@@ -92,17 +85,14 @@ class ObjectMapperTest {
         assertEquals("katta-test-", profile.getBucketPrefix());
         assertEquals("eu-central-1", profile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), profile.getRegions());
-        assertTrue(profile.getWithPathStyleAccessEnabled());
+        assertTrue(profile.getPathStyleAccessEnabled());
         assertEquals("arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE", profile.getStsRoleCreateBucketHub());
         assertEquals("arn:minio:iam:::role/IqZpDC5ahW_DCAvZPZA4ACjEnDE", profile.getStsRoleCreateBucketClient());
         assertEquals("arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94", profile.getStsRoleAccessBucketAssumeRoleWithWebIdentity());
         assertNull(profile.getStsRoleAccessBucketAssumeRoleTaggedSession());
         assertEquals(Protocol.S3_STS, profile.getProtocol());
-        assertEquals("http", profile.getScheme());
-        assertEquals("minio", profile.getHostname());
-        assertEquals(9000, profile.getPort());
+        assertEquals("http://minio:9000", profile.getEndpoint());
         // default NONE from backend
-        assertEquals(S3ServersideEncryption.NONE, profile.getBucketEncryption());
         assertEquals(S3StorageClass.STANDARD, profile.getStorageClass());
         assertNull(profile.getBucketAcceleration());
     }

@@ -41,6 +41,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -57,7 +58,7 @@ import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.api.VaultResourceApi;
 import cloud.katta.client.model.Role;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
@@ -97,8 +98,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             final ObjectMapper mapper = new JSON().getMapper();
             try {
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(
-                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(
+                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_static/storage_profile.json")), StorageProfileS3StaticDto.class)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -110,8 +111,8 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             }
 
             try {
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(
-                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class).storageClass(S3STORAGECLASSES.STANDARD));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(
+                        Objects.requireNonNull(this.getClass().getResourceAsStream("/setup/aws_sts/storage_profile.json")), StorageProfileS3STSDto.class).storageClass(S3StorageClass.STANDARD)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -127,7 +128,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
-                adminStorageProfileApi.apiStorageprofileS3staticPost(mapper.readValue(json, StorageProfileS3StaticDto.class));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(json, StorageProfileS3StaticDto.class)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -143,7 +144,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
-                adminStorageProfileApi.apiStorageprofileS3stsPost(mapper.readValue(json, StorageProfileS3STSDto.class));
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(json, StorageProfileS3STSDto.class)));
             }
             catch(ApiException e) {
                 if(e.getCode() == 409) {
@@ -193,13 +194,15 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             // client-generated code is not subclassed...
             if(storageProfile.getActualInstance() instanceof StorageProfileS3STSDto) {
                 final StorageProfileS3STSDto profile = (StorageProfileS3STSDto) storageProfile.getActualInstance();
-                profile.setId(uuid);
-                adminStorageProfileApi.apiStorageprofileS3stsPost(profile);
+                final Field f = profile.getClass().getField("id");
+                f.set(f, uuid.toString());
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(profile));
             }
             else if(storageProfile.getActualInstance() instanceof StorageProfileS3StaticDto) {
                 final StorageProfileS3StaticDto profile = (StorageProfileS3StaticDto) storageProfile.getActualInstance();
-                profile.setId(uuid);
-                adminStorageProfileApi.apiStorageprofileS3staticPost(profile);
+                final Field f = profile.getClass().getField("id");
+                f.set(f, uuid.toString());
+                adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(profile));
             }
             else {
                 fail();

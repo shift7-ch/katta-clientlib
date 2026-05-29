@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.model;
@@ -180,12 +180,12 @@ public class StorageProfileDtoWrapper {
         return null;
     }
 
-    public Boolean getWithPathStyleAccessEnabled() {
+    public Boolean getPathStyleAccessEnabled() {
         if(proxy.getActualInstance() instanceof StorageProfileS3StaticDto) {
-            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
+            return ((StorageProfileS3StaticDto) proxy.getActualInstance()).getPathStyleAccessEnabled();
         }
         else if(proxy.getActualInstance() instanceof StorageProfileS3STSDto) {
-            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getWithPathStyleAccessEnabled();
+            return ((StorageProfileS3STSDto) proxy.getActualInstance()).getPathStyleAccessEnabled();
         }
         return null;
     }

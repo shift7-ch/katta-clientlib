@@ -13,8 +13,8 @@ import java.util.UUID;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3ServersideEncryption;
 import cloud.katta.client.model.S3StorageClass;
+import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -30,24 +30,20 @@ class AWSSTSStorageProfileTest {
                 "1234", "testing.katta.cloud-kc-realms-pepper-", "fancy-");
         cli.call(api);
 
-        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
-        dto.setId(vaultId);
+        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto(vaultId);
         dto.setName("AWS S3 STS");
         dto.setProtocol(Protocol.S3_STS);
         dto.setArchived(false);
-        dto.setScheme("https");
-        dto.setPort(443);
-        dto.setWithPathStyleAccessEnabled(false);
+        dto.pathStyleAccessEnabled(false);
         dto.setStorageClass(S3StorageClass.STANDARD);
         dto.setRegion("eu-west-1");
         dto.setRegions(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"));
         dto.bucketPrefix("fancy-");
         dto.stsRoleCreateBucketClient("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
         dto.stsRoleCreateBucketHub("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-create-bucket");
-        dto.setBucketEncryption(S3ServersideEncryption.NONE);
         dto.stsRoleAccessBucketAssumeRoleWithWebIdentity("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-web-identity-role");
         dto.stsRoleAccessBucketAssumeRoleTaggedSession("arn:aws:iam::1234:role/testing.katta.cloud-kc-realms-pepper-access-bucket-tagged-session-role");
-        Mockito.verify(api, times(1)).apiStorageprofileS3stsPost(dto);
+        Mockito.verify(api, times(1)).apiStorageprofilePost(new StorageProfileDto(dto));
         assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }
 }
