@@ -12,6 +12,11 @@
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
+    <scm>
+        <connection>scm:git:https://github.com/shift7-ch/katta-clientlib.git</connection>
+        <tag>HEAD</tag>
+    </scm>
+
     <modules>
         <module>test</module>
         <module>hub</module>
