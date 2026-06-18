@@ -155,8 +155,8 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
         // Ensure device key is available
         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
         log.debug("Configured with setup prompt {}", setup);
-        final UserKeys userKeys = this.getUserKeys(setup);
-        log.debug("Retrieved user keys {}", userKeys);
+        userKeysHolder.set(this.pair(setup));
+        log.debug("Retrieved user keys for host {}", host.getHostname());
         access = new HubGrantAccessSchedulerService(this);
     }
 
@@ -165,10 +165,10 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
             final UserDto user = this.getMe();
             // Setup parameter allows generating new device key
             final DeviceKeys deviceKeys = new DeviceKeysServiceImpl(keychain).getOrCreateDeviceKeys(host, user, setup);
-            log.debug("Retrieved device keys {}", deviceKeys);
+            log.debug("Retrieved device keys for user {}", user.getId());
             // Setup parameter allows generating account and user keys or prompt for account key and device name
             final UserKeys userKeys = new UserKeysServiceImpl(this).getOrCreateUserKeys(host, user, deviceKeys, setup);
-            log.debug("Retrieved user keys {}", userKeys);
+            log.debug("Retrieved user keys for user {}", user.getId());
             return userKeys;
         }
         catch(SecurityFailure e) {
@@ -193,7 +193,7 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
     public UserDto getMe() throws BackgroundException {
         try {
             final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true, false);
-            log.debug("Retrieved user {}", me);
+            log.debug("Retrieved user {}", me.getId());
             return me;
         }
         catch(ApiException e) {
@@ -212,7 +212,7 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
     public UserKeys getUserKeys(final DeviceSetupCallback setup) throws BackgroundException {
         if(userKeysHolder.get() == null) {
             final UserKeys keys = this.pair(setup);
-            log.debug("Retrieved keys {}", keys);
+            log.debug("Retrieved keys for host {}", host.getHostname());
             userKeysHolder.set(keys);
         }
         return userKeysHolder.get();

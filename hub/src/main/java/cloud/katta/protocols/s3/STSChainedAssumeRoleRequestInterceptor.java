@@ -76,11 +76,11 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
     public TemporaryAccessTokens assumeRoleWithWebIdentity(final OAuthTokens oauth, final String roleArn) throws BackgroundException {
         final TemporaryAccessTokens tokens = super.assumeRoleWithWebIdentity(this.tokenExchange(oauth), roleArn);
         if(StringUtils.isNotBlank(stsSessionTagRoleArn) && StringUtils.isNotBlank(stsSessionTag)) {
-            log.debug("Assume role with temporary credentials {}", tokens);
+            log.debug("Assume role with temporary credentials for vault {}", vaultId);
             return super.assumeRole(bookmark.getCredentials().setTokens(tokens)
                     .setProperty(Profile.STS_TAGS_PROPERTY_KEY, String.format("%s=%s", stsSessionTag, vaultId)), stsSessionTagRoleArn);
         }
-        log.warn("No vault tag set. Skip assuming role with temporary credentials {} for {}", tokens, bookmark);
+        log.warn("No vault tag set. Skip assuming role with temporary credentials for {}", bookmark);
         return tokens;
     }
 
@@ -90,7 +90,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * @return New tokens scoped to single vault
      */
     private OAuthTokens tokenExchange(final OAuthTokens tokens) throws BackgroundException {
-        log.info("Exchange tokens {} for vault {}", tokens, vaultId);
+        log.info("Exchange OAuth tokens for vault {}", vaultId);
         final StorageResourceApi api = new StorageResourceApi(hub.getClient());
         try {
             final AccessTokenResponse tokenExchangeResponse = api.apiStorageS3TokenPost(vaultId.toString());
@@ -98,7 +98,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
             final OAuthTokens exchanged = new OAuthTokens(tokenExchangeResponse.getAccessToken(),
                     tokenExchangeResponse.getRefreshToken(),
                     tokenExchangeResponse.getExpiresIn() != null ? System.currentTimeMillis() + tokenExchangeResponse.getExpiresIn() * 1000 : null);
-            log.debug("Received exchanged token {} for {}", exchanged, bookmark);
+            log.debug("Received exchanged token for {}", bookmark);
             this.validateVaultClaims(JWT.decode(exchanged.getAccessToken()));
             return exchanged;
         }
