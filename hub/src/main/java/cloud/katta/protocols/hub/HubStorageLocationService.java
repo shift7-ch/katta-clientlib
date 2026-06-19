@@ -134,7 +134,7 @@ public class HubStorageLocationService implements Location {
                     .withStorage(new VaultMetadataStorageDto()
                             .username(credentials.getUsername()).password(credentials.getPassword())
                             .provider(storageProfileId)
-                            .defaultPath(bucket.getName())
+                            .bucket(bucket.getName())
                             .region(region)
                             .nickname(bucket.attributes().getDisplayname()))
                     .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto()

@@ -56,7 +56,7 @@ class HubVaultMetadataUVFProviderTest {
                         new VaultMetadataStorageDto()
                                 .provider("provider")
                                 .nickname("nickname")
-                                .defaultPath("bucket")
+                                .bucket("bucket")
                 ).withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto()
                         .enabled(true)
                         .maxWotDepth(42)
