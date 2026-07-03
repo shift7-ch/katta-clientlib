@@ -20,7 +20,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 @JsonPropertyOrder({
         VaultMetadataStorageDto.JSON_PROPERTY_PROVIDER,
-        VaultMetadataStorageDto.JSON_PROPERTY_DEFAULT_PATH,
+        VaultMetadataStorageDto.JSON_PROPERTY_BUCKET,
         VaultMetadataStorageDto.JSON_PROPERTY_NICKNAME,
         VaultMetadataStorageDto.JSON_PROPERTY_REGION,
         VaultMetadataStorageDto.JSON_PROPERTY_USERNAME,
@@ -32,8 +32,8 @@ public class VaultMetadataStorageDto {
     public static final String JSON_PROPERTY_PROVIDER = "provider";
     private String provider;
 
-    public static final String JSON_PROPERTY_DEFAULT_PATH = "defaultPath";
-    private String defaultPath;
+    public static final String JSON_PROPERTY_BUCKET = "bucket";
+    private String bucket;
 
     public static final String JSON_PROPERTY_NICKNAME = "nickname";
     private String nickname;
@@ -64,7 +64,6 @@ public class VaultMetadataStorageDto {
     @ApiModelProperty(required = true, value = "")
     @JsonProperty(JSON_PROPERTY_PROVIDER)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
     public String getProvider() {
         return provider;
     }
@@ -76,33 +75,23 @@ public class VaultMetadataStorageDto {
         this.provider = provider;
     }
 
-
-    public VaultMetadataStorageDto defaultPath(String defaultPath) {
-        this.defaultPath = defaultPath;
+    public VaultMetadataStorageDto bucket(String bucket) {
+        this.bucket = bucket;
         return this;
     }
 
-    /**
-     * Get defaultPath
-     *
-     * @return defaultPath
-     **/
-    @javax.annotation.Nonnull
     @ApiModelProperty(required = true, value = "")
-    @JsonProperty(JSON_PROPERTY_DEFAULT_PATH)
+    @JsonProperty(JSON_PROPERTY_BUCKET)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-    public String getDefaultPath() {
-        return defaultPath;
+    public String getBucket() {
+        return bucket;
     }
 
-
-    @JsonProperty(JSON_PROPERTY_DEFAULT_PATH)
+    @JsonProperty(JSON_PROPERTY_BUCKET)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
-    public void setDefaultPath(String defaultPath) {
-        this.defaultPath = defaultPath;
+    public void setBucket(String bucket) {
+        this.bucket = bucket;
     }
-
 
     public VaultMetadataStorageDto nickname(String nickname) {
         this.nickname = nickname;
@@ -118,18 +107,15 @@ public class VaultMetadataStorageDto {
     @ApiModelProperty(required = true, value = "")
     @JsonProperty(JSON_PROPERTY_NICKNAME)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
     public String getNickname() {
         return nickname;
     }
-
 
     @JsonProperty(JSON_PROPERTY_NICKNAME)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }
-
 
     public VaultMetadataStorageDto region(String region) {
         this.region = region;
@@ -145,18 +131,15 @@ public class VaultMetadataStorageDto {
     @ApiModelProperty(required = true, value = "")
     @JsonProperty(JSON_PROPERTY_REGION)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
     public String getRegion() {
         return region;
     }
-
 
     @JsonProperty(JSON_PROPERTY_REGION)
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
     public void setRegion(String region) {
         this.region = region;
     }
-
 
     public VaultMetadataStorageDto username(String username) {
         this.username = username;
@@ -172,18 +155,15 @@ public class VaultMetadataStorageDto {
     @ApiModelProperty(value = "")
     @JsonProperty(JSON_PROPERTY_USERNAME)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
     public String getUsername() {
         return username;
     }
-
 
     @JsonProperty(JSON_PROPERTY_USERNAME)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public void setUsername(String username) {
         this.username = username;
     }
-
 
     public VaultMetadataStorageDto password(String password) {
         this.password = password;
@@ -199,7 +179,6 @@ public class VaultMetadataStorageDto {
     @ApiModelProperty(value = "")
     @JsonProperty(JSON_PROPERTY_PASSWORD)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
     public String getPassword() {
         return password;
     }
@@ -225,7 +204,7 @@ public class VaultMetadataStorageDto {
         }
         VaultMetadataStorageDto vaultMetadataJWEBackendDto = (VaultMetadataStorageDto) o;
         return Objects.equals(this.provider, vaultMetadataJWEBackendDto.provider) &&
-                Objects.equals(this.defaultPath, vaultMetadataJWEBackendDto.defaultPath) &&
+                Objects.equals(this.bucket, vaultMetadataJWEBackendDto.bucket) &&
                 Objects.equals(this.nickname, vaultMetadataJWEBackendDto.nickname) &&
                 Objects.equals(this.region, vaultMetadataJWEBackendDto.region) &&
                 Objects.equals(this.username, vaultMetadataJWEBackendDto.username) &&
@@ -234,7 +213,7 @@ public class VaultMetadataStorageDto {
 
     @Override
     public int hashCode() {
-        return Objects.hash(provider, defaultPath, nickname, region, username, password);
+        return Objects.hash(provider, bucket, nickname, region, username, password);
     }
 
     @Override
@@ -242,7 +221,7 @@ public class VaultMetadataStorageDto {
         final StringBuilder sb = new StringBuilder("VaultMetadataStorageDto{");
         sb.append("region='").append(region).append('\'');
         sb.append(", nickname='").append(nickname).append('\'');
-        sb.append(", defaultPath='").append(defaultPath).append('\'');
+        sb.append(", bucket='").append(bucket).append('\'');
         sb.append(", provider='").append(provider).append('\'');
         sb.append('}');
         return sb.toString();
