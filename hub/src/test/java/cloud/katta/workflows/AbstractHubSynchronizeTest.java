@@ -360,7 +360,6 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
             settings.setEnableAutomaticAccessGrant(true);
             settings.setAllowAutomaticAccessGrantOverride(true);
             settings.setAutomaticAccessGrantTrustThreshold(-1);
-            settings.setAllowAutomaticAccessGrantOverride(true);
             new SettingsResourceApi(adminHubSession.getClient()).apiSettingsPut(settings);
 
             {

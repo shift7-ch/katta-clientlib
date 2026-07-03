@@ -82,7 +82,6 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
             settings.setEnableAutomaticAccessGrant(true);
             settings.setAllowAutomaticAccessGrantOverride(true);
             settings.setAutomaticAccessGrantTrustThreshold(-1);
-            settings.setAllowAutomaticAccessGrantOverride(true);
             new SettingsResourceApi(adminApiClient).apiSettingsPut(settings);
 
             log.info("S00 admin uploads storage profile");
