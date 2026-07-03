@@ -20,7 +20,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 @JsonPropertyOrder({
         VaultMetadataStorageDto.JSON_PROPERTY_PROVIDER,
-        VaultMetadataStorageDto.JSON_PROPERTY_DEFAULT_PATH,
+        VaultMetadataStorageDto.JSON_PROPERTY_BUCKET,
         VaultMetadataStorageDto.JSON_PROPERTY_NICKNAME,
         VaultMetadataStorageDto.JSON_PROPERTY_REGION,
         VaultMetadataStorageDto.JSON_PROPERTY_USERNAME,
@@ -31,9 +31,6 @@ import io.swagger.annotations.ApiModelProperty;
 public class VaultMetadataStorageDto {
     public static final String JSON_PROPERTY_PROVIDER = "provider";
     private String provider;
-
-    public static final String JSON_PROPERTY_DEFAULT_PATH = "defaultPath";
-    private String defaultPath;
 
     public static final String JSON_PROPERTY_BUCKET = "bucket";
     private String bucket;
@@ -76,27 +73,6 @@ public class VaultMetadataStorageDto {
     @JsonInclude(value = JsonInclude.Include.ALWAYS)
     public void setProvider(String provider) {
         this.provider = provider;
-    }
-
-    @Deprecated
-    public VaultMetadataStorageDto defaultPath(String defaultPath) {
-        this.defaultPath = defaultPath;
-        return this;
-    }
-
-    @ApiModelProperty(required = true, value = "")
-    @JsonProperty(JSON_PROPERTY_DEFAULT_PATH)
-    @JsonInclude(value = JsonInclude.Include.ALWAYS)
-    @Deprecated
-    public String getDefaultPath() {
-        return defaultPath;
-    }
-
-    @JsonProperty(JSON_PROPERTY_DEFAULT_PATH)
-    @JsonInclude(value = JsonInclude.Include.ALWAYS)
-    @Deprecated
-    public void setDefaultPath(String defaultPath) {
-        this.defaultPath = defaultPath;
     }
 
     public VaultMetadataStorageDto bucket(String bucket) {

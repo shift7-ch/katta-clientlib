@@ -269,7 +269,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                         throw new VaultException(storageProfile.getProtocol().toString());
                 }
                 log.debug("Configured storage backend for vault {}", vaultId);
-                final Path bucket = new Path(null != vaultStorageMetadata.getBucket() ? vaultStorageMetadata.getBucket() : vaultStorageMetadata.getDefaultPath(),
+                final Path bucket = new Path(vaultStorageMetadata.getBucket(),
                         EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault),
                         new DefaultPathAttributes()
                                 .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
