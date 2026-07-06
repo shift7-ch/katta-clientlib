@@ -216,9 +216,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
              final HubSession adminHubSession = setupConnection(config.setup.hubURL, config.setup.adminConfig, config.vault)) {
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
             log.info("Coercing storage profiles {}", storageProfiles);
+            assertTrue(storageProfiles.stream()
+                    .map(StorageProfileDtoWrapper::coerce)
+                    .anyMatch(p -> p.getName().equals(config.vault.storageProfileName)));
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+                    .filter(p -> p.getName().equals(config.vault.storageProfileName)).findFirst().get();
 
             log.info("Creating vault in {}", hubSession);
 
@@ -355,9 +358,12 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 // admin creates vault
                 final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminHubSession.getClient()).apiStorageprofileGet(false);
                 log.info("Coercing storage profiles {}", storageProfiles);
+                assertTrue(storageProfiles.stream()
+                        .map(StorageProfileDtoWrapper::coerce)
+                        .anyMatch(p -> p.getName().equals(config.vault.storageProfileName)));
                 final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                         .map(StorageProfileDtoWrapper::coerce)
-                        .filter(p -> p.getId().toString().equals(config.vault.storageProfileId.toLowerCase())).findFirst().get();
+                        .filter(p -> p.getName().equals(config.vault.storageProfileName)).findFirst().get();
 
                 log.info("Creating vault in {}", adminHubSession);
 
