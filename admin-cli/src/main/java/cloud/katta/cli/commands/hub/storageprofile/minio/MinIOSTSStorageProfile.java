@@ -73,9 +73,6 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
         catch(URISyntaxException e) {
             throw new IllegalArgumentException("Invalid endpoint URL: " + endpointUrl, e);
         }
-        final String scheme = uri.getScheme();
-        final String hostname = uri.getHost();
-        final int port = uri.getPort() == -1 ? ("https".equals(scheme) ? 443 : 80) : uri.getPort();
         storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto(uuid)
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STS)
