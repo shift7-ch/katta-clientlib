@@ -53,7 +53,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 abstract class AbstractHubWorkflowTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubWorkflowTest.class.getName());
@@ -96,12 +95,9 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
 
             log.info("S01 {} alice creates vault", setup);
             final List<StorageProfileDto> storageProfiles = new StorageProfileResourceApi(adminApiClient).apiStorageprofileGet(false);
-            assertTrue(storageProfiles.stream()
-                    .map(StorageProfileDtoWrapper::coerce)
-                    .anyMatch(p -> p.getName().equals(config.vault.storageProfileName)));
             final StorageProfileDtoWrapper storageProfileWrapper = storageProfiles.stream()
                     .map(StorageProfileDtoWrapper::coerce)
-                    .filter(p -> p.getName().equals(config.vault.storageProfileName)).findFirst().get();
+                    .filter(p -> p.getName().equals(config.vault.storageProfileName)).findFirst().orElseThrow(() -> new IllegalStateException(String.format("Storage profile %s not found", config.vault.storageProfileName)));
 
             final Path vaultName = new Path(String.format("Vault %s", new AlphanumericRandomStringService().random()), EnumSet.of(Path.Type.volume, Path.Type.directory));
             final HubStorageLocationService.StorageLocation location = new HubStorageLocationService.StorageLocation(storageProfileWrapper.getId().toString(), storageProfileWrapper.getRegion(),
