@@ -348,7 +348,7 @@ services:
         #        curl --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready
 
 
-        java  -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar quarkus-run.jar
+        /work/application
 
   hub_setup_storage_profile:
     profiles: [ demo ]
