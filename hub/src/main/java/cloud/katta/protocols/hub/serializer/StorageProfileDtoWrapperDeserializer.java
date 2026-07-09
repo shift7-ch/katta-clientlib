@@ -115,14 +115,17 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         if(dto.getName() != null) {
             keys.add(DEFAULT_NICKNAME_KEY);
         }
-        if(URI.create(dto.getEndpoint()).getScheme() != null) {
-            keys.add(SCHEME_KEY);
-        }
-        if(URI.create(dto.getEndpoint()).getHost() != null) {
-            keys.add(DEFAULT_HOSTNAME_KEY);
-        }
-        if(URI.create(dto.getEndpoint()).getPort() != -1) {
-            keys.add(DEFAULT_PORT_KEY);
+        if(dto.getEndpoint() != null) {
+            final URI uri = URI.create(dto.getEndpoint());
+            if(uri.getScheme() != null) {
+                keys.add(SCHEME_KEY);
+            }
+            if(uri.getHost() != null) {
+                keys.add(DEFAULT_HOSTNAME_KEY);
+            }
+            if(uri.getPort() != -1) {
+                keys.add(DEFAULT_PORT_KEY);
+            }
         }
         if(dto.getStsEndpoint() != null) {
             keys.add(STS_ENDPOINT_KEY);
