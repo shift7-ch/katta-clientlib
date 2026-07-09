@@ -45,7 +45,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case PROPERTIES_KEY:
                 // In format key=value
                 final List<String> properties = new ArrayList<>(super.listForKey(key));
-                if(dto.getPathStyleAccessEnabled()) {
+                if(dto.getPathStyleAccessEnabled() != null && dto.getPathStyleAccessEnabled()) {
                     properties.add(String.format("s3.bucket.virtualhost.disable=%s", true));
                 }
                 if(dto.getStorageClass() != null) {
