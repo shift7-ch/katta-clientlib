@@ -70,6 +70,8 @@ services:
         if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
           export HUB_KEYCLOAK_HTTP_PORT=${HUB_KEYCLOAK_HTTP_PORT}
+          # DNS resolver of the container runtime (Docker: 127.0.0.11, Podman: network gateway)
+          export DOCKER_RESOLVER=$(grep -m1 '^nameserver' /etc/resolv.conf | cut -d' ' -f2)
           envsubst < /etc/nginx/conf.d/keycloak.conf.template >> /etc/nginx/conf.d/default.conf
           cat /etc/nginx/conf.d/default.conf
           # reload and verify configuration
@@ -142,6 +144,8 @@ services:
 
         if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
+          # DNS resolver of the container runtime (Docker: 127.0.0.11, Podman: network gateway)
+          export DOCKER_RESOLVER=$(grep -m1 '^nameserver' /etc/resolv.conf | cut -d' ' -f2)
           envsubst < /etc/nginx/conf.d/keycloak.conf.template >> /etc/nginx/conf.d/default.conf
           cat /etc/nginx/conf.d/default.conf
           # reload and verify configuration
@@ -177,6 +181,8 @@ services:
 
         if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
+          # DNS resolver of the container runtime (Docker: 127.0.0.11, Podman: network gateway)
+          export DOCKER_RESOLVER=$(grep -m1 '^nameserver' /etc/resolv.conf | cut -d' ' -f2)
           envsubst < /etc/nginx/conf.d/keycloak.conf.template >> /etc/nginx/conf.d/default.conf
           cat /etc/nginx/conf.d/default.conf
           # reload and verify configuration
@@ -314,6 +320,8 @@ services:
         if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
           export HUB_KEYCLOAK_HTTP_PORT=${HUB_KEYCLOAK_HTTP_PORT}
+          # DNS resolver of the container runtime (Docker: 127.0.0.11, Podman: network gateway)
+          export DOCKER_RESOLVER=$(grep -m1 '^nameserver' /etc/resolv.conf | cut -d' ' -f2)
 
           envsubst < /etc/nginx/conf.d/keycloak.conf.template >> /etc/nginx/conf.d/default.conf
           cat /etc/nginx/conf.d/default.conf
@@ -368,6 +376,8 @@ services:
 
         if [ -n "${HUB_KEYCLOAK_HOSTNAME}" ]; then
           # inject ports
+          # DNS resolver of the container runtime (Docker: 127.0.0.11, Podman: network gateway)
+          export DOCKER_RESOLVER=$(grep -m1 '^nameserver' /etc/resolv.conf | cut -d' ' -f2)
           envsubst < /etc/nginx/conf.d/keycloak.conf.template >> /etc/nginx/conf.d/default.conf
           cat /etc/nginx/conf.d/default.conf
           # reload and verify configuration
