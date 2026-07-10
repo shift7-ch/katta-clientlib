@@ -23,7 +23,7 @@ services:
     # hub to Keycloak communication inside Docker network (http://keycloak:8180) goes to the container internal port! Therefore, we need to start keycloak with the same port `--http-port 8180`
     command: start-dev --import-realm --db=dev-mem --health-enabled=true --hostname ${HUB_KEYCLOAK_HOSTNAME} --http-port ${HUB_KEYCLOAK_HTTP_PORT}
     healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail http://127.0.0.1:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" ]
+      test: [ "CMD-SHELL", "curl -v --fail http://127.0.0.1:${HUB_KEYCLOAK_HTTP_PORT}/realms/cryptomator/.well-known/openid-configuration" ]
       interval: 5s
       timeout: 10s
       retries: 15
@@ -129,7 +129,7 @@ services:
       # Note: per bucket CORS not supported in MinIO Community Edition: https://github.com/minio/minio/discussions/20841
       MINIO_API_CORS_ALLOW_ORIGIN: "${HUB_URL}"
     healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
+      test: [ "CMD-SHELL", "curl -v --fail ${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}/minio/health/ready" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -268,7 +268,7 @@ services:
         condition: service_completed_successfully
         required: false
     healthcheck:
-      test: [ "CMD", "bash", "-c", "curl -v --fail ${HUB_URL}/api/config" ]
+      test: [ "CMD-SHELL", "curl -v --fail ${HUB_URL}/api/config" ]
       interval: 5s
       timeout: 5s
       retries: 20
