@@ -13,7 +13,7 @@
     <artifactId>katta-clientlib-hub</artifactId>
 
     <properties>
-        <jwt.version>4.5.2</jwt.version>
+        <jwt.version>4.6.0</jwt.version>
         <nimbus-jose.version>10.9.1</nimbus-jose.version>
         <swagger-annotations.version>1.6.16</swagger-annotations.version>
 
