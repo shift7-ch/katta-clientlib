@@ -48,13 +48,7 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
                 .archived(false)
                 .storageClass(S3StorageClass.STANDARD)
                 .pathStyleAccessEnabled(false)
-
                 .bucketPrefix(bucketPrefix)
-
-                // TODO missing static - required for bucket creation
-//                .bucketVersioning(true)
-//                .bucketAcceleration(null)
-
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
         ));
