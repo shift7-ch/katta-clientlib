@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.UUID;
 
 import cloud.katta.cli.Katta;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -27,12 +26,10 @@ class S3StaticStorageProfileIT extends AbstractAdminCLIIT {
 
     @Test
     public void testStorageProfileS3StaticSetup() throws Exception {
-        final UUID storageProfileId = UUID.randomUUID();
         int rc = new CommandLine(new Katta()).execute(
                 "storageprofile", "s3", "static",
                 "--hubUrl", "http://localhost:8280",
                 "--accessToken", accessToken,
-                "--uuid", storageProfileId.toString(),
                 "--name", "S3 Static",
                 "--endpointUrl", "https://s3.example.com",
                 "--region", "us-east-1",
@@ -43,8 +40,7 @@ class S3StaticStorageProfileIT extends AbstractAdminCLIIT {
         assertEquals(0, rc);
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
         Optional<StorageProfileDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream()
-                .filter(p -> p.getActualInstance() instanceof StorageProfileS3StaticDto)
-                .filter(p -> p.getStorageProfileS3StaticDto().getId().equals(storageProfileId)).findFirst();
+                .filter(p -> p.getActualInstance() instanceof StorageProfileS3StaticDto).findFirst();
         assertTrue(profile.isPresent());
         final StorageProfileS3StaticDto dto = profile.get().getStorageProfileS3StaticDto();
         assertEquals("S3 Static", dto.getName());

@@ -7,7 +7,6 @@ package cloud.katta.cli.commands.hub.storageprofile.minio;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
@@ -53,9 +52,9 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
     public MinIOSTSStorageProfile() {
     }
 
-    public MinIOSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions,
+    public MinIOSTSStorageProfile(final String hubUrl, final String name, final String region, final List<String> regions,
                                   final String endpointUrl, final String bucketPrefix, final String stsRoleCreateBucketClient, final String stsRoleCreateBucketHub, final String stsRoleAccessBucket) {
-        super(hubUrl, uuid, name, region, regions);
+        super(hubUrl, name, region, regions);
         this.endpointUrl = endpointUrl;
         this.bucketPrefix = bucketPrefix;
         this.stsRoleCreateBucketClient = stsRoleCreateBucketClient;
@@ -65,7 +64,6 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
 
     @Override
     protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
         final URI uri;
         try {
             uri = new URI(endpointUrl);
@@ -73,7 +71,7 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
         catch(URISyntaxException e) {
             throw new IllegalArgumentException("Invalid endpoint URL: " + endpointUrl, e);
         }
-        storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto(uuid)
+        return storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto()
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STS)
                 .archived(false)
@@ -100,7 +98,6 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
                 .stsRoleAccessBucketAssumeRoleTaggedSession(null)
                 .stsSessionTag(null)
         ));
-        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 
     @Override

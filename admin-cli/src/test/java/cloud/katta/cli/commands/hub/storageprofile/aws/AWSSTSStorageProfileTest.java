@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -25,12 +24,11 @@ class AWSSTSStorageProfileTest {
     @Test
     public void testCall() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
-        final UUID vaultId = UUID.randomUUID();
-        final AWSSTSStorageProfile cli = new AWSSTSStorageProfile(null, vaultId.toString(), "AWS S3 STS", "eu-west-1", Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"),
+        final AWSSTSStorageProfile cli = new AWSSTSStorageProfile("http://localhost/myhub", "AWS S3 STS", "eu-west-1", Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"),
                 "1234", "testing.katta.cloud-kc-realms-pepper-", "fancy-");
         cli.call(api);
 
-        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto(vaultId);
+        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
         dto.setName("AWS S3 STS");
         dto.setProtocol(Protocol.S3_STS);
         dto.setArchived(false);

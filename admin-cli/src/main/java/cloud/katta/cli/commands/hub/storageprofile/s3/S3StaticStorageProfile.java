@@ -5,7 +5,6 @@
 package cloud.katta.cli.commands.hub.storageprofile.s3;
 
 import java.util.List;
-import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
@@ -37,18 +36,16 @@ public class S3StaticStorageProfile extends AbstractStorageProfile {
     public S3StaticStorageProfile() {
     }
 
-    public S3StaticStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions,
+    public S3StaticStorageProfile(final String hubUrl, final String name, final String region, final List<String> regions,
                                   final String endpointUrl, final String bucketPrefix) {
-        super(hubUrl, uuid, name, region, regions);
+        super(hubUrl, name, region, regions);
         this.endpointUrl = endpointUrl;
         this.bucketPrefix = bucketPrefix;
     }
 
     @Override
     protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
-
-        storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3StaticDto(uuid)
+        return storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3StaticDto()
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STATIC)
                 .archived(false)
@@ -65,7 +62,6 @@ public class S3StaticStorageProfile extends AbstractStorageProfile {
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
         ));
-        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 
     @Override

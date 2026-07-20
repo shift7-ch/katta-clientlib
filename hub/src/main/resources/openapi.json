@@ -145,6 +145,12 @@
                     },
                     "uuid": {
                         "type": "string"
+                    },
+                    "desktopDownloadUrlMac": {
+                        "type": "string"
+                    },
+                    "desktopDownloadUrlWin": {
+                        "type": "string"
                     }
                 }
             },
@@ -2802,7 +2808,14 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "uploaded storage configuration"
+                        "description": "uploaded storage configuration",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorageProfileDto"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Constraint violation"

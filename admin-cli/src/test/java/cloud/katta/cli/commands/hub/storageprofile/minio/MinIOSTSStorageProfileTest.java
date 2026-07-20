@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.JSON;
@@ -26,8 +25,7 @@ class MinIOSTSStorageProfileTest {
     @Test
     public void testCall() throws ApiException {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
-        final UUID profileId = UUID.randomUUID();
-        final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile(null, profileId.toString(), "MinIO STS", "us-east-1",
+        final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile("http://localhost/myhub", "MinIO STS", "us-east-1",
                 Arrays.asList("us-east-1", "us-west-2"),
                 "https://minio.example.com:9000", "katta-",
                 "arn:minio:iam:::role/fusilli-create-bucket-client",
@@ -35,7 +33,7 @@ class MinIOSTSStorageProfileTest {
                 "arn:minio:iam:::role/fusilli-access-bucket");
         cli.call(api);
 
-        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto(profileId);
+        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
         dto.setName("MinIO STS");
         dto.setProtocol(Protocol.S3_STS);
         dto.setArchived(false);
@@ -56,15 +54,14 @@ class MinIOSTSStorageProfileTest {
     @Test
     public void testCallDefaultPortHttps() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
-        final UUID profileId = UUID.randomUUID();
-        final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile(null, profileId.toString(), "MinIO STS", "us-east-1", null,
+        final MinIOSTSStorageProfile cli = new MinIOSTSStorageProfile("http://localhost/myhub", "MinIO STS", "us-east-1", null,
                 "https://minio.example.com", "katta-",
                 "arn:minio:iam:::role/create-bucket-client",
                 "arn:minio:iam:::role/create-bucket-hub",
                 "arn:minio:iam:::role/access-bucket");
         cli.call(api);
 
-        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto(profileId);
+        final StorageProfileS3STSDto dto = new StorageProfileS3STSDto();
         dto.setName("MinIO STS");
         dto.setProtocol(Protocol.S3_STS);
         dto.setArchived(false);

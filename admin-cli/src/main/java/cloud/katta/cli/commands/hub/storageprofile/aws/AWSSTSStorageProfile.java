@@ -5,7 +5,6 @@
 package cloud.katta.cli.commands.hub.storageprofile.aws;
 
 import java.util.List;
-import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
@@ -43,8 +42,8 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
     public AWSSTSStorageProfile() {
     }
 
-    public AWSSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions, final String awsAccountId, final String roleNamePrefix, final String bucketPrefix) {
-        super(hubUrl, uuid, name, region, regions);
+    public AWSSTSStorageProfile(final String hubUrl, final String name, final String region, final List<String> regions, final String awsAccountId, final String roleNamePrefix, final String bucketPrefix) {
+        super(hubUrl, name, region, regions);
         this.awsAccountId = awsAccountId;
         this.roleNamePrefix = roleNamePrefix;
         this.bucketPrefix = bucketPrefix;
@@ -52,8 +51,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
 
     @Override
     protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
-        storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto(uuid)
+        return storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto()
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STS)
                 .archived(false)
@@ -77,7 +75,6 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("arn:aws:iam::%s:role/%s%s%s", awsAccountId, roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
                 .stsSessionTag(REQUEST_TAG)
         ));
-        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
     }
 
     @Override

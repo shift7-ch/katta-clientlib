@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
-import java.util.UUID;
 
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -25,12 +24,11 @@ class S3StaticStorageProfileTest {
     @Test
     public void testCall() throws Exception {
         final StorageProfileResourceApi api = Mockito.mock(StorageProfileResourceApi.class);
-        final UUID vaultId = UUID.randomUUID();
-        final S3StaticStorageProfile cli = new S3StaticStorageProfile("https://hub.example.com", vaultId.toString(), "S3 static", "us-east-1", null,
+        final S3StaticStorageProfile cli = new S3StaticStorageProfile("http://localhost/myhub", "S3 static", "us-east-1", null,
                 "https://s3.example.com", "katta-");
         cli.call(api);
 
-        final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto(vaultId);
+        final StorageProfileS3StaticDto dto = new StorageProfileS3StaticDto();
         dto.setName("S3 static");
         dto.setProtocol(Protocol.S3_STATIC);
         dto.setArchived(false);
