@@ -36,10 +36,6 @@ class AWSStaticStorageProfileTest {
         dto.pathStyleAccessEnabled(false);
         dto.setBucketPrefix("katta-");
         dto.setStorageClass(S3StorageClass.STANDARD);
-        // TODO missing dto - required for bucket creation
-//        dto.setBucketAcceleration(null);
-//        dto.stsRoleCreateBucketClient("");
-//        dto.stsRoleCreateBucketHub("");
         Mockito.verify(api, times(1)).apiStorageprofilePost(new StorageProfileDto(dto));
         assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }

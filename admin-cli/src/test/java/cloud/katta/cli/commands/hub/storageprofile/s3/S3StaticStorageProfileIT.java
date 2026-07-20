@@ -52,11 +52,5 @@ class S3StaticStorageProfileIT extends AbstractAdminCLIIT {
         assertEquals("us-east-1", dto.getRegion());
         assertEquals(Arrays.asList("us-east-1", "us-east-2", "us-west-1"), dto.getRegions());
         assertEquals("katta-", dto.getBucketPrefix());
-        // TODO missing dto - required for bucket creation
-//        assertEquals("", dto.getStsRoleCreateBucketClient());
-//        assertEquals("", dto.getStsRoleCreateBucketHub());
-//        assertNull(dto.getStsEndpoint());
-//        assertFalse(dto.getBucketVersioning());
-//        assertNull(dto.getBucketAcceleration());
     }
 }

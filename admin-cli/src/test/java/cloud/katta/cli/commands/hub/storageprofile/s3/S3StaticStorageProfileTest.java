@@ -38,9 +38,6 @@ class S3StaticStorageProfileTest {
         dto.setRegion("us-east-1");
         dto.setRegions(List.of("us-east-1"));
         dto.setBucketPrefix("katta-");
-        // TODO missing dto - required for bucket creation
-//        dto.setBucketVersioning(false);
-//        dto.setBucketAcceleration(null);
         Mockito.verify(api, times(1)).apiStorageprofilePost(new StorageProfileDto(dto));
         assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }

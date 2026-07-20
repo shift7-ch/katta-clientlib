@@ -55,11 +55,5 @@ class AWSStaticStorageProfileIT extends AbstractAdminCLIIT {
         assertEquals("eu-west-1", dto.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3"), dto.getRegions());
         assertEquals("katta-", dto.getBucketPrefix());
-        // TODO missing in static - required for creation
-//        assertEquals("", dto.getStsRoleCreateBucketClient());
-//        assertEquals("", dto.getStsRoleCreateBucketHub());
-//        assertNull(dto.getStsEndpoint());
-//        assertTrue(dto.getBucketVersioning());
-//        assertNull(dto.getBucketAcceleration());
     }
 }
