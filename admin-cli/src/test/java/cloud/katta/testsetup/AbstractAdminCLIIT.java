@@ -7,7 +7,6 @@ package cloud.katta.testsetup;
 import org.junit.jupiter.api.BeforeEach;
 
 import cloud.katta.client.ApiClient;
-import cloud.katta.client.auth.HttpBearerAuth;
 
 import static io.restassured.RestAssured.given;
 
@@ -28,7 +27,6 @@ public class AbstractAdminCLIIT {
                 .then()
                 .statusCode(200)
                 .extract().path("access_token");
-        final HttpBearerAuth auth = new HttpBearerAuth("Bearer");
         apiClient = new ApiClient();
         apiClient.addDefaultHeader("Authorization", "Bearer " + accessToken);
         apiClient.setBasePath("http://localhost:8280");

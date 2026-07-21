@@ -96,7 +96,6 @@ public class MinIOSTSStorageProfile extends AbstractStorageProfile {
 
                 // -- (5) No role chaining for MinIO (AWS-only feature)
                 .stsRoleAccessBucketAssumeRoleTaggedSession(null)
-                .stsSessionTag(null)
         ));
     }
 

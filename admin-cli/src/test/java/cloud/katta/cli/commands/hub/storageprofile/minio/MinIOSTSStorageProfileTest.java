@@ -48,6 +48,7 @@ class MinIOSTSStorageProfileTest {
         dto.setStsRoleAccessBucketAssumeRoleWithWebIdentity("arn:minio:iam:::role/fusilli-access-bucket");
         dto.setStsEndpoint("https://minio.example.com:9000");
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);
+        dto.setStsSessionTag("Vault");
         Mockito.verify(api, times(1)).apiStorageprofilePost(new StorageProfileDto(dto));
     }
 
@@ -76,6 +77,7 @@ class MinIOSTSStorageProfileTest {
         dto.setStsRoleAccessBucketAssumeRoleWithWebIdentity("arn:minio:iam:::role/access-bucket");
         dto.setStsEndpoint("https://minio.example.com");
         dto.setStsRoleAccessBucketAssumeRoleTaggedSession(null);
+        dto.setStsSessionTag("Vault");
         Mockito.verify(api, times(1)).apiStorageprofilePost(new StorageProfileDto(dto));
         assertNotEquals("{}", new JSON().getMapper().writeValueAsString(dto));
     }

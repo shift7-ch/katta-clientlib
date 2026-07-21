@@ -27,13 +27,12 @@ class AWSStaticStorageProfileIT extends AbstractAdminCLIIT {
 
     @Test
     public void testStorageProfileAwsStaticSetup() throws Exception {
-        final UUID storageProfileId = UUID.randomUUID();
+        final String profileName = "AWS S3 Static - " + UUID.randomUUID();
         int rc = new CommandLine(new Katta()).execute(
                 "storageprofile", "aws", "static",
                 "--hubUrl", "http://localhost:8280",
                 "--accessToken", accessToken,
-                "--uuid", storageProfileId.toString(),
-                "--name", "AWS S3 Static",
+                "--name", profileName,
                 "--region", "eu-west-1",
                 "--regions", "eu-west-1",
                 "--regions", "eu-west-2",
@@ -43,10 +42,10 @@ class AWSStaticStorageProfileIT extends AbstractAdminCLIIT {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
         Optional<StorageProfileDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream()
                 .filter(p -> p.getActualInstance() instanceof StorageProfileS3StaticDto)
-                .filter(p -> p.getStorageProfileS3StaticDto().getId().equals(storageProfileId)).findFirst();
+                .filter(p -> p.getStorageProfileS3StaticDto().getName().equals(profileName)).findFirst();
         assertTrue(profile.isPresent());
         final StorageProfileS3StaticDto dto = profile.get().getStorageProfileS3StaticDto();
-        assertEquals("AWS S3 Static", dto.getName());
+        assertEquals(profileName, dto.getName());
         assertEquals(Protocol.S3_STATIC, dto.getProtocol());
         assertFalse(dto.getArchived());
         assertNull(dto.getEndpoint());
