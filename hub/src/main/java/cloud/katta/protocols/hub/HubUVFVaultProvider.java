@@ -271,7 +271,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                         log.error("Unsupported storage configuration {} for vault {}", storageProfile.getProtocol(), vaultId);
                         throw new VaultException(storageProfile.getProtocol().toString());
                 }
-                log.debug("Configured storage backend for vault {}", vaultId);
+                log.debug("Configured {} for vault {}", storage, vaultId);
                 final Path bucket = new Path(vaultStorageMetadata.getBucket(),
                         EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault),
                         new DefaultPathAttributes()
@@ -284,7 +284,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                 catch(BackgroundException e) {
                     throw new VaultUnlockCancelException(bucket, e);
                 }
-                log.debug("Connected to storage backend for vault {}", vaultId);
+                log.debug("Connected to {} for vault {}", storage, vaultId);
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 try {
                     vault.load(session, vaultMetadataProvider);
