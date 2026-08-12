@@ -142,9 +142,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 keys.add(DEFAULT_PORT_KEY);
             }
         }
-        if(dto.getStsEndpoint() != null) {
-            keys.add(STS_ENDPOINT_KEY);
-        }
         if(dto.getRegion() != null) {
             keys.add(REGION_KEY);
         }
@@ -153,6 +150,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         }
         switch(dto.getProtocol()) {
             case S3_STS:
+                keys.add(STS_ENDPOINT_KEY);
                 keys.add(ROLE_KEY_CONFIGURABLE_KEY);
                 break;
         }
