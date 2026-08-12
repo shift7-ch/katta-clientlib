@@ -26,6 +26,7 @@ import io.swagger.annotations.ApiModelProperty;
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class VaultMetadataAutomaticAccessGrantDto {
+
     public static final String JSON_PROPERTY_ENABLED = "enabled";
     private Boolean enabled;
 
@@ -40,20 +41,13 @@ public class VaultMetadataAutomaticAccessGrantDto {
         return this;
     }
 
-    /**
-     * Get enabled
-     *
-     * @return enabled
-     **/
     @javax.annotation.Nullable
     @ApiModelProperty(value = "")
     @JsonProperty(JSON_PROPERTY_ENABLED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
     public Boolean getEnabled() {
         return enabled;
     }
-
 
     @JsonProperty(JSON_PROPERTY_ENABLED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -61,22 +55,15 @@ public class VaultMetadataAutomaticAccessGrantDto {
         this.enabled = enabled;
     }
 
-
     public VaultMetadataAutomaticAccessGrantDto maxWotDepth(Integer maxWotDepth) {
         this.maxWotDepth = maxWotDepth;
         return this;
     }
 
-    /**
-     * Get maxWotDepth
-     *
-     * @return maxWotDepth
-     **/
     @javax.annotation.Nullable
     @ApiModelProperty(value = "")
     @JsonProperty(JSON_PROPERTY_MAX_WOT_DEPTH)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
     public Integer getMaxWotDepth() {
         return maxWotDepth;
     }
@@ -88,10 +75,6 @@ public class VaultMetadataAutomaticAccessGrantDto {
         this.maxWotDepth = maxWotDepth;
     }
 
-
-    /**
-     * Return true if this AutomaticAccessGrant object is equal to o.
-     */
     @Override
     public boolean equals(Object o) {
         if(this == o) {
