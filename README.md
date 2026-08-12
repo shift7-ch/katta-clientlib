@@ -21,6 +21,16 @@ Features:
 
 ## Dev Setup
 
+### Unit tests
+
+Run unit tests only:
+
+```shell
+mvn clean verify -DskipITs
+```
+
+### Debug logging
+
 In order to run a single integration test with debug logging, use
 
 ```shell

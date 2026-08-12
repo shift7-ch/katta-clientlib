@@ -60,8 +60,8 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                 return;
             }
             // 1. Get Ids of trusted and verified users
-            // maxWotDepth: -1 means "grant to anyone", where 0, 1, 2 would be the number of edges between any vault owner and the grantee.
-            final int maxWotDepth = ofNullable(vaultMetadata.automaticAccessGrant().getMaxWotDepth()).orElse(-1);
+            // trustThreshold: -1 means "grant to anyone", where 0, 1, 2 would be the number of edges between any vault owner and the grantee.
+            final int trustThreshold = ofNullable(vaultMetadata.automaticAccessGrant().getTrustThreshold()).orElse(-1);
             final Map<String, Integer> verifiedTrustedUsers = woTService.getTrustLevelsPerUserId(userKeys);
             // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter
             // than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key (and optionally its recovery key):
@@ -73,15 +73,15 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                     log.debug("Ignoring user {} for vault {} - no user key yet", user.getId(), vaultId);
                     continue;
                 }
-                if(maxWotDepth >= 0) {
+                if(trustThreshold >= 0) {
                     final Integer trustLevel = verifiedTrustedUsers.get(user.getId());
                     if(trustLevel == null) {
                         log.warn("Ignoring user {} for vault {} - no trust level", user.getId(), vaultId);
                         continue;
                     }
-                    // trustLevel must be <= maxWotDepth for automatic access grant
-                    if(trustLevel > maxWotDepth) {
-                        log.warn("Ignoring user {} for vault {} - not verified (trust level {} > maxWotDepth {})", user.getId(), vaultId, trustLevel, maxWotDepth);
+                    // trustLevel must be <= trustThreshold for automatic access grant
+                    if(trustLevel > trustThreshold) {
+                        log.warn("Ignoring user {} for vault {} - not verified (trust level {} > trustThreshold {})", user.getId(), vaultId, trustLevel, trustThreshold);
                         continue;
                     }
                 }

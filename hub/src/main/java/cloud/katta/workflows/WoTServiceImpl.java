@@ -59,7 +59,8 @@ public class WoTServiceImpl implements WoTService {
             return Collections.emptyMap();
         }
 
-        final List<UserDto> users = authorityApi.apiAuthoritiesGet(trusts.stream().map(TrustedUserDto::getTrustedUserId).filter(Objects::nonNull).collect(Collectors.toList())).stream().map(AuthorityDto::getUserDto).collect(Collectors.toList());
+        final List<UserDto> users = authorityApi.apiAuthoritiesGet(trusts.stream().map(TrustedUserDto::getTrustedUserId).filter(Objects::nonNull)
+                .collect(Collectors.toList())).stream().map(AuthorityDto::getUserDto).collect(Collectors.toList());
 
         // 2. Verify all returned signature chains
         return WoT.verifyTrusts(trusts, users, signerPublicKey);
