@@ -90,6 +90,11 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 break;
             case STS_ENDPOINT_KEY:
+                if(null == dto.getStsEndpoint()) {
+                    if(null != dto.getRegion()) {
+                        return String.format("https://sts.%s.amazonaws.com/", dto.getRegion());
+                    }
+                }
                 return dto.getStsEndpoint();
             case REGION_KEY:
                 return dto.getRegion();
