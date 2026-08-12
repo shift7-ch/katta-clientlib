@@ -100,21 +100,21 @@ class HubVaultMetadataUVFProviderTest {
     @Test
     void testDecrypt() throws Exception {
         // https://datatracker.ietf.org/doc/html/rfc7516#section-7.2.1
-        final JWKSet jwks = JWKSet.parse("{\"keys\":[{\"kty\":\"oct\",\"kid\":\"org.cryptomator.hub.memberkey\",\"k\":\"dp5yWgrqhBNarwOEFDCXKv4h3lUf2pYKCCsXy-6TXDA\",\"alg\":\"A256KW\"}, {\"kty\":\"EC\",\"d\":\"8jz0iHA1jcp2dTB8NkVzTrDjpNhLeqfjLh-6iC2kWpc1VI-tMfK8T7gYjoNDJDDi\",\"crv\":\"P-384\",\"kid\":\"org.cryptomator.hub.recoverykey.2ZXISh-HhVaChehjaOZ6_n5Xl20fy6oAIkIrKkmMuNc\",\"x\":\"C1BXM5oQgz5AsfI7NblbYKMysWO72bQEbXbS7stgypKRxlOn4VQXQ2NkuFu0Ygom\",\"y\":\"7o8Wxe5efN-CXNsm8qe7prohViSl7a4TB8ilF5QHEh2vlIcJ5OXT2MZQyVXUZABo\",\"alg\":\"ECDH-ES+A256KW\"}]}");
+        final JWKSet jwks = JWKSet.parse("{\"keys\":[{\"kty\":\"oct\",\"kid\":\"org.cryptomator.hub.memberkey\",\"k\":\"MVVPlljNLz9U5RFXL69Ayhio64QL-LtObty1G5kDxuQ\",\"alg\":\"A256KW\"}, {\"kty\":\"EC\",\"d\":\"NTfdwokq1q6qA8FZ-jdZ09LrBY4oI6UHL40_2bQ64HI0KIhGYIOwFGBwX2U50Eei\",\"crv\":\"P-384\",\"kid\":\"org.cryptomator.hub.recoverykey.k60X5s2Jie8fadgmy9HPnv4c_1kEv7qOVdP1j8vKjbA\",\"x\":\"Q_QS3CJbiLqczASmiKbYJtb1sf3nxoKtL6ooH4I-mI9XcygjhDwos6-XfRq_xFh1\",\"y\":\"AF9UnxL6FBolRVfrJw0ZNRBsFYPeqqc98rXdfn8je7HzysDWPQA_XNJ18YJtNPsi\",\"alg\":\"ECDH-ES+A256KW\"}]}\n");
         // protected: {"uvf.spec.version":1,"cty":"json","enc":"A256GCM","crit":["uvf.spec.version"],"jku":"jwks.json","cloud.katta.origin":"https://example.com/gateway/api/vaults/b68b0473-e924-4e3e-aea9-3113bb39f506/uvf/vault.uvf"}
-        final String jwe = "{\"ciphertext\":\"mu1NLt7SrGeIvUp_LQ8MdX8NmrycbsSxkeU5k3eQ93AjXeWrd1yXLGTFknn7Ca37Oa5xUYZ2ghtROxnKPIMI00x_NZNgb29G9Ph8WMhj9xmASmVaJHB8qETT5PpB2InPS-E_cYE1KLuFjSVJh6XxtYaP0TSg-Qp0v-VJAu1zacksdHPzjBHJPYe-brumjV6treU5_6ODgWggvMV_C2fLUWWeDAZRQtl32GEmDQKwbpoxx__UcUeD4VkZs49PEbGXA1xzIraey3dnzCOLlO1N5nZYyEs0RLIxYWicR4zlvS-RJAmO6O0Y8MSC5jlzPChzcPnkF0j2Wf1VcVgKFeqXuwLSQ-09bkGikCHamg3GtGGuzBwZwQEVhEveOv8rB-iFGSLcljUqA0wDNRm8dEEjrED2XcsKyeVSKHBryzdeDDEjED_ZvSf9lQpBHcQoYLCrLKd0bg7lLU-tPgOlHHh2fRhP6_7lBg\",\"protected\":\"eyJ1dmYuc3BlYy52ZXJzaW9uIjoxLCJjdHkiOiJqc29uIiwiZW5jIjoiQTI1NkdDTSIsImNyaXQiOlsidXZmLnNwZWMudmVyc2lvbiJdLCJqa3UiOiJqd2tzLmpzb24iLCJjbG91ZC5rYXR0YS5vcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2dhdGV3YXkvYXBpL3ZhdWx0cy9iNjhiMDQ3My1lOTI0LTRlM2UtYWVhOS0zMTEzYmIzOWY1MDYvdXZmL3ZhdWx0LnV2ZiJ9\",\"recipients\":[{\"encrypted_key\":\"9tP7Dpr959jxCrfg5GrCxXiiQ24zPn1B_DayRq0_VqGpI7APVhudww\",\"header\":{\"alg\":\"A256KW\",\"kid\":\"org.cryptomator.hub.memberkey\"}},{\"encrypted_key\":\"YjxKzvDtcUV0LCuHFySPGlFIO8my65nn7g740lUp5vmA13jvsg18GQ\",\"header\":{\"epk\":{\"kty\":\"EC\",\"crv\":\"P-384\",\"x\":\"iXoJZC1IZ7gGK8dJ1SILmdVBxA-Z3L22tYtc8mnVD5iP6XhFfZCWZcjm7uomLQ8z\",\"y\":\"_5VK8uZnETmwsn3GGUV0A9AEft9_wGANPaeq6LxUJlGlZzeK4mTrw-Wo0lCG_Gaj\"},\"alg\":\"ECDH-ES+A256KW\",\"kid\":\"org.cryptomator.hub.recoverykey.2ZXISh-HhVaChehjaOZ6_n5Xl20fy6oAIkIrKkmMuNc\"}}],\"tag\":\"uP3byZ9RSicLD19rNfaAbQ\",\"iv\":\"MvlZJ8DvwR9tOWx6\"}";
+        final String jwe = "{\"protected\":\"eyJjdHkiOiJqc29uIiwiY3JpdCI6WyJ1dmYuc3BlYy52ZXJzaW9uIl0sInV2Zi5zcGVjLnZlcnNpb24iOjEsImNsb3VkLmthdHRhLm9yaWdpbiI6Imh0dHBzOi8vZXhhbXBsZS5jb20vYXBpLy92YXVsdHMvMTIzL3V2Zi92YXVsdC51dmYiLCJqa3UiOiJqd2tzLmpzb24iLCJlbmMiOiJBMjU2R0NNIn0\",\"recipients\":[{\"header\":{\"kid\":\"org.cryptomator.hub.memberkey\",\"alg\":\"A256KW\"},\"encrypted_key\":\"oMvz_GY-Lg4XJNvNVEUut4gnvwn-a9k16AysFKnryFp2Wy4lZqZ40g\"},{\"header\":{\"kid\":\"org.cryptomator.hub.recoverykey.k60X5s2Jie8fadgmy9HPnv4c_1kEv7qOVdP1j8vKjbA\",\"alg\":\"ECDH-ES+A256KW\",\"epk\":{\"key_ops\":[],\"ext\":true,\"kty\":\"EC\",\"x\":\"ZjquA9iBhxzIxM23m4cULBgClvJM7GMY-askSvTyLn8Hc8FRIEH8tkms3m19Odsk\",\"y\":\"MJuhBwrpKsG7_S_imlv6R_mDe-3-NBCwiGJk3WhXM3_1vQbH2hxLzo-MTjWf4AaI\",\"crv\":\"P-384\"},\"apu\":\"\",\"apv\":\"\"},\"encrypted_key\":\"gx_ccI0xlDMB7XLVRQlmDMLPlbH70XwimVkeqcWLwdtM_z4XCrwrpg\"}],\"iv\":\"ueBmTvYT_bcEE01a\",\"ciphertext\":\"XG8WBC0kCZDVFGy7t9ARetwDsMQuBcz-M3byQctQDBOszOwGmyYPVM2KOiEPayfe55QyJzHqSYolwPkvf4vS2o_D6JYJ4GA_VvdxIpdaOhl3zE-bAyW2fMpUKY6IFDjQDAs147tO2s_zCtr_q27idRKgdK0T10RwPY-tDmEPrStUS-KqXsim53XW3GNLWjPMUh5jgJQtGeXiGZ5gejC8rTxMBCYcTXORYe4yAf1kzHIuQTgPFQJA93NuQnO5t8Gohdj_YBGmmXwE58h4uIFkYSSayWt1dVEUKrM6xJFb6bshZmO3e0vn0svdpxuadcnA_LsCwh7-73s1m7dP4520O27G2_EaJMwIGhsWNx2mUC17Xco4tnb8xPE00m_oezU2DAEbhVjCmr6dwFLpAtDg9rQ6PFDWEfk\",\"tag\":\"JSGRv9Ygtne4oW1nOaHt0055iiDELleCNlEHm9B6Luk\"}";
         for(JWK key : jwks.getKeys()) {
             final UVFMetadataPayload meta = new HubVaultMetadataUVFProvider(JWEObjectJSON.parse(jwe), new JWKSet(key)).getPayload();
             assertEquals("AES-256-GCM-32k", meta.fileFormat());
             assertEquals("AES-SIV-512-B64URL", meta.nameFormat());
             assertEquals(1, meta.seeds().size());
-            assertEquals("p6zznin4zSGt7gH6T95_kZj6HndpyUdY-1QVfxR2k20", meta.seeds().get("ZO3G9w"));
-            assertEquals("ZO3G9w", meta.initialSeed());
-            assertEquals("ZO3G9w", meta.latestSeed());
-            assertEquals("1STEP-HMAC-SHA512", meta.kdf());
-            assertEquals("pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh_SK73Q0KvfKMY", meta.kdfSalt());
+            assertEquals("Ltg87d0_EnV8i5Rmnt4r48tMTlKc5q5mTcCkBcL1eXk", meta.seeds().get("WOpxyg"));
+            assertEquals("WOpxyg", meta.initialSeed());
+            assertEquals("WOpxyg", meta.latestSeed());
+            assertEquals("HKDF-SHA512", meta.kdf());
+            assertEquals("Sv9EiiT3ekfuVVWYJw26t28JyOQYi3JOFeQ8vRt-fzQ", meta.kdfSalt());
             assertEquals(true, meta.automaticAccessGrant().getEnabled());
-            assertNull(meta.automaticAccessGrant().getTrustThreshold());
+            assertEquals(1, meta.automaticAccessGrant().getTrustThreshold());
             assertNull(meta.storage());
         }
     }
