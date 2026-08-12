@@ -141,7 +141,7 @@ public class HubStorageLocationService implements Location {
                             .nickname(bucket.attributes().getDisplayname()))
                     .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto()
                             .enabled(settings.getEnableAutomaticAccessGrant())
-                            .maxWotDepth(settings.getAutomaticAccessGrantTrustThreshold()));
+                            .trustThreshold(settings.getAutomaticAccessGrantTrustThreshold()));
         }
     }
 }

@@ -54,7 +54,7 @@ class GrantAccessServiceImplTest {
         when(vaultServiceMock.getVaultAccessToken(vaultId, aliceKeys)).thenReturn(new UVFAccessTokenPayload(vaultKeys.memberKey()));
         when(vaultServiceMock.getVaultMetadata(vaultId)).thenReturn(
                 JWEObjectJSON.parse(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
-                        .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).maxWotDepth(maxWotDepth)),
+                        .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(automaticAccessGrantEnabled).trustThreshold(maxWotDepth)),
                         "apiUrl", vaultId, vaultKeys.serialize()).encrypt()));
         when(wotServiceMock.getTrustLevelsPerUserId(aliceKeys)).thenReturn(Collections.singletonMap(bob.getId(), bobTrustLevel));
 

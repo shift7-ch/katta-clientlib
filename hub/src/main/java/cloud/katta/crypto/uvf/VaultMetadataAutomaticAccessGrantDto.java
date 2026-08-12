@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 
 @JsonPropertyOrder({
         VaultMetadataAutomaticAccessGrantDto.JSON_PROPERTY_ENABLED,
-        VaultMetadataAutomaticAccessGrantDto.JSON_PROPERTY_MAX_WOT_DEPTH
+        VaultMetadataAutomaticAccessGrantDto.JSON_PROPERTY_TRUST_THRESHOLD
 })
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -30,8 +30,8 @@ public class VaultMetadataAutomaticAccessGrantDto {
     public static final String JSON_PROPERTY_ENABLED = "enabled";
     private Boolean enabled;
 
-    public static final String JSON_PROPERTY_MAX_WOT_DEPTH = "maxWotDepth";
-    private Integer maxWotDepth;
+    public static final String JSON_PROPERTY_TRUST_THRESHOLD = "trustThreshold";
+    private Integer trustThreshold;
 
     public VaultMetadataAutomaticAccessGrantDto() {
     }
@@ -41,7 +41,6 @@ public class VaultMetadataAutomaticAccessGrantDto {
         return this;
     }
 
-    @javax.annotation.Nullable
     @ApiModelProperty(value = "")
     @JsonProperty(JSON_PROPERTY_ENABLED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -55,24 +54,23 @@ public class VaultMetadataAutomaticAccessGrantDto {
         this.enabled = enabled;
     }
 
-    public VaultMetadataAutomaticAccessGrantDto maxWotDepth(Integer maxWotDepth) {
-        this.maxWotDepth = maxWotDepth;
+    public VaultMetadataAutomaticAccessGrantDto trustThreshold(Integer trustThreshold) {
+        this.trustThreshold = trustThreshold;
         return this;
     }
 
-    @javax.annotation.Nullable
     @ApiModelProperty(value = "")
-    @JsonProperty(JSON_PROPERTY_MAX_WOT_DEPTH)
+    @JsonProperty(JSON_PROPERTY_TRUST_THRESHOLD)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public Integer getMaxWotDepth() {
-        return maxWotDepth;
+    public Integer getTrustThreshold() {
+        return trustThreshold;
     }
 
 
-    @JsonProperty(JSON_PROPERTY_MAX_WOT_DEPTH)
+    @JsonProperty(JSON_PROPERTY_TRUST_THRESHOLD)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public void setMaxWotDepth(Integer maxWotDepth) {
-        this.maxWotDepth = maxWotDepth;
+    public void setTrustThreshold(Integer trustThreshold) {
+        this.trustThreshold = trustThreshold;
     }
 
     @Override
@@ -85,19 +83,19 @@ public class VaultMetadataAutomaticAccessGrantDto {
         }
         VaultMetadataAutomaticAccessGrantDto vaultMetadataJWEAutomaticAccessGrantDto = (VaultMetadataAutomaticAccessGrantDto) o;
         return Objects.equals(this.enabled, vaultMetadataJWEAutomaticAccessGrantDto.enabled) &&
-                Objects.equals(this.maxWotDepth, vaultMetadataJWEAutomaticAccessGrantDto.maxWotDepth);
+                Objects.equals(this.trustThreshold, vaultMetadataJWEAutomaticAccessGrantDto.trustThreshold);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, maxWotDepth);
+        return Objects.hash(enabled, trustThreshold);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("VaultMetadataAutomaticAccessGrantDto{");
         sb.append("enabled=").append(enabled);
-        sb.append(", maxWotDepth=").append(maxWotDepth);
+        sb.append(", trustThreshold=").append(trustThreshold);
         sb.append('}');
         return sb.toString();
     }
