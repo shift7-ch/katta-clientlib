@@ -261,7 +261,7 @@ services:
     build:
       dockerfile: docker/hub/Dockerfile
       args:
-        KATTA_SERVER_IMAGE: "ghcr.io/shift7-ch/katta-server:1.5.0-SNAPSHOT-ci@sha256:40551922744654f65a931c844b064616de1cc1104a0d0d947f8daf95d1463dd0"
+        KATTA_SERVER_IMAGE: "ghcr.io/shift7-ch/katta-server:1.5.0-SNAPSHOT-ci@sha256:90dd9764133a1b87327295b53d2eaa42cabfa454c8ef77dea733d6ef45510182"
     depends_on:
       keycloak-ready:
         condition: service_completed_successfully
