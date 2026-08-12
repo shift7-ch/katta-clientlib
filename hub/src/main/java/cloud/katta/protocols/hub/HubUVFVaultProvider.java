@@ -99,8 +99,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     new DefaultPathAttributes()
                             .setRegion(region)
                             .setDisplayname(name.getName()));
-            final SettingsResourceApi settingsResourceApi = new SettingsResourceApi(HubSession.coerce(session).getClient());
-            final SettingsDto settings = settingsResourceApi.apiSettingsGet();
+            final SettingsDto settings = new SettingsResourceApi(HubSession.coerce(session).getClient()).apiSettingsGet();
             final UVFMetadataPayload payload;
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC: {
