@@ -356,10 +356,10 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
 
             // enable automatic access grant, disable WoT verification
             log.info("Enable automatic access grant and disable WoT in {}", adminHubSession);
-            final SettingsDto settings = new SettingsResourceApi(adminHubSession.getClient()).apiSettingsGet();
-            settings.setEnableAutomaticAccessGrant(true);
-            settings.setAllowAutomaticAccessGrantOverride(true);
-            settings.setAutomaticAccessGrantTrustThreshold(-1);
+            final SettingsDto settings = new SettingsResourceApi(adminHubSession.getClient()).apiSettingsGet()
+                    .enableAutomaticAccessGrant(true)
+                    .allowAutomaticAccessGrantOverride(true)
+                    .automaticAccessGrantTrustThreshold(-1);
             new SettingsResourceApi(adminHubSession.getClient()).apiSettingsPut(settings);
 
             {
