@@ -25,14 +25,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
-import cloud.katta.client.Pair;
 import cloud.katta.client.api.ConfigResourceApi;
 import cloud.katta.client.model.ConfigDto;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
@@ -50,13 +46,8 @@ public class HubTestUtilities {
                 .setClientAuthentication(new ClientParametersAuthentication(setup.clientId, null))
                 .setRequestInitializer(new UserAgentHttpRequestInitializer(new PreferencesUseragentProvider()));
         final String adminAccessToken = request.executeUnparsed().parseAs(OAuth2AuthorizationService.PermissiveTokenResponse.class).toTokenResponse().getAccessToken();
-        final ApiClient adminApiClient = new ApiClient() {
-            @Override
-            protected void updateParamsForAuth(final String[] authNames, final List<Pair> queryParams, final Map<String, String> headerParams, final Map<String, String> cookieParams, final String payload, final String method, final URI uri) throws ApiException {
-                super.updateParamsForAuth(authNames, queryParams, headerParams, cookieParams, payload, method, uri);
-                headerParams.put("Authorization", String.format("Bearer %s", adminAccessToken));
-            }
-        };
+        final ApiClient adminApiClient = new ApiClient();
+        adminApiClient.addDefaultHeader("Authorization", String.format("Bearer %s", adminAccessToken));
         return adminApiClient.setBasePath(setup.hubURL);
     }
 

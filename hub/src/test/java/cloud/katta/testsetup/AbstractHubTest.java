@@ -79,12 +79,12 @@ public abstract class AbstractHubTest {
             new HubTestConfig(LOCAL_TEST_CONFIG, vs)));
 
     public static final Arguments LOCAL_MINIO_STATIC = prepareArgumentLocal.apply(new HubTestConfig.VaultSpec(
-            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
+            "MinIO S3 static",
             LOCAL_PROPERTIES.getProperty("MINIO_USER_ACCESS_KEY"),
             LOCAL_PROPERTIES.getProperty("MINIO_USER_SECRET_KEY"),
             "us-east-1"));
     public static final Arguments LOCAL_MINIO_STS = prepareArgumentLocal.apply(new HubTestConfig.VaultSpec(
-            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
+            "MinIO S3 STS",
             null, null, "eu-central-1"));
 
 
@@ -126,24 +126,24 @@ public abstract class AbstractHubTest {
 
 
     public static final Arguments CHIPOTLE_MINIO_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "MinIO static", "71B910E0-2ECC-46DE-A871-8DB28549677E",
+            "MinIO S3 static",
             CHIPOTLE_PROPERTIES.getProperty("MINIO_USER_ACCESS_KEY"),
             CHIPOTLE_PROPERTIES.getProperty("MINIO_USER_SECRET_KEY"),
             "us-east-1"
     ));
     public static final Arguments CHIPOTLE_MINIO_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "MinIO STS", "732D43FA-3716-46C4-B931-66EA5405EF1C",
+            "MinIO S3 STS",
             null, null, "eu-central-1"
     ));
 
     public static final Arguments CHIPOTLE_AWS_STATIC = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "AWS static", "72736C19-283C-49D3-80A5-AB74B5202549",
+            "AWS S3 static",
             CHIPOTLE_PROPERTIES.getProperty("AWS_USER_ACCESS_KEY"),
             CHIPOTLE_PROPERTIES.getProperty("AWS_USER_SECRET_KEY"),
             "eu-north-1"
     ));
     public static final Arguments CHIPOTLE_AWS_STS = prepareArgumentsHybrid.apply(new HubTestConfig.VaultSpec(
-            "AWS STS", "844BD517-96D4-4787-BCFA-238E103149F6",
+            "AWS S3 STS",
             null, null, "eu-west-1"
     ));
 

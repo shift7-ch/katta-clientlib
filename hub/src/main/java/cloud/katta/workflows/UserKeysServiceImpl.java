@@ -141,7 +141,6 @@ public class UserKeysServiceImpl implements UserKeysService {
                 .devices(withCounts.getDevices())
                 .language(withCounts.getLanguage())
                 .email(withCounts.getEmail())
-                .realmRoles(withCounts.getRealmRoles())
                 .pictureUrl(withCounts.getPictureUrl())
                 .privateKeys(withCounts.getPrivateKeys())
                 .setupCode(withCounts.getSetupCode())

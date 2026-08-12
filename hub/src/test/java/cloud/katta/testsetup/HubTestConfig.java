@@ -107,14 +107,12 @@ public class HubTestConfig {
 
     public static class VaultSpec {
         public final String storageProfileName;
-        public final String storageProfileId;
         public final String username;
         public final String password;
         public final String region;
 
-        public VaultSpec(final String storageProfileName, final String storageProfileId, final String username, final String password, final String region) {
+        public VaultSpec(final String storageProfileName, final String username, final String password, final String region) {
             this.storageProfileName = storageProfileName;
-            this.storageProfileId = storageProfileId;
             this.username = username;
             this.password = password;
             this.region = region;
@@ -124,7 +122,6 @@ public class HubTestConfig {
         public String toString() {
             final StringBuilder sb = new StringBuilder("VaultSpec{");
             sb.append("storageProfileName='").append(storageProfileName).append('\'');
-            sb.append(", storageProfileId='").append(storageProfileId).append('\'');
             sb.append(", username='").append(username).append('\'');
             sb.append(", password='").append(password).append('\'');
             sb.append(", region='").append(region).append('\'');

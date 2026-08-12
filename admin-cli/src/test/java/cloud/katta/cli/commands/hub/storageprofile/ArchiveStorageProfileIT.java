@@ -9,12 +9,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.UUID;
 
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.model.StorageProfileDtoWrapper;
@@ -29,34 +27,29 @@ class ArchiveStorageProfileIT extends AbstractAdminCLIIT {
 
     @Test
     public void testStorageProfileArchive() throws Exception {
-        final String storageProfileId = "732D43FA-3716-46C4-B931-66EA5405EF1C".toLowerCase();
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
+        final StorageProfileDto storageProfileDto = storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3StaticDto()
+                .name("S3 static")
+                .protocol(Protocol.S3_STATIC)
+                .archived(false)
+                .storageClass(S3StorageClass.STANDARD)
+                .region("eu-west-1")
+                .regions(Arrays.asList("eu-west-1"))
+                .bucketPrefix("katta-test")
+        ));
         {
-            storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
-                    .id(UUID.fromString(storageProfileId))
-                    .name("S3 static")
-                    .protocol(Protocol.S3_STATIC)
-                    .archived(false)
-                    .storageClass(S3STORAGECLASSES.STANDARD)
-                    .region("eu-west-1")
-                    .regions(Arrays.asList("eu-west-1"))
-                    .bucketPrefix("katta-test")
-                    .stsRoleCreateBucketClient("")
-                    .stsRoleCreateBucketHub("")
-                    .bucketVersioning(true)
-                    .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
-            );
-
-            final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p -> StorageProfileDtoWrapper.coerce(p).getId().toString().toLowerCase().equals(storageProfileId))
+            final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p ->
+                            StorageProfileDtoWrapper.coerce(p).getId().toString().equalsIgnoreCase(StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString()))
                     .map(StorageProfileDto::getActualInstance).map(StorageProfileS3StaticDto.class::cast)
                     .findFirst();
             assertTrue(profile.isPresent());
             assertFalse(profile.get().getArchived());
         }
-        final ArchiveStorageProfile cli = new ArchiveStorageProfile(null, null, null, accessToken, "http://localhost:8280", storageProfileId);
+        final ArchiveStorageProfile cli = new ArchiveStorageProfile(null, null, null, accessToken, "http://localhost:8280", StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString());
         cli.call();
         {
-            final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p -> StorageProfileDtoWrapper.coerce(p).getId().toString().toLowerCase().equals(storageProfileId)).map(StorageProfileDto::getActualInstance).map(StorageProfileS3StaticDto.class::cast).findFirst();
+            final Optional<StorageProfileS3StaticDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream().filter(p ->
+                    StorageProfileDtoWrapper.coerce(p).getId().toString().equalsIgnoreCase(StorageProfileDtoWrapper.coerce(storageProfileDto).getId().toString())).map(StorageProfileDto::getActualInstance).map(StorageProfileS3StaticDto.class::cast).findFirst();
             assertTrue(profile.isPresent());
             assertTrue(profile.get().getArchived());
         }

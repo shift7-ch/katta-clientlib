@@ -5,14 +5,12 @@
 package cloud.katta.cli.commands.hub.storageprofile.aws;
 
 import java.util.List;
-import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3STSDto;
 import picocli.CommandLine;
@@ -44,8 +42,8 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
     public AWSSTSStorageProfile() {
     }
 
-    public AWSSTSStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions, final String awsAccountId, final String roleNamePrefix, final String bucketPrefix) {
-        super(hubUrl, uuid, name, region, regions);
+    public AWSSTSStorageProfile(final String hubUrl, final String name, final String region, final List<String> regions, final String awsAccountId, final String roleNamePrefix, final String bucketPrefix) {
+        super(hubUrl, name, region, regions);
         this.awsAccountId = awsAccountId;
         this.roleNamePrefix = roleNamePrefix;
         this.bucketPrefix = bucketPrefix;
@@ -53,25 +51,19 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
 
     @Override
     protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
-        storageProfileResourceApi.apiStorageprofileS3stsPost(new StorageProfileS3STSDto()
-                .id(uuid)
+        return storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3STSDto()
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STS)
                 .archived(false)
 
                 // -- (1) bucket creation, template upload and client profile
-                .scheme("https")
-                .port(443)
-                .storageClass(S3STORAGECLASSES.STANDARD)
-                .withPathStyleAccessEnabled(false)
+                .storageClass(S3StorageClass.STANDARD)
+                .pathStyleAccessEnabled(false)
 
                 // -- (2) bucket creation only (only relevant for Desktop client)
                 .bucketPrefix(bucketPrefix)
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
-                .bucketVersioning(true)
 
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-create-bucket
                 .stsRoleCreateBucketClient(String.format("arn:aws:iam::%s:role/%s%s", awsAccountId, roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX))
@@ -82,8 +74,7 @@ public class AWSSTSStorageProfile extends AbstractStorageProfile {
                 // arn:aws:iam::XXXXXXX:role/testing.katta.cloud-kc-realms-tamarind-access-bucket-role-tagged-session
                 .stsRoleAccessBucketAssumeRoleTaggedSession(String.format("arn:aws:iam::%s:role/%s%s%s", awsAccountId, roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX))
                 .stsSessionTag(REQUEST_TAG)
-        );
-        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
+        ));
     }
 
     @Override

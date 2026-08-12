@@ -36,6 +36,8 @@ jobs:
         run: mvn --no-transfer-progress --batch-mode verify -U
         env:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          HUB_INITIAL_ID: ${{ secrets.HUB_INITIAL_ID }}
+          HUB_INITIAL_LICENSE: ${{ secrets.HUB_INITIAL_LICENSE }}
           TESTCONTAINERS_RYUK_DISABLED: true
       - name: Publish Test Report
         if: ${{ always() }}

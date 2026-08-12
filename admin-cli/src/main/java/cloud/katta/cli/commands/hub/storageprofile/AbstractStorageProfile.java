@@ -16,8 +16,6 @@ import cloud.katta.client.model.StorageProfileDto;
 import picocli.CommandLine;
 
 public abstract class AbstractStorageProfile extends AbstractAuthorizationCode implements Callable<Void> {
-    @CommandLine.Option(names = {"--uuid"}, description = "The uuid.", required = false)
-    protected String uuid;
 
     @CommandLine.Option(names = {"--name"}, description = "The name.", required = false)
     protected String name;
@@ -34,9 +32,8 @@ public abstract class AbstractStorageProfile extends AbstractAuthorizationCode i
     public AbstractStorageProfile() {
     }
 
-    public AbstractStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions) {
+    public AbstractStorageProfile(final String hubUrl, final String name, final String region, final List<String> regions) {
         this.hubUrl = hubUrl;
-        this.uuid = uuid;
         this.name = name;
         this.region = region;
         this.regions = regions;

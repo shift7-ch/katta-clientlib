@@ -50,13 +50,13 @@ class UserKeysServiceImplTest extends AbstractHubTest {
             final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
             // N.B. DeviceKeysServiceImpl does not override device keys in keychain, so compare remote
-            final int numDevicesBeforeRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
+            final int numDevicesBeforeRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices().size();
 
             // setting up new device w/ Account Key for existing user keys and correct setup code
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(config.setup.userConfig));
             assertEquals(expecteduserKeys, userKeys);
 
-            final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
+            final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices().size();
             assertEquals(numDevicesBeforeRecover + 1, numDevicesAfterRecover);
         }
     }
@@ -98,16 +98,16 @@ class UserKeysServiceImplTest extends AbstractHubTest {
             final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
             // delete devices remote in order to simplify checking new device uploaded
-            for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
+            for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices()) {
                 new DeviceResourceApi(hubSession.getClient()).apiDevicesDeviceIdDelete(device.getId());
             }
-            assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size());
+            assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices().size());
 
             // setting up existing device w/ Account Key for existing user keys (if device keys from keychain not present in hub)
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), hubSession.getMe(), DeviceKeys.create(), deviceSetupCallback(config.setup.userConfig));
             assertEquals(expecteduserKeys, userKeys);
 
-            final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
+            final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices().size();
             assertEquals(1, numDevicesAfterRecover);
         }
     }
@@ -122,18 +122,18 @@ class UserKeysServiceImplTest extends AbstractHubTest {
             final UserKeys expecteduserKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(), existingDeviceKeys);
 
             // delete devices remote in order to simplify checking new device uploaded
-            for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
+            for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices()) {
                 new DeviceResourceApi(hubSession.getClient()).apiDevicesDeviceIdDelete(device.getId());
             }
-            assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size());
+            assertEquals(0, new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices().size());
 
-            for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices()) {
+            for(final DeviceDto device : new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices()) {
                 new DeviceResourceApi(hubSession.getClient()).apiDevicesDeviceIdDelete(device.getId());
             }
 
             final UserDto newMe = new UserDto().id(me.getId());
             new UsersResourceApi(hubSession.getClient()).apiUsersMePut(newMe);
-            new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
+            new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);
 
             // setting up new user keys and account key
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getOrCreateUserKeys(hubSession.getHost(), newMe, DeviceKeys.create(),
@@ -141,9 +141,9 @@ class UserKeysServiceImplTest extends AbstractHubTest {
 
             assertNotEquals(expecteduserKeys, userKeys);
 
-            new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false);
+            new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true);
 
-            final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true, false).getDevices().size();
+            final int numDevicesAfterRecover = new UsersResourceApi(hubSession.getClient()).apiUsersMeGet(true).getDevices().size();
             assertEquals(1, numDevicesAfterRecover);
 
             // restore setup code (to prevent side-effect if in LocalAlreadyRunning mode)

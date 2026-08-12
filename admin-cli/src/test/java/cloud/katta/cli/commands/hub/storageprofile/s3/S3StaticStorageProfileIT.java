@@ -13,8 +13,7 @@ import java.util.UUID;
 import cloud.katta.cli.Katta;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import cloud.katta.testsetup.AbstractAdminCLIIT;
@@ -28,13 +27,12 @@ class S3StaticStorageProfileIT extends AbstractAdminCLIIT {
 
     @Test
     public void testStorageProfileS3StaticSetup() throws Exception {
-        final UUID storageProfileId = UUID.randomUUID();
+        final String profileName = "AWS S3 Static - " + UUID.randomUUID();
         int rc = new CommandLine(new Katta()).execute(
                 "storageprofile", "s3", "static",
                 "--hubUrl", "http://localhost:8280",
                 "--accessToken", accessToken,
-                "--uuid", storageProfileId.toString(),
-                "--name", "S3 Static",
+                "--name", profileName,
                 "--endpointUrl", "https://s3.example.com",
                 "--region", "us-east-1",
                 "--regions", "us-east-1",
@@ -45,25 +43,17 @@ class S3StaticStorageProfileIT extends AbstractAdminCLIIT {
         final StorageProfileResourceApi storageProfileResourceApi = new StorageProfileResourceApi(apiClient);
         Optional<StorageProfileDto> profile = storageProfileResourceApi.apiStorageprofileGet(null).stream()
                 .filter(p -> p.getActualInstance() instanceof StorageProfileS3StaticDto)
-                .filter(p -> p.getStorageProfileS3StaticDto().getId().equals(storageProfileId)).findFirst();
+                .filter(p -> p.getStorageProfileS3StaticDto().getName().equals(profileName)).findFirst();
         assertTrue(profile.isPresent());
         final StorageProfileS3StaticDto dto = profile.get().getStorageProfileS3StaticDto();
-        assertEquals("S3 Static", dto.getName());
+        assertEquals(profileName, dto.getName());
         assertEquals(Protocol.S3_STATIC, dto.getProtocol());
         assertFalse(dto.getArchived());
-        assertEquals("https", dto.getScheme());
-        assertEquals("s3.example.com", dto.getHostname());
-        assertEquals(443, dto.getPort());
-        assertTrue(dto.getWithPathStyleAccessEnabled());
-        assertEquals(S3STORAGECLASSES.STANDARD, dto.getStorageClass());
+        assertEquals("https://s3.example.com", dto.getEndpoint());
+        assertTrue(dto.getPathStyleAccessEnabled());
+        assertEquals(S3StorageClass.STANDARD, dto.getStorageClass());
         assertEquals("us-east-1", dto.getRegion());
         assertEquals(Arrays.asList("us-east-1", "us-east-2", "us-west-1"), dto.getRegions());
         assertEquals("katta-", dto.getBucketPrefix());
-        assertEquals("", dto.getStsRoleCreateBucketClient());
-        assertEquals("", dto.getStsRoleCreateBucketHub());
-        assertNull(dto.getStsEndpoint());
-        assertFalse(dto.getBucketVersioning());
-        assertNull(dto.getBucketAcceleration());
-        assertEquals(S3SERVERSIDEENCRYPTION.NONE, dto.getBucketEncryption());
     }
 }

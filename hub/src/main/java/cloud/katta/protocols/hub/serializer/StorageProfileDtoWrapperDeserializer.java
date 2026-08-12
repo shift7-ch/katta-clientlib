@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 shift7 GmbH. All rights reserved.
+ * Copyright (c) 2026 shift7 GmbH. All rights reserved.
  */
 
 package cloud.katta.protocols.hub.serializer;
@@ -7,9 +7,11 @@ package cloud.katta.protocols.hub.serializer;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.serializer.Deserializer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +46,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case PROPERTIES_KEY:
                 // In format key=value
                 final List<String> properties = new ArrayList<>(super.listForKey(key));
-                if(dto.getWithPathStyleAccessEnabled()) {
+                if(dto.getPathStyleAccessEnabled() != null && dto.getPathStyleAccessEnabled()) {
                     properties.add(String.format("s3.bucket.virtualhost.disable=%s", true));
                 }
                 if(dto.getStorageClass() != null) {
@@ -73,11 +75,20 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case DEFAULT_NICKNAME_KEY:
                 return dto.getName();
             case SCHEME_KEY:
-                return dto.getScheme();
+                if(StringUtils.isNotBlank(dto.getEndpoint())) {
+                    return URI.create(dto.getEndpoint()).getScheme();
+                }
+                break;
             case DEFAULT_HOSTNAME_KEY:
-                return dto.getHostname();
+                if(StringUtils.isNotBlank(dto.getEndpoint())) {
+                    return URI.create(dto.getEndpoint()).getHost();
+                }
+                break;
             case DEFAULT_PORT_KEY:
-                return String.valueOf(dto.getPort());
+                if(StringUtils.isNotBlank(dto.getEndpoint())) {
+                    return String.valueOf(URI.create(dto.getEndpoint()).getPort());
+                }
+                break;
             case STS_ENDPOINT_KEY:
                 return dto.getStsEndpoint();
             case REGION_KEY:
@@ -114,14 +125,17 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         if(dto.getName() != null) {
             keys.add(DEFAULT_NICKNAME_KEY);
         }
-        if(dto.getScheme() != null) {
-            keys.add(SCHEME_KEY);
-        }
-        if(dto.getHostname() != null) {
-            keys.add(DEFAULT_HOSTNAME_KEY);
-        }
-        if(dto.getPort() != null) {
-            keys.add(DEFAULT_PORT_KEY);
+        if(dto.getEndpoint() != null) {
+            final URI uri = URI.create(dto.getEndpoint());
+            if(uri.getScheme() != null) {
+                keys.add(SCHEME_KEY);
+            }
+            if(uri.getHost() != null) {
+                keys.add(DEFAULT_HOSTNAME_KEY);
+            }
+            if(uri.getPort() != -1) {
+                keys.add(DEFAULT_PORT_KEY);
+            }
         }
         if(dto.getStsEndpoint() != null) {
             keys.add(STS_ENDPOINT_KEY);

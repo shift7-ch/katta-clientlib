@@ -40,7 +40,7 @@ class UserKeysRecoveryTest extends AbstractHubTest {
     void testFirstLoginAndUserKeyRecovery(final HubTestConfig config) throws Exception {
         try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final UsersResourceApi usersApi = new UsersResourceApi(hubSession.getClient());
-            final UserDto me = usersApi.apiUsersMeGet(true, false);
+            final UserDto me = usersApi.apiUsersMeGet(true);
 
             final SecurityFailure exception = assertThrows(SecurityFailure.class, () -> UserKeys.recoverWithAccountKey(me.getPrivateKeys(), new AlphanumericRandomStringService().random(), me.getEcdhPublicKey(), me.getEcdsaPublicKey()));
             assertInstanceOf(JOSEException.class, exception.getCause());

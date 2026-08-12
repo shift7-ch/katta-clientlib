@@ -5,14 +5,12 @@
 package cloud.katta.cli.commands.hub.storageprofile.aws;
 
 import java.util.List;
-import java.util.UUID;
 
 import cloud.katta.cli.commands.hub.storageprofile.AbstractStorageProfile;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.model.Protocol;
-import cloud.katta.client.model.S3SERVERSIDEENCRYPTION;
-import cloud.katta.client.model.S3STORAGECLASSES;
+import cloud.katta.client.model.S3StorageClass;
 import cloud.katta.client.model.StorageProfileDto;
 import cloud.katta.client.model.StorageProfileS3StaticDto;
 import picocli.CommandLine;
@@ -35,38 +33,23 @@ public class AWSStaticStorageProfile extends AbstractStorageProfile {
     public AWSStaticStorageProfile() {
     }
 
-    public AWSStaticStorageProfile(final String hubUrl, final String uuid, final String name, final String region, final List<String> regions, final String bucketPrefix) {
-        super(hubUrl, uuid, name, region, regions);
+    public AWSStaticStorageProfile(final String hubUrl, final String name, final String region, final List<String> regions, final String bucketPrefix) {
+        super(hubUrl, name, region, regions);
         this.bucketPrefix = bucketPrefix;
     }
 
     @Override
     protected StorageProfileDto call(final StorageProfileResourceApi storageProfileResourceApi) throws ApiException {
-        final UUID uuid = UUID.fromString(null == this.uuid ? UUID.randomUUID().toString() : this.uuid);
-        storageProfileResourceApi.apiStorageprofileS3staticPost(new StorageProfileS3StaticDto()
-                .id(uuid)
+        return storageProfileResourceApi.apiStorageprofilePost(new StorageProfileDto(new StorageProfileS3StaticDto()
                 .name(null == name ? this.toString() : name)
                 .protocol(Protocol.S3_STATIC)
                 .archived(false)
-
-                .scheme("https")
-                .port(443)
-                .storageClass(S3STORAGECLASSES.STANDARD)
-                .withPathStyleAccessEnabled(false)
-
+                .storageClass(S3StorageClass.STANDARD)
+                .pathStyleAccessEnabled(false)
                 .bucketPrefix(bucketPrefix)
-                .bucketEncryption(S3SERVERSIDEENCRYPTION.NONE)
-                .bucketVersioning(true)
-                .bucketAcceleration(null)
-
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
-
-                // Workaround https://github.com/shift7-ch/katta-server/issues/124
-                .stsRoleCreateBucketClient("")
-                .stsRoleCreateBucketHub("")
-        );
-        return storageProfileResourceApi.apiStorageprofileProfileIdGet(uuid);
+        ));
     }
 
     @Override
