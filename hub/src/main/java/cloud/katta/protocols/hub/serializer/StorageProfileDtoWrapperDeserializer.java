@@ -7,6 +7,7 @@ package cloud.katta.protocols.hub.serializer;
 import ch.cyberduck.core.Profile;
 import ch.cyberduck.core.serializer.Deserializer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -74,11 +75,20 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
             case DEFAULT_NICKNAME_KEY:
                 return dto.getName();
             case SCHEME_KEY:
-                return URI.create(dto.getEndpoint()).getScheme();
+                if(StringUtils.isNotBlank(dto.getEndpoint())) {
+                    return URI.create(dto.getEndpoint()).getScheme();
+                }
+                break;
             case DEFAULT_HOSTNAME_KEY:
-                return URI.create(dto.getEndpoint()).getHost();
+                if(StringUtils.isNotBlank(dto.getEndpoint())) {
+                    return URI.create(dto.getEndpoint()).getHost();
+                }
+                break;
             case DEFAULT_PORT_KEY:
-                return String.valueOf(URI.create(dto.getEndpoint()).getPort());
+                if(StringUtils.isNotBlank(dto.getEndpoint())) {
+                    return String.valueOf(URI.create(dto.getEndpoint()).getPort());
+                }
+                break;
             case STS_ENDPOINT_KEY:
                 return dto.getStsEndpoint();
             case REGION_KEY:
