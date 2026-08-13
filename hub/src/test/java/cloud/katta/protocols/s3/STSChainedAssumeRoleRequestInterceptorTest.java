@@ -26,6 +26,7 @@ class STSChainedAssumeRoleRequestInterceptorTest {
     void testMissingClaimAWS() throws Exception {
         final UUID vault = UUID.randomUUID();
         final Host host = Mockito.mock(Host.class);
+        when(host.getHostname()).thenReturn("s3.amazonaws.com");
         when(host.getCredentials()).thenReturn(new Credentials());
         when(host.getProtocol()).thenReturn(new S3Protocol());
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
@@ -40,6 +41,7 @@ class STSChainedAssumeRoleRequestInterceptorTest {
     void testNoClaimForNoAWS() throws Exception {
         final UUID vault = UUID.randomUUID();
         final Host host = Mockito.mock(Host.class);
+        when(host.getHostname()).thenReturn("hostname");
         when(host.getCredentials()).thenReturn(new Credentials());
         when(host.getProtocol()).thenReturn(new S3Protocol() {
             @Override
@@ -59,6 +61,7 @@ class STSChainedAssumeRoleRequestInterceptorTest {
     void testNonMatchingVault() throws Exception {
         final UUID vault = UUID.randomUUID();
         final Host host = Mockito.mock(Host.class);
+        when(host.getHostname()).thenReturn("s3.amazonaws.com");
         when(host.getCredentials()).thenReturn(new Credentials());
         when(host.getProtocol()).thenReturn(new S3Protocol());
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
@@ -73,6 +76,7 @@ class STSChainedAssumeRoleRequestInterceptorTest {
     void testTags() throws Exception {
         final UUID vault = UUID.fromString("450e17ed-1fb6-4930-8586-4360b790a04b");
         final Host host = Mockito.mock(Host.class);
+        when(host.getHostname()).thenReturn("s3.amazonaws.com");
         when(host.getCredentials()).thenReturn(new Credentials());
         when(host.getProtocol()).thenReturn(new S3Protocol());
         final STSChainedAssumeRoleRequestInterceptor interceptor = new STSChainedAssumeRoleRequestInterceptor(Mockito.mock(),
