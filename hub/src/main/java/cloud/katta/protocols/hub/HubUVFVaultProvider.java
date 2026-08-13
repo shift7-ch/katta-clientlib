@@ -192,8 +192,13 @@ public class HubUVFVaultProvider implements VaultProvider {
                     }
                     catch(BackgroundException e) {
                         log.warn("Delete vault {} after failure {} uploading template", vaultId, e);
-                        vaultResourceApi.apiVaultsVaultIdDelete(vaultId);
-                        throw e;
+                        try {
+                            vaultResourceApi.apiVaultsVaultIdDelete(vaultId);
+                        }
+                        catch(ApiException f) {
+                            f.addSuppressed(e);
+                            throw e;
+                        }
                     }
                     return vault;
                 }
