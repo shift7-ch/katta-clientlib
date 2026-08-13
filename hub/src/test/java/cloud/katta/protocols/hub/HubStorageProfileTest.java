@@ -22,5 +22,7 @@ class HubStorageProfileTest {
         Mockito.when(storageProfile.getStsEndpoint()).thenReturn("https://sts.minio");
         final HubStorageProfile profile = new HubStorageProfile(new S3Protocol(), Mockito.mock(ConfigDto.class), storageProfile);
         assertEquals("https://sts.minio", profile.getSTSEndpoint());
+        Mockito.when(storageProfile.getStsEndpoint()).thenReturn(null);
+        assertEquals("https://sts.amazonaws.com/", profile.getSTSEndpoint());
     }
 }

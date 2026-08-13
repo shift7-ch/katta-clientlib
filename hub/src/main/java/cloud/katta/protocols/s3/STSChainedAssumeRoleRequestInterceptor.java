@@ -12,7 +12,7 @@ import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.exception.AccessDeniedException;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
-import ch.cyberduck.core.s3.S3Protocol;
+import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
 import ch.cyberduck.core.sts.STSAssumeRoleWithWebIdentityCredentialsStrategy;
@@ -114,8 +114,7 @@ public class STSChainedAssumeRoleRequestInterceptor extends STSAssumeRoleWithWeb
      * @throws AccessDeniedException No matching vault id found
      */
     protected void validateVaultClaims(final DecodedJWT jwt) throws AccessDeniedException {
-        // Are we AWS?
-        if(StringUtils.equals(new S3Protocol().getSTSEndpoint(), bookmark.getProtocol().getSTSEndpoint())) {
+        if(S3Session.isAwsHostname(bookmark.getHostname())) {
             final String name = "https://aws.amazon.com/tags";
             final Claim value = jwt.getClaim(name);
             if(value.isMissing()) {

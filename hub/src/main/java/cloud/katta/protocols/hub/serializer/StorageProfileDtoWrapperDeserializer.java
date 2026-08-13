@@ -90,6 +90,11 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 }
                 break;
             case STS_ENDPOINT_KEY:
+                if(null == dto.getStsEndpoint()) {
+                    if(null != dto.getRegion()) {
+                        return String.format("https://sts.%s.amazonaws.com/", dto.getRegion());
+                    }
+                }
                 return dto.getStsEndpoint();
             case REGION_KEY:
                 return dto.getRegion();
@@ -137,9 +142,6 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                 keys.add(DEFAULT_PORT_KEY);
             }
         }
-        if(dto.getStsEndpoint() != null) {
-            keys.add(STS_ENDPOINT_KEY);
-        }
         if(dto.getRegion() != null) {
             keys.add(REGION_KEY);
         }
@@ -148,6 +150,7 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
         }
         switch(dto.getProtocol()) {
             case S3_STS:
+                keys.add(STS_ENDPOINT_KEY);
                 keys.add(ROLE_KEY_CONFIGURABLE_KEY);
                 break;
         }
