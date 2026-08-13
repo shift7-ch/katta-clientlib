@@ -109,7 +109,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             StringUtils.EMPTY, new LoginOptions(new S3Protocol())
                                     .user(true)
                                     .password(true)
-                                    .save(false));
+                                    .save(false).keychain(false));
                     log.debug("Use static S3 credentials for vault {}", vaultId);
                     payload = location.toPayload(bucket, credentials, settings);
                     storage = new S3Session(new Host(new HubStorageProfile(
