@@ -40,7 +40,7 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .usernamePlaceholder(LocaleFactory.localizedString("Account Key", "Hub"))
                             // Account key not editable
                             .user(false)
-                            .passwordPlaceholder(AccountKeyAndDeviceName.COMPUTER_NAME)
+                            .passwordPlaceholder(LocaleFactory.localizedString("Device Name", "Hub"))
                             // Input device name
                             .password(true)
                             .keychain(false)
