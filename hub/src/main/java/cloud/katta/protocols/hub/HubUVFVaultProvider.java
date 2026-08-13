@@ -187,7 +187,14 @@ public class HubUVFVaultProvider implements VaultProvider {
                     vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
                             new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
                     // Upload metadata to bucket
-                    vault.create(session, location.getRegion(), vaultMetadataProvider);
+                    try {
+                        vault.create(session, location.getRegion(), vaultMetadataProvider);
+                    }
+                    catch(BackgroundException e) {
+                        log.warn("Delete vault {} after failure {} uploading template", vaultId, e);
+                        vaultResourceApi.apiVaultsVaultIdDelete(vaultId);
+                        throw e;
+                    }
                     return vault;
                 }
             }
