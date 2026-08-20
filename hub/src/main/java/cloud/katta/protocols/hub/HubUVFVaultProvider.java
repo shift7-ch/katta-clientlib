@@ -196,9 +196,9 @@ public class HubUVFVaultProvider implements VaultProvider {
                             vaultResourceApi.apiVaultsVaultIdDelete(vaultId);
                         }
                         catch(ApiException f) {
-                            f.addSuppressed(e);
-                            throw e;
+                            e.addSuppressed(f);
                         }
+                        throw e;
                     }
                     return vault;
                 }
