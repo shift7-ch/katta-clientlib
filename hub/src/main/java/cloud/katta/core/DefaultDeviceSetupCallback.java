@@ -40,10 +40,10 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .usernamePlaceholder(LocaleFactory.localizedString("Account Key", "Hub"))
                             // Account key not editable
                             .user(false)
-                            .passwordPlaceholder(AccountKeyAndDeviceName.COMPUTER_NAME)
+                            .passwordPlaceholder(LocaleFactory.localizedString("Device Name", "Hub"))
                             // Input device name
                             .password(true)
-                            .keychain(false)
+                            .save(false).keychain(false)
             );
             return new AccountKeyAndDeviceName(input.getUsername(), input.getPassword());
         }
@@ -68,7 +68,7 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .passwordPlaceholder(LocaleFactory.localizedString("Account Key", "Hub"))
                             // Input account key
                             .password(true)
-                            .keychain(false)
+                            .save(false).keychain(false)
             );
             return new AccountKeyAndDeviceName(input.getUsername(), input.getPassword());
         }

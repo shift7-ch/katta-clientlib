@@ -49,9 +49,9 @@ public class FirstLoginController extends AlertController {
                 .append(LocaleFactory.localizedString("You can see a list of authorized apps on your profile page", "Hub")).toString());
         alert.addButtonWithTitle(LocaleFactory.localizedString("Finish Setup", "Hub"));
         alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
-        alert.setShowsSuppressionButton(false);
-        alert.suppressionButton().setTitle(LocaleFactory.localizedString("Add to Keychain", "Login"));
-        alert.suppressionButton().setState(PreferencesFactory.get().getBoolean("cryptomator.vault.keychain") ? NSCell.NSOnState : NSCell.NSOffState);
+        alert.setShowsSuppressionButton(true);
+        alert.suppressionButton().setTitle(LocaleFactory.localizedString("I stored my Account Key securely.", "Hub"));
+        alert.suppressionButton().setState(NSCell.NSOffState);
         return alert;
     }
 
@@ -89,6 +89,9 @@ public class FirstLoginController extends AlertController {
     @Override
     public boolean validate(final int option) {
         if(SheetCallback.DEFAULT_OPTION == option) {
+            if(!this.isSuppressed()) {
+                return false;
+            }
             return StringUtils.isNotBlank(deviceNameField.stringValue());
         }
         return true;

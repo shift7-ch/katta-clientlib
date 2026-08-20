@@ -103,17 +103,25 @@ public class HubUVFVaultProvider implements VaultProvider {
             final UVFMetadataPayload payload;
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC: {
-                    // Prompt for static tokens to create vault in storage
-                    final Credentials credentials = prompt.prompt(session.getHost(), StringUtils.EMPTY,
-                            LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
-                            StringUtils.EMPTY, new LoginOptions(new S3Protocol())
-                                    .user(true)
-                                    .password(true)
-                                    .save(false));
                     log.debug("Use static S3 credentials for vault {}", vaultId);
-                    payload = location.toPayload(bucket, credentials, settings);
+                    // Prompt for static tokens to create vault in storage
+                    payload = location.toPayload(bucket,
+                            prompt.prompt(session.getHost(), StringUtils.EMPTY,
+                                    LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
+                                    LocaleFactory.localizedString("Access Key ID and Secret Access Key with permissions to create bucket required", "Hub"),
+                                    new LoginOptions(new S3Protocol())
+                                            .user(true)
+                                            .password(true)
+                                            .save(false).keychain(false)), settings);
                     storage = new S3Session(new Host(new HubStorageProfile(
-                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile), credentials).setRegion(location.getRegion()),
+                            new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile),
+                            prompt.prompt(session.getHost(), StringUtils.EMPTY,
+                                    LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
+                                    LocaleFactory.localizedString("Access Key ID and Secret Access Key with permissions to access bucket required", "Hub"),
+                                    new LoginOptions(new S3Protocol())
+                                            .user(true)
+                                            .password(true)
+                                            .save(false).keychain(false))).setRegion(location.getRegion()),
                             session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class));
                     break;
                 }
