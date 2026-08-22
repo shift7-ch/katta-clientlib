@@ -46,8 +46,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.HubApiClient;
@@ -64,6 +68,10 @@ import cloud.katta.workflows.DeviceKeysServiceImpl;
 import cloud.katta.workflows.UserKeysServiceImpl;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 
 /**
  * Providing Katta Server client for accessing its REST API
@@ -90,6 +98,11 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
             = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
 
     private ListService vaults;
+
+    /**
+     * Realm roles assigned to the user parsed from the access token on login
+     */
+    private final Set<String> roles = new HashSet<>();
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
@@ -151,7 +164,24 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final Credentials credentials = host.getCredentials();
-        credentials.setOauth(authorizationService.validate(credentials.getOauth()));
+        final OAuthTokens tokens = authorizationService.validate(credentials.getOauth());
+        if(null != tokens.getAccessToken()) {
+            try {
+                final DecodedJWT jwt = JWT.decode(tokens.getAccessToken());
+                final Claim realmAccess = jwt.getClaim("realm_access");
+                if(!realmAccess.isMissing()) {
+                    final Object value = realmAccess.asMap().get("roles");
+                    if(value instanceof List) {
+                        roles.addAll(((List<?>) value).stream().map(String::valueOf).collect(Collectors.toList()));
+                    }
+                }
+                log.debug("Assigned roles {} for host {}", roles, host);
+            }
+            catch(JWTDecodeException e) {
+                log.warn("Failure {} decoding JWT {}", e, tokens.getAccessToken());
+            }
+        }
+        credentials.setOauth(tokens);
         // Ensure device key is available
         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
         log.debug("Configured with setup prompt {}", setup);
