@@ -46,7 +46,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +57,7 @@ import cloud.katta.client.HubApiClient;
 import cloud.katta.client.api.ConfigResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.ConfigDto;
+import cloud.katta.client.model.RealmRole;
 import cloud.katta.client.model.UserDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.DeviceKeys;
@@ -98,11 +98,6 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
             = new ExpiringObjectHolder<>(-1L == preferences.getLong("katta.userkeys.ttl") ? 60000 : preferences.getLong("katta.userkeys.ttl"));
 
     private ListService vaults;
-
-    /**
-     * Realm roles assigned to the user parsed from the access token on login
-     */
-    private final Set<String> roles = new HashSet<>();
 
     public HubSession(final Host host, final X509TrustManager trust, final X509KeyManager key) {
         super(host, trust, key);
@@ -172,10 +167,12 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
                 if(!realmAccess.isMissing()) {
                     final Object value = realmAccess.asMap().get("roles");
                     if(value instanceof List) {
-                        roles.addAll(((List<?>) value).stream().map(String::valueOf).collect(Collectors.toList()));
+                        final Set<String> roles = (((List<?>) value).stream().map(String::valueOf).collect(Collectors.toSet()));
+                        log.debug("Assigned roles {}", roles);
+                        host.setProperty("nativity.contextmenu.cryptomator.create.enable",
+                                String.valueOf(roles.contains(RealmRole.CREATE_VAULTS.getValue())));
                     }
                 }
-                log.debug("Assigned roles {} for host {}", roles, host);
             }
             catch(JWTDecodeException e) {
                 log.warn("Failure {} decoding JWT {}", e, tokens.getAccessToken());
