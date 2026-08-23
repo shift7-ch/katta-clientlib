@@ -175,7 +175,7 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
                 }
             }
             catch(JWTDecodeException e) {
-                log.warn("Failure {} decoding JWT {}", e, tokens.getAccessToken());
+                log.warn("Failure {} decoding JWT", e.toString());
             }
         }
         credentials.setOauth(tokens);
