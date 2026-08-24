@@ -46,11 +46,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiException;
 import cloud.katta.client.HubApiClient;
@@ -72,6 +70,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Providing Katta Server client for accessing its REST API
@@ -165,13 +165,10 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
                 final DecodedJWT jwt = JWT.decode(tokens.getAccessToken());
                 final Claim realmAccess = jwt.getClaim("realm_access");
                 if(!realmAccess.isMissing()) {
-                    final Object value = realmAccess.asMap().get("roles");
-                    if(value instanceof List) {
-                        final Set<String> roles = (((List<?>) value).stream().map(String::valueOf).collect(Collectors.toSet()));
-                        log.debug("Assigned roles {}", roles);
-                        host.setProperty("nativity.contextmenu.cryptomator.create.enable",
-                                String.valueOf(roles.contains(RealmRole.CREATE_VAULTS.getValue())));
-                    }
+                    final Set<String> roles = realmAccess.as(RealmAccess.class).roles;
+                    log.debug("Assigned roles {}", roles);
+                    host.setProperty("nativity.contextmenu.cryptomator.create.enable",
+                            String.valueOf(roles.contains(RealmRole.CREATE_VAULTS.getValue())));
                 }
             }
             catch(JWTDecodeException e) {
@@ -185,6 +182,12 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
         userKeysHolder.set(this.pair(setup));
         log.debug("Retrieved user keys for host {}", host.getHostname());
         access = new HubGrantAccessSchedulerService(this);
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class RealmAccess {
+        @JsonProperty("roles")
+        private Set<String> roles;
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
