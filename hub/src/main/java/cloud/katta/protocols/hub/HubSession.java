@@ -166,9 +166,11 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
                 final Claim realmAccess = jwt.getClaim("realm_access");
                 if(!realmAccess.isMissing()) {
                     final Set<String> roles = realmAccess.as(RealmAccess.class).roles;
-                    log.debug("Assigned roles {}", roles);
-                    host.setProperty("nativity.contextmenu.cryptomator.create.enable",
-                            String.valueOf(roles.contains(RealmRole.CREATE_VAULTS.getValue())));
+                    if(roles != null) {
+                        log.debug("Assigned roles {}", roles);
+                        host.setProperty("nativity.contextmenu.cryptomator.create.enable",
+                                String.valueOf(roles.contains(RealmRole.CREATE_VAULTS.getValue())));
+                    }
                 }
             }
             catch(JWTDecodeException e) {
