@@ -46,6 +46,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -78,6 +79,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class HubSession extends HttpSession<HubApiClient> implements AutoCloseable {
     private static final Logger log = LogManager.getLogger(HubSession.class);
+
+    /**
+     * Toggle context menu to create new vaults
+     */
+    static final String CREATE_VAULTS_ENABLE_PROPERTY = "nativity.contextmenu.cryptomator.create.enable";
+
+    /**
+     * Realm roles claim in access token
+     */
+    private static final String REALM_ACCESS_CLAIM = "realm_access";
 
     private final HostPasswordStore keychain = PasswordStoreFactory.get();
 
@@ -161,21 +172,8 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
         final Credentials credentials = host.getCredentials();
         final OAuthTokens tokens = authorizationService.validate(credentials.getOauth());
         if(null != tokens.getAccessToken()) {
-            try {
-                final DecodedJWT jwt = JWT.decode(tokens.getAccessToken());
-                final Claim realmAccess = jwt.getClaim("realm_access");
-                if(!realmAccess.isMissing() && !realmAccess.isNull()) {
-                    final Set<String> roles = realmAccess.as(RealmAccess.class).roles;
-                    if(roles != null) {
-                        log.debug("Assigned roles {}", roles);
-                        host.setProperty("nativity.contextmenu.cryptomator.create.enable",
-                                String.valueOf(roles.contains(RealmRole.CREATE_VAULTS.getValue())));
-                    }
-                }
-            }
-            catch(JWTDecodeException e) {
-                log.warn("Failure {} decoding JWT", e.toString());
-            }
+            host.setProperty(CREATE_VAULTS_ENABLE_PROPERTY,
+                    String.valueOf(RealmAccess.parse(host, tokens.getAccessToken()).contains(RealmRole.CREATE_VAULTS.getValue())));
         }
         credentials.setOauth(tokens);
         // Ensure device key is available
@@ -187,9 +185,34 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class RealmAccess {
+    public static class RealmAccess {
         @JsonProperty("roles")
         private Set<String> roles;
+
+        /**
+         * Toggle features depending on realm roles assigned to user in access token
+         *
+         * @param host        Bookmark to set properties for
+         * @param accessToken JWT with <code>realm_access</code> claim
+         * @return Assigned roles found in realm access claim
+         */
+        static Set<String> parse(final Host host, final String accessToken) {
+            try {
+                final DecodedJWT jwt = JWT.decode(accessToken);
+                final Claim realmAccess = jwt.getClaim(REALM_ACCESS_CLAIM);
+                if(!realmAccess.isMissing() && !realmAccess.isNull()) {
+                    final Set<String> roles = realmAccess.as(RealmAccess.class).roles;
+                    if(roles != null) {
+                        log.debug("Assigned roles {}", roles);
+                        return roles;
+                    }
+                }
+            }
+            catch(JWTDecodeException e) {
+                log.warn("Failure {} decoding JWT", e.toString());
+            }
+            return Collections.emptySet();
+        }
     }
 
     private UserKeys pair(final DeviceSetupCallback setup) throws BackgroundException {
