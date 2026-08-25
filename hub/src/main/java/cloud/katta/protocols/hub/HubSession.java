@@ -164,7 +164,7 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
             try {
                 final DecodedJWT jwt = JWT.decode(tokens.getAccessToken());
                 final Claim realmAccess = jwt.getClaim("realm_access");
-                if(!realmAccess.isMissing()) {
+                if(!realmAccess.isMissing() && !realmAccess.isNull()) {
                     final Set<String> roles = realmAccess.as(RealmAccess.class).roles;
                     if(roles != null) {
                         log.debug("Assigned roles {}", roles);
