@@ -18,8 +18,7 @@ import cloud.katta.testsetup.AbstractHubTest;
 import cloud.katta.testsetup.HubTestConfig;
 import cloud.katta.testsetup.HubTestSetupDockerExtension;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith({HubTestSetupDockerExtension.Local.class})
 class HubSessionTest extends AbstractHubTest {
@@ -27,6 +26,15 @@ class HubSessionTest extends AbstractHubTest {
     private static Stream<Arguments> arguments() {
         // static or STS does not matter
         return Stream.of(LOCAL_MINIO_STATIC);
+    }
+
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void testRolesFromAccessToken(final HubTestConfig config) throws Exception {
+        try (final HubSession session = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
+            // Realm role create-vaults is assigned to user in realm configuration
+            assertEquals("true", session.getHost().getProperty(HubSession.CREATE_VAULTS_ENABLE_PROPERTY));
+        }
     }
 
     @ParameterizedTest
