@@ -253,15 +253,14 @@
             <id>native</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <configuration>
-                            <argLine>
-                                -agentlib:native-image-agent=config-merge-dir=${project.build.directory}/META-INF/native-image,access-filter-file=${project.basedir}/src/main/resources/META-INF/native-image/agent-filter.json,builtin-caller-filter=true,builtin-heuristic-filter=true
-                            </argLine>
-                        </configuration>
-                    </plugin>
+                    <!--
+                      The native-image agent is attached to the failsafe run by the
+                      native-maven-plugin <agent> configuration below. Do not also set
+                      -agentlib:native-image-agent via maven-failsafe-plugin <argLine>:
+                      native-build-tools >= 1.1.x injects its own agent into the failsafe
+                      fork, and a second -agentlib:native-image-agent makes the forked JVM
+                      fail to start ("Error occurred in starting fork", exit code 99).
+                    -->
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
