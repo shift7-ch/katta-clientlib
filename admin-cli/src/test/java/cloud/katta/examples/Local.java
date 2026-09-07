@@ -4,8 +4,6 @@
 
 package cloud.katta.examples;
 
-import java.util.UUID;
-
 import cloud.katta.cli.Katta;
 import picocli.CommandLine;
 
@@ -22,11 +20,9 @@ public class Local {
         final String hubUrl = String.format("http://localhost:8080");
         final String region = "eu-central-1";
         if(true) {
-            final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "minio", "sts",
                     "--hubUrl", hubUrl,
-                    "--uuid", storageProfileId.toString(),
                     "--name", "MinIO S3 STS",
                     "--bucketPrefix", bucketPrefix,
                     "--endpointUrl", "http://localhost:9000",
@@ -41,11 +37,9 @@ public class Local {
             assertEquals(0, rc);
         }
         if(false) {
-            final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "s3", "static",
                     "--hubUrl", hubUrl,
-                    "--uuid", storageProfileId.toString(),
                     "--name", "MinIO S3 Static",
                     "--endpointUrl", "http://localhost:9000",
                     "--region", "eu-west-1",

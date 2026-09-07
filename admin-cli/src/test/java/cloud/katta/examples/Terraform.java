@@ -4,8 +4,6 @@
 
 package cloud.katta.examples;
 
-import java.util.UUID;
-
 import cloud.katta.cli.Katta;
 import picocli.CommandLine;
 
@@ -51,14 +49,12 @@ public class Terraform {
             assertEquals(0, rc);
         }
         if(true) {
-            final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "aws", "sts",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
                     "--hubUrl", hubUrl,
-                    "--uuid", storageProfileId.toString(),
                     "--name", "AWS S3 STS",
                     "--bucketPrefix", bucketPrefix,
                     "--awsAccountId", "430118840017",
@@ -70,14 +66,12 @@ public class Terraform {
             assertEquals(0, rc);
         }
         if(true) {
-            final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "s3", "static",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
                     "--hubUrl", hubUrl,
-                    "--uuid", storageProfileId.toString(),
                     "--name", "S3 Static",
                     "--endpointUrl", "https://s3.example.com",
                     "--region", region,
@@ -87,14 +81,12 @@ public class Terraform {
             assertEquals(0, rc);
         }
         if(true) {
-            final UUID storageProfileId = UUID.randomUUID();
             final String[] options = {
                     "storageprofile", "aws", "static",
                     "--tokenUrl", tokenUrl,
                     "--authUrl", authUrl,
                     "--clientId", "cryptomator",
                     "--hubUrl", hubUrl,
-                    "--uuid", storageProfileId.toString(),
                     "--name", "AWS S3 Static",
                     "--region", "eu-west-1",
                     "--regions", "eu-west-1",

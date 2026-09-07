@@ -4,8 +4,6 @@
 
 package cloud.katta.examples;
 
-import java.util.UUID;
-
 import cloud.katta.cli.Katta;
 import picocli.CommandLine;
 
@@ -26,14 +24,12 @@ public class Tamarind {
         }
 
         if(false) {
-            final UUID storageProfileId = UUID.randomUUID();
             new CommandLine(new Katta()).setPosixClusteredShortOptionsAllowed(false).execute(
                     "storageprofile", "aws", "sts",
                     "--tokenUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/token",
                     "--authUrl", "https://testing.katta.cloud/kc/realms/tamarind/protocol/openid-connect/auth",
                     "--clientId", "cryptomator",
                     "--hubUrl", "https://testing.katta.cloud/tamarind/",
-                    "--uuid", storageProfileId.toString(),
                     "--name", "AWS S3 STS",
                     "--bucketPrefix", "katta-test-",
                     "--awsAccountId", "430118840017",
