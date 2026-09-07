@@ -55,9 +55,6 @@ public class S3StaticStorageProfile extends AbstractStorageProfile {
                 .pathStyleAccessEnabled(true) // Required for generic S3-compatible providers
 
                 .bucketPrefix(bucketPrefix)
-                // TODO missing static - required for bucket creation
-//                .bucketVersioning(false)
-//                .bucketAcceleration(null) // Not supported by generic S3 providers
 
                 .region(region)
                 .regions(null == regions ? List.of(region) : regions)
