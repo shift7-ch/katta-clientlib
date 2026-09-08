@@ -7,6 +7,7 @@ package cloud.katta.client;
 import ch.cyberduck.core.ConnectionTimeoutFactory;
 import ch.cyberduck.core.Host;
 import ch.cyberduck.core.HostUrlProvider;
+import ch.cyberduck.core.Path;
 import ch.cyberduck.core.PreferencesUseragentProvider;
 import ch.cyberduck.core.Scheme;
 import ch.cyberduck.core.jersey.HttpComponentsProvider;
@@ -50,7 +51,9 @@ public class HubApiClient extends ApiClient {
         this.setConnectTimeout(timeout);
         this.setReadTimeout(timeout);
         this.setUserAgent(new PreferencesUseragentProvider().get());
-        this.setBasePath(new HostUrlProvider().withPath(true).get(scheme, port, null, hostname, defaultPath));
+        // Skip a bare delimiter default path, otherwise the generated API code would append operation paths as "//api/config"
+        this.setBasePath(new HostUrlProvider().withPath(!String.valueOf(Path.DELIMITER).equals(defaultPath))
+                .get(scheme, port, null, hostname, defaultPath));
     }
 
     @Override
