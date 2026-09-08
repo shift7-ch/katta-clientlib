@@ -46,6 +46,7 @@ Every tagged release publishes native executables and packages as
 
 ```bash
 brew tap shift7-ch/katta
+brew trust shift7-ch/katta
 brew install katta
 ```
 
