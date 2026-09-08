@@ -1,12 +1,11 @@
 {
-    "id": "72736C19-283C-49D3-80A5-AB74B5202549",
     "name": "AWS S3 static",
     "protocol": "S3STATIC",
-    "storageClass": "STANDARD",
     "archived": false,
-    "region": "eu-central-1",
+    "storageClass": "STANDARD",
     "bucketPrefix": "katta-test-",
-    "stsRoleCreateBucketHub": "",
-    "stsRoleCreateBucketClient": "",
-    "bucketEncryption": "NONE"
+    "region": "eu-central-1",
+    "regions": [
+        "eu-central-1"
+    ]
 }

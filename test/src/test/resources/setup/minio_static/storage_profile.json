@@ -1,14 +1,13 @@
 {
-    "id": "71B910E0-2ECC-46DE-A871-8DB28549677E",
     "name": "MinIO S3 static",
     "protocol": "S3STATIC",
-    "pathStyleAccessEnabled": true,
+    "archived": false,
     "endpoint": "${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}",
     "storageClass": "STANDARD",
-    "archived": false,
+    "pathStyleAccessEnabled": true,
     "bucketPrefix": "katta-test-",
-    "stsRoleCreateBucketHub": "",
-    "stsRoleCreateBucketClient": "",
-    "stsEndpoint": "",
-    "bucketEncryption": "NONE"
+    "region": "eu-central-1",
+    "regions": [
+        "eu-central-1"
+    ]
 }
