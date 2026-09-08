@@ -15,16 +15,20 @@ import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.StringAppender;
 import ch.cyberduck.core.exception.LoginCanceledException;
 
-import cloud.katta.workflows.exceptions.AccessException;
-
 import java.text.MessageFormat;
+
+import cloud.katta.workflows.exceptions.AccessException;
 
 public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
 
     private final LoginCallback prompt;
 
     public DefaultDeviceSetupCallback(final Controller controller) {
-        this.prompt = LoginCallbackFactory.get(controller);
+        this(LoginCallbackFactory.get(controller));
+    }
+
+    public DefaultDeviceSetupCallback(final LoginCallback prompt) {
+        this.prompt = prompt;
     }
 
     @Override
@@ -70,7 +74,8 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .password(true)
                             .save(false).keychain(false)
             );
-            return new AccountKeyAndDeviceName(input.getUsername(), input.getPassword());
+            // Username field holds the device name, password field holds the account key
+            return new AccountKeyAndDeviceName(input.getPassword(), input.getUsername());
         }
         catch(LoginCanceledException e) {
             throw new AccessException(e);
