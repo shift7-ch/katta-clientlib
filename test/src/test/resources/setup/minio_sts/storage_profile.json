@@ -21,5 +21,6 @@
     "stsRoleCreateBucketHub": "arn:minio:iam:::role/HGKdlY4eFFsXVvJmwlMYMhmbnDE",
     "stsRoleAccessBucketAssumeRoleWithWebIdentity": "arn:minio:iam:::role/Hdms6XDZ6oOpuWYI3gu4gmgHN94",
     "stsEndpoint": "${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}",
-    "stsRoleAccessBucketAssumeRoleTaggedSession": null
+    "stsRoleAccessBucketAssumeRoleTaggedSession": null,
+    "stsSessionTag": "Vault"
 }
