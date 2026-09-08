@@ -1,0 +1,27 @@
+# nfpm configuration for the Katta Admin CLI Linux packages (.deb / .rpm).
+# Rendered and consumed by .github/workflows/cli.yml on tag builds.
+# See https://nfpm.goreleaser.com/configuration/
+name: katta
+arch: amd64
+platform: linux
+version: ${VERSION}
+version_schema: none
+maintainer: "shift7 GmbH <noreply@shift7.ch>"
+description: |
+  Katta Admin CLI.
+  Configure a Katta Server including its S3 storage backend: AWS S3 with static
+  access keys, AWS STS with OIDC, generic S3-compatible providers and MinIO STS.
+vendor: "shift7 GmbH"
+homepage: "https://katta.cloud/"
+license: "AGPL-3.0-or-later"
+section: utils
+priority: optional
+contents:
+  - src: ./admin-cli/target/katta
+    dst: /usr/bin/katta
+    file_info:
+      mode: 0755
+  - src: ./admin-cli/target/katta.bash
+    dst: /usr/share/bash-completion/completions/katta
+    file_info:
+      mode: 0644
