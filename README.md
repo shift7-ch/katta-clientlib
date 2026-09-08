@@ -63,7 +63,7 @@ docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml 
 
 Also deploys storage profiles for local MinIO (static+STS):
 
-```
+```bash
 docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo --env-file test/src/test/resources/.local.env up --wait
 docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo down
 ```
