@@ -37,6 +37,37 @@ Add `-Prelease` to build with `-O3` instead of the default `-Ob` (faster runtime
 admin-cli/target/katta --help
 ```
 
+## Installation
+
+Every tagged release publishes native executables and packages as
+[GitHub Release assets](https://github.com/shift7-ch/katta-clientlib/releases).
+
+### macOS (Homebrew)
+
+```bash
+brew tap shift7-ch/katta
+brew install katta
+```
+
+Upgrade with `brew upgrade katta`. Requires Apple Silicon (arm64).
+
+### Linux (Debian/Ubuntu)
+
+```bash
+curl -fsSLO https://github.com/shift7-ch/katta-clientlib/releases/latest/download/katta_amd64.deb
+sudo apt install ./katta_amd64.deb
+```
+
+### Linux (Fedora/RHEL/openSUSE)
+
+```bash
+sudo rpm -i https://github.com/shift7-ch/katta-clientlib/releases/latest/download/katta.x86_64.rpm
+```
+
+The `.deb` and `.rpm` packages install `katta` to `/usr/bin/katta` and a bash
+completion script to `/usr/share/bash-completion/completions/katta`. They are
+built for x86_64/amd64 only.
+
 ### Setup AWS using OIDC Provider and Security Token Service (STS) with `setup` command
 
 Set up AWS as a storage backend for Katta Server. Configures identity provider and roles in IAM to restrict access to S3 buckets to users authenticated by
