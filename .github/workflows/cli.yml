@@ -75,8 +75,10 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.value }}
         run: |
-          nfpm package -f admin-cli/src/deploy/nfpm.yaml -p deb -t admin-cli/target/
-          nfpm package -f admin-cli/src/deploy/nfpm.yaml -p rpm -t admin-cli/target/
+          # Version-less filenames keep the releases/latest/download/ URLs stable;
+          # the package version lives in the .deb/.rpm metadata.
+          nfpm package -f admin-cli/src/deploy/nfpm.yaml -p deb -t admin-cli/target/katta_amd64.deb
+          nfpm package -f admin-cli/src/deploy/nfpm.yaml -p rpm -t admin-cli/target/katta.x86_64.rpm
           cp admin-cli/target/katta admin-cli/target/katta-linux-amd64
 
       # --- macOS: tarball for the Homebrew formula ---
@@ -92,8 +94,8 @@ jobs:
           name: katta-linux
           path: |
             admin-cli/target/katta-linux-amd64
-            admin-cli/target/*.deb
-            admin-cli/target/*.rpm
+            admin-cli/target/katta_amd64.deb
+            admin-cli/target/katta.x86_64.rpm
           if-no-files-found: error
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -111,8 +113,8 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             admin-cli/target/katta-linux-amd64
-            admin-cli/target/*.deb
-            admin-cli/target/*.rpm
+            admin-cli/target/katta_amd64.deb
+            admin-cli/target/katta.x86_64.rpm
       - name: Publish macOS tarball on Github Releases
         if: startsWith(github.ref, 'refs/tags/') && runner.os == 'macOS'
         uses: softprops/action-gh-release@v3
