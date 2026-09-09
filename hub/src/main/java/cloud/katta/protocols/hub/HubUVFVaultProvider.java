@@ -104,20 +104,21 @@ public class HubUVFVaultProvider implements VaultProvider {
             switch(storageProfile.getProtocol()) {
                 case S3_STATIC: {
                     log.debug("Use static S3 credentials for vault {}", vaultId);
-                    // Prompt for static tokens to create vault in storage
+                    // Prompt for static tokens saved in vault metadata and shared with all members of the vault
                     payload = location.toPayload(bucket,
                             prompt.prompt(session.getHost(), StringUtils.EMPTY,
                                     LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
-                                    LocaleFactory.localizedString("Access Key ID and Secret Access Key with permissions to create bucket required", "Hub"),
+                                    LocaleFactory.localizedString("Access Key ID and Secret Access Key with permissions to access bucket required", "Hub"),
                                     new LoginOptions(new S3Protocol())
                                             .user(true)
                                             .password(true)
                                             .save(false).keychain(false)), settings);
+                    // Prompt for static tokens used once to create the bucket and upload the vault template
                     storage = new S3Session(new Host(new HubStorageProfile(
                             new S3Protocol(), HubSession.coerce(session).getConfig(), storageProfile),
                             prompt.prompt(session.getHost(), StringUtils.EMPTY,
                                     LocaleFactory.localizedString("Provide additional login credentials", "Credentials"),
-                                    LocaleFactory.localizedString("Access Key ID and Secret Access Key with permissions to access bucket required", "Hub"),
+                                    LocaleFactory.localizedString("Access Key ID and Secret Access Key with permissions to create bucket required", "Hub"),
                                     new LoginOptions(new S3Protocol())
                                             .user(true)
                                             .password(true)
