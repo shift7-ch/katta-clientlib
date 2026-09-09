@@ -103,9 +103,13 @@ public class AbstractAuthorizationCode {
                 return false;
         }
         try {
-            return new ProcessBuilder(command).start().exitValue() == 0;
+            return new ProcessBuilder(command).start().waitFor() == 0;
         }
         catch(IOException e) {
+            return false;
+        }
+        catch(InterruptedException e) {
+            Thread.currentThread().interrupt();
             return false;
         }
     }
