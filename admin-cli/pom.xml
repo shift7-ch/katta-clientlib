@@ -16,6 +16,8 @@
 
         <native-maven-plugin.version>1.1.12</native-maven-plugin.version>
         <native.optimization>-Ob</native.optimization>
+        <!-- URL protocols to enable in the native image (java.net.URL); disabled by default in GraalVM -->
+        <native.url.protocols>http,https</native.url.protocols>
     </properties>
 
     <dependencies>
@@ -219,6 +221,7 @@
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
+                                <arg>--enable-url-protocols=${native.url.protocols}</arg>
                             </buildArgs>
                         </configuration>
                     </plugin>
@@ -241,6 +244,7 @@
                         <configuration>
                             <buildArgs>
                                 <arg>${native.optimization}</arg>
+                                <arg>--enable-url-protocols=${native.url.protocols}</arg>
                                 <arg>--static</arg>
                                 <arg>--libc=musl</arg>
                             </buildArgs>
