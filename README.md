@@ -69,6 +69,13 @@ docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml 
 --env-file test/src/test/resources/.local.env down
 ```
 
+> [!TIP]
+> Configure MinIO for STS Storage Access Mode. Refer to
+the [Admin CLI Docmentation](admin-cli/README.md#setup-minio-using-oidc-provider-and-security-token-service-sts-with-setup-command).
+> ```bash
+> katta setup minio --hubUrl http://localhost:8280 --endpointUrl http://localhost:9100 --accessKey=minioadmin --secretKey=minioadmin
+> ```
+
 ### Hybrid Test Environment Profile
 
 For integration tests with
