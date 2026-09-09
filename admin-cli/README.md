@@ -37,6 +37,30 @@ Add `-Prelease` to build with `-O3` instead of the default `-Ob` (faster runtime
 admin-cli/target/katta --help
 ```
 
+### Authentication
+
+The `storageprofile` commands and `accesstoken` call the Katta Server API on behalf of a user with the `admin` role. They obtain
+an access token through the OAuth 2.0 authorization code flow with PKCE: the CLI starts a temporary loopback listener on a random
+port, opens the Keycloak login page in the browser, and receives the authorization code on the redirect
+(`http://127.0.0.1:<random>/<random>`).
+
+The OIDC client used for login (`--clientId`, default `cryptomator`) must therefore have `http://127.0.0.1/*` registered as a
+*Valid redirect URI*. Keycloak ignores the port for loopback (`127.0.0.1`, `[::1]`) redirect URIs, so this one entry matches any
+ephemeral port. The Docker Compose demo setup and the bundled Keycloak realm already configure this.
+
+> Registering a port-less `http://127.0.0.1/*` is flagged by [CVE-2024-8883](https://github.com/keycloak/keycloak/issues/33115)
+> as unsuitable for production. For a hardened Keycloak, register a fixed loopback port instead and obtain the token out of band
+> with `--accessToken`.
+
+Alternatively, skip the browser flow entirely by passing a token directly:
+
+- `--accessToken <token>` — a Keycloak access token for an `admin` user, e.g. obtained via a direct access grant:
+
+  ```bash
+  curl -s -d grant_type=password -d client_id=cryptomator -d username=<admin-user> -d password=<password> -d scope=openid \
+    <keycloak-url>/realms/cryptomator/protocol/openid-connect/token | jq -r .access_token
+  ```
+
 ### Setup AWS using OIDC Provider and Security Token Service (STS) with `setup` command
 
 Set up AWS as a storage backend for Katta Server. Configures identity provider and roles in IAM to restrict access to S3 buckets to users authenticated by
