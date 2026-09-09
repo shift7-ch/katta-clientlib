@@ -131,23 +131,28 @@ public class MinIOSTSStorage implements Callable<Void> {
         final String keycloakClientIdCryptomatorVaults = apiConfig.getString("keycloakClientIdCryptomatorVaults");
 
         System.out.printf("""
-                        # The MinIO Client API is incomplete (https://github.com/minio/minio/issues/16151).
+                        # The minio-java admin client cannot configure an OpenID identity provider: it exposes no
+                        # equivalent of the config commands below (the "set-config-kv" admin endpoint expects an
+                        # encrypted payload which minio-java does not implement, unlike minio-go). minio/minio is
+                        # archived read-only since April 2026, so this is not expected to change.
                         # Please execute the following commands on the command line.
+                        # Note: "mc idp openid add" is AIStor-only; on AGPL MinIO configure the provider via
+                        # "mc admin config set ... identity_openid:<name>" as shown here.
                         # Further info: https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio
 
                         mc alias set %s %s %s %s
 
-                        mc idp openid add %s %s \
+                        mc admin config set %s identity_openid:%s \
                             config_url="%s" \
                             client_id="%s" \
                             client_secret="ignore-me" \
                             role_policy="%s"
-                        mc idp openid add %s %s \
+                        mc admin config set %s identity_openid:%s \
                             config_url="%s" \
                             client_id="%s" \
                             client_secret="ignore-me" \
                             role_policy="%s"
-                        mc idp openid add %s %s \
+                        mc admin config set %s identity_openid:%s \
                             config_url="%s" \
                             client_id="%s" \
                             client_secret="ignore-me" \
