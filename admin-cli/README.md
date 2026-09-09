@@ -107,6 +107,51 @@ katta storageprofile s3 static \
 - `--regions`: Additional bucket regions. Example: `--regions us-east-1 --regions us-west-2`
 - `--name`: Display name for the storage profile.
 
+### Setup MinIO using OIDC Provider and Security Token Service (STS) with `setup` command
+
+Set up MinIO as a storage backend for Katta Server. Reads the Keycloak URL, realm and client IDs from `<hub-url>/api/config`
+and creates (or updates) two policies via the MinIO Admin API:
+
+- a **bucket creation** policy (`--createBucketPolicyName`, default `katta-createbucketpolicy`) allowing `s3:CreateBucket` and
+  versioning/policy reads on `arn:aws:s3:::katta-*`, plus `s3:PutObject` for the vault template, restricted to the bucket prefix;
+- a **bucket access** policy (`--accessBucketPolicyName`, default `katta-accessbucketpolicy`) granting read/write on
+  `arn:aws:s3:::katta-${jwt:client_id}`. MinIO scopes bucket access per vault through the `${jwt:client_id}` policy variable and
+  does not support role chaining or tagged sessions.
+
+It is idempotent — re-run it to pick up policy changes.
+
+```bash
+katta setup minio \
+  --hubUrl <hub-url> \
+  --endpointUrl <minio-endpoint-url> \
+  --accessKey <minio-access-key> \
+  --secretKey <minio-secret-key>
+```
+
+**Required Options:**
+
+- `--hubUrl`: Hub URL. Example: `https://hub.default.katta.cloud/`
+- `--endpointUrl`: MinIO endpoint URL (S3 API). Example: `http://localhost:9000` or `https://minio.example.com:9000`
+- `--accessKey`: Access key of a MinIO admin account.
+- `--secretKey`: Secret key of a MinIO admin account.
+
+**Additional Options:**
+
+- `--minioAlias`: MinIO client alias used in the printed `mc` commands. Defaults to `myminio`.
+- `--roleNamePrefix`: Prefix for the generated OIDC provider names (`<roleNamePrefix><clientId>`). Defaults to `katta-`.
+- `--bucketPrefix`: Prefix used when creating buckets for this storage profile. Defaults to `katta-`.
+- `--createBucketPolicyName`: Name of the bucket creation policy. Defaults to `<roleNamePrefix>createbucketpolicy`.
+- `--accessBucketPolicyName`: Name of the bucket access policy. Defaults to `<roleNamePrefix>accessbucketpolicy`.
+
+The MinIO Admin API used through `minio-java` cannot configure the OIDC identity provider itself (the `set-config-kv` endpoint
+expects an encrypted payload that `minio-java` does not implement, and `minio/minio` is archived read-only since April 2026).
+`katta setup minio` therefore does **not** register the providers; instead it prints the `mc alias set`, one
+`mc admin config set … identity_openid:<roleNamePrefix><clientId>` per client, and `mc admin service restart` commands for you
+to run against the MinIO server. (`mc idp openid add` is only available against MinIO AIStor deployments.)
+
+MinIO prints the generated `RoleARN` for each provider to its server log on restart — pass those to
+`katta storageprofile minio sts` below.
+
 ### Configure storage profile for MinIO using `storageprofile` command
 
 Uploads a storage profile to Katta Server for use with MinIO STS. Requires MinIO STS setup with an OIDC provider.
@@ -115,7 +160,7 @@ Unlike AWS, MinIO does not support role chaining or tagged-session `AssumeRole`,
 and `stsSessionTag` are not used for MinIO storage profiles. MinIO uses the `${jwt:client_id}` policy variable to scope bucket
 access per vault.
 
-See also: [MinIO setup documentation](https://github.com/shift7-ch/katta-docs/blob/main/SETUP_KATTA_SERVER.md#minio).
+Requires [Setup MinIO using OIDC Provider and Security Token Service (STS)](#setup-minio-using-oidc-provider-and-security-token-service-sts-with-setup-command).
 
 ```bash
 katta storageprofile minio sts \
