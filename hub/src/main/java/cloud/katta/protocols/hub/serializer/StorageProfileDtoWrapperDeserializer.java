@@ -50,8 +50,8 @@ public class StorageProfileDtoWrapperDeserializer extends ProxyDeserializer<NSDi
                     properties.add(String.format("s3.bucket.virtualhost.disable=%s", true));
                 }
                 if(dto.getStorageClass() != null) {
-                    properties.add(String.format("3.storage.class.options=%s", dto.getStorageClass().name()));
-                    properties.add(String.format("3.storage.class=%s", dto.getStorageClass().name()));
+                    properties.add(String.format("s3.storage.class.options=%s", dto.getStorageClass().name()));
+                    properties.add(String.format("s3.storage.class=%s", dto.getStorageClass().name()));
                 }
                 if(dto.getProtocol() == S3_STS) {
                     if(dto.getStsDurationSeconds() != null) {
