@@ -11,9 +11,35 @@ This CLI program is used to configure a Katta Server including its S3 storage ba
 - Generic S3-compatible provider accessed using static access credentials.
 - MinIO accessed using Security Token Service (STS) with OIDC.
 
+### Build the native image
+
+The `katta` Admin CLI is distributed as a self-contained native executable built with GraalVM `native-image` through the `native` Maven profile.
+
+**Prerequisites:**
+
+- GraalVM for JDK 25 (or newer) with the `native-image` tool on the `PATH`, e.g. via [`graalvm/setup-graalvm`](https://github.com/graalvm/setup-graalvm)
+  or [SDKMAN!](https://sdkman.io/).
+- On Linux the executable is linked statically against musl (`--static --libc=musl`), which requires `musl-dev` / `musl-tools` and a musl-linked static
+  `libz.a` — see [`.github/workflows/cli.yml`](../.github/workflows/cli.yml) for the exact setup. macOS builds are dynamically linked and need no extra tooling.
+
+```bash
+# 1. Install the sibling modules (katta-clientlib-hub, katta-clientlib-tests) into the local repository
+mvn install -pl admin-cli -am -DskipTests
+
+# 2. Build the native image
+mvn verify -pl admin-cli -Pnative
+```
+
+Add `-Prelease` to build with `-O3` instead of the default `-Ob` (faster runtime, slower build). The resulting executable is written to
+`admin-cli/target/katta`:
+
+```bash
+admin-cli/target/katta --help
+```
+
 ### Setup AWS using OIDC Provider and Security Token Service (STS) with `setup` command
 
-Set up AWS as storage backend for Katta Server. Configures identity provider and roles in IAM to restrict access to S3 buckets to users authenticated by
+Set up AWS as a storage backend for Katta Server. Configures identity provider and roles in IAM to restrict access to S3 buckets to users authenticated by
 Keycloak.
 
 ```bash
