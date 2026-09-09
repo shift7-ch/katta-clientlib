@@ -3,23 +3,25 @@
 
 # Katta: the secure and easy way to work in teams
 
-Katta bring zero-config storage management and zero-knowledge key management for teams and organizations.
+Katta brings zero-config storage management and zero-knowledge key management for teams and organizations.
 
 ## Katta Client Library
 
-This library implements the [Katta Server API](https://github.com/shift7-ch/katta-docs/blob/main/OVERVIEW.md)
-as [Cyberduck](https://github.com/iterate-ch/cyberduck) protocol features
-for the Katta Client.
+This library implements the [Katta Server API](https://github.com/shift7-ch/katta-docs/blob/main/docs/introduction/OVERVIEW.md)
+as [Cyberduck](https://github.com/iterate-ch/cyberduck) protocol features for [Katta Desktop](https://github.com/shift7-ch/katta-desktop).
 
 Features:
 
-* Client code is generated for Katta Backend API through `openapi.json`
-* Katta Server interaction (workflows like first login, vault creation, (automatic) access grant and sync of storage profiles and vaults): implementation and
-  integration/regression tests.
-* `S3` and `S3STS` Cyberduck protocols for Katta (see [Katta S3 Modes](https://github.com/shift7-ch/katta-docs/blob/main/OVERVIEW.md#katta-s3-modes)) incl.
-  token exchange and AWS role chaining. Cyberduck handles OAuth 2.0 token management (authorization code grant and token refresh).
+* Client code is generated for Katta Server API from the [OpenAPI specification](hub/src/main/resources/openapi.json).
+* Implementations for device setup, retrieval of available storage profiles and creation of vaults in UVF format.
+* Extensions for the OIDC authentication flow using token exchange and AWS role chaining
+  for [Katta S3 Storage Access](https://github.com/shift7-ch/katta-docs/blob/main/docs/setup/SERVER_SETUP.md#storage-provider-setup)).
 
-## Dev Setup
+## Katta Admin CLI
+
+Additionally, this repository contains the [Katta Admin CLI](admin-cli/README.md) used to configure a Katta Server including available S3 storage profiles.
+
+## Development Setup
 
 ### Unit tests
 
@@ -31,47 +33,66 @@ mvn clean verify -DskipITs
 
 ### Debug logging
 
-In order to run a single integration test with debug logging, use
+To run a single integration test with debug logging, use
 
 ```shell
-mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest -Dfailsafe.failIfNoSpecifiedTests=false -Dlog4j.configurationFile=./hub/src/test/resources/log4j-test.xml
+mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \\
+ -Dfailsafe.failIfNoSpecifiedTests=false -Dlog4j.configurationFile=./hub/src/test/resources/log4j-test.xml
 ```
 
 ## One-Stop Shop Demo with Docker Compose
 
-### Profiles
+> [!TIP]
+> Open Katta Web at http://localhost:8280 in your web browser.
 
-#### Local
+### Local Profile
 
-Running full stack consisting of Katta Server, Keycloak and MinIO locally with Docker Compose.
+Running full stack locally consisting of
 
-```bash
-docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile local --env-file test/src/test/resources/.local.env up --wait
-docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile local down
-```
-
-#### Hybrid (testing)
-
-For integration tests with deployed Keycloak, MinIO on `testing.katta.cloud` and AWS S3.
+- Katta Server
+- Keycloak
+- MinIO with Docker Compose.
 
 ```bash
-docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile hybrid --env-file test/src/test/resources/.chipotle.env up --wait
-docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile hybrid down
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile local \\
+--env-file test/src/test/resources/.local.env up --wait
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile local \\
+--env-file test/src/test/resources/.local.env down
 ```
 
-#### Demo
+### Hybrid Test Environment Profile
 
-Also deploys storage profiles for local MinIO (static+STS):
+For integration tests with
+
+- Katta Server
+- Keycloak, MinIO on `testing.katta.cloud` and AWS S3.
 
 ```bash
-docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo --env-file test/src/test/resources/.local.env up --wait
-docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo down
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile hybrid \\
+--env-file test/src/test/resources/.chipotle.env up --wait
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile hybrid \\
+--env-file test/src/test/resources/.chipotle.env down
 ```
 
-To access through desktop client, add [Katta Server.cyberduckprofile](test/src/test/resources/Katta Server.cyberduckprofile) to
+#### Local Demo Profile
+
+Running full stack locally, including the deployment of storage profiles for MinIO with static and STS Storage Access Mode:
+
+```bash
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo \\
+--env-file test/src/test/resources/.local.env up --wait
+docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo \\
+--env-file test/src/test/resources/.local.env down
+```
+
+> [!TIP]
+> To access through the desktop client, add [Katta Server.cyberduckprofile](test/src/test/resources/Katta Server.cyberduckprofile),
+which connects over plain HTTP (no HTTPS/TLS required), to
 `~/Library/Group Containers/KD9X6Y7KA2.cloud.katta.desktop/Library/Application Support/Katta/Profiles`.
 
-### Users
+### Provisioned Users
+
+The following users are automatically provisioned for testing:
 
 | User         | Password     | Katta Roles (`realmRoles`) | Keycloak Roles (`realm-management`)                            | MinIO Roles       |
 |--------------|--------------|----------------------------|----------------------------------------------------------------|-------------------|
@@ -86,34 +107,10 @@ To access through desktop client, add [Katta Server.cyberduckprofile](test/src/t
 
 ### Endpoints
 
-| Component       | URL                                             | Discovery                                                                                                                                              |
-|-----------------|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Katta Web       | http://localhost:8280                           | http://localhost:8280/api/config                                                                                                                       |
-| Keycloak        | http://localhost:8380  / https://localhost:8443 | http://localhost:8380/realms/cryptomator/.well-known/openid-configuration / https://localhost:8443/realms/cryptomator/.well-known/openid-configuration |
-| MinIO Console   | http://localhost:9101                           |                                                                                                                                                        |
-| Swagger OpenAPI | http://localhost:8280/q/swagger-ui/             | http://localhost:8280/q/openapi.json                                                                                                                   |
+The following endpoints are available for testing:
 
-You can use SecurityScheme (OAuth2, password)  with `client_id = cryptomatorhub` for Swagger UI.
-
-### Architecture
-
-The following diagram shows the docker services:
-
-```mermaid
-architecture-beta
-group dockernetwork(internet)[Docker Network]
-
-service miniosetup(server)[MinIO setup] in dockernetwork
-service minio(server)[MinIO] in dockernetwork
-service keycloak(server)[Keycloak] in dockernetwork
-service kattaweb(server)[Katta Web] in dockernetwork
-service kattaserver(server)[Katta Server] in dockernetwork
-service kattaserversetup(server)[Katta Server Setup] in dockernetwork
-service postgres(database)[postgres] in dockernetwork
-miniosetup:B --> T:minio
-minio:R --> L:keycloak
-kattaserver:T --> B:keycloak
-kattaweb:R --> L:kattaserver
-kattaserversetup:T --> B:kattaserver
-kattaserver:R --> L:postgres
-```
+| Component     | URL                   | Discovery                                                                 |
+|---------------|-----------------------|---------------------------------------------------------------------------|
+| Katta Web     | http://localhost:8280 | http://localhost:8280/api/config                                          |
+| Keycloak      | http://localhost:8380 | http://localhost:8380/realms/cryptomator/.well-known/openid-configuration |
+| MinIO Console | http://localhost:9101 |                                                                           |
