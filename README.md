@@ -17,6 +17,15 @@ Features:
 * Extensions for the OIDC authentication flow using token exchange and AWS role chaining
   for [Katta S3 Storage Access](https://github.com/shift7-ch/katta-docs/blob/main/docs/setup/SERVER_SETUP.md#storage-provider-setup)).
 
+This is a Maven multi-module project:
+
+| Module                             | Artifact                | Description                                                                                                                                                                                                                                              |
+|------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`hub`](hub)                       | `katta-clientlib-hub`   | Core client library. Contains the OpenAPI-generated Katta Server API client, the Cyberduck `hub` protocol, the workflow services (device and user key management, vault creation, access grants, Web of Trust) and the S3/STS storage-access extensions. |
+| [`osx`](osx)                       | `katta-clientlib-osx`   | macOS integration. Cocoa binding controllers (`ch.cyberduck:binding`) that wire the workflows into the Cyberduck desktop UI, e.g. first-login and device-setup prompts.                                                                                  |
+| [`admin-cli`](admin-cli/README.md) | `katta-admin-cli`       | Standalone command-line tool (picocli, with an optional GraalVM native-image build) to configure a Katta Server and its S3 storage profiles.                                                                                                             |
+| [`test`](test)                     | `katta-clientlib-tests` | Shared test fixtures and the Docker Compose environment (Katta Server, Keycloak, MinIO) packaged as a `test-jar` and reused by the integration tests of the other modules.                                                                               |
+
 ## Katta Admin CLI
 
 Additionally, this repository contains the [Katta Admin CLI](admin-cli/README.md) used to configure a Katta Server including available S3 storage profiles.
