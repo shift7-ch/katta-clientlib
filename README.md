@@ -56,6 +56,9 @@ mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \\
 
 ### Local Profile
 
+> [!WARNING]
+> You are required to configure `HUB_INITIAL_LICENSE` and `HUB_INITIAL_ID` in [.local.env](test/src/test/resources/.local.env)
+
 Running full stack locally consisting of
 
 - Katta Server
@@ -102,9 +105,11 @@ docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml 
 ```
 
 > [!TIP]
-> To access through the desktop client, add [Katta Server.cyberduckprofile](test/src/test/resources/Katta Server.cyberduckprofile),
-which connects over plain HTTP (no HTTPS/TLS required), to
-`~/Library/Group Containers/KD9X6Y7KA2.cloud.katta.desktop/Library/Application Support/Katta/Profiles`.
+> To access with Katta Desktop over plain HTTP (no HTTPS/TLS required),
+copy [Katta Server.cyberduckprofile](test/src/test/resources/Katta%20Server.cyberduckprofile) to:
+
+- **macOS** `~/Library/Group Containers/KD9X6Y7KA2.cloud.katta.desktop/Library/Application Support/Katta/Profiles`
+- **Windows** `%APPDATA%\Katta\Profiles`
 
 ### Provisioned Users
 
