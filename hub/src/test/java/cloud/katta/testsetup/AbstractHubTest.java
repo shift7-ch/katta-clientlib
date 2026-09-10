@@ -164,7 +164,7 @@ public abstract class AbstractHubTest {
         preferences.setProperty("factory.supportdirectoryfinder.class", ch.cyberduck.core.preferences.TemporarySupportDirectoryFinder.class.getName());
         preferences.setProperty("factory.passwordstore.class", UnsecureHostPasswordStore.class.getName());
         preferences.setProperty("factory.vaultregistry.class", HubVaultRegistry.class.getName());
-        preferences.setProperty("tmp.dir", Files.createTempDirectory("cipherduck_test_setup_alice").toString());
+        preferences.setProperty("tmp.dir", Files.createTempDirectory("katta").toString());
 
         preferences.setProperty("cryptomator.vault.config.filename", "vault.uvf");
         preferences.setProperty("cryptomator.vault.autodetect", "false");
