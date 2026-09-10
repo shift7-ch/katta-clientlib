@@ -77,7 +77,7 @@ public class MinIOSTSStorage implements Callable<Void> {
                 .credentials(accessKey, secretKey)
                 .endpoint(endpointUrl).build();
 
-        // /mc admin policy create myminio cipherduckcreatebucket /setup/minio_sts/createbucketpolicy.json
+        // /mc admin policy create myminio katta-createbucketpolicy /setup/minio_sts/createbucketpolicy.json
         {
             final IamPolicy miniocreatebucketpolicy = IamPolicy.builder()
                     .addStatement(b -> b
@@ -98,7 +98,7 @@ public class MinIOSTSStorage implements Callable<Void> {
                     .build()));
             System.out.println(minioAdminClient.listCannedPolicies().get(createBucketPolicyName));
         }
-        // /mc admin policy create myminio cipherduckaccessbucket /setup/minio_sts/accessbucketpolicy.json
+        // /mc admin policy create myminio katta-accessbucketpolicy /setup/minio_sts/accessbucketpolicy.json
         {
             final IamPolicy minioAccessBucketPolicy = IamPolicy.builder()
                     .addStatement(b -> b

@@ -115,7 +115,7 @@ public class AWSSTSStorage implements Callable<Void> {
 
         final Optional<OpenIDConnectProviderListEntry> existingOIDCProvider = existingOpenIdConnectProviders.openIDConnectProviderList().stream().filter(idp -> idp.arn().endsWith(arnPostfix)).findFirst();
         //
-        //		aws iam create-open-id-connect-provider --url https://testing.hub.cryptomator.org/kc/realms/cipherduck --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
+        //		aws iam create-open-id-connect-provider --url https://testing.katta.cloud/kc/realms/cryptomator --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
         //
         final String oidcProviderArn;
         if(existingOIDCProvider.isPresent()) {
@@ -157,8 +157,8 @@ public class AWSSTSStorage implements Callable<Void> {
         final String arnPrefix = oidcProviderArn.replace(":oidc-provider" + "/" + arnPostfix, "");
 
         //
-        //		aws iam create-role --role-name cipherduck-createbucket --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebuckettrustpolicy.json
-        //		aws iam put-role-policy --role-name cipherduck-createbucket --policy-name cipherduck-createbucket --policy-document file://src/main/resources/cipherduck/setup/aws_stscreatebucketpermissionpolicy.json
+        //		aws iam create-role --role-name katta-create-bucket --assume-role-policy-document aws_stscreatebuckettrustpolicy.json
+        //		aws iam put-role-policy --role-name katta-create-bucket --policy-name katta-create-bucket --policy-document aws_stscreatebucketpermissionpolicy.json
         //
         final String awsSTSCreateBucketRoleName = String.format("%s%s", roleNamePrefix, CREATE_BUCKET_ROLE_NAME_INFIX);
         final IamPolicy awsSTSCreateBucketTrustPolicy = IamPolicy.builder()
@@ -194,8 +194,8 @@ public class AWSSTSStorage implements Callable<Void> {
         );
 
         //
-        //		aws iam create-role --role-name cipherduck_chain_01 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_trustpolicy.json
-        //		aws iam put-role-policy --role-name cipherduck_chain_01 --policy-name cipherduck_chain_01 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_01_permissionpolicy.json
+        //		aws iam create-role --role-name katta-access-bucket-web-identity-role --assume-role-policy-document aws_stskatta-access-bucket-web-identity-role_trustpolicy.json
+        //		aws iam put-role-policy --role-name katta-access-bucket-web-identity-role --policy-name katta-access-bucket-web-identity-role --policy-document aws_stskatta-access-bucket-web-identity-role_permissionpolicy.json
         //
         final String assumeRoleWithWebIdentityRoleName = String.format("%s%s%s", roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_SUFFIX);
         final String assumeRoleTaggedSessionRoleName = String.format("%s%s%s", roleNamePrefix, ACCESS_BUCKET_ROLE_NAME_INFIX, ASSUME_ROLE_TAGGED_SESSION_ROLE_SUFFIX);
@@ -229,8 +229,8 @@ public class AWSSTSStorage implements Callable<Void> {
         Thread.sleep(sleep);
 
         //
-        //		aws iam create-role --role-name cipherduck_chain_02 --assume-role-policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_trustpolicy.json
-        //		aws iam put-role-policy --role-name cipherduck_chain_02 --policy-name cipherduck_chain_02 --policy-document file://src/main/resources/cipherduck/setup/aws_stscipherduck_chain_02_permissionpolicy.json
+        //		aws iam create-role --role-name katta-access-bucket-tagged-session-role --assume-role-policy-document aws_stskatta-access-bucket-tagged-session-role_trustpolicy.json
+        //		aws iam put-role-policy --role-name katta-access-bucket-tagged-session-role --policy-name katta-access-bucket-tagged-session-role --policy-document aws_stskatta-access-bucket-tagged-session-role_permissionpolicy.json
         //
         final GetRoleResponse role = iam.getRole(GetRoleRequest.builder().roleName(assumeRoleWithWebIdentityRoleName).build());
         final IamPolicy accessBucketTaggedSessionRoleTrustPolicy = IamPolicy.builder()
@@ -349,16 +349,16 @@ public class AWSSTSStorage implements Callable<Void> {
         //				openssl x509 -in testing.hub.cryptomator.org.crt -fingerprint -sha1 -noout | sed -e 's/://g' | sed -e 's/[Ss][Hh][Aa]1 [Ff]ingerprint=//'
         //		BE21B29075BF9F3265353F8B85208A8981DAEC2A
         //
-        //		aws iam create-open-id-connect-provider --url https://testing.hub.cryptomator.org/kc/realms/cipherduck --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
+        //		aws iam create-open-id-connect-provider --url https://testing.katta.cloud/kc/realms/cryptomator --client-id-list cryptomator cryptomatorhub  --thumbprint-list BE21B29075BF9F3265353F8B85208A8981DAEC2A
         //		{
-        //			"OpenIDConnectProviderArn": "arn:aws:iam::930717317329:oidc-provider/testing.hub.cryptomator.org/kc/realms/cipherduck1"
+        //			"OpenIDConnectProviderArn": "arn:aws:iam::930717317329:oidc-provider/testing.hub.cryptomator.org/kc/realms/cryptomator1"
         //		}
         //
         //		aws iam list-open-id-connect-providers
         //
-        //		aws iam get-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::930717317329:oidc-provider/testing.hub.cryptomator.org/kc/realms/cipherduck
+        //		aws iam get-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::930717317329:oidc-provider/testing.hub.cryptomator.org/kc/realms/cryptomator
         //		{
-        //			"Url": "testing.hub.cryptomator.org/kc/realms/cipherduck",
+        //			"Url": "testing.hub.cryptomator.org/kc/realms/cryptomator",
         //				"ClientIDList": [
         //			"cryptomatorhub",
         //					"cryptomator"
