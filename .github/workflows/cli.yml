@@ -8,6 +8,9 @@ on:
 
 env:
   NFPM_VERSION: "2.47.0"
+  # Digest of nfpm_${NFPM_VERSION}_amd64.deb, see
+  # https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt
+  NFPM_SHA256: "3f1cf344bd0b57373ca55636a78c08b0491f7293d609a456a9ac3b0b150fda97"
 
 jobs:
   cli:
@@ -69,6 +72,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           curl -fsSL "https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}/nfpm_${NFPM_VERSION}_amd64.deb" -o /tmp/nfpm.deb
+          echo "${NFPM_SHA256}  /tmp/nfpm.deb" | sha256sum -c
           sudo dpkg -i /tmp/nfpm.deb
       - name: Build .deb and .rpm packages
         if: runner.os == 'Linux'
