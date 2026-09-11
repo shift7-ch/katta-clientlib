@@ -286,9 +286,7 @@ services:
       QUARKUS_DATASOURCE_USERNAME: quarkus
       QUARKUS_DATASOURCE_PASSWORD: quarkus
       QUARKUS_LOG_LEVEL: DEBUG
-      # allow calls from frontend localhost:8280 to keycloak:8380 and minio:9000 when using interactively (attended),
-      # dev-ui needs very permissive CSP:
-      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; connect-src 'self'  ${MINIO_HOSTNAME}:${MINIO_PORT} ${HUB_KEYCLOAK_URL}; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'"
+      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: "default-src 'self'; connect-src 'self' api.katta.cloud ${MINIO_HOSTNAME}:${MINIO_PORT} ${HUB_KEYCLOAK_URL}; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'"
       QUARKUS_SWAGGER_UI_ALWAYS_INCLUDE: true
       QUARKUS_SWAGGER_UI_ENABLE: true
       QUARKUS_SWAGGER_UI_OAUTH_USE_PKCE_WITH_AUTHORIZATION_CODE_GRANT: true
