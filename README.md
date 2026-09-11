@@ -132,6 +132,8 @@ The following endpoints are available for testing:
 
 | Component     | URL                   | Discovery                                                                 |
 |---------------|-----------------------|---------------------------------------------------------------------------|
-| Katta Web     | http://localhost:8280 | http://localhost:8280/api/config                                          |
+| Katta Web     | http://localhost:8280 |
+| Katta API     | http://localhost:8280 | http://localhost:8280/api/config                                          |
 | Keycloak      | http://localhost:8380 | http://localhost:8380/realms/cryptomator/.well-known/openid-configuration |
 | MinIO Console | http://localhost:9101 |                                                                           |
+| MinIO S3 API  | http://localhost:9100 |                                                                           |
