@@ -38,9 +38,6 @@ jobs:
           CC=x86_64-linux-musl-gcc ./configure --static --prefix=/usr/local
           make -j$(nproc)
           sudo cp libz.a /usr/lib/x86_64-linux-musl/
-      - name: Ensure to use tagged version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}
       - name: Build dependencies
         run: >
           mvn --batch-mode install -pl admin-cli -am -DskipTests
