@@ -286,7 +286,10 @@ services:
       QUARKUS_DATASOURCE_USERNAME: quarkus
       QUARKUS_DATASOURCE_PASSWORD: quarkus
       QUARKUS_LOG_LEVEL: DEBUG
-      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: "default-src 'self'; connect-src 'self' api.katta.cloud ${MINIO_HOSTNAME}:${MINIO_PORT} ${HUB_KEYCLOAK_URL}; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'"
+      # CSP_CONNECT_SRC_EXTRA holds the S3 and STS endpoints of storage profiles the browser talks to
+      # directly, e.g. CSP_CONNECT_SRC_EXTRA="https://*.wasabisys.com". Values are CSP source expressions
+      # used verbatim, so a host wildcard covers both path-style and virtual-hosted-style requests.
+      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: "default-src 'self'; connect-src 'self' api.katta.cloud ${MINIO_HOSTNAME}:${MINIO_PORT} ${HUB_KEYCLOAK_URL} ${CSP_CONNECT_SRC_EXTRA:-}; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'"
       QUARKUS_SWAGGER_UI_ALWAYS_INCLUDE: true
       QUARKUS_SWAGGER_UI_ENABLE: true
       QUARKUS_SWAGGER_UI_OAUTH_USE_PKCE_WITH_AUTHORIZATION_CODE_GRANT: true
