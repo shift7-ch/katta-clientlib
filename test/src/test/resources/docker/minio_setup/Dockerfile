@@ -1,8 +1,9 @@
+# Binaries are no longer available from dl.min.io (410 Gone)
+FROM quay.io/minio/mc:RELEASE.2024-11-05T11-29-45Z AS mc
+
 FROM ubuntu:24.04
-ARG TARGETARCH=amd64
+COPY --from=mc /usr/bin/mc /mc
 RUN apt-get update && apt-get install -y wget curl nginx systemctl jq gettext-base && \
-    wget https://dl.min.io/client/mc/release/linux-${TARGETARCH}/archive//mc.RELEASE.2024-11-05T11-29-45Z -O mc && \
-    chmod +x mc &&\
     systemctl start nginx
 
 ENTRYPOINT ["/mc"]
