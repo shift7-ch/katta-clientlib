@@ -61,12 +61,10 @@ public class HubTestConfig {
         }
 
         public static class DockerConfig {
-            public final String composeFile;
             public final String envFile;
             public final String profile;
 
-            public DockerConfig(final String composeFile, final String envFile, final String profile) {
-                this.composeFile = composeFile;
+            public DockerConfig(final String envFile, final String profile) {
                 this.envFile = envFile;
                 this.profile = profile;
             }
@@ -74,8 +72,7 @@ public class HubTestConfig {
             @Override
             public String toString() {
                 final StringBuilder sb = new StringBuilder("DockerConfig{");
-                sb.append("composeFile='").append(composeFile).append('\'');
-                sb.append(", envFile='").append(envFile).append('\'');
+                sb.append("envFile='").append(envFile).append('\'');
                 sb.append(", profile='").append(profile).append('\'');
                 sb.append('}');
                 return sb.toString();

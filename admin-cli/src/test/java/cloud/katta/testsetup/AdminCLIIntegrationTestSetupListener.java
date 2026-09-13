@@ -13,14 +13,8 @@ import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class AdminCLIIntegrationTestSetupListener implements TestExecutionListener {
     private static final Logger log = LogManager.getLogger(AdminCLIIntegrationTestSetupListener.class);
@@ -33,31 +27,16 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                 .flatMap(root -> testPlan.getChildren(root).stream())
                 .anyMatch(ti -> ti.getTags().contains(TestTag.create("cli")))) {
 
-            final String composeFile = "/docker-compose-hub-keycloak-minio.yml";
             final String envFile = "/.local.env";
             final String profile = "local";
-            final Properties props = new Properties();
             try {
-                props.load(Objects.requireNonNull(AbstractAdminCLIIT.class.getResourceAsStream(envFile)));
-            }
-            catch(IOException e) {
-                throw new RuntimeException(e);
-            }
-            final HashMap<String, String> env = props.entrySet().stream().collect(
-                    Collectors.toMap(
-                            e -> String.valueOf(e.getKey()),
-                            e -> String.valueOf(e.getValue()),
-                            (prev, next) -> next, HashMap::new
-                    ));
-            try {
-                compose = new ComposeContainer(
-                        new File(AbstractAdminCLIIT.class.getResource(composeFile).toURI()))
+                compose = new ComposeContainer(KattaCompose.composeFile())
                         .withPull(true)
-                        .withEnv(env)
+                        .withEnv(KattaCompose.environment(envFile))
                         .withOptions(String.format("--profile=%s", profile))
                         .waitingFor("hub", new DockerHealthcheckWaitStrategy());
             }
-            catch(URISyntaxException e) {
+            catch(IOException e) {
                 throw new RuntimeException(e);
             }
             compose.start();

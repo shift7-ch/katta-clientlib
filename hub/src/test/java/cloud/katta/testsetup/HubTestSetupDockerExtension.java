@@ -12,14 +12,8 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.stream.Collectors;
 
 
 /**
@@ -41,22 +35,11 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     protected ComposeContainer compose;
 
-    protected void setupDocker(final HubTestConfig.Setup.DockerConfig dockerConfig) throws URISyntaxException, IOException {
+    protected void setupDocker(final HubTestConfig.Setup.DockerConfig dockerConfig) throws IOException {
         log.info("Setup docker {}", dockerConfig);
-        final Properties configuration = new Properties();
-        try (InputStream in = Objects.requireNonNull(this.getClass().getResourceAsStream(dockerConfig.envFile))) {
-            configuration.load(in);
-        }
-        final HashMap<String, String> env = configuration.entrySet().stream().collect(
-                Collectors.toMap(
-                        e -> String.valueOf(e.getKey()),
-                        e -> String.valueOf(e.getValue()),
-                        (prev, next) -> next, HashMap::new
-                ));
-        compose = new ComposeContainer(
-                new File(Objects.requireNonNull(HubTestSetupDockerExtension.class.getResource(dockerConfig.composeFile)).toURI()))
+        compose = new ComposeContainer(KattaCompose.composeFile())
                 .withPull(true)
-                .withEnv(env)
+                .withEnv(KattaCompose.environment(dockerConfig.envFile))
                 .withOptions(String.format("--profile=%s", dockerConfig.profile))
                 .waitingFor("hub", new DockerHealthcheckWaitStrategy());
         compose.start();

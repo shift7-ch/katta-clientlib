@@ -44,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 public abstract class AbstractHubTest {
 
     public static final HubTestConfig.Setup.DockerConfig LOCAL_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
-            "/docker-compose-hub-keycloak-minio.yml",
             "/.local.env",
             "local");
 
@@ -89,7 +88,6 @@ public abstract class AbstractHubTest {
 
 
     public static final HubTestConfig.Setup.DockerConfig CHIPOTLE_DOCKER_CONFIG = new HubTestConfig.Setup.DockerConfig(
-            "/docker-compose-hub-keycloak-minio.yml",
             "/.chipotle.env",
             "hybrid"
     );
