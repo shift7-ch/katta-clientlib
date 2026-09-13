@@ -4,6 +4,9 @@
 
 package cloud.katta.testsetup;
 
+import org.testcontainers.containers.ComposeContainer;
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,9 +26,22 @@ public final class KattaCompose {
     }
 
     /**
+     * @param envFile Classpath resource with variables for the compose file
+     * @param profile Compose profile to start
+     * @return Compose container that waits for Katta Server to be healthy when started
+     */
+    public static ComposeContainer container(final String envFile, final String profile) throws IOException {
+        return new ComposeContainer(composeFile())
+                .withPull(true)
+                .withEnv(environment(envFile))
+                .withOptions(String.format("--profile=%s", profile))
+                .waitingFor("hub", new DockerHealthcheckWaitStrategy());
+    }
+
+    /**
      * @return Compose file of this project including katta-compose
      */
-    public static File composeFile() {
+    private static File composeFile() {
         return resource("/compose.yaml");
     }
 
@@ -33,7 +49,7 @@ public final class KattaCompose {
      * @param envFile Classpath resource with variables for the compose file
      * @return Variables from the env file with the Keycloak realm and setup files of this project
      */
-    public static Map<String, String> environment(final String envFile) throws IOException {
+    private static Map<String, String> environment(final String envFile) throws IOException {
         final Properties properties = new Properties();
         try (InputStream in = Objects.requireNonNull(KattaCompose.class.getResourceAsStream(envFile), envFile)) {
             properties.load(in);

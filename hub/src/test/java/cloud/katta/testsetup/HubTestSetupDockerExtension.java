@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.ComposeContainer;
-import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -37,11 +36,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     protected void setupDocker(final HubTestConfig.Setup.DockerConfig dockerConfig) throws IOException {
         log.info("Setup docker {}", dockerConfig);
-        compose = new ComposeContainer(KattaCompose.composeFile())
-                .withPull(true)
-                .withEnv(KattaCompose.environment(dockerConfig.envFile))
-                .withOptions(String.format("--profile=%s", dockerConfig.profile))
-                .waitingFor("hub", new DockerHealthcheckWaitStrategy());
+        compose = KattaCompose.container(dockerConfig.envFile, dockerConfig.profile);
         compose.start();
         log.info("Done setup docker {}", dockerConfig);
     }

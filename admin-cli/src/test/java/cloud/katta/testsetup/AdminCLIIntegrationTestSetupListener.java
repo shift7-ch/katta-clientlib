@@ -10,7 +10,6 @@ import org.junit.platform.engine.TestTag;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.testcontainers.containers.ComposeContainer;
-import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 
 import java.io.IOException;
@@ -27,14 +26,8 @@ public class AdminCLIIntegrationTestSetupListener implements TestExecutionListen
                 .flatMap(root -> testPlan.getChildren(root).stream())
                 .anyMatch(ti -> ti.getTags().contains(TestTag.create("cli")))) {
 
-            final String envFile = "/.local.env";
-            final String profile = "local";
             try {
-                compose = new ComposeContainer(KattaCompose.composeFile())
-                        .withPull(true)
-                        .withEnv(KattaCompose.environment(envFile))
-                        .withOptions(String.format("--profile=%s", profile))
-                        .waitingFor("hub", new DockerHealthcheckWaitStrategy());
+                compose = KattaCompose.container("/.local.env", "local");
             }
             catch(IOException e) {
                 throw new RuntimeException(e);
