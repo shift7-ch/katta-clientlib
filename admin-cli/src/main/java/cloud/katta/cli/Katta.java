@@ -24,10 +24,14 @@ import picocli.CommandLine;
         })
 public class Katta {
 
-    public static void main(String... args) {
-        int exitCode = new CommandLine(new Katta())
+    public static CommandLine commandLine() {
+        return new CommandLine(new Katta())
                 .setPosixClusteredShortOptionsAllowed(false)
-                .execute(args);
+                .setCaseInsensitiveEnumValuesAllowed(true);
+    }
+
+    public static void main(String... args) {
+        int exitCode = commandLine().execute(args);
         System.exit(exitCode);
     }
 }
