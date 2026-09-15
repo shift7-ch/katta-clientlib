@@ -4,23 +4,27 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## What this is
 
-`katta-clientlib` implements the [Katta Server API](https://github.com/shift7-ch/katta-docs/blob/main/OVERVIEW.md)
-as [Cyberduck](https://github.com/iterate-ch/cyberduck) protocol features for the Katta desktop client, plus an admin CLI for provisioning storage backends.
+`katta-clientlib` implements the [Katta Server API](https://github.com/shift7-ch/katta-docs/blob/main/docs/introduction/OVERVIEW.md)
+as [Cyberduck](https://github.com/iterate-ch/cyberduck) protocol features for [Katta Desktop](https://github.com/shift7-ch/katta-desktop).
 Katta provides zero-config storage management and zero-knowledge (end-to-end encrypted) key management for teams, layered on Cryptomator's Universal Vault
 Format (UVF) and Cryptomator Hub concepts.
 
 It is a Maven multi-module build (`groupId` `cloud.katta`). Java **8** bytecode is enforced for non-test main code (`maven-enforcer-plugin`,
-`maxJdkVersion 1.8`); CI compiles/tests with JDK 21, and the CLI native image uses GraalVM (JDK 25). Cyberduck artifacts come from `repo.maven.cyberduck.io`
-(see `<repositories>` in `pom.xml`).
+`maxJdkVersion 1.8`); CI compiles/tests with JDK 21. Cyberduck artifacts come from `repo.maven.cyberduck.io` (see `<repositories>` in `pom.xml`).
+
+Related repositories that used to live here:
+
+- [katta-admin-cli](https://github.com/shift7-ch/katta-admin-cli) — the admin CLI (`cloud.katta.cli.Katta`) for provisioning storage backends and uploading
+  storage profiles, formerly the `admin-cli` module.
+- [katta-compose](https://github.com/shift7-ch/katta-compose) — the Docker Compose stack (Katta Server, Keycloak, PostgreSQL, MinIO) used by the integration
+  tests, formerly in the `test` module.
 
 ## Modules
 
-| Module      | Artifact                | Purpose                                                                                                                                                                                                                                   |
-|-------------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `test`      | `katta-clientlib-tests` | Shared test **resources only** (docker-compose stack, Keycloak realm, `.env` files, storage-profile JSON). Packaged as a `tests` classifier jar and unpacked into the other modules' `target/test-classes` via `maven-dependency-plugin`. |
-| `hub`       | `katta-clientlib-hub`   | Core library: generated API client, crypto, workflows, and the `hub` / S3 Cyberduck protocols. Most logic lives here.                                                                                                                     |
-| `osx`       | `katta-clientlib-osx`   | macOS `NSAlert`-based UI controllers (`ch.cyberduck.binding`) implementing the device-setup / first-login prompts.                                                                                                                        |
-| `admin-cli` | `katta-admin-cli`       | picocli CLI (`cloud.katta.cli.Katta`) to configure a Katta Server + its S3/MinIO/AWS-STS storage backends. Builds to a GraalVM native image.                                                                                              |
+| Module | Artifact              | Purpose                                                                                                                                                  |
+|--------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `hub`  | `katta-clientlib-hub` | Core library: generated API client, crypto, workflows, and the `hub` / S3 Cyberduck protocols. Also holds all test fixtures. Most logic lives here.     |
+| `osx`  | `katta-clientlib-osx` | macOS `NSAlert`-based UI controllers (`ch.cyberduck.binding`) implementing the device-setup / first-login prompts. Depends on `katta-clientlib-hub`. |
 
 ## Build & test commands
 
@@ -39,20 +43,16 @@ mvn -pl hub test -Dtest=UserKeysTest#recoverUserKeyPair
 mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \
   -Dfailsafe.failIfNoSpecifiedTests=false \
   -Dlog4j.configurationFile=./hub/src/test/resources/log4j-test.xml
-
-# Build the admin CLI native image
-mvn --batch-mode install -pl admin-cli -am -DskipTests
-mvn --batch-mode verify -pl admin-cli -Pnative
 ```
 
 ### Unit vs. integration tests
 
-- **Unit tests** = Surefire, class/file suffix `*Test`. `surefire` config sets `<excludedGroups>hub</excludedGroups>`.
-- **Integration tests** = Failsafe, suffix `*IT`, run in the `integration-test` phase with `<groups>hub,cli</groups>`. They are gated by JUnit tags:
-  `@HubIntegrationTest` (`@Tag("hub")`) and `@CLIIntegrationTest` (`@Tag("cli")`). A class annotated `@HubIntegrationTest` (e.g. `AbstractHubTest`) starts the
-  full Keycloak + MinIO + Katta Server stack through `HubTestSetupDockerExtension` / Testcontainers, so Docker must be running and integration runs are slow.
-- Note some integration behaviour is also covered by `*Test` classes extending `AbstractHub*Test` bases in
-  `hub/src/test/.../workflows/` — check the base class before assuming a `*Test` is pure unit.
+- Tests are split by JUnit tag, not by class name suffix. Surefire runs everything except `<excludedGroups>hub</excludedGroups>`; Failsafe includes
+  `**/*.java` and runs only `<groups>hub</groups>` in the `integration-test` phase.
+- `@HubIntegrationTest` (`@Tag("hub")`) marks integration tests. `AbstractHubTest` carries it, and the `AbstractHub*Test` bases in `hub/src/test/.../workflows/`
+  extend it, so many `*Test` classes are integration tests — check the base class before assuming a `*Test` is a pure unit test.
+- Integration tests start the full Keycloak + MinIO + Katta Server stack through `HubTestSetupDockerExtension` / Testcontainers (see below), so Docker must be
+  running and runs are slow.
 
 ## Architecture
 
@@ -60,11 +60,10 @@ mvn --batch-mode verify -pl admin-cli -Pnative
 
 `hub/src/main/resources/openapi.json` is the checked-in OpenAPI spec. During `process-sources` the
 `openapi-generator-maven-plugin` (generator `java`, library `jersey2`) generates `cloud.katta.client`,
-`cloud.katta.client.api`, `cloud.katta.client.model` into `hub/target/generated-sources/openapi`. **This generated code is not committed.** To pick up server
-API changes, replace `openapi.json` (from the server's
-`/q/openapi.json`) and rebuild. `HubApiClient` (committed) subclasses the generated `ApiClient` to wire in Cyberduck's HTTP stack, timeouts and user-agent.
-Custom Jackson deserializers for polymorphic DTOs live in
-`cloud.katta.protocols.hub.serializer`.
+`cloud.katta.client.api`, `cloud.katta.client.model` into `hub/target/generated-sources/openapi`. **This generated code is not committed.** The plugin output
+directory is the `hub` module base directory, so generator metadata also lands in `hub/.openapi-generator/` — do not commit it either. To pick up server
+API changes, replace `openapi.json` (from the server's `/q/openapi.json`) and rebuild. `HubApiClient` (committed) subclasses the generated `ApiClient` to wire in
+Cyberduck's HTTP stack, timeouts and user-agent. Custom Jackson deserializers for polymorphic DTOs live in `cloud.katta.protocols.hub.serializer`.
 
 ### Crypto (`cloud.katta.crypto`)
 
@@ -97,24 +96,30 @@ Zero-knowledge key hierarchy, mirroring the Cryptomator Hub / UVF TypeScript imp
 - `protocols.s3` — `STSChainedAssumeRoleRequestInterceptor` implements AWS role-chaining / token exchange for the
   `S3` and `S3STS` Katta modes (temporary credentials from an OIDC access token via STS).
 
-### admin-cli
+## Integration test environment (Docker Compose)
 
-picocli command tree rooted at `cloud.katta.cli.Katta`. Subcommands: `setup` (provision AWS/MinIO STS: IAM identity provider + roles), `storageprofile` (upload
-storage-profile config to a Katta Server: `aws sts`,
-`aws static`, `s3 static`, `minio sts`), `login`, `completion`. See `admin-cli/README.md` for full option docs. GraalVM native-image reachability metadata is
-captured under `admin-cli/src/main/resources/META-INF/native-image`.
+The stack is not defined in this repository. `hub/src/test/resources/compose.yaml` only `include`s the compose file of
+[katta-compose](https://github.com/shift7-ch/katta-compose) by Git URL (`…/katta-compose.git#main`); Docker Compose fetches it on first use. To test against a
+local katta-compose checkout, replace the Git URL with the absolute path to its `compose.yaml` (do not commit that change).
 
-## Local stack (Docker Compose)
+Project-specific inputs stay in `hub/src/test/resources`:
 
-Compose file: `test/src/test/resources/docker-compose-hub-keycloak-minio.yml`. Profiles: `local` (fully local),
-`hybrid` (integration tests against deployed `testing.katta.cloud` + real AWS S3), `demo` (local + deploys MinIO storage profiles). Env files: `.local.env`,
-`.chipotle.env`. Key local endpoints: Katta Web `:8280`, Keycloak
-`:8380` / `:8443`, MinIO console `:9101`, Swagger UI `http://localhost:8280/q/swagger-ui/`. Test users and the full command lines are in `README.md`.
+- `keycloak/cryptomator-realm.json` — Keycloak realm with the test users (listed in `README.md`), passed as `KEYCLOAK_REALM_FILE`.
+- `setup/` — storage-profile and bucket-policy JSON (`aws_static`, `aws_sts`, `minio_static`, `minio_sts`), passed as `SETUP_DIR`.
+- `.local.env` (profile `local`, fully local) and `.chipotle.env` (profile `hybrid`, Keycloak/MinIO on `testing.katta.cloud` + AWS S3; CI writes it from the
+  `HYBRID_ENV` secret).
+
+`cloud.katta.testsetup.KattaCompose` builds the Testcontainers `ComposeContainer` from these (loads the env file, sets `KEYCLOAK_REALM_FILE` / `SETUP_DIR`,
+selects the profile, waits for the `hub` service healthcheck). `HubTestSetupDockerExtension` wraps it in `Local*` / `HybridTesting*` variants, each with
+`KeepRunning` and `AlreadyRunning` modes to skip teardown or setup. Commands to start the stack manually are in `README.md`; profiles and endpoints are documented
+in katta-compose.
 
 ## Conventions
 
 - `.editorconfig` is authoritative: 4-space indent, LF, final newline, max line length 160, UTF-8. IntelliJ formatting keys are pinned there.
 - Every source file starts with the `Copyright (c) <year> shift7 GmbH. All rights reserved.` header.
+- CI: `build.yml` (pull requests) and `integration.yml` (push to `main`, nightly) both run `mvn verify` including integration tests; `deploy.yml` publishes
+  snapshots from `main`.
 - Releases are cut with `maven-release-plugin` (`[maven-release-plugin] prepare release …` commits). Artifacts deploy (`<distributionManagement>`) to
   `s3://repo-maven-shift7` (`releases/` and `snapshots/`); the
   `repo.maven.cyberduck.io` entries in `<repositories>` are only for *consuming* Cyberduck dependencies. Dependency bumps come through Dependabot PRs.
