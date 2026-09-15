@@ -16,7 +16,6 @@
     </scm>
 
     <modules>
-        <module>test</module>
         <module>hub</module>
         <module>osx</module>
     </modules>

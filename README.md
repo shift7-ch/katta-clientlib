@@ -23,7 +23,6 @@ This is a Maven multi-module project:
 |------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`hub`](hub)                       | `katta-clientlib-hub`   | Core client library. Contains the OpenAPI-generated Katta Server API client, the Cyberduck `hub` protocol, the workflow services (device and user key management, vault creation, access grants, Web of Trust) and the S3/STS storage-access extensions. |
 | [`osx`](osx)                       | `katta-clientlib-osx`   | macOS integration. Cocoa binding controllers (`ch.cyberduck:binding`) that wire the workflows into the Cyberduck desktop UI, e.g. first-login and device-setup prompts.                                                                                  |
-| [`test`](test)                     | `katta-clientlib-tests` | Shared test fixtures packaged as a `test-jar` and reused by the integration tests of `hub`: compose file including the [katta-compose](https://github.com/shift7-ch/katta-compose) environment, env files, Keycloak realm and setup files. |
 
 
 ## Development Setup
@@ -48,27 +47,27 @@ mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \\
 ### Docker Compose environment
 
 Integration tests start the Docker Compose environment of [katta-compose](https://github.com/shift7-ch/katta-compose)
-included with its Git URL in [`compose.yaml`](test/src/test/resources/compose.yaml). Docker Compose fetches the
+included with its Git URL in [`compose.yaml`](hub/src/test/resources/compose.yaml). Docker Compose fetches the
 referenced commit on first use. To run integration tests with a local checkout of katta-compose instead, replace the
 Git URL with the absolute path to `compose.yaml` in the checkout.
 
 ## Integration Test Environment
 
 Integration tests run Katta Server, Keycloak, PostgreSQL and MinIO with [katta-compose](https://github.com/shift7-ch/katta-compose),
-using the Keycloak realm, setup files and env files of this project in [`test/src/test/resources`](test/src/test/resources).
+using the Keycloak realm, setup files and env files of this project in [`hub/src/test/resources`](hub/src/test/resources).
 Refer to katta-compose for the One-Stop Shop Demo, its profiles and endpoints.
 
 To start the environment of the integration tests yourself, use
 
 ```bash
-export KEYCLOAK_REALM_FILE=$PWD/test/src/test/resources/keycloak/cryptomator-realm.json
-export SETUP_DIR=$PWD/test/src/test/resources/setup
-docker compose -f test/src/test/resources/compose.yaml --env-file test/src/test/resources/.local.env --profile local up --wait
-docker compose -f test/src/test/resources/compose.yaml --env-file test/src/test/resources/.local.env --profile local down
+export KEYCLOAK_REALM_FILE=$PWD/hub/src/test/resources/keycloak/cryptomator-realm.json
+export SETUP_DIR=$PWD/hub/src/test/resources/setup
+docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local up --wait
+docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local down
 ```
 
 For the `hybrid` profile with Keycloak and MinIO on `testing.katta.cloud` and AWS S3, use
-[`.chipotle.env`](test/src/test/resources/.chipotle.env) instead. CI writes its values from a repository secret.
+[`.chipotle.env`](hub/src/test/resources/.chipotle.env) instead. CI writes its values from a repository secret.
 
 ### Provisioned Users
 
