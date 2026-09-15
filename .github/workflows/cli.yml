@@ -13,14 +13,11 @@ env:
   NFPM_SHA256: "3f1cf344bd0b57373ca55636a78c08b0491f7293d609a456a9ac3b0b150fda97"
 
 jobs:
-  cli:
-    name: Build native image for ${{ matrix.os }}
+  linux:
+    name: Build native image for Linux
     permissions:
       contents: write
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macos-self-hosted ]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: graalvm/setup-graalvm@v1
@@ -31,7 +28,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
       - name: Install musl tools
-        if: runner.os == 'Linux'
         run: |
           sudo apt-get update && sudo apt-get install -y musl-dev musl-tools
           # Build and install zlib for musl (libz-dev only provides glibc-linked libz.a,
@@ -55,7 +51,6 @@ jobs:
           mvn --batch-mode verify -pl admin-cli -Pnative
       - name: Determine package version
         id: version
-        shell: bash
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             echo "value=${GITHUB_REF##*/}" >> "$GITHUB_OUTPUT"
@@ -64,18 +59,13 @@ jobs:
             echo "value=0.0.0" >> "$GITHUB_OUTPUT"
           fi
       - name: Generate bash completion
-        shell: bash
         run: admin-cli/target/katta completion --shell bash > admin-cli/target/katta.bash
-
-      # --- Linux: .deb / .rpm packages via nfpm ---
       - name: Install nfpm
-        if: runner.os == 'Linux'
         run: |
           curl -fsSL "https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}/nfpm_${NFPM_VERSION}_amd64.deb" -o /tmp/nfpm.deb
           echo "${NFPM_SHA256}  /tmp/nfpm.deb" | sha256sum -c
           sudo dpkg -i /tmp/nfpm.deb
       - name: Build .deb and .rpm packages
-        if: runner.os == 'Linux'
         env:
           VERSION: ${{ steps.version.outputs.value }}
         run: |
@@ -84,15 +74,7 @@ jobs:
           nfpm package -f admin-cli/src/deploy/nfpm.yaml -p deb -t admin-cli/target/katta_amd64.deb
           nfpm package -f admin-cli/src/deploy/nfpm.yaml -p rpm -t admin-cli/target/katta.x86_64.rpm
           cp admin-cli/target/katta admin-cli/target/katta-linux-amd64
-
-      # --- macOS: tarball for the Homebrew formula ---
-      - name: Package macOS tarball
-        if: runner.os == 'macOS'
-        run: |
-          tar czf admin-cli/target/katta-macos-arm64.tar.gz -C admin-cli/target katta
-
       - name: Upload Linux artifacts
-        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v7
         with:
           name: katta-linux
@@ -101,17 +83,8 @@ jobs:
             admin-cli/target/katta_amd64.deb
             admin-cli/target/katta.x86_64.rpm
           if-no-files-found: error
-      - name: Upload macOS artifacts
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v7
-        with:
-          name: katta-macos
-          path: |
-            admin-cli/target/katta-macos-arm64.tar.gz
-          if-no-files-found: error
-
       - name: Publish Linux packages on Github Releases
-        if: startsWith(github.ref, 'refs/tags/') && runner.os == 'Linux'
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
           fail_on_unmatched_files: true
@@ -119,8 +92,44 @@ jobs:
             admin-cli/target/katta-linux-amd64
             admin-cli/target/katta_amd64.deb
             admin-cli/target/katta.x86_64.rpm
+
+  macos:
+    name: Build native image for macOS
+    permissions:
+      contents: write
+    runs-on: macos-self-hosted
+    steps:
+      - uses: actions/checkout@v7
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+      - name: Ensure to use tagged version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: mvn versions:set -DnewVersion=${GITHUB_REF##*/}
+      - name: Build dependencies
+        run: >
+          mvn --batch-mode install -pl admin-cli -am -DskipTests
+      - name: Build native image
+        run: >
+          mvn --batch-mode verify -pl admin-cli -Pnative
+      # The Homebrew formula generates the shell completions from the binary itself,
+      # so the tarball only needs to ship the executable.
+      - name: Package macOS tarball
+        run: |
+          tar czf admin-cli/target/katta-macos-arm64.tar.gz -C admin-cli/target katta
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: katta-macos
+          path: |
+            admin-cli/target/katta-macos-arm64.tar.gz
+          if-no-files-found: error
       - name: Publish macOS tarball on Github Releases
-        if: startsWith(github.ref, 'refs/tags/') && runner.os == 'macOS'
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
           fail_on_unmatched_files: true
@@ -129,7 +138,7 @@ jobs:
 
   homebrew:
     name: Update Homebrew tap
-    needs: cli
+    needs: macos
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
