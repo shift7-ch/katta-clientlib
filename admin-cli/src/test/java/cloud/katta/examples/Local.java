@@ -11,7 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Example to use with
- * <code>docker compose -f test/src/test/resources/docker-compose-hub-keycloak-minio.yml --profile demo --env-file test/src/test/resources/.local.env up  --wait</code>.
+ * <code>docker compose -f test/src/test/resources/compose.yaml --profile demo --env-file test/src/test/resources/.local.env up --wait</code>
+ * with <code>KEYCLOAK_REALM_FILE</code> and <code>SETUP_DIR</code> set as described in the README.
  */
 public class Local {
     public static void main(String[] args) {
