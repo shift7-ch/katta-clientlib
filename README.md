@@ -23,12 +23,8 @@ This is a Maven multi-module project:
 |------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`hub`](hub)                       | `katta-clientlib-hub`   | Core client library. Contains the OpenAPI-generated Katta Server API client, the Cyberduck `hub` protocol, the workflow services (device and user key management, vault creation, access grants, Web of Trust) and the S3/STS storage-access extensions. |
 | [`osx`](osx)                       | `katta-clientlib-osx`   | macOS integration. Cocoa binding controllers (`ch.cyberduck:binding`) that wire the workflows into the Cyberduck desktop UI, e.g. first-login and device-setup prompts.                                                                                  |
-| [`admin-cli`](admin-cli/README.md) | `katta-admin-cli`       | Standalone command-line tool (picocli, with an optional GraalVM native-image build) to configure a Katta Server and its S3 storage profiles.                                                                                                             |
-| [`test`](test)                     | `katta-clientlib-tests` | Shared test fixtures packaged as a `test-jar` and reused by the integration tests of the other modules: compose file including the [katta-compose](https://github.com/shift7-ch/katta-compose) environment, env files, Keycloak realm and setup files. |
+| [`test`](test)                     | `katta-clientlib-tests` | Shared test fixtures packaged as a `test-jar` and reused by the integration tests of `hub`: compose file including the [katta-compose](https://github.com/shift7-ch/katta-compose) environment, env files, Keycloak realm and setup files. |
 
-## Katta Admin CLI
-
-Additionally, this repository contains the [Katta Admin CLI](admin-cli/README.md) used to configure a Katta Server including available S3 storage profiles.
 
 ## Development Setup
 
@@ -76,6 +72,8 @@ For the `hybrid` profile with Keycloak and MinIO on `testing.katta.cloud` and AW
 
 ### Provisioned Users
 
+#### Keycloak
+
 The realm of the integration tests provisions the following users:
 
 | User    | Password | Katta Roles (`realmRoles`) | Keycloak Roles (`realm-management`) | Groups     |
@@ -88,7 +86,8 @@ The realm of the integration tests provisions the following users:
 | `erin`  | `asd`    | `user`                     |                                     | `groupies` |
 
 The realm also contains the service account `system` of client `cryptomatorhub-system` used by Katta Server, and the
-service account `cli` of client `cryptomatorhub-cli` used by the integration tests of the Katta Admin CLI.
+service account `cli` of client `cryptomatorhub-cli`.
 
+#### MinIO
 MinIO provisions the root user `minioadmin` with password `minioadmin`, and the user `testuser` with password `top-secret`
 for static storage access.

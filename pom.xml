@@ -19,7 +19,6 @@
         <module>test</module>
         <module>hub</module>
         <module>osx</module>
-        <module>admin-cli</module>
     </modules>
 
     <properties>
@@ -181,7 +180,7 @@
                         </goals>
                         <phase>integration-test</phase>
                         <configuration>
-                            <groups>hub,cli</groups>
+                            <groups>hub</groups>
                         </configuration>
                     </execution>
                 </executions>
