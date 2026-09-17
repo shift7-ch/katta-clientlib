@@ -132,7 +132,7 @@ sequenceDiagram
     Owner ->> Web: open "Grant access" dialog, review, confirm
     Note over Web: per pending user: encryptForUser(ecdhPublicKey, includeOwnerKeys)<br/>→ ECDH-ES JWE wrapping the MemberKey (+ RecoveryKey private bytes, only if granting OWNER)
     Web ->> HubBackend: POST /vaults/{vaultId}/access-tokens {userId: jwe, ...}
-    HubBackend ->> HubBackend: persist AccessToken rows&#59; log VaultAccessGranted(automatic=false)
+    HubBackend ->> HubBackend: persist AccessToken rows, log VaultAccessGranted(automatic=false)
 ```
 
 ## 2. Manual access grant — desktop client
@@ -193,7 +193,7 @@ end
 end
 Note over Web: encryptForUser(ecdhPublicKey) per trusted candidate<br/>→ ECDH-ES JWE, member role only (never owner/recovery key)
 Web->>HubBackend: POST /vaults/{vaultId}/access-tokens/auto {userId: jwe, ...}
-HubBackend->>HubBackend: reject any candidate not genuinely pending&#59; persist&#59; log VaultAccessGranted(automatic=true)
+HubBackend->>HubBackend: reject any candidate not genuinely pending, persist, log VaultAccessGranted(automatic=true)
 end
 ```
 
@@ -221,7 +221,7 @@ Desktop->>HubBackend: GET /api/vaults/{vaultId}/users-requiring-access-grant
 HubBackend-->>Desktop: pending users (individual, even if added via a group)
 loop each candidate
 Desktop->>HubBackend: GET /api/users/trusted
-Note over Desktop: WoT.verifyRecursive walks the ES384 signature chain&#59;<br/>trust level = verified chain length
+Note over Desktop: WoT.verifyRecursive walks the ES384 signature chain,<br/>trust level = verified chain length
 alt trustThreshold < 0, or trustLevel <= trustThreshold
 Note over Desktop: candidate is trusted
 else
