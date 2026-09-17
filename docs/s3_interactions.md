@@ -23,15 +23,15 @@ Which components of **katta-clientlib** (this repo) and **katta-server** ("Hub" 
 
 ## Component summary
 
-| Component                                       | Calls STS?                                                                             | Calls S3 directly?                                                                     | Notes                                                                                                                                                                                                                      |
-|-------------------------------------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Desktop client** (katta-clientlib, this repo) | Yes — `AssumeRoleWithWebIdentity`, plus AWS role-chaining `AssumeRole`                 | Yes — all bucket creation and every file read/write                                    | The only component that moves file bytes; see [`HubUVFVaultProvider`](hub/src/main/java/cloud/katta/protocols/hub/HubUVFVaultProvider.java), [`HubUVFVault`](hub/src/main/java/cloud/katta/protocols/hub/HubUVFVault.java) |
-| **Hub backend** (katta-server)                  | No — only receives temp credentials the frontend forwards                              | Only in the browser-assisted bucket-creation path, using credentials handed to it      | Its own Hub protocol session refuses Read/Write/Delete outright — metadata only                                                                                                                                            |
-| **Hub web frontend** (katta-server, Vue 3)      | S3-STS only — `AssumeRoleWithWebIdentity(stsRoleCreateBucketHub)` in `CreateVault.vue` | S3STATIC only — uploads `vault.uvf` straight to the bucket itself, no backend involved | Vault-creation only, for both profile types — has no file-browsing/read/download capability at all (no route, no `GetObjectCommand`/`DeleteObjectCommand` anywhere in `frontend/src`)                                      |
-| **admin-cli** (this repo)                       | No — calls cloud IAM / MinIO admin APIs directly, not STS                              | No                                                                                     | Setup-time only; provisions the roles/policies the other three actors later use                                                                                                                                            |
-| Keycloak                                        | —                                                                                      | —                                                                                      | OIDC IdP; issues the access tokens used as STS web-identity tokens, and the Hub's down-scoped, vault-tagged exchange tokens                                                                                                |
-| AWS STS / MinIO STS                             | —                                                                                      | —                                                                                      | Issues temporary credentials from `AssumeRoleWithWebIdentity` / `AssumeRole`                                                                                                                                               |
-| S3 / MinIO                                      | —                                                                                      | —                                                                                      | The object store itself                                                                                                                                                                                                    |
+| Component                                       | Calls STS?                                                                                                                      | Calls S3 directly?                                                                     | Notes                                                                                                                                                                                                                      |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Desktop client** (katta-clientlib, this repo) | Yes — `AssumeRoleWithWebIdentity`, plus AWS role-chaining `AssumeRole`                                                          | Yes — all bucket creation and every file read/write                                    | The only component that moves file bytes; see [`HubUVFVaultProvider`](hub/src/main/java/cloud/katta/protocols/hub/HubUVFVaultProvider.java), [`HubUVFVault`](hub/src/main/java/cloud/katta/protocols/hub/HubUVFVault.java) |
+| **Hub backend** (katta-server)                  | No — only receives temp credentials the frontend forwards (see [section 3](#3-vault-creation--hub-web-frontend-s3-sts-profile)) | Only in the browser-assisted bucket-creation path, using credentials handed to it      | Its own Hub protocol session refuses Read/Write/Delete outright — metadata only                                                                                                                                            |
+| **Hub web frontend** (katta-server, Vue 3)      | S3-STS only — `AssumeRoleWithWebIdentity(stsRoleCreateBucketHub)` in `CreateVault.vue`                                          | S3STATIC only — uploads `vault.uvf` straight to the bucket itself, no backend involved | Vault-creation only, for both profile types — has no file-browsing/read/download capability at all (no route, no `GetObjectCommand`/`DeleteObjectCommand` anywhere in `frontend/src`)                                      |
+| **admin-cli** (this repo)                       | No — calls cloud IAM / MinIO admin APIs directly, not STS                                                                       | No                                                                                     | Setup-time only; provisions the roles/policies the other three actors later use                                                                                                                                            |
+| Keycloak                                        | —                                                                                                                               | —                                                                                      | OIDC IdP; issues the access tokens used as STS web-identity tokens, and the Hub's down-scoped, vault-tagged exchange tokens                                                                                                |
+| AWS STS / MinIO STS                             | —                                                                                                                               | —                                                                                      | Issues temporary credentials from `AssumeRoleWithWebIdentity` / `AssumeRole`                                                                                                                                               |
+| S3 / MinIO                                      | —                                                                                                                               | —                                                                                      | The object store itself                                                                                                                                                                                                    |
 
 ## 1. Setup — provisioning IAM roles and registering a storage profile
 
@@ -45,20 +45,19 @@ sequenceDiagram
     participant CLI as admin-cli
     participant IAM as AWS IAM / MinIO Admin API
     participant HubBackend as katta-server backend
-
-    Operator->>CLI: storage aws | storage minio
+    Operator ->> CLI: storage aws | storage minio
     alt AWS
-        CLI->>IAM: CreateOpenIDConnectProvider(Keycloak realm,<br/>clientIDs: cryptomator, cryptomatorhub, cryptomatorvaults)
-        CLI->>IAM: CreateRole create-bucket<br/>(trust: sts:AssumeRoleWithWebIdentity)
-        CLI->>IAM: CreateRole access-bucket-web-identity-role<br/>(trust: AssumeRoleWithWebIdentity + TagSession)
-        CLI->>IAM: CreateRole access-bucket-tagged-session-role<br/>(trust: AssumeRole + TagSession from role above,<br/>condition TransitiveTagKeys=Vault)
+        CLI ->> IAM: CreateOpenIDConnectProvider(Keycloak realm,<br/>clientIDs: cryptomator, cryptomatorhub, cryptomatorvaults)
+        CLI ->> IAM: CreateRole create-bucket<br/>(trust: sts:AssumeRoleWithWebIdentity)
+        CLI ->> IAM: CreateRole access-bucket-web-identity-role<br/>(trust: AssumeRoleWithWebIdentity + TagSession)
+        CLI ->> IAM: CreateRole access-bucket-tagged-session-role<br/>(trust: AssumeRole + TagSession from role above,<br/>condition TransitiveTagKeys=Vault)
     else MinIO
-        CLI->>IAM: addCannedPolicy(katta_create_bucket_policy)
-        CLI->>IAM: addCannedPolicy(katta_access_bucket_policy,<br/>resource scoped by ${jwt:client_id})
-        CLI-->>Operator: prints `mc idp openid add ...` —<br/>MinIO OIDC IDP registration has no admin API, so it's manual
+        CLI ->> IAM: addCannedPolicy(katta_create_bucket_policy)
+        CLI ->> IAM: addCannedPolicy(katta_access_bucket_policy,<br/>resource scoped by ${jwt:client_id})
+        CLI -->> Operator: prints `mc idp openid add ...` —<br/>MinIO OIDC IDP registration has no admin API, so it's manual
     end
-    Operator->>CLI: hub storageprofile aws sts | hub storageprofile minio sts
-    CLI->>HubBackend: POST /api/storageprofile<br/>(StorageProfileS3STSDto: role ARNs, endpoint, bucketPrefix)
+    Operator ->> CLI: hub storageprofile aws sts | hub storageprofile minio sts
+    CLI ->> HubBackend: POST /api/storageprofile<br/>(StorageProfileS3STSDto: role ARNs, endpoint, bucketPrefix)
 ```
 
 MinIO can't do AWS-style role chaining or session tagging, so it has only two roles/policies instead of three, and scopes per-vault access with the
@@ -77,21 +76,20 @@ sequenceDiagram
     participant Keycloak
     participant STS as AWS / MinIO STS
     participant S3 as S3 / MinIO
-
-    Desktop->>HubBackend: GET /api/storageprofile/{id}
-    HubBackend-->>Desktop: StorageProfileS3STSDto<br/>(stsRoleCreateBucketClient, endpoint, bucketPrefix)
-    Desktop->>HubBackend: GET /api/settings
-    HubBackend-->>Desktop: automatic-access-grant config
+    Desktop ->> HubBackend: GET /api/storageprofile/{id}
+    HubBackend -->> Desktop: StorageProfileS3STSDto<br/>(stsRoleCreateBucketClient, endpoint, bucketPrefix)
+    Desktop ->> HubBackend: GET /api/settings
+    HubBackend -->> Desktop: automatic-access-grant config
     Note over Desktop: web identity token = the Desktop's own Hub-login Keycloak access token
-    Desktop->>STS: AssumeRoleWithWebIdentity(roleArn=stsRoleCreateBucketClient)
-    STS-->>Desktop: temporary credentials
-    Desktop->>S3: CreateBucket(bucketPrefix + vaultId)
-    Desktop->>S3: PutBucketVersioning, PutEncryptionConfiguration
-    Desktop->>S3: PutObject vault.uvf, dir.uvf (encrypted client-side)
-    Desktop->>HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet)
-    HubBackend->>Keycloak: create per-vault client-scope + protocol mapper<br/>(AWS: principal_tags/transitive_tag_keys claim, MinIO: client_id claim)
-    Desktop->>HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creator their own access)
-    Note over HubBackend,S3: Hub backend receives no AWS credentials and makes no S3 call in this flow
+    Desktop ->> STS: AssumeRoleWithWebIdentity(roleArn=stsRoleCreateBucketClient)
+    STS -->> Desktop: temporary credentials
+    Desktop ->> S3: CreateBucket(bucketPrefix + vaultId)
+    Desktop ->> S3: PutBucketVersioning, PutEncryptionConfiguration
+    Desktop ->> S3: PutObject vault.uvf, dir.uvf (encrypted client-side)
+    Desktop ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet)
+    HubBackend ->> Keycloak: create per-vault client-scope + protocol mapper<br/>(AWS: principal_tags/transitive_tag_keys claim, MinIO: client_id claim)
+    Desktop ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creator their own access)
+    Note over HubBackend, S3: Hub backend receives no AWS credentials and makes no S3 call in this flow
 ```
 
 ## 3. Vault creation — Hub web frontend (S3-STS profile)
@@ -110,16 +108,15 @@ sequenceDiagram
     participant STS as AWS / MinIO STS
     participant HubBackend as katta-server backend
     participant S3 as S3 / MinIO
-
     Note over Web: web identity token = the operator's own Hub-login Keycloak access token (cryptomatorhub client)
-    Web->>STS: AssumeRoleWithWebIdentity(roleArn=stsRoleCreateBucketHub,<br/>inline session policy: CreateBucket/GetBucketPolicy + scoped PutObject)
-    STS-->>Web: temporary credentials (awsAccessKey, awsSecretKey, sessionToken)
-    Web->>HubBackend: PUT /api/storage/{vaultId}<br/>(CreateS3STSBucketDto: vaultUvf, dirUvf, rootDirHash, awsAccessKey, awsSecretKey, sessionToken, region)
-    HubBackend->>S3: CreateBucket(bucketPrefix + vaultId), using the credentials forwarded by the browser
-    HubBackend->>S3: PutObject vault.uvf
-    HubBackend->>S3: PutObject empty dir-placeholder object, PutObject dir.uvf
-    S3-->>HubBackend: 200 OK
-    HubBackend-->>Web: 201 Created
+    Web ->> STS: AssumeRoleWithWebIdentity(roleArn=stsRoleCreateBucketHub,<br/>inline session policy: CreateBucket/GetBucketPolicy + scoped PutObject)
+    STS -->> Web: temporary credentials (awsAccessKey, awsSecretKey, sessionToken)
+    Web ->> HubBackend: PUT /api/storage/{vaultId}<br/>(CreateS3STSBucketDto: vaultUvf, dirUvf, rootDirHash, awsAccessKey, awsSecretKey, sessionToken, region)
+    HubBackend ->> S3: CreateBucket(bucketPrefix + vaultId), using the credentials forwarded by the browser
+    HubBackend ->> S3: PutObject vault.uvf
+    HubBackend ->> S3: PutObject empty dir-placeholder object, PutObject dir.uvf
+    S3 -->> HubBackend: 200 OK
+    HubBackend -->> Web: 201 Created
 ```
 
 This is the *only* place the Hub backend touches S3 at all, and even then it's acting on temporary credentials someone else obtained — not its own identity.
@@ -141,13 +138,12 @@ sequenceDiagram
     participant Web as katta-server web frontend (Vue 3, browser)
     participant HubBackend as katta-server backend
     participant S3 as S3 / MinIO
-
     Note over Web: operator types the vault's own access key, secret key, and bucket name into the form
-    Web->>S3: ListObjectsV2 (pre-flight: bucket exists and is empty?)
-    Web->>S3: PutObject vault.uvf
-    Web->>S3: PutObject root dir marker (d/xx/yyyy/)
-    Web->>HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile with the static creds embedded, uvfKeySet)
-    Note over Web,S3: bucket CORS for the browser's origin is a manual admin step —<br/>CreateVault.vue only prints an `aws s3api put-bucket-cors` hint on failure, nothing in katta-server automates it
+    Web ->> S3: ListObjectsV2 (pre-flight: bucket exists and is empty?)
+    Web ->> S3: PutObject vault.uvf
+    Web ->> S3: PutObject root dir marker (d/xx/yyyy/)
+    Web ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile with the static creds embedded, uvfKeySet)
+    Note over Web, S3: bucket CORS for the browser's origin is a manual admin step —<br/>CreateVault.vue only prints an `aws s3api put-bucket-cors` hint on failure, nothing in katta-server automates it
 ```
 
 Whichever profile type is used, this is as far as the web frontend's S3 involvement goes: it can create a vault, but **it has no file-browsing feature at all**.
@@ -169,22 +165,21 @@ sequenceDiagram
     participant HubBackend as katta-server backend
     participant STS as AWS / MinIO STS
     participant S3 as S3 / MinIO
-
-    Note over Desktop,HubBackend: Desktop already holds a Keycloak access token from logging into the Hub
-    Desktop->>HubBackend: POST /api/storage/s3-token (OAuth2 token exchange, RFC 8693)
-    HubBackend-->>Desktop: vault-scoped, down-scoped access token<br/>(claims: principal_tags / transitive_tag_keys = vaultId)
-    Desktop->>STS: AssumeRoleWithWebIdentity(webIdentityToken=down-scoped token,<br/>roleArn=stsRoleAccessBucketAssumeRoleWithWebIdentity)
-    STS-->>Desktop: temporary credentials #1
+    Note over Desktop, HubBackend: Desktop already holds a Keycloak access token from logging into the Hub
+    Desktop ->> HubBackend: POST /api/storage/s3-token (OAuth2 token exchange, RFC 8693)
+    HubBackend -->> Desktop: vault-scoped, down-scoped access token<br/>(claims: principal_tags / transitive_tag_keys = vaultId)
+    Desktop ->> STS: AssumeRoleWithWebIdentity(webIdentityToken=down-scoped token,<br/>roleArn=stsRoleAccessBucketAssumeRoleWithWebIdentity)
+    STS -->> Desktop: temporary credentials#1
     alt AWS — role chaining supported
-        Desktop->>STS: AssumeRole(using credentials #1,<br/>roleArn=stsRoleAccessBucketAssumeRoleTaggedSession, sessionTag=Vault:vaultId)
-        STS-->>Desktop: temporary credentials #2<br/>(bucket-scoped via a PrincipalTag/Vault trust condition)
+        Desktop ->> STS: AssumeRole(using credentials#1,<br/>roleArn=stsRoleAccessBucketAssumeRoleTaggedSession, sessionTag=Vault:vaultId)
+        STS -->> Desktop: temporary credentials#2<br/>(bucket-scoped via a PrincipalTag/Vault trust condition)
     else MinIO — no role chaining
-        Note over Desktop,STS: credentials #1 are used directly,<br/>per-vault scoping instead comes from the ${jwt:client_id} policy variable
+        Note over Desktop, STS: credentials#1 are used directly,<br/>per-vault scoping instead comes from the ${jwt:client_id} policy variable
     end
     loop every file operation (browse, upload, download)
-        Desktop->>S3: GetObject / PutObject / ListObjectsV2
+        Desktop ->> S3: GetObject / PutObject / ListObjectsV2
     end
-    Note over Desktop,HubBackend: HubSession throws UnsupportedException for Read/Write/Delete —<br/>the Hub connection is locked to metadata only and never carries file bytes
+    Note over Desktop, HubBackend: HubSession throws UnsupportedException for Read/Write/Delete —<br/>the Hub connection is locked to metadata only and never carries file bytes
 ```
 
 ## 6. Vault unlock and day-to-day file access — desktop client (S3STATIC profile)
@@ -198,14 +193,13 @@ sequenceDiagram
     participant Desktop as katta-clientlib desktop client
     participant HubBackend as katta-server backend
     participant S3 as S3 / MinIO
-
-    Desktop->>HubBackend: GET /api/vaults/{vaultId}
-    HubBackend-->>Desktop: VaultDto.uvfMetadataFile (encrypted)
+    Desktop ->> HubBackend: GET /api/vaults/{vaultId}
+    HubBackend -->> Desktop: VaultDto.uvfMetadataFile (encrypted)
     Note over Desktop: decrypts vault.uvf client-side → VaultMetadataStorageDto.username / password
     loop every file operation
-        Desktop->>S3: GetObject / PutObject (SigV4 with the static access key/secret)
+        Desktop ->> S3: GetObject / PutObject (SigV4 with the static access key/secret)
     end
-    Note over HubBackend,S3: no STS, no OAuth token involved anywhere in this path
+    Note over HubBackend, S3: no STS, no OAuth token involved anywhere in this path
 ```
 
 ## Sources
