@@ -26,6 +26,11 @@ How the per-user **Account Key** (server-side field name: `setupCode`) is create
 
 ## What the Account Key actually is
 
+> [!IMPORTANT]
+> **Account Key** and **`setupCode`** name the same value, not two different secrets: "Account Key" is the user-facing name shown in the UI (see the
+> [official user guide](https://docs.cryptomator.org/hub/user-guide/your-account/#account-key)), while `setupCode` is the server-side/API field name for
+> that identical value (`UserDto.setupCode`, the `org.cryptomator.hub.setupCode` JWE key-id).
+
 It's a **randomly generated UUID**, not a user-chosen passphrase — despite the UI language ("Account Key") suggesting the latter. It's used as the password
 input to a standard JOSE PBES2 key derivation (PBKDF2-HMAC-SHA512, 1,000,000 iterations by default, wrapping an AES-256 key — RFC 7518 §4.8,
 `alg=PBES2-HS512+A256KW`), which wraps the user's ECDH+ECDSA private keys for server-side backup. But that PBES2-wrapped backup isn't the only hub-side copy of
