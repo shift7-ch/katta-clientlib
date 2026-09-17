@@ -71,6 +71,8 @@ classDiagram
         +Map~String,String~ seeds
         +String initialSeed
         +String latestSeed
+        +VaultMetadataStorageDto storage
+        +VaultMetadataAutomaticAccessGrantDto automaticAccessGrant
     }
 
     class VaultMetadataStorageDto {

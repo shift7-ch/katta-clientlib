@@ -130,6 +130,8 @@ classDiagram
             +String latestSeed
             +String kdf
             +String kdfSalt
+            +VaultMetadataStorageDto storage
+            +VaultMetadataAutomaticAccessGrantDto automaticAccessGrant
         }
         class VaultMetadataStorageDto {
             +String provider
