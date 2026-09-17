@@ -90,3 +90,16 @@ service account `cli` of client `cryptomatorhub-cli`.
 #### MinIO
 MinIO provisions the root user `minioadmin` with password `minioadmin`, and the user `testuser` with password `top-secret`
 for static storage access.
+
+#### Further Architecture Documentation
+
+- [`docs/vault_data_model.md`](docs/vault_data_model.md) — class diagram tracing foreign-key relationships across storage profiles, the `/vault` API, the vault
+  `.uvf` JWE metadata, and the Hub bookmark.
+- [`docs/s3_interactions.md`](docs/s3_interactions.md) — sequence diagrams of every S3/STS touchpoint across the desktop client, Hub backend, and Hub web
+  frontend, for both S3-STS and S3STATIC storage profiles.
+- [`docs/account_key_interactions.md`](docs/account_key_interactions.md) — creation, recovery, and rotation of the per-user Account Key across the desktop
+  client and Hub.
+- [`docs/recovery_key_interactions.md`](docs/recovery_key_interactions.md) — creation and recovery of the per-vault, word-encoded Recovery Key, a
+  web-frontend-only feature distinct from the Account Key.
+- [`docs/access_grant_data_model_interactions.md`](docs/access_grant_data_model_interactions.md) — manual vs. automatic vault access grant, and the
+  settings/data model governing them, across the desktop client and Hub.
