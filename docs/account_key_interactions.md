@@ -35,7 +35,7 @@ paired:
 | Field                   | Contents                                                                                  | Stored hub-side?         | Stored client-side (keychain)?                                                                     | Encrypted at rest by                  | JWE algorithm        |
 |-------------------------|-------------------------------------------------------------------------------------------|--------------------------|----------------------------------------------------------------------------------------------------|---------------------------------------|----------------------|
 | `User.privateKeys`      | The user's ECDH + ECDSA private keys — the recovery-only backup copy                      | Yes                      | No — fetched from the server on demand, never persisted in the OS keychain                         | The Account Key itself                | `PBES2-HS512+A256KW` |
-| `User.setupCode`        | The plaintext Account Key string, wrapped to the user's own public key                    | Yes                      | No — same, fetched on demand                                                                       | The user's own ECDH private key       | `ECDH-ES+A256KW`     |
+| `User.setupCode`        | The plaintext Account Key string, wrapped with the user's own public key                  | Yes                      | No — same, fetched on demand                                                                       | The user's own ECDH public key        | `ECDH-ES+A256KW`     |
 | `Device.userPrivateKey` | The *same* ECDH + ECDSA private keys — one row per registered device, the day-to-day copy | Yes — one row per device | No — still hub-side; only the device's *own* keypair (which unlocks this) lives in the OS keychain | That specific device's own public key | `ECDH-ES+A256KW`     |
 
 `User.setupCode` exists purely so an already-unlocked session (via a registered device key) can redisplay the Account Key later — the server never derives or
@@ -76,7 +76,7 @@ sequenceDiagram
     Note over Desktop: accountKey = random UUID
     Note over Desktop: generate UserKeys — two fresh P-384 EC keypairs (ECDH + ECDSA)
     Note over Desktop: display the Account Key and ask for a device name (FirstLoginController)
-    Desktop->>HubBackend: PUT /api/users/me<br/>(ecdhPublicKey, ecdsaPublicKey,<br/>privateKeys=encryptWithAccountKey(accountKey),<br/>setupCode=accountKey wrapped to own ecdhPublicKey)
+    Desktop->>HubBackend: PUT /api/users/me<br/>(ecdhPublicKey, ecdsaPublicKey,<br/>privateKeys=encryptWithAccountKey(accountKey),<br/>setupCode=accountKey wrapped with own ecdhPublicKey)
     Desktop->>HubBackend: PUT /api/devices/{deviceId}<br/>(userPrivateKey = user keys wrapped for this device)
 ```
 
@@ -93,7 +93,7 @@ sequenceDiagram
     Note over Web: setupCode = crypto.randomUUID()
     Note over Web: generate UserKeys — ECDH + ECDSA CryptoKeyPairs (WebCrypto)
     Note over Web: privateKeys = encryptWithSetupCode(setupCode)<br/>PBKDF2-HMAC-SHA512, 1,000,000 iterations, PBES2-HS512+A256KW
-    Note over Web: setupCode field = setupCode wrapped to own ecdhPublicKey (ECDH-ES+A256KW)
+    Note over Web: setupCode field = setupCode wrapped with own ecdhPublicKey (ECDH-ES+A256KW)
     Web->>HubBackend: PUT /users/me (ecdhPublicKey, ecdsaPublicKey, privateKeys, setupCode)
     Note over Web: generate browser device keys
     Web->>HubBackend: PUT /devices/{id} (register this browser as a device)
