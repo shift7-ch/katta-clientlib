@@ -3,7 +3,8 @@
 Which components of **katta-clientlib** (this repo) and **katta-server** ("Hub" — a separate repo, backend + web frontend) talk to S3 and STS APIs, and how.
 
 > **Scope note.** katta-server is a separate repo ([shift7-ch/katta-server](https://github.com/shift7-ch/katta-server), verified at commit `1e50912`) — a
-> monorepo containing both the Java/Quarkus `backend/` and the Vue 3 `frontend/`. Everything below has been read directly from source in both repos, not inferred.
+> monorepo containing both the Java/Quarkus `backend/` and the Vue 3 `frontend/`. Everything below has been read directly from source in both repos, not
+> inferred.
 
 > [!CAUTION]
 > AI-generated content, manually skimmed.

@@ -1,7 +1,7 @@
 # Vault Recovery Key Interactions
 
-How the per-**vault** word-encoded **Recovery Key** is created, used for recovery, and (not) rotated across **katta-clientlib** (desktop) and **katta-server
-** ("Hub" — backend + web frontend).
+How the per-**vault** word-encoded **Recovery Key** is created, used for recovery, and (not) rotated across **katta-clientlib** (desktop) and **katta-server**
+("Hub" — backend + web frontend).
 
 > **Scope note.** katta-server is a separate repo ([shift7-ch/katta-server](https://github.com/shift7-ch/katta-server), verified at commit `1e50912`).
 > Everything below is read directly from source in both repos, not inferred. **This is a different mechanism from the
@@ -55,11 +55,10 @@ sequenceDiagram
     autonumber
     participant Client as Desktop client OR web frontend
     participant HubBackend as katta-server backend
-
     Note over Client: generate the vault's MemberKey (AES) and RecoveryKey (P-384 EC keypair)
     Note over Client: vault.uvf JWE gets two parallel recipients:<br/>org.cryptomator.hub.memberkey (AES-KW) and org.cryptomator.hub.recoverykey.<thumbprint> (ECDH-ES)
-    Client->>HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet = public half of the recovery keypair)
-    Client->>HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creating owner both memberKey and the recovery keypair's private bytes)
+    Client ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet = public half of the recovery keypair)
+    Client ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creating owner both memberKey and the recovery keypair's private bytes)
     Note over HubBackend: stores both opaquely — never decrypts vault.uvf, never sees the recovery private key
 ```
 
@@ -77,14 +76,13 @@ sequenceDiagram
     participant Owner as Vault owner (browser)
     participant Web as katta-server web frontend (Vue 3)
     participant HubBackend as katta-server backend
-
-    Owner->>Web: open Vault Details → "Display Recovery Key"
-    Web->>HubBackend: GET vault access token (already unlocked user keys required)
-    HubBackend-->>Web: this owner's encrypted access token
+    Owner ->> Web: open Vault Details → "Display Recovery Key"
+    Web ->> HubBackend: GET vault access token (already unlocked user keys required)
+    HubBackend -->> Web: this owner's encrypted access token
     Note over Web: decrypt token → recover MemberKey and the RecoveryKey private key
     Note over Web: export the RecoveryKey's PKCS8 private key bytes + CRC16 checksum, pad to a multiple of 3
     Note over Web: word-encode 3 raw bytes → two 12-bit dictionary words at a time (custom 4096-word list, not BIP-39)
-    Web-->>Owner: display the word phrase (read-only, copy-to-clipboard)
+    Web -->> Owner: display the word phrase (read-only, copy-to-clipboard)
 ```
 
 `DisplayRecoveryKeyDialog.vue` itself does no cryptography — encode/decode lives in `frontend/src/common/util.ts`'s `WordEncoder`, and the export logic lives on
@@ -101,12 +99,11 @@ sequenceDiagram
     participant Owner as Vault owner (browser)
     participant Web as katta-server web frontend (Vue 3)
     participant HubBackend as katta-server backend
-
-    Owner->>Web: open "Recover vault" dialog, paste the saved word phrase
+    Owner ->> Web: open "Recover vault" dialog, paste the saved word phrase
     Note over Web: decode words → reconstruct the vault's master key / RecoveryKey private key
     Note over Web: re-encrypt it for the current user's own ecdhPublicKey
-    Web->>HubBackend: grantAccess(vaultId, {userId: me, token: jwe})<br/>(the same endpoint used for an ordinary manual grant)
-    HubBackend-->>Web: 200 — access restored
+    Web ->> HubBackend: grantAccess(vaultId, {userId: me, token: jwe})<br/>(the same endpoint used for an ordinary manual grant)
+    HubBackend -->> Web: 200 — access restored
 ```
 
 **Known gap, called out in the source itself:** `RecoverVaultDialog.vue` has a literal `// TODO: check whether Vault Format 8 or UVF` — as written, it only
@@ -123,9 +120,8 @@ sequenceDiagram
     participant User as User (browser)
     participant Web as katta-server web frontend (Vue 3)
     participant HubBackend as katta-server backend
-
-    User->>Web: navigate to /vaults/recover
-    User->>Web: paste the word phrase, upload the vault's vault.uvf / vault.cryptomator file
+    User ->> Web: navigate to /vaults/recover
+    User ->> Web: paste the word phrase, upload the vault's vault.uvf / vault.cryptomator file
     alt UVF
         Note over Web: decode words → RecoveryKey private key<br/>decrypt the uploaded vault.uvf via the recoverykey JWE recipient
         Note over Web: generate a brand-new MemberKey (the old one is unknown/irrelevant)
@@ -133,7 +129,7 @@ sequenceDiagram
         Note over Web: decode words → master key, verify it signs the uploaded vault.cryptomator JWT
     end
     Note over Web: continue the normal vault-creation wizard (new vaultId, owner grant, etc.)
-    Web->>HubBackend: create the vault as a new VaultDto (uvfKeySet includes the recovered public recovery key)
+    Web ->> HubBackend: create the vault as a new VaultDto (uvfKeySet includes the recovered public recovery key)
 ```
 
 The backend has **zero** code referencing the word-phrase recovery key anywhere (`grep -rn "recoveryKey" backend/src/main/java` → no hits) — it only ever sees

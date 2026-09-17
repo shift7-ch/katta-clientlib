@@ -19,13 +19,14 @@ IDs: **storage profiles**, the **/vault API**, the **vault.uvf JWE metadata**, a
 ```mermaid
 classDiagram
     direction LR
-    Supertype <|-- Subtype : discriminated subtype, e.g. StorageProfileS3StaticDto is-a StorageProfileDto
-    Owner *-- Owned : embedded field, owned, e.g. UserDto embeds its devices
-    Consumer --> Provider : fetched/associated via the API, not a literal embedded field
-    Referrer ..> Referenced : foreign key, an id field referencing another entity
+    Supertype <|-- Subtype: discriminated subtype, e.g. StorageProfileS3StaticDto is-a StorageProfileDto
+    Owner *-- Owned: embedded field, owned, e.g. UserDto embeds its devices
+    Consumer --> Provider: fetched/associated via the API, not a literal embedded field
+    Referrer ..> Referenced: foreign key, an id field referencing another entity
 ```
 
-Color groups in the diagram: storage profile, /vault API entity, vault.uvf JWE metadata, Hub bookmark (runtime) — see the `classDef` fill colors on the diagram below.
+Color groups in the diagram: storage profile, /vault API entity, vault.uvf JWE metadata, Hub bookmark (runtime) — see the `classDef` fill colors on the diagram
+below.
 
 ## Diagram
 
@@ -190,10 +191,10 @@ classDiagram
     HubStorageProfile ..> StorageProfileDto: (ctor arg)=id (FK)
     Host ..> VaultDto: volume path=id (FK)
 
-classDef storageGrp fill:#e0f2f1
-classDef apiGrp fill:#e3f2fd
-classDef jweGrp fill:#fff3e0
-classDef bookmarkGrp fill:#e8f5e9
+classDef storageGrp fill: #e0f2f1
+classDef apiGrp fill: #e3f2fd
+classDef jweGrp fill: #fff3e0
+classDef bookmarkGrp fill: #e8f5e9
 
 class StorageProfileDto storageGrp
 class StorageProfileS3StaticDto storageGrp

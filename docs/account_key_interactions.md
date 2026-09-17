@@ -1,7 +1,7 @@
 # Account Key Interactions
 
-How the per-user **Account Key** (server-side field name: `setupCode`) is created, used for recovery, and rotated across **katta-clientlib** (desktop) and *
-*katta-server** ("Hub" — backend + web frontend).
+How the per-user **Account Key** (server-side field name: `setupCode`) is created, used for recovery, and rotated across **katta-clientlib** (desktop) and
+**katta-server** ("Hub" — backend + web frontend).
 
 > **Scope note.** katta-server is a separate repo ([shift7-ch/katta-server](https://github.com/shift7-ch/katta-server), verified at commit `1e50912`).
 > Everything below is read directly from source in both repos, not inferred. The JWE formats and key identifiers (`org.cryptomator.hub.setupCode`,
@@ -69,15 +69,14 @@ sequenceDiagram
     autonumber
     participant Desktop as katta-clientlib desktop client
     participant HubBackend as katta-server backend
-
-    Desktop->>HubBackend: GET /api/users/me
-    HubBackend-->>Desktop: UserDto (no ecdhPublicKey / privateKeys — first login)
+    Desktop ->> HubBackend: GET /api/users/me
+    HubBackend -->> Desktop: UserDto (no ecdhPublicKey / privateKeys — first login)
     Note over Desktop: generate device keys (P-384 EC), stored in the OS keychain
     Note over Desktop: accountKey = random UUID
     Note over Desktop: generate UserKeys — two fresh P-384 EC keypairs (ECDH + ECDSA)
     Note over Desktop: display the Account Key and ask for a device name (FirstLoginController)
-    Desktop->>HubBackend: PUT /api/users/me<br/>(ecdhPublicKey, ecdsaPublicKey,<br/>privateKeys=encryptWithAccountKey(accountKey),<br/>setupCode=accountKey wrapped with own ecdhPublicKey)
-    Desktop->>HubBackend: PUT /api/devices/{deviceId}<br/>(userPrivateKey = user keys wrapped for this device)
+    Desktop ->> HubBackend: PUT /api/users/me<br/>(ecdhPublicKey, ecdsaPublicKey,<br/>privateKeys=encryptWithAccountKey(accountKey),<br/>setupCode=accountKey wrapped with own ecdhPublicKey)
+    Desktop ->> HubBackend: PUT /api/devices/{deviceId}<br/>(userPrivateKey = user keys wrapped for this device)
 ```
 
 ## 2. Creation — web frontend
@@ -87,16 +86,15 @@ sequenceDiagram
     autonumber
     participant Web as katta-server web frontend (Vue 3, browser)
     participant HubBackend as katta-server backend
-
-    Web->>HubBackend: GET /users/me
-    HubBackend-->>Web: UserDto (no setupCode — first login)
+    Web ->> HubBackend: GET /users/me
+    HubBackend -->> Web: UserDto (no setupCode — first login)
     Note over Web: setupCode = crypto.randomUUID()
     Note over Web: generate UserKeys — ECDH + ECDSA CryptoKeyPairs (WebCrypto)
     Note over Web: privateKeys = encryptWithSetupCode(setupCode)<br/>PBKDF2-HMAC-SHA512, 1,000,000 iterations, PBES2-HS512+A256KW
     Note over Web: setupCode field = setupCode wrapped with own ecdhPublicKey (ECDH-ES+A256KW)
-    Web->>HubBackend: PUT /users/me (ecdhPublicKey, ecdsaPublicKey, privateKeys, setupCode)
+    Web ->> HubBackend: PUT /users/me (ecdhPublicKey, ecdsaPublicKey, privateKeys, setupCode)
     Note over Web: generate browser device keys
-    Web->>HubBackend: PUT /devices/{id} (register this browser as a device)
+    Web ->> HubBackend: PUT /devices/{id} (register this browser as a device)
 ```
 
 ## 3. Usage and recovery — desktop client (new or lost device)
@@ -109,17 +107,16 @@ sequenceDiagram
     autonumber
     participant Desktop as katta-clientlib desktop client
     participant HubBackend as katta-server backend
-
-    Desktop->>HubBackend: GET /api/users/me
-    HubBackend-->>Desktop: UserDto (ecdhPublicKey, ecdsaPublicKey, privateKeys present)
-    Desktop->>HubBackend: GET /api/devices/{deviceId}
-    HubBackend-->>Desktop: 404 — this device isn't registered
+    Desktop ->> HubBackend: GET /api/users/me
+    HubBackend -->> Desktop: UserDto (ecdhPublicKey, ecdsaPublicKey, privateKeys present)
+    Desktop ->> HubBackend: GET /api/devices/{deviceId}
+    HubBackend -->> Desktop: 404 — this device isn't registered
     Note over Desktop: prompt the user for their Account Key and a device name
     Note over Desktop: locally decrypt privateKeys using the entered Account Key (PBES2)
     alt wrong Account Key
         Note over Desktop: decryption fails — re-prompt until success or cancel
     end
-    Desktop->>HubBackend: PUT /api/devices/{deviceId}<br/>(register this device, wrap the recovered user keys for it)
+    Desktop ->> HubBackend: PUT /api/devices/{deviceId}<br/>(register this device, wrap the recovered user keys for it)
 ```
 
 ## 4. Usage and recovery — web frontend (new browser)
@@ -129,17 +126,16 @@ sequenceDiagram
     autonumber
     participant Web as katta-server web frontend (Vue 3, browser)
     participant HubBackend as katta-server backend
-
-    Web->>HubBackend: GET /users/me
-    HubBackend-->>Web: UserDto (setupCode / privateKeys present, no local browser device key)
+    Web ->> HubBackend: GET /users/me
+    HubBackend -->> Web: UserDto (setupCode / privateKeys present, no local browser device key)
     Note over Web: prompt the user to enter their Account Key
     Note over Web: locally decrypt privateKeys via the PBKDF2-derived wrapping key
     alt wrong Account Key
         Note over Web: UnwrapKeyError → "wrong account key", re-prompt
     end
     Note over Web: generate new browser device keys
-    Web->>HubBackend: PUT /users/me (backfill ecdsaPublicKey if missing — pre-1.4.0 back-compat)
-    Web->>HubBackend: PUT /devices/{id} (register this browser as a device)
+    Web ->> HubBackend: PUT /users/me (backfill ecdsaPublicKey if missing — pre-1.4.0 back-compat)
+    Web ->> HubBackend: PUT /devices/{id} (register this browser as a device)
 ```
 
 ## 5. Rotation — web frontend only (Regenerate Account Key)
@@ -152,14 +148,13 @@ sequenceDiagram
     autonumber
     participant Web as katta-server web frontend (Vue 3, browser)
     participant HubBackend as katta-server backend
-
     Note over Web: session already unlocked via this browser's device key
     Note over Web: newCode = crypto.randomUUID()
     Note over Web: re-encrypt the already-decrypted private keys under newCode (PBES2)
     Note over Web: re-wrap newCode to the user's own ecdhPublicKey (ECDH-ES) for the setupCode field
-    Web->>HubBackend: PUT /users/me (privateKeys, setupCode updated)
-    HubBackend->>HubBackend: diff-detects the setupCode change → logs UserSetupCodeChangeEvent (audit log)
-    Note over Web,HubBackend: per-device wrapped keys are untouched —<br/>the underlying keypair is unchanged, only its passphrase-wrapping is
+    Web ->> HubBackend: PUT /users/me (privateKeys, setupCode updated)
+    HubBackend ->> HubBackend: diff-detects the setupCode change → logs UserSetupCodeChangeEvent (audit log)
+    Note over Web, HubBackend: per-device wrapped keys are untouched —<br/>the underlying keypair is unchanged, only its passphrase-wrapping is
 ```
 
 **The desktop client has no equivalent.** `UserKeysService` exposes only `getUserKeys(...)`/`getOrCreateUserKeys(...)`, and `DeviceSetupCallback` only one-shot
