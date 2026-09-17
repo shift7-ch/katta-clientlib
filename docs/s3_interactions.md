@@ -14,12 +14,17 @@ Which components of **katta-clientlib** (this repo) and **katta-server** ("Hub" 
 - **Setup**
     - [1. Setup — provisioning IAM roles and registering a storage profile](#1-setup--provisioning-iam-roles-and-registering-a-storage-profile)
 - **Vault creation**
-    - [2. Vault creation — desktop client (S3-STS profile)](#2-vault-creation--desktop-client-s3-sts-profile)
-    - [3. Vault creation — Hub web frontend (S3-STS profile)](#3-vault-creation--hub-web-frontend-s3-sts-profile)
-    - [4. Vault creation — Hub web frontend (S3STATIC profile)](#4-vault-creation--hub-web-frontend-s3static-profile)
+    - *S3-STS profile*
+        - [2. Vault creation — desktop client (S3-STS profile)](#2-vault-creation--desktop-client-s3-sts-profile)
+        - [3. Vault creation — Hub web frontend (S3-STS profile)](#3-vault-creation--hub-web-frontend-s3-sts-profile)
+    - *S3STATIC profile*
+        - [4. Vault creation — desktop client (S3STATIC profile)](#4-vault-creation--desktop-client-s3static-profile)
+        - [5. Vault creation — Hub web frontend (S3STATIC profile)](#5-vault-creation--hub-web-frontend-s3static-profile)
 - **Vault unlock & day-to-day access**
-    - [5. Vault unlock and day-to-day file access — desktop client (S3-STS profile)](#5-vault-unlock-and-day-to-day-file-access--desktop-client-s3-sts-profile)
-    - [6. Vault unlock and day-to-day file access — desktop client (S3STATIC profile)](#6-vault-unlock-and-day-to-day-file-access--desktop-client-s3static-profile)
+    - *S3-STS profile*
+        - [6. Vault unlock and day-to-day file access — desktop client (S3-STS profile)](#6-vault-unlock-and-day-to-day-file-access--desktop-client-s3-sts-profile)
+    - *S3STATIC profile*
+        - [7. Vault unlock and day-to-day file access — desktop client (S3STATIC profile)](#7-vault-unlock-and-day-to-day-file-access--desktop-client-s3static-profile)
 
 ## Component summary
 
@@ -121,7 +126,40 @@ sequenceDiagram
 
 This is the *only* place the Hub backend touches S3 at all, and even then it's acting on temporary credentials someone else obtained — not its own identity.
 
-## 4. Vault creation — Hub web frontend (S3STATIC profile)
+## 4. Vault creation — desktop client (S3STATIC profile)
+
+Unlike the web frontend (section 5), the desktop client isn't limited by browser CORS — so this flow *does* include a real `CreateBucket` call, just like the
+S3-STS creation flow (section 2), except `HubUVFVaultProvider.create()`'s `case S3_STATIC` branch (`hub/src/main/java/cloud/katta/protocols/hub/HubUVFVaultProvider.java:105-128`)
+obtains its S3 session from operator-entered static credentials instead of an STS-issued temporary session — the two flows share the same generic
+`vault.create()`/`HubUVFVault.create()` bucket-provisioning code afterward. Two separate credential prompts occur: one for the access key/secret persisted
+into the vault's `vault.uvf` metadata (used by every member for day-to-day access, per section 7), and one — potentially the same key pair, potentially not —
+used once here to actually create the bucket.
+
+There's also no per-vault Keycloak protocol-mapper step here, unlike section 2: `apiVaultsVaultIdPut`'s two AWS/MinIO configuration flags are both gated on
+`storage.getHost().getProtocol().isRoleConfigurable()` (`HubUVFVaultProvider.java:188-189`), which is false for a `StorageProfileS3StaticDto`-backed session —
+there's no role ARN to configure a trust policy for.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Desktop as katta-clientlib desktop client
+    participant HubBackend as katta-server backend
+    participant S3 as S3 / MinIO
+    Desktop ->> HubBackend: GET /api/storageprofile/{id}
+    HubBackend -->> Desktop: StorageProfileS3StaticDto<br/>(endpoint, region, bucketPrefix)
+    Desktop ->> HubBackend: GET /api/settings
+    HubBackend -->> Desktop: automatic-access-grant config
+    Note over Desktop: operator enters access key/secret to persist in vault metadata<br/>(used by every member for day-to-day access)
+    Note over Desktop: operator enters access key/secret used once to create the bucket
+    Desktop ->> S3: PUT /{bucket}<br/>(CreateBucket, bucket = bucketPrefix + vaultId)
+    Desktop ->> S3: PUT /{bucket}?versioning, PUT /{bucket}?encryption<br/>(PutBucketVersioning, PutEncryptionConfiguration)
+    Desktop ->> S3: PUT /{bucket}/{key}<br/>(PutObject vault.uvf, dir.uvf — encrypted client-side)
+    Desktop ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile with the static creds embedded, uvfKeySet)
+    Desktop ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creator their own access)
+    Note over HubBackend, S3: no Keycloak protocol-mapper step here — isRoleConfigurable() is false for S3STATIC profiles,<br/>so both AWS/MinIO flags on PUT /api/vaults/{vaultId} are false
+```
+
+## 5. Vault creation — Hub web frontend (S3STATIC profile)
 
 `StorageProfileS3StaticDto` carries no credential field at all (just `endpoint`, `region`, `bucketPrefix`, etc.) — so unlike an admin-shared secret, each vault
 creator types their own access key, secret key, and target bucket name straight into the `CreateVault.vue` form. Two things make this path different from every
@@ -148,9 +186,9 @@ sequenceDiagram
 
 Whichever profile type is used, this is as far as the web frontend's S3 involvement goes: it can create a vault, but **it has no file-browsing feature at all**.
 `VaultDetails.vue` (the only per-vault screen) only manages metadata and access grants; there's no route, no `GetObjectCommand`, no `DeleteObjectCommand`
-anywhere in `frontend/src`. Browsing, uploading, and downloading files is exclusively the desktop client's job (sections 5 and 6).
+anywhere in `frontend/src`. Browsing, uploading, and downloading files is exclusively the desktop client's job (sections 6 and 7).
 
-## 5. Vault unlock and day-to-day file access — desktop client (S3-STS profile)
+## 6. Vault unlock and day-to-day file access — desktop client (S3-STS profile)
 
 Every open/browse/upload/download after the first unlock goes through this chained-credential dance, then talks to S3 directly. The Hub backend is consulted
 once per token refresh (to down-scope a token to this one vault) and is otherwise completely out of the data path — confirmed by `HubUVFVault` delegating every
@@ -182,7 +220,7 @@ sequenceDiagram
     Note over Desktop, HubBackend: HubSession throws UnsupportedException for Read/Write/Delete —<br/>the Hub connection is locked to metadata only and never carries file bytes
 ```
 
-## 6. Vault unlock and day-to-day file access — desktop client (S3STATIC profile)
+## 7. Vault unlock and day-to-day file access — desktop client (S3STATIC profile)
 
 For `S3STATIC` storage profiles, S3 access keys are set once at vault-creation time and persisted (encrypted, member-to-member) inside the vault's own
 `vault.uvf` metadata. No OAuth, no STS, no role ARNs — the Hub backend never sees the plaintext secret outside that opaque encrypted blob it stores.
