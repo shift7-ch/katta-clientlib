@@ -1,7 +1,7 @@
 # Vault Access Grant
 
-How a vault's member key gets deposited for a new member — manually (an owner explicitly acts) or automatically (via Web-of-Trust verification) — across *
-*katta-clientlib** (desktop) and **katta-server** ("Hub" — backend + web frontend), plus the settings/defaults data model that governs it.
+How a vault's member key gets deposited for a new member — manually (an owner explicitly acts) or automatically (via Web-of-Trust verification) — across
+**katta-clientlib** (desktop) and **katta-server** ("Hub" — backend + web frontend), plus the settings/defaults data model that governs it.
 
 > **Scope note.** katta-server is a separate repo ([shift7-ch/katta-server](https://github.com/shift7-ch/katta-server), verified at commit `1e50912`).
 > Everything below is read directly from source in both repos, not inferred.
@@ -92,10 +92,10 @@ classDiagram
     note for VaultMetadataAutomaticAccessGrantDto "Immutable after creation: no API or UI\nin either repo updates an existing\nvault's automaticAccessGrant"
     note for SettingsDto "allowAutomaticAccessGrantOverride is defined\nhere but only ever read by the web frontend's\nCreateVault wizard - katta-clientlib never reads it"
 
-classDef settingsGrp fill:#ede7f6
-classDef storageGrp fill:#e0f2f1
-classDef apiGrp fill:#e3f2fd
-classDef jweGrp fill:#fff3e0
+classDef settingsGrp fill: #ede7f6
+classDef storageGrp fill: #e0f2f1
+classDef apiGrp fill: #e3f2fd
+classDef jweGrp fill: #fff3e0
 
 class SettingsDto settingsGrp
 class StorageProfileDto storageGrp
@@ -152,14 +152,14 @@ sequenceDiagram
     Owner ->> Web: add a user/group as a vault member (RBAC only — see section 1)
     Note over Desktop: HubGrantAccessSchedulerService, started at Hub login, ticks periodically regardless
     Desktop ->> HubBackend: GET /api/vaults/{vaultId}/users-requiring-access-grant
-alt automaticAccessGrant.enabled == false
-Note over Desktop: skip this vault — the desktop client never deposits a key for it
-else trustThreshold == -1
-Note over Desktop: trust check disabled — grant to anyone pending<br/>(this is as close to "manual, right now" as the desktop client gets)
-Desktop->>HubBackend: POST /api/vaults/{vaultId}/access-tokens (identical to the automatic path)
-else trustThreshold >= 0
-Note over Desktop: no shortcut for a manually-added member — falls straight into<br/>the full Web-of-Trust check, byte-for-byte the section 4 flow
-end
+    alt automaticAccessGrant.enabled == false
+        Note over Desktop: skip this vault — the desktop client never deposits a key for it
+    else trustThreshold == -1
+        Note over Desktop: trust check disabled — grant to anyone pending<br/>(this is as close to "manual, right now" as the desktop client gets)
+        Desktop ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens (identical to the automatic path)
+    else trustThreshold >= 0
+        Note over Desktop: no shortcut for a manually-added member — falls straight into<br/>the full Web-of-Trust check, byte-for-byte the section 4 flow
+    end
 ```
 
 ## 3. Automatic access grant — web frontend
@@ -179,22 +179,22 @@ sequenceDiagram
     end
     Web ->> HubBackend: fetch and decrypt this vault's access token + vault.uvf
     Note over Web: read automaticAccessGrant.enabled/trustThreshold straight from the decrypted UVF metadata
-alt not enabled
-Note over Web: disqualify this vault permanently for the session
-else enabled
-loop each candidate user
-Web->>HubBackend: GET /users/trusted/{userId} → signatureChain
-Note over Web: wot.verify() walks the ES384 JWT chain from my own ECDSA key<br/>to the candidate's claimed public keys
-alt trustThreshold == -1, or chain verifies and length <= trustThreshold
-Note over Web: candidate is trusted
-else
-Note over Web: skip candidate
-end
-end
-Note over Web: encryptForUser(ecdhPublicKey) per trusted candidate<br/>→ ECDH-ES JWE, member role only (never owner/recovery key)
-Web->>HubBackend: POST /vaults/{vaultId}/access-tokens/auto {userId: jwe, ...}
-HubBackend->>HubBackend: reject any candidate not genuinely pending, persist, log VaultAccessGranted(automatic=true)
-end
+    alt not enabled
+        Note over Web: disqualify this vault permanently for the session
+    else enabled
+        loop each candidate user
+            Web ->> HubBackend: GET /users/trusted/{userId} → signatureChain
+            Note over Web: wot.verify() walks the ES384 JWT chain from my own ECDSA key<br/>to the candidate's claimed public keys
+            alt trustThreshold == -1, or chain verifies and length <= trustThreshold
+                Note over Web: candidate is trusted
+            else
+                Note over Web: skip candidate
+            end
+        end
+        Note over Web: encryptForUser(ecdhPublicKey) per trusted candidate<br/>→ ECDH-ES JWE, member role only (never owner/recovery key)
+        Web ->> HubBackend: POST /vaults/{vaultId}/access-tokens/auto {userId: jwe, ...}
+        HubBackend ->> HubBackend: reject any candidate not genuinely pending, persist, log VaultAccessGranted(automatic=true)
+    end
 ```
 
 ## 4. Automatic access grant — desktop client
@@ -208,31 +208,31 @@ sequenceDiagram
     participant Desktop as katta-clientlib desktop client
     participant HubBackend as katta-server backend
     Note over Desktop: HubGrantAccessSchedulerService starts at HubSession.login(), ticks on a fixed period
-loop every scheduler period
-Desktop->>HubBackend: GET /api/vaults/accessible?role=OWNER
-HubBackend-->>Desktop: owned, non-archived vaults
-loop each owned vault
-Desktop->>HubBackend: GET /api/vaults/{vaultId}/uvf/vault.uvf
-Note over Desktop: decrypt locally → read automaticAccessGrant.enabled/trustThreshold
-alt not enabled
-Note over Desktop: skip vault
-else enabled
-Desktop->>HubBackend: GET /api/vaults/{vaultId}/users-requiring-access-grant
-HubBackend-->>Desktop: pending users (individual, even if added via a group)
-loop each candidate
-Desktop->>HubBackend: GET /api/users/trusted
-Note over Desktop: WoT.verifyRecursive walks the ES384 signature chain,<br/>trust level = verified chain length
-alt trustThreshold < 0, or trustLevel <= trustThreshold
-Note over Desktop: candidate is trusted
-else
-Note over Desktop: skip candidate
-end
-end
-Note over Desktop: encryptForUser(ecdhPublicKey) per trusted candidate → ECDH-ES JWE
-Desktop->>HubBackend: POST /api/vaults/{vaultId}/access-tokens {userId: jwe, ...}
-end
-end
-end
+    loop every scheduler period
+        Desktop ->> HubBackend: GET /api/vaults/accessible?role=OWNER
+        HubBackend -->> Desktop: owned, non-archived vaults
+        loop each owned vault
+            Desktop ->> HubBackend: GET /api/vaults/{vaultId}/uvf/vault.uvf
+            Note over Desktop: decrypt locally → read automaticAccessGrant.enabled/trustThreshold
+            alt not enabled
+                Note over Desktop: skip vault
+            else enabled
+                Desktop ->> HubBackend: GET /api/vaults/{vaultId}/users-requiring-access-grant
+                HubBackend -->> Desktop: pending users (individual, even if added via a group)
+                loop each candidate
+                    Desktop ->> HubBackend: GET /api/users/trusted
+                    Note over Desktop: WoT.verifyRecursive walks the ES384 signature chain,<br/>trust level = verified chain length
+                    alt trustThreshold < 0, or trustLevel <= trustThreshold
+                        Note over Desktop: candidate is trusted
+                    else
+                        Note over Desktop: skip candidate
+                    end
+                end
+                Note over Desktop: encryptForUser(ecdhPublicKey) per trusted candidate → ECDH-ES JWE
+                Desktop ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens {userId: jwe, ...}
+            end
+        end
+    end
 ```
 
 ## Client comparison: desktop vs. web frontend
