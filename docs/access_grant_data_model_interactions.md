@@ -86,10 +86,10 @@ classDiagram
         +Integer trustThreshold
     }
 
-    VaultDto ..> UVFMetadataPayload: uvfMetadataFile decrypts to
+    VaultDto ..> UVFMetadataPayload: uvfMetadataFile decrypts to this payload
     UVFMetadataPayload *-- VaultMetadataStorageDto: storage
     UVFMetadataPayload *-- VaultMetadataAutomaticAccessGrantDto: automaticAccessGrant
-    VaultMetadataStorageDto ..> StorageProfileDto: provider (FK)
+    VaultMetadataStorageDto ..> StorageProfileDto: provider=id (FK)
     SettingsDto ..> VaultMetadataAutomaticAccessGrantDto: seeds enabled/trustThreshold,<br/>once, at vault creation only
     note for VaultMetadataAutomaticAccessGrantDto "Immutable after creation: no API or UI\nin either repo updates an existing\nvault's automaticAccessGrant"
     note for SettingsDto "allowAutomaticAccessGrantOverride is defined\nhere but only ever read by the web frontend's\nCreateVault wizard - katta-clientlib never reads it"
