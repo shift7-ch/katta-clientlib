@@ -81,6 +81,7 @@ classDiagram
             +String name
             +String email
             +boolean enabled
+            +DeviceDto[] devices
             +String ecdhPublicKey
             +String ecdsaPublicKey
         }
@@ -166,26 +167,26 @@ classDiagram
     StorageProfileDto <|-- StorageProfileS3StaticDto
     StorageProfileDto <|-- StorageProfileS3STSDto
     VaultDto "1" --> "0..*" MemberDto: members (GET .../members)
-    MemberDto ..> UserDto: id, type=USER (FK)
-    MemberDto ..> GroupDto: id, type=GROUP (FK)
+    MemberDto ..> UserDto: id=id, type=USER (FK)
+    MemberDto ..> GroupDto: id=id, type=GROUP (FK)
     UserDto "1" *-- "0..*" DeviceDto: devices
-    DeviceDto ..> UserDto: owner (FK)
-    RecoveryProcessDto ..> VaultDto: vaultId (FK)
+    DeviceDto ..> UserDto: owner=id (FK)
+    RecoveryProcessDto ..> VaultDto: vaultId=id (FK)
     RecoveryProcessDto "1" *-- "1..*" RecoveredKeyShareDto: recoveredKeyShares
-    RecoveredKeyShareDto ..> UserDto: map key = authority id (FK)
-    CreateS3STSBucketDto ..> VaultDto: vaultId (FK)
-    CreateS3STSBucketDto ..> StorageProfileDto: storageConfigId (FK)
-    VaultDto ..> UVFMetadataPayload: uvfMetadataFile decrypts to
+    RecoveredKeyShareDto ..> UserDto: recoveredKeyShares map key=id (FK)
+    CreateS3STSBucketDto ..> VaultDto: vaultId=id (FK)
+    CreateS3STSBucketDto ..> StorageProfileDto: storageConfigId=id (FK)
+    VaultDto ..> UVFMetadataPayload: uvfMetadataFile decrypts to this payload
     UVFMetadataPayload *-- VaultMetadataStorageDto: storage
     UVFMetadataPayload *-- VaultMetadataAutomaticAccessGrantDto: automaticAccessGrant
-    VaultMetadataStorageDto ..> StorageProfileDto: provider (FK)
-    VaultDto ..> HubVaultKeys: uvfKeySet is a JWKS of
-    HubVaultKeys ..> UVFAccessTokenPayload: delivers memberKey/recoveryKey via
-    UVFAccessTokenPayload ..> UserDto: encrypted for ecdhPublicKey (FK)
+    VaultMetadataStorageDto ..> StorageProfileDto: provider=id (FK)
+    VaultDto ..> HubVaultKeys: uvfKeySet is a JWKS of these keys
+    HubVaultKeys ..> UVFAccessTokenPayload: reconstructed from memberKey/recoveryKey fields
+    UVFAccessTokenPayload ..> UserDto: recipient=ecdhPublicKey (FK)
     Host --> HubStorageProfile: profile
     Host ..> HubProtocol: protocol
-    HubStorageProfile ..> StorageProfileDto: wraps id (FK)
-    Host ..> VaultDto: volume path = vault id (FK)
+    HubStorageProfile ..> StorageProfileDto: (ctor arg)=id (FK)
+    Host ..> VaultDto: volume path=id (FK)
 
 classDef storageGrp fill:#e0f2f1
 classDef apiGrp fill:#e3f2fd
