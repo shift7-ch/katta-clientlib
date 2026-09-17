@@ -36,7 +36,6 @@ through separate calls. Whether a key gets deposited automatically is governed b
 default — and never consulted again after that.
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'background':'#0a2540','primaryColor':'#123a63','primaryTextColor':'#eaf2fb','primaryBorderColor':'#5a8fc0','lineColor':'#8fb4d9','tertiaryColor':'#123a63','fontFamily':'ui-monospace, SFMono-Regular, Menlo, monospace','fontSize':'13px'}}}%%
 classDiagram
     direction LR
 
@@ -93,10 +92,10 @@ classDiagram
     note for VaultMetadataAutomaticAccessGrantDto "Immutable after creation: no API or UI\nin either repo updates an existing\nvault's automaticAccessGrant"
     note for SettingsDto "allowAutomaticAccessGrantOverride is defined\nhere but only ever read by the web frontend's\nCreateVault wizard - katta-clientlib never reads it"
 
-classDef settingsGrp fill: #4a2f6b, stroke:#c9a8f0, color:#f5ecff, stroke-width:1px
-classDef storageGrp fill:#1f6f8b, stroke:#7fd6f0, color:#eaf6fb, stroke-width:1px
-classDef apiGrp fill: #22406b, stroke:#9fc1e8, color:#eaf2fb, stroke-width:1px
-classDef jweGrp fill: #6b4a12, stroke:#f0c375,color:#fff6e6, stroke-width:1px
+classDef settingsGrp fill:#ede7f6
+classDef storageGrp fill:#e0f2f1
+classDef apiGrp fill:#e3f2fd
+classDef jweGrp fill:#fff3e0
 
 class SettingsDto settingsGrp
 class StorageProfileDto storageGrp
@@ -106,7 +105,7 @@ class VaultMetadataStorageDto jweGrp
 class VaultMetadataAutomaticAccessGrantDto jweGrp
 ```
 
-(Colors match [`data_model.md`](data_model.md)'s domain groups — violet is the one new group here, for hub-wide settings.)
+(Colors match [`vault_data_model.md`](vault_data_model.md)'s domain groups — violet is the one new group here, for hub-wide settings.)
 
 **The overriding mechanism, precisely:** at vault-creation time, `CreateVault.vue` fetches `GET /settings` and uses `enableAutomaticAccessGrant`/
 `automaticAccessGrantTrustThreshold` as the initial values for the new vault. If the hub-wide `allowAutomaticAccessGrantOverride` is `true`, the wizard shows an
@@ -133,7 +132,7 @@ sequenceDiagram
     Owner ->> Web: open "Grant access" dialog, review, confirm
     Note over Web: per pending user: encryptForUser(ecdhPublicKey, includeOwnerKeys)<br/>→ ECDH-ES JWE wrapping the MemberKey (+ RecoveryKey private bytes, only if granting OWNER)
     Web ->> HubBackend: POST /vaults/{vaultId}/access-tokens {userId: jwe, ...}
-    HubBackend ->> HubBackend: persist AccessToken rows; log VaultAccessGranted(automatic=false)
+    HubBackend ->> HubBackend: persist AccessToken rows&#59; log VaultAccessGranted(automatic=false)
 ```
 
 ## 2. Manual access grant — desktop client
@@ -158,7 +157,7 @@ Note over Desktop: skip this vault — the desktop client never deposits a key f
 else trustThreshold == -1
 Note over Desktop: trust check disabled — grant to anyone pending<br/>(this is as close to "manual, right now" as the desktop client gets)
 Desktop->>HubBackend: POST /api/vaults/{vaultId}/access-tokens (identical to the automatic path)
-else trustThreshold &gt ;= 0
+else trustThreshold >= 0
 Note over Desktop: no shortcut for a manually-added member — falls straight into<br/>the full Web-of-Trust check, byte-for-byte the section 4 flow
 end
 ```
@@ -186,7 +185,7 @@ else enabled
 loop each candidate user
 Web->>HubBackend: GET /users/trusted/{userId} → signatureChain
 Note over Web: wot.verify() walks the ES384 JWT chain from my own ECDSA key<br/>to the candidate's claimed public keys
-alt trustThreshold == -1, or chain verifies and length &lt ;= trustThreshold
+alt trustThreshold == -1, or chain verifies and length <= trustThreshold
 Note over Web: candidate is trusted
 else
 Note over Web: skip candidate
@@ -194,7 +193,7 @@ end
 end
 Note over Web: encryptForUser(ecdhPublicKey) per trusted candidate<br/>→ ECDH-ES JWE, member role only (never owner/recovery key)
 Web->>HubBackend: POST /vaults/{vaultId}/access-tokens/auto {userId: jwe, ...}
-HubBackend->>HubBackend: reject any candidate not genuinely pending ; persist; log VaultAccessGranted(automatic=true)
+HubBackend->>HubBackend: reject any candidate not genuinely pending&#59; persist&#59; log VaultAccessGranted(automatic=true)
 end
 ```
 
@@ -222,8 +221,8 @@ Desktop->>HubBackend: GET /api/vaults/{vaultId}/users-requiring-access-grant
 HubBackend-->>Desktop: pending users (individual, even if added via a group)
 loop each candidate
 Desktop->>HubBackend: GET /api/users/trusted
-Note over Desktop: WoT.verifyRecursive walks the ES384 signature chain ;<br/>trust level = verified chain length
-alt trustThreshold &lt; 0, or trustLevel &lt;= trustThreshold
+Note over Desktop: WoT.verifyRecursive walks the ES384 signature chain&#59;<br/>trust level = verified chain length
+alt trustThreshold < 0, or trustLevel <= trustThreshold
 Note over Desktop: candidate is trusted
 else
 Note over Desktop: skip candidate

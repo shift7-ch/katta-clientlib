@@ -88,7 +88,7 @@ sequenceDiagram
     Desktop->>S3: PutBucketVersioning, PutEncryptionConfiguration
     Desktop->>S3: PutObject vault.uvf, dir.uvf (encrypted client-side)
     Desktop->>HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet)
-    HubBackend->>Keycloak: create per-vault client-scope + protocol mapper<br/>(AWS: principal_tags/transitive_tag_keys claim; MinIO: client_id claim)
+    HubBackend->>Keycloak: create per-vault client-scope + protocol mapper<br/>(AWS: principal_tags/transitive_tag_keys claim&#59; MinIO: client_id claim)
     Desktop->>HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creator their own access)
     Note over HubBackend,S3: Hub backend receives no AWS credentials and makes no S3 call in this flow
 ```
@@ -178,7 +178,7 @@ sequenceDiagram
         Desktop->>STS: AssumeRole(using credentials #1,<br/>roleArn=stsRoleAccessBucketAssumeRoleTaggedSession, sessionTag=Vault:vaultId)
         STS-->>Desktop: temporary credentials #2<br/>(bucket-scoped via a PrincipalTag/Vault trust condition)
     else MinIO — no role chaining
-        Note over Desktop,STS: credentials #1 are used directly;<br/>per-vault scoping instead comes from the ${jwt:client_id} policy variable
+        Note over Desktop,STS: credentials #1 are used directly&#59;<br/>per-vault scoping instead comes from the ${jwt:client_id} policy variable
     end
     loop every file operation (browse, upload, download)
         Desktop->>S3: GetObject / PutObject / ListObjectsV2

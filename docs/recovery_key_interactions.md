@@ -57,7 +57,7 @@ sequenceDiagram
     participant HubBackend as katta-server backend
 
     Note over Client: generate the vault's MemberKey (AES) and RecoveryKey (P-384 EC keypair)
-    Note over Client: vault.uvf JWE gets two parallel recipients:<br/>org.cryptomator.hub.memberkey (AES-KW) and org.cryptomator.hub.recoverykey.&lt;thumbprint&gt; (ECDH-ES)
+    Note over Client: vault.uvf JWE gets two parallel recipients:<br/>org.cryptomator.hub.memberkey (AES-KW) and org.cryptomator.hub.recoverykey.<thumbprint> (ECDH-ES)
     Client->>HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet = public half of the recovery keypair)
     Client->>HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creating owner both memberKey and the recovery keypair's private bytes)
     Note over HubBackend: stores both opaquely — never decrypts vault.uvf, never sees the recovery private key
@@ -125,12 +125,12 @@ sequenceDiagram
     participant HubBackend as katta-server backend
 
     User->>Web: navigate to /vaults/recover
-    User->>Web: paste the word phrase; upload the vault's vault.uvf / vault.cryptomator file
+    User->>Web: paste the word phrase&#59; upload the vault's vault.uvf / vault.cryptomator file
     alt UVF
         Note over Web: decode words → RecoveryKey private key<br/>decrypt the uploaded vault.uvf via the recoverykey JWE recipient
         Note over Web: generate a brand-new MemberKey (the old one is unknown/irrelevant)
     else legacy VaultFormat8
-        Note over Web: decode words → master key; verify it signs the uploaded vault.cryptomator JWT
+        Note over Web: decode words → master key&#59; verify it signs the uploaded vault.cryptomator JWT
     end
     Note over Web: continue the normal vault-creation wizard (new vaultId, owner grant, etc.)
     Web->>HubBackend: create the vault as a new VaultDto (uvfKeySet includes the recovered public recovery key)

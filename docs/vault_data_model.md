@@ -185,10 +185,10 @@ classDiagram
     HubStorageProfile ..> StorageProfileDto: wraps id (FK)
     Host ..> VaultDto: volume path = vault id (FK)
 
-classDef storageGrp fill: #1f6f8b, stroke:#7fd6f0, color:#eaf6fb, stroke-width:1px
-classDef apiGrp fill: #22406b, stroke:#9fc1e8, color:#eaf2fb, stroke-width:1px
-classDef jweGrp fill: #6b4a12, stroke:#f0c375, color:#fff6e6, stroke-width:1px
-classDef bookmarkGrp fill: #1f5c4d, stroke:#7fe0c0,color:#eafff6, stroke-width:1px
+classDef storageGrp fill:#e0f2f1
+classDef apiGrp fill:#e3f2fd
+classDef jweGrp fill:#fff3e0
+classDef bookmarkGrp fill:#e8f5e9
 
 class StorageProfileDto storageGrp
 class StorageProfileS3StaticDto storageGrp
