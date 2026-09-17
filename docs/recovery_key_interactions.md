@@ -77,7 +77,7 @@ sequenceDiagram
     participant Web as katta-server web frontend (Vue 3)
     participant HubBackend as katta-server backend
     Owner ->> Web: open Vault Details → "Display Recovery Key"
-    Web ->> HubBackend: GET vault access token (already unlocked user keys required)
+    Web ->> HubBackend: GET /api/vaults/{vaultId}/access-token<br/>(already unlocked user keys required)
     HubBackend -->> Web: this owner's encrypted access token
     Note over Web: decrypt token → recover MemberKey and the RecoveryKey private key
     Note over Web: export the RecoveryKey's PKCS8 private key bytes + CRC16 checksum, pad to a multiple of 3
@@ -102,7 +102,7 @@ sequenceDiagram
     Owner ->> Web: open "Recover vault" dialog, paste the saved word phrase
     Note over Web: decode words → reconstruct the vault's master key / RecoveryKey private key
     Note over Web: re-encrypt it for the current user's own ecdhPublicKey
-    Web ->> HubBackend: grantAccess(vaultId, {userId: me, token: jwe})<br/>(the same endpoint used for an ordinary manual grant)
+    Web ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens {userId: me, token: jwe}<br/>(grantAccess — the same endpoint used for an ordinary manual grant)
     HubBackend -->> Web: 200 — access restored
 ```
 
@@ -129,7 +129,7 @@ sequenceDiagram
         Note over Web: decode words → master key, verify it signs the uploaded vault.cryptomator JWT
     end
     Note over Web: continue the normal vault-creation wizard (new vaultId, owner grant, etc.)
-    Web ->> HubBackend: create the vault as a new VaultDto (uvfKeySet includes the recovered public recovery key)
+    Web ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(create the vault as a new VaultDto — uvfKeySet includes the recovered public recovery key)
 ```
 
 The backend has **zero** code referencing the word-phrase recovery key anywhere (`grep -rn "recoveryKey" backend/src/main/java` → no hits) — it only ever sees

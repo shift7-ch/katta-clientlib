@@ -63,7 +63,7 @@ is what decrypts the `Device.userPrivateKey` row above. See [Creation — deskto
 |----------------------------------------|--------------------------------------------------------------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
 | **Desktop client** (katta-clientlib)   | Yes — `HubSession.login()` → `UserKeysServiceImpl.getOrCreateUserKeys()` | Yes — same method, recovery branch on device-not-found | **No** — no rotate/change method anywhere in `UserKeysService` or `DeviceSetupCallback` | `cloud.katta.crypto.UserKeys`/`JWE` (Nimbus JOSE)                         |
 | **Web frontend** (katta-server, Vue 3) | Yes — `InitialSetup.vue`, `State.CreateUserKey`                          | Yes — `InitialSetup.vue`, `State.RecoverUserKey`       | **Yes** — `RegenerateSetupCodeDialog.vue`                                               | `frontend/src/common/crypto.ts`/`jwe.ts` (WebCrypto)                      |
-| **Hub backend** (katta-server)         | Stores opaque JWEs via `PUT /users/me`                                   | Same endpoint serves `GET`/`PUT /users/me`             | Same endpoint — diff-detected and audit-logged                                          | Never derives or sees the plaintext Account Key; see `UsersResource.java` |
+| **Hub backend** (katta-server)         | Stores opaque JWEs via `PUT /api/users/me`                               | Same endpoint serves `GET`/`PUT /api/users/me`         | Same endpoint — diff-detected and audit-logged                                          | Never derives or sees the plaintext Account Key; see `UsersResource.java` |
 
 ## 1. Creation — desktop client
 
@@ -91,15 +91,15 @@ sequenceDiagram
     autonumber
     participant Web as katta-server web frontend (Vue 3, browser)
     participant HubBackend as katta-server backend
-    Web ->> HubBackend: GET /users/me
+    Web ->> HubBackend: GET /api/users/me
     HubBackend -->> Web: UserDto (no setupCode — first login)
     Note over Web: setupCode = crypto.randomUUID()
     Note over Web: generate UserKeys — ECDH + ECDSA CryptoKeyPairs (WebCrypto)
     Note over Web: privateKeys = encryptWithSetupCode(setupCode)<br/>PBKDF2-HMAC-SHA512, 1,000,000 iterations, PBES2-HS512+A256KW
     Note over Web: setupCode field = setupCode wrapped with own ecdhPublicKey (ECDH-ES+A256KW)
-    Web ->> HubBackend: PUT /users/me (ecdhPublicKey, ecdsaPublicKey, privateKeys, setupCode)
+    Web ->> HubBackend: PUT /api/users/me (ecdhPublicKey, ecdsaPublicKey, privateKeys, setupCode)
     Note over Web: generate browser device keys
-    Web ->> HubBackend: PUT /devices/{id} (register this browser as a device)
+    Web ->> HubBackend: PUT /api/devices/{id} (register this browser as a device)
 ```
 
 ## 3. Usage and recovery — desktop client (new or lost device)
@@ -131,7 +131,7 @@ sequenceDiagram
     autonumber
     participant Web as katta-server web frontend (Vue 3, browser)
     participant HubBackend as katta-server backend
-    Web ->> HubBackend: GET /users/me
+    Web ->> HubBackend: GET /api/users/me
     HubBackend -->> Web: UserDto (setupCode / privateKeys present, no local browser device key)
     Note over Web: prompt the user to enter their Account Key
     Note over Web: locally decrypt privateKeys via the PBKDF2-derived wrapping key
@@ -139,8 +139,8 @@ sequenceDiagram
         Note over Web: UnwrapKeyError → "wrong account key", re-prompt
     end
     Note over Web: generate new browser device keys
-    Web ->> HubBackend: PUT /users/me (backfill ecdsaPublicKey if missing — pre-1.4.0 back-compat)
-    Web ->> HubBackend: PUT /devices/{id} (register this browser as a device)
+    Web ->> HubBackend: PUT /api/users/me (backfill ecdsaPublicKey if missing — pre-1.4.0 back-compat)
+    Web ->> HubBackend: PUT /api/devices/{id} (register this browser as a device)
 ```
 
 ## 5. Rotation — web frontend only (Regenerate Account Key)
@@ -157,7 +157,7 @@ sequenceDiagram
     Note over Web: newCode = crypto.randomUUID()
     Note over Web: re-encrypt the already-decrypted private keys under newCode (PBES2)
     Note over Web: re-wrap newCode to the user's own ecdhPublicKey (ECDH-ES) for the setupCode field
-    Web ->> HubBackend: PUT /users/me (privateKeys, setupCode updated)
+    Web ->> HubBackend: PUT /api/users/me (privateKeys, setupCode updated)
     HubBackend ->> HubBackend: diff-detects the setupCode change → logs UserSetupCodeChangeEvent (audit log)
     Note over Web, HubBackend: per-device wrapped keys are untouched —<br/>the underlying keypair is unchanged, only its passphrase-wrapping is
 ```
@@ -166,7 +166,7 @@ sequenceDiagram
 creation/recovery prompts — there is no rotate/regenerate method anywhere in `cloud.katta.workflows.*` or `cloud.katta.core.*`. Today, rotating an Account Key
 requires the web frontend.
 
-The closest thing to a backend "reset" is the destructive `POST /users/me/reset`, which wipes `ecdhPublicKey`/`ecdsaPublicKey`/`privateKeys`/`setupCode`
+The closest thing to a backend "reset" is the destructive `POST /api/users/me/reset`, which wipes `ecdhPublicKey`/`ecdsaPublicKey`/`privateKeys`/`setupCode`
 entirely and cascades deletion of devices, access tokens, and emergency-key-shares — forcing a brand-new first-login cycle rather than gracefully re-wrapping
 existing keys. The desktop client's generated `apiUsersMeResetPost()` method exists but is never called anywhere in this repo.
 
@@ -179,7 +179,7 @@ Two other subsystems also use the word "recovery" but are unrelated to the per-u
 - **Emergency Access / Council Recovery** — a per-*vault*, multi-party, threshold-style social recovery scheme (`EmergencyRecoveryProcess`,
   `EmergencyAccessResource`, `RecoveryProcessDto`/`RecoveredKeyShareDto` in the data model). Requires cooperation from other trusted vault members ("council")
   through a multi-step, server-tracked process — nothing to do with a single user's own passphrase-derived backup, beyond one coupling point: resetting your own
-  account (`POST /users/me/reset`) also removes you as a council member from any vault's emergency-access scheme.
+  account (`POST /api/users/me/reset`) also removes you as a council member from any vault's emergency-access scheme.
 
 ## Sources
 
@@ -198,7 +198,7 @@ From `/Users/che/workspaces/katta-clientlib` (this repo):
 From [shift7-ch/katta-server](https://github.com/shift7-ch/katta-server) (commit `1e50912`):
 
 - `backend/src/main/java/org/cryptomator/hub/entities/User.java`, `flyway/B28__Hub_1.5.0.sql` — `setupcode`/`privatekeys` columns
-- `backend/src/main/java/org/cryptomator/hub/api/UsersResource.java` — `PUT/GET /users/me`, `POST /users/me/reset`
+- `backend/src/main/java/org/cryptomator/hub/api/UsersResource.java` — `PUT/GET /api/users/me`, `POST /api/users/me/reset`
 - `backend/src/main/java/org/cryptomator/hub/entities/events/UserSetupCodeChangeEvent.java` — audit event for rotation
 - `frontend/src/components/InitialSetup.vue` — `State.CreateUserKey` / `State.RecoverUserKey`
 - `frontend/src/components/RegenerateSetupCodeDialog.vue`, `ManageSetupCode.vue` — rotation UI

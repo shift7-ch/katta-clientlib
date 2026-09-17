@@ -227,8 +227,8 @@ class HubStorageProfile bookmarkGrp
 | `CreateS3STSBucketDto` / `RecoveryProcessDto` | `vaultId`         | `VaultDto.id`                 | Also the path parameter on nearly every `/api/vaults/{vaultId}/...` route.                                 |
 | `Host`                                        | volume path       | `VaultDto.id`                 | The bucket object path is `bucketPrefix + vaultId`; the bookmark's root volume encodes it.                 |
 | `MemberDto` / `AuthorityDto`                  | `id` (+ `type`)   | `UserDto.id` or `GroupDto.id` | Polymorphic FK — `type` discriminates which table the id belongs to.                                       |
-| `DeviceDto`                                   | `owner`           | `UserDto.id`                  | Also the path param in the deprecated `GET /vaults/{vaultId}/keys/{deviceId}`.                             |
-| `UVFAccessTokenPayload`                       | JWE recipient     | `UserDto.ecdhPublicKey`       | Delivered per-user via `/vaults/{vaultId}/access-token(s)`, encrypted so only that key holder can open it. |
+| `DeviceDto`                                   | `owner`           | `UserDto.id`                  | Also the path param in the deprecated `GET /api/vaults/{vaultId}/keys/{deviceId}`.                          |
+| `UVFAccessTokenPayload`                       | JWE recipient     | `UserDto.ecdhPublicKey`       | Delivered per-user via `/api/vaults/{vaultId}/access-token(s)`, encrypted so only that key holder can open it. |
 | `RecoveryProcessDto`                          | `vaultId`         | `VaultDto.id`                 | Emergency-access process; `recoveredKeyShares` map keys are authority ids (FK to User/Group).              |
 
 ## Simplifications
