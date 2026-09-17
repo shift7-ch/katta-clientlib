@@ -47,13 +47,13 @@ sequenceDiagram
     participant HubBackend as katta-server backend
     Operator ->> CLI: storage aws | storage minio
     alt AWS
-        CLI ->> IAM: CreateOpenIDConnectProvider(Keycloak realm,<br/>clientIDs: cryptomator, cryptomatorhub, cryptomatorvaults)
-        CLI ->> IAM: CreateRole create-bucket<br/>(trust: sts:AssumeRoleWithWebIdentity)
-        CLI ->> IAM: CreateRole access-bucket-web-identity-role<br/>(trust: AssumeRoleWithWebIdentity + TagSession)
-        CLI ->> IAM: CreateRole access-bucket-tagged-session-role<br/>(trust: AssumeRole + TagSession from role above,<br/>condition TransitiveTagKeys=Vault)
+        CLI ->> IAM: POST /<br/>(Action=CreateOpenIDConnectProvider, Keycloak realm,<br/>clientIDs: cryptomator, cryptomatorhub, cryptomatorvaults)
+        CLI ->> IAM: POST /<br/>(Action=CreateRole create-bucket, trust: sts:AssumeRoleWithWebIdentity)
+        CLI ->> IAM: POST /<br/>(Action=CreateRole access-bucket-web-identity-role,<br/>trust: AssumeRoleWithWebIdentity + TagSession)
+        CLI ->> IAM: POST /<br/>(Action=CreateRole access-bucket-tagged-session-role,<br/>trust: AssumeRole + TagSession from role above,<br/>condition TransitiveTagKeys=Vault)
     else MinIO
-        CLI ->> IAM: addCannedPolicy(katta_create_bucket_policy)
-        CLI ->> IAM: addCannedPolicy(katta_access_bucket_policy,<br/>resource scoped by ${jwt:client_id})
+        CLI ->> IAM: PUT /minio/admin/v3/add-canned-policy?name=katta_create_bucket_policy
+        CLI ->> IAM: PUT /minio/admin/v3/add-canned-policy?name=katta_access_bucket_policy<br/>(resource scoped by ${jwt:client_id})
         CLI -->> Operator: prints `mc idp openid add ...` —<br/>MinIO OIDC IDP registration has no admin API, so it's manual
     end
     Operator ->> CLI: hub storageprofile aws sts | hub storageprofile minio sts
@@ -83,9 +83,9 @@ sequenceDiagram
     Note over Desktop: web identity token = the Desktop's own Hub-login Keycloak access token
     Desktop ->> STS: AssumeRoleWithWebIdentity(roleArn=stsRoleCreateBucketClient)
     STS -->> Desktop: temporary credentials
-    Desktop ->> S3: CreateBucket(bucketPrefix + vaultId)
-    Desktop ->> S3: PutBucketVersioning, PutEncryptionConfiguration
-    Desktop ->> S3: PutObject vault.uvf, dir.uvf (encrypted client-side)
+    Desktop ->> S3: PUT /{bucket}<br/>(CreateBucket, bucket = bucketPrefix + vaultId)
+    Desktop ->> S3: PUT /{bucket}?versioning, PUT /{bucket}?encryption<br/>(PutBucketVersioning, PutEncryptionConfiguration)
+    Desktop ->> S3: PUT /{bucket}/{key}<br/>(PutObject vault.uvf, dir.uvf — encrypted client-side)
     Desktop ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile, uvfKeySet)
     HubBackend ->> Keycloak: create per-vault client-scope + protocol mapper<br/>(AWS: principal_tags/transitive_tag_keys claim, MinIO: client_id claim)
     Desktop ->> HubBackend: POST /api/vaults/{vaultId}/access-tokens<br/>(grant the creator their own access)
@@ -112,9 +112,9 @@ sequenceDiagram
     Web ->> STS: AssumeRoleWithWebIdentity(roleArn=stsRoleCreateBucketHub,<br/>inline session policy: CreateBucket/GetBucketPolicy + scoped PutObject)
     STS -->> Web: temporary credentials (awsAccessKey, awsSecretKey, sessionToken)
     Web ->> HubBackend: PUT /api/storage/{vaultId}<br/>(CreateS3STSBucketDto: vaultUvf, dirUvf, rootDirHash, awsAccessKey, awsSecretKey, sessionToken, region)
-    HubBackend ->> S3: CreateBucket(bucketPrefix + vaultId), using the credentials forwarded by the browser
-    HubBackend ->> S3: PutObject vault.uvf
-    HubBackend ->> S3: PutObject empty dir-placeholder object, PutObject dir.uvf
+    HubBackend ->> S3: PUT /{bucket}<br/>(CreateBucket, bucket = bucketPrefix + vaultId — using the credentials forwarded by the browser)
+    HubBackend ->> S3: PUT /{bucket}/{key}<br/>(PutObject vault.uvf)
+    HubBackend ->> S3: PUT /{bucket}/{key}<br/>(PutObject empty dir-placeholder object, PutObject dir.uvf)
     S3 -->> HubBackend: 200 OK
     HubBackend -->> Web: 201 Created
 ```
@@ -139,9 +139,9 @@ sequenceDiagram
     participant HubBackend as katta-server backend
     participant S3 as S3 / MinIO
     Note over Web: operator types the vault's own access key, secret key, and bucket name into the form
-    Web ->> S3: ListObjectsV2 (pre-flight: bucket exists and is empty?)
-    Web ->> S3: PutObject vault.uvf
-    Web ->> S3: PutObject root dir marker (d/xx/yyyy/)
+    Web ->> S3: GET /{bucket}?list-type=2<br/>(ListObjectsV2 — pre-flight: bucket exists and is empty?)
+    Web ->> S3: PUT /{bucket}/{key}<br/>(PutObject vault.uvf)
+    Web ->> S3: PUT /{bucket}/{key}<br/>(PutObject root dir marker, d/xx/yyyy/)
     Web ->> HubBackend: PUT /api/vaults/{vaultId}<br/>(VaultDto: uvfMetadataFile with the static creds embedded, uvfKeySet)
     Note over Web, S3: bucket CORS for the browser's origin is a manual admin step —<br/>CreateVault.vue only prints an `aws s3api put-bucket-cors` hint on failure, nothing in katta-server automates it
 ```
@@ -177,7 +177,7 @@ sequenceDiagram
         Note over Desktop, STS: credentials#1 are used directly,<br/>per-vault scoping instead comes from the ${jwt:client_id} policy variable
     end
     loop every file operation (browse, upload, download)
-        Desktop ->> S3: GetObject / PutObject / ListObjectsV2
+        Desktop ->> S3: GET|PUT /{bucket}/{key}, GET /{bucket}?list-type=2<br/>(GetObject / PutObject / ListObjectsV2)
     end
     Note over Desktop, HubBackend: HubSession throws UnsupportedException for Read/Write/Delete —<br/>the Hub connection is locked to metadata only and never carries file bytes
 ```
@@ -197,7 +197,7 @@ sequenceDiagram
     HubBackend -->> Desktop: VaultDto.uvfMetadataFile (encrypted)
     Note over Desktop: decrypts vault.uvf client-side → VaultMetadataStorageDto.username / password
     loop every file operation
-        Desktop ->> S3: GetObject / PutObject (SigV4 with the static access key/secret)
+        Desktop ->> S3: GET|PUT /{bucket}/{key}<br/>(GetObject / PutObject, SigV4 with the static access key/secret)
     end
     Note over HubBackend, S3: no STS, no OAuth token involved anywhere in this path
 ```
