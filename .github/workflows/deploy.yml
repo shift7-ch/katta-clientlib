@@ -21,6 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: 21
           cache: maven
+          show-download-progress: true
       - name: Build with Maven
         run: mvn --batch-mode deploy -DskipTests -DskipITs
         env:
