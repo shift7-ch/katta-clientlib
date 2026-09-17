@@ -16,14 +16,16 @@ IDs: **storage profiles**, the **/vault API**, the **vault.uvf JWE metadata**, a
 
 ## Legend
 
-| Symbol  | Meaning                                                                           |
-|---------|-----------------------------------------------------------------------------------|
-| `<\|--` | discriminated subtype (e.g. `StorageProfileS3StaticDto` is-a `StorageProfileDto`) |
-| `*--`   | embedded field, owned (e.g. `UserDto` embeds its `devices`)                       |
-| `-->`   | fetched/associated via the API, not a literal embedded field                      |
-| `..>`   | foreign key — an id field referencing another entity                              |
+```mermaid
+classDiagram
+    direction LR
+    Supertype <|-- Subtype : discriminated subtype, e.g. StorageProfileS3StaticDto is-a StorageProfileDto
+    Owner *-- Owned : embedded field, owned, e.g. UserDto embeds its devices
+    Consumer --> Provider : fetched/associated via the API, not a literal embedded field
+    Referrer ..> Referenced : foreign key, an id field referencing another entity
+```
 
-Color groups in the diagram: 🟦 storage profile · 🟪 /vault API entity · 🟧 vault.uvf JWE metadata · 🟩 Hub bookmark (runtime).
+Color groups in the diagram: storage profile, /vault API entity, vault.uvf JWE metadata, Hub bookmark (runtime) — see the `classDef` fill colors on the diagram below.
 
 ## Diagram
 
