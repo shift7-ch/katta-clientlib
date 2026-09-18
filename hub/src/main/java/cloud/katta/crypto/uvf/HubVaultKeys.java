@@ -11,6 +11,7 @@ import org.cryptomator.cryptolib.common.P384KeyPair;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.zip.CRC32;
 
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
@@ -129,6 +130,29 @@ public final class HubVaultKeys {
      */
     public OctetSequenceKey memberKey() {
         return memberKey;
+    }
+
+    /**
+     * Serializes the private part of the recovery key in PKCS #8 format, appends a 16 bit checksum of the
+     * least significant bytes of its CRC-32 and pads the result to a multiple of three bytes required for
+     * the encoding as words.
+     *
+     * @return Private recovery key with checksum and padding
+     */
+    public static byte[] createRecoveryKey(final P384KeyPair recoveryKey) {
+        // PKCS #8 encoded private key
+        final byte[] rawkey = recoveryKey.getPrivate().getEncoded();
+        final CRC32 crc32 = new CRC32();
+        crc32.update(rawkey, 0, rawkey.length);
+        final long checksum = crc32.getValue();
+        // Add 1-3 bytes of padding: 01 or 02 02 or 03 03 03
+        final int padding = 3 - ((rawkey.length + 2) % 3);
+        final byte[] combined = Arrays.copyOf(rawkey, rawkey.length + 2 + padding);
+        // Append the least significant byte of the crc followed by the second-least significant byte
+        combined[rawkey.length] = (byte) (checksum & 0xff);
+        combined[rawkey.length + 1] = (byte) ((checksum >> 8) & 0xff);
+        Arrays.fill(combined, rawkey.length + 2, combined.length, (byte) padding);
+        return combined;
     }
 
     /**
