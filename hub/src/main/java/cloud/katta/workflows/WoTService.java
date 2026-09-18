@@ -26,6 +26,16 @@ public interface WoTService {
     Map<String, Integer> getTrustLevelsPerUserId(UserKeys userKeys) throws ApiException, AccessException, SecurityFailure;
 
     /**
+     * Get trust levels for the given users, verifying the signature chains against the public keys as carried by these
+     * very {@link UserDto}s. Callers that subsequently encrypt for one of these users therefore encrypt for the same key
+     * the chain attests.
+     *
+     * @param users Users to verify, typically the candidates for an access grant
+     * @return IDs of trusted users with their trust level, skipping unverified trusts.
+     */
+    Map<String, Integer> getTrustLevelsPerUserId(UserKeys userKeys, List<UserDto> users) throws ApiException, AccessException, SecurityFailure;
+
+    /**
      * Verifies a chain of signatures, where each signature signs the public key of the next signature.
      *
      * @param signatureChain   The signature chain, where the first element is signed by me

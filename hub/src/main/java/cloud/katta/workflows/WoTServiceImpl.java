@@ -50,6 +50,18 @@ public class WoTServiceImpl implements WoTService {
         return this.getTrustLevels(userKeys).entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().getTrustedUserId(), Map.Entry::getValue));
     }
 
+    @Override
+    public Map<String, Integer> getTrustLevelsPerUserId(final UserKeys userKeys, final List<UserDto> users) throws ApiException {
+        // 1. From the perspective of the currently logged-in user, GET a list of trusted users from /api/users/trusted
+        final List<TrustedUserDto> trusts = usersApi.apiUsersTrustedGet();
+        if(trusts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        // 2. Verify the returned signature chains against the keys of the given users
+        return WoT.verifyTrusts(trusts, users, userKeys.ecdsaKeyPair().getPublic()).entrySet().stream()
+                .collect(Collectors.toMap(entry -> entry.getKey().getTrustedUserId(), Map.Entry::getValue));
+    }
+
     protected Map<TrustedUserDto, Integer> getTrustLevels(final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
         final ECPublicKey signerPublicKey = userKeys.ecdsaKeyPair().getPublic();
 
