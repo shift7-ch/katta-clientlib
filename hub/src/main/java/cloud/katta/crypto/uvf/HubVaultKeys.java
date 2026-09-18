@@ -6,17 +6,26 @@ package cloud.katta.crypto.uvf;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.sec.SECObjectIdentifiers;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
@@ -154,7 +163,7 @@ public final class HubVaultKeys {
      */
     public static byte[] createRecoveryKey(final P384KeyPair recoveryKey) {
         // PKCS #8 encoded private key
-        final byte[] rawkey = recoveryKey.getPrivate().getEncoded();
+        final byte[] rawkey = encodePrivateKey(recoveryKey);
         final CRC32 crc32 = new CRC32();
         crc32.update(rawkey, 0, rawkey.length);
         final long checksum = crc32.getValue();
@@ -166,6 +175,32 @@ public final class HubVaultKeys {
         combined[rawkey.length + 1] = (byte) ((checksum >> 8) & 0xff);
         Arrays.fill(combined, rawkey.length + 2, combined.length, (byte) padding);
         return combined;
+    }
+
+    /**
+     * Encodes the private key in PKCS #8 format with the same structure as the web frontend exporting with
+     * WebCrypto, independent of the security provider. The curve is only identified in the algorithm identifier
+     * and omitted in the ECPrivateKey structure (RFC 5915) which includes the public key. The default encoding
+     * of the private key differs between providers (BouncyCastle includes the optional parameters), resulting
+     * in a different recovery key for the same key pair.
+     *
+     * @param recoveryKey Recovery key pair
+     * @return DER encoded PrivateKeyInfo
+     */
+    private static byte[] encodePrivateKey(final P384KeyPair recoveryKey) {
+        final ECPrivateKey privateKey = (ECPrivateKey) recoveryKey.getPrivate();
+        final ECPublicKey publicKey = (ECPublicKey) recoveryKey.getPublic();
+        final ECNamedCurveParameterSpec curve = ECNamedCurveTable.getParameterSpec("secp384r1");
+        // Uncompressed point 0x04 || x || y
+        final byte[] publicPoint = curve.getCurve().createPoint(publicKey.getW().getAffineX(), publicKey.getW().getAffineY()).getEncoded(false);
+        try {
+            return new PrivateKeyInfo(new AlgorithmIdentifier(X9ObjectIdentifiers.id_ecPublicKey, SECObjectIdentifiers.secp384r1),
+                    new org.bouncycastle.asn1.sec.ECPrivateKey(curve.getN().bitLength(), privateKey.getS(), new DERBitString(publicPoint), null))
+                    .getEncoded(ASN1Encoding.DER);
+        }
+        catch(IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**

@@ -4,15 +4,26 @@
 
 package cloud.katta.crypto.uvf;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.security.KeyFactory;
+import java.security.Provider;
+import java.security.Security;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.zip.CRC32;
 
 import cloud.katta.workflows.exceptions.SecurityFailure;
+import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,33 +44,44 @@ class HubVaultKeysTest {
         assertFalse(keys.serialize().toPublicJWKSet().containsNonPublicKeys());
     }
 
-    @Test
-    void createRecoveryKey() throws Exception {
-        assertEquals(RECOVERY_KEY, new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey())));
+    @ParameterizedTest
+    @ValueSource(strings = {"SunEC", "BC"})
+    void createRecoveryKey(final String provider) throws Throwable {
+        withPreferredProvider(provider, () ->
+                assertEquals(RECOVERY_KEY, new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey()))));
     }
 
-    @Test
-    void recoverRecoveryKey() throws Exception {
-        final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(RECOVERY_KEY);
-        assertEquals(PRIVATE_RECOVERY_KEY, Base64.getEncoder().encodeToString(recovered.getPrivate().getEncoded()));
-        // Public key derived from private key
-        assertArrayEquals(recoveryKey().getPublic().getEncoded(), recovered.getPublic().getEncoded());
-        assertEquals(ECKey.parse(PUBLIC_RECOVERY_KEY).computeThumbprint(), new ECKey.Builder(ECKey.parse(PUBLIC_RECOVERY_KEY).getCurve(), recovered.getPublic()).build().computeThumbprint());
+    @ParameterizedTest
+    @ValueSource(strings = {"SunEC", "BC"})
+    void recoverRecoveryKey(final String provider) throws Throwable {
+        withPreferredProvider(provider, () -> {
+            final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(RECOVERY_KEY);
+            assertEquals(((ECPrivateKey) recoveryKey().getPrivate()).getS(), ((ECPrivateKey) recovered.getPrivate()).getS());
+            // Public key derived from private key
+            assertEquals(((ECPublicKey) recoveryKey().getPublic()).getW(), ((ECPublicKey) recovered.getPublic()).getW());
+            assertEquals(ECKey.parse(PUBLIC_RECOVERY_KEY).computeThumbprint(), new ECKey.Builder(Curve.P_384, recovered.getPublic()).build().computeThumbprint());
+            assertEquals(RECOVERY_KEY, new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recovered)));
+        });
     }
 
     @Test
     void recoverRecoveryKeyWithLineBreaks() throws Exception {
         final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(RECOVERY_KEY.replaceAll(" (?=all|compare|accept|connected|lesson|respond)", "\n      "));
-        assertEquals(PRIVATE_RECOVERY_KEY, Base64.getEncoder().encodeToString(recovered.getPrivate().getEncoded()));
+        assertEquals(((ECPrivateKey) recoveryKey().getPrivate()).getS(), ((ECPrivateKey) recovered.getPrivate()).getS());
     }
 
-    @Test
-    void recoverGeneratedRecoveryKey() throws Exception {
-        final P384KeyPair recoveryKey = HubVaultKeys.create().recoveryKey();
-        assertNotNull(recoveryKey);
-        final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey)));
-        assertArrayEquals(recoveryKey.getPrivate().getEncoded(), recovered.getPrivate().getEncoded());
-        assertArrayEquals(recoveryKey.getPublic().getEncoded(), recovered.getPublic().getEncoded());
+    @ParameterizedTest
+    @ValueSource(strings = {"SunEC", "BC"})
+    void recoverGeneratedRecoveryKey(final String provider) throws Throwable {
+        withPreferredProvider(provider, () -> {
+            final P384KeyPair recoveryKey = HubVaultKeys.create().recoveryKey();
+            assertNotNull(recoveryKey);
+            final String encoded = new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey));
+            final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(encoded);
+            assertEquals(((ECPrivateKey) recoveryKey.getPrivate()).getS(), ((ECPrivateKey) recovered.getPrivate()).getS());
+            assertEquals(((ECPublicKey) recoveryKey.getPublic()).getW(), ((ECPublicKey) recovered.getPublic()).getW());
+            assertEquals(encoded, new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recovered)));
+        });
     }
 
     @Test
@@ -94,6 +116,28 @@ class HubVaultKeysTest {
         crc32.update(rawkey, 0, rawkey.length);
         final byte[] padded = new byte[]{0x01, 0x02, 0x03, 0x04, (byte) (crc32.getValue() & 0xff), (byte) ((crc32.getValue() >> 8) & 0xff), 0x03, 0x03, 0x03};
         assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey(padded));
+    }
+
+    /**
+     * Run test with BouncyCastle registered as preferred provider as in the desktop application or removed
+     */
+    private static void withPreferredProvider(final String provider, final Executable test) throws Throwable {
+        final Provider bc = Security.getProvider(BouncyCastleProvider.PROVIDER_NAME);
+        final int position = Arrays.asList(Security.getProviders()).indexOf(bc) + 1;
+        try {
+            Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+            if(BouncyCastleProvider.PROVIDER_NAME.equals(provider)) {
+                Security.insertProviderAt(new BouncyCastleProvider(), 1);
+            }
+            assertEquals(provider, KeyFactory.getInstance("EC").getProvider().getName());
+            test.execute();
+        }
+        finally {
+            Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+            if(bc != null) {
+                Security.insertProviderAt(bc, position);
+            }
+        }
     }
 
     private static P384KeyPair recoveryKey() throws Exception {
