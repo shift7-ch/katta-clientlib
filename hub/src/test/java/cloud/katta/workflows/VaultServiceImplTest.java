@@ -31,7 +31,7 @@ class VaultServiceImplTest {
 
         final UserKeys userKeys = UserKeys.create();
         final HubVaultKeys jwks = HubVaultKeys.create();
-        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic());
+        final String accessToken = new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic(), true);
 
         final UUID vaultId = UUID.randomUUID();
         when(vaultResourceMock.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));

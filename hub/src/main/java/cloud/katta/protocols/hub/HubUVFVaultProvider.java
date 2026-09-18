@@ -194,7 +194,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
                     // Share vault with myself including admin access with recovery key
                     vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
-                            new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic())));
+                            new UVFAccessTokenPayload(keys.memberKey(), keys.recoveryKey()).encryptForUser(userKeys.ecdhKeyPair().getPublic(), true)));
                     // Upload metadata to bucket
                     try {
                         vault.create(session, location.getRegion(), vaultMetadataProvider);

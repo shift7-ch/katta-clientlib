@@ -80,7 +80,7 @@ class KeyRotationTest extends AbstractHubTest {
                 final List<MemberDto> members = vaultResourceApi.apiVaultsVaultIdMembersGet(vaultDto.getId());
                 for(final MemberDto member : members) {
                     if(userPublicKeys.containsKey(member.getId())) {
-                        tokens.put(member.getId(), masterkeyJWE.encryptForUser(decodePublicKey(userPublicKeys.get(member.getId()))));
+                        tokens.put(member.getId(), masterkeyJWE.encryptForUser(decodePublicKey(userPublicKeys.get(member.getId())), true));
                     }
                 }
                 vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), tokens);
