@@ -80,8 +80,8 @@ profile, [`KattaTestRealm`](hub/src/test/java/cloud/katta/testsetup/KattaTestRea
 - It creates the user `HUB_USER` with password `HUB_PASSWORD` of the env file (`alice` with password `asd`) and the roles
   `user` and `create-vaults` using the API of Katta Server.
 
-When you start the environment yourself, run an integration test with `HubTestSetupDockerExtension.LocalKeepRunning` once, or
-add the configuration in Keycloak and Katta Web.
+The setup is idempotent. When you start the environment yourself with the commands above, run the integration tests with
+`HubTestSetupDockerExtension.LocalAlreadyRunning`, which adds the test configuration to the running environment.
 
 #### MinIO
 MinIO provisions the root user `minioadmin` with password `minioadmin`, and the user `testuser` with password `top-secret`

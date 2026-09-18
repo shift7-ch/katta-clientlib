@@ -89,8 +89,9 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
 
     public static class LocalAlreadyRunning extends HubTestSetupDockerExtension {
         @Override
-        public void beforeAll(final ExtensionContext context) throws URISyntaxException {
-            // no setup
+        public void beforeAll(final ExtensionContext context) throws IOException {
+            // no docker setup, but add the test configuration to the realm of the running environment
+            this.setupRealm(AbstractHubTest.LOCAL_TEST_CONFIG);
         }
 
         @Override

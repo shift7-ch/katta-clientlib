@@ -88,19 +88,19 @@ public final class KattaTestRealm {
 
     private static void createUser(final ApiClient adminApiClient, final HubTestConfig.Setup.UserConfig user) throws ApiException {
         final UsersResourceApi users = new UsersResourceApi(adminApiClient);
-        if(find(users, user.username).isPresent()) {
-            log.info("User {} already exists", user.username);
-            return;
-        }
         final EnumSet<RealmRole> roles = EnumSet.of(RealmRole.USER, RealmRole.CREATE_VAULTS);
         final String email = String.format("%s@localhost", user.username);
-        users.apiUsersPost(new CreateUserDto().name(user.username).email(email).firstName(user.username).lastName(user.username)
-                .password(user.password).realmRoles(roles));
-        // Katta Server creates users with a temporary password, which requires a password change before any login
+        if(!find(users, user.username).isPresent()) {
+            users.apiUsersPost(new CreateUserDto().name(user.username).email(email).firstName(user.username).lastName(user.username)
+                    .password(user.password).realmRoles(roles));
+            log.info("Created user {}", user.username);
+        }
+        // Katta Server creates users with a temporary password, which requires a password change before any login. Reset
+        // password and roles of an existing user as well when the setup runs against an environment already set up.
         final String id = find(users, user.username).orElseThrow(() -> new IllegalStateException(String.format("User %s not found", user.username))).getId();
         users.apiUsersIdPut(id, new UpdateUserDto().email(email).firstName(user.username).lastName(user.username)
                 .password(user.password).realmRoles(roles));
-        log.info("Created user {} with id {}", user.username, id);
+        log.info("Set password and roles of user {} with id {}", user.username, id);
     }
 
     private static Optional<WithCounts> find(final UsersResourceApi users, final String username) throws ApiException {
