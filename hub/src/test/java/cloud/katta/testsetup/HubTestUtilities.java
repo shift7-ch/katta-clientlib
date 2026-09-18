@@ -40,15 +40,22 @@ import com.google.api.client.json.gson.GsonFactory;
 public class HubTestUtilities {
 
     public static ApiClient getAdminApiClient(final HubTestConfig.Setup setup) throws IOException, ApiException {
+        return getApiClient(setup, setup.adminConfig);
+    }
+
+    /**
+     * Authenticate as the given test user with a Keycloak resource owner password credentials grant.
+     */
+    public static ApiClient getApiClient(final HubTestConfig.Setup setup, final HubTestConfig.Setup.UserConfig user) throws IOException, ApiException {
         final ConfigDto config = new ConfigResourceApi(new ApiClient().setBasePath(setup.hubURL)).apiConfigGet();
         final PasswordTokenRequest request = new PasswordTokenRequest(new ApacheHttpTransport(), new GsonFactory(), new GenericUrl(config.getKeycloakTokenEndpoint()),
-                setup.adminConfig.username, setup.adminConfig.password)
+                user.username, user.password)
                 .setClientAuthentication(new ClientParametersAuthentication(setup.clientId, null))
                 .setRequestInitializer(new UserAgentHttpRequestInitializer(new PreferencesUseragentProvider()));
-        final String adminAccessToken = request.executeUnparsed().parseAs(OAuth2AuthorizationService.PermissiveTokenResponse.class).toTokenResponse().getAccessToken();
-        final ApiClient adminApiClient = new ApiClient();
-        adminApiClient.addDefaultHeader("Authorization", String.format("Bearer %s", adminAccessToken));
-        return adminApiClient.setBasePath(setup.hubURL);
+        final String accessToken = request.executeUnparsed().parseAs(OAuth2AuthorizationService.PermissiveTokenResponse.class).toTokenResponse().getAccessToken();
+        final ApiClient apiClient = new ApiClient();
+        apiClient.addDefaultHeader("Authorization", String.format("Bearer %s", accessToken));
+        return apiClient.setBasePath(setup.hubURL);
     }
 
     public static byte[] write(final Session<?> session, final Path file, final byte[] content) throws BackgroundException, IOException {
