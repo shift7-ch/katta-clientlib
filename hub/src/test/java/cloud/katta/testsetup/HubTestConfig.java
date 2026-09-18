@@ -27,6 +27,11 @@ public class HubTestConfig {
         public String clientId = "cryptomator";
         public UserConfig adminConfig;
         public UserConfig userConfig;
+        /**
+         * Second regular user, member of vaults owned by {@link #userConfig}. Optional, only set up for environments
+         * where {@link KattaTestRealm} creates the test users.
+         */
+        public UserConfig memberConfig;
         public DockerConfig dockerConfig;
 
         public Setup withHubURL(final String hubURL) {
@@ -44,6 +49,11 @@ public class HubTestConfig {
             return this;
         }
 
+        public Setup withMemberConfig(final UserConfig memberConfig) {
+            this.memberConfig = memberConfig;
+            return this;
+        }
+
         public Setup withDockerConfig(final DockerConfig dockerConfig) {
             this.dockerConfig = dockerConfig;
             return this;
@@ -55,6 +65,7 @@ public class HubTestConfig {
             sb.append("hubURL='").append(hubURL).append('\'');
             sb.append(", adminConfig=").append(adminConfig);
             sb.append(", userConfig=").append(userConfig);
+            sb.append(", memberConfig=").append(memberConfig);
             sb.append(", dockerConfig=").append(dockerConfig);
             sb.append('}');
             return sb.toString();
