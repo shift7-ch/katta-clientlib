@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.zip.CRC32;
 
+import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.jwk.ECKey;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,6 +36,64 @@ class HubVaultKeysTest {
     @Test
     void createRecoveryKey() throws Exception {
         assertEquals(RECOVERY_KEY, new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey())));
+    }
+
+    @Test
+    void recoverRecoveryKey() throws Exception {
+        final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(RECOVERY_KEY);
+        assertEquals(PRIVATE_RECOVERY_KEY, Base64.getEncoder().encodeToString(recovered.getPrivate().getEncoded()));
+        // Public key derived from private key
+        assertArrayEquals(recoveryKey().getPublic().getEncoded(), recovered.getPublic().getEncoded());
+        assertEquals(ECKey.parse(PUBLIC_RECOVERY_KEY).computeThumbprint(), new ECKey.Builder(ECKey.parse(PUBLIC_RECOVERY_KEY).getCurve(), recovered.getPublic()).build().computeThumbprint());
+    }
+
+    @Test
+    void recoverRecoveryKeyWithLineBreaks() throws Exception {
+        final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(RECOVERY_KEY.replaceAll(" (?=all|compare|accept|connected|lesson|respond)", "\n      "));
+        assertEquals(PRIVATE_RECOVERY_KEY, Base64.getEncoder().encodeToString(recovered.getPrivate().getEncoded()));
+    }
+
+    @Test
+    void recoverGeneratedRecoveryKey() throws Exception {
+        final P384KeyPair recoveryKey = HubVaultKeys.create().recoveryKey();
+        assertNotNull(recoveryKey);
+        final P384KeyPair recovered = HubVaultKeys.recoverRecoveryKey(new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey)));
+        assertArrayEquals(recoveryKey.getPrivate().getEncoded(), recovered.getPrivate().getEncoded());
+        assertArrayEquals(recoveryKey.getPublic().getEncoded(), recovered.getPublic().getEncoded());
+    }
+
+    @Test
+    void recoverRecoveryKeyNotInDictionary() {
+        final SecurityFailure failure = assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey("hallo bonjour"));
+        assertTrue(failure.getMessage().contains("Word not in dictionary"));
+    }
+
+    @Test
+    void recoverRecoveryKeyInvalidPadding() {
+        final SecurityFailure failure = assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey("cult hold all away buck do law relaxed other stimulus"));
+        assertEquals("Invalid padding", failure.getMessage());
+    }
+
+    @Test
+    void recoverRecoveryKeyInvalidChecksum() {
+        final SecurityFailure failure = assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey(RECOVERY_KEY.replaceFirst("^cult", "wrong")));
+        assertEquals("Invalid recovery key checksum", failure.getMessage());
+    }
+
+    @Test
+    void recoverRecoveryKeyTruncated() {
+        assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey(new byte[0]));
+        assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey(new byte[]{0x01, 0x01, 0x01}));
+    }
+
+    @Test
+    void recoverRecoveryKeyNotPKCS8() {
+        // Valid padding and checksum of data that is not a private key
+        final byte[] rawkey = new byte[]{0x01, 0x02, 0x03, 0x04};
+        final CRC32 crc32 = new CRC32();
+        crc32.update(rawkey, 0, rawkey.length);
+        final byte[] padded = new byte[]{0x01, 0x02, 0x03, 0x04, (byte) (crc32.getValue() & 0xff), (byte) ((crc32.getValue() >> 8) & 0xff), 0x03, 0x03, 0x03};
+        assertThrows(SecurityFailure.class, () -> HubVaultKeys.recoverRecoveryKey(padded));
     }
 
     private static P384KeyPair recoveryKey() throws Exception {
