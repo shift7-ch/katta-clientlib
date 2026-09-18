@@ -87,7 +87,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                 }
                 // else: -1 means grant to all
                 // Member-level access only: the vault's recovery key is never shared through the automatic access grant flow
-                accessTokens.put(user.getId(), accessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey())));
+                accessTokens.put(user.getId(), accessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey()), false));
             }
             if(accessTokens.isEmpty()) {
                 log.info("for vault {} - nothing to upload", vaultId);

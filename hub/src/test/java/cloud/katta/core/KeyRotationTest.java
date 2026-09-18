@@ -80,7 +80,9 @@ class KeyRotationTest extends AbstractHubTest {
                 final List<MemberDto> members = vaultResourceApi.apiVaultsVaultIdMembersGet(vaultDto.getId());
                 for(final MemberDto member : members) {
                     if(userPublicKeys.containsKey(member.getId())) {
-                        tokens.put(member.getId(), masterkeyJWE.encryptForUser(decodePublicKey(userPublicKeys.get(member.getId())), true));
+                        // Only owners keep the recovery key, as in the web frontend's GrantPermissionDialog
+                        final boolean includeOwnerKeys = Role.OWNER.equals(member.getVaultRole());
+                        tokens.put(member.getId(), masterkeyJWE.encryptForUser(decodePublicKey(userPublicKeys.get(member.getId())), includeOwnerKeys));
                     }
                 }
                 vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultDto.getId(), tokens);
