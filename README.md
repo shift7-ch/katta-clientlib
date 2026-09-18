@@ -54,13 +54,13 @@ Git URL with the absolute path to `compose.yaml` in the checkout.
 ## Integration Test Environment
 
 Integration tests run Katta Server, Keycloak, PostgreSQL and MinIO with [katta-compose](https://github.com/shift7-ch/katta-compose),
-using the Keycloak realm, setup files and env files of this project in [`hub/src/test/resources`](hub/src/test/resources).
+using the setup files and env files of this project in [`hub/src/test/resources`](hub/src/test/resources).
+katta-compose renders the Keycloak realm from the Helm chart of Katta Server.
 Refer to katta-compose for the One-Stop Shop Demo, its profiles and endpoints.
 
 To start the environment of the integration tests yourself, use
 
 ```bash
-export KEYCLOAK_REALM_FILE=$PWD/hub/src/test/resources/keycloak/cryptomator-realm.json
 export SETUP_DIR=$PWD/hub/src/test/resources/setup
 docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local up --wait
 docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local down
@@ -73,19 +73,15 @@ For the `hybrid` profile with Keycloak and MinIO on `testing.katta.cloud` and AW
 
 #### Keycloak
 
-The realm of the integration tests provisions the following users:
+The realm of katta-compose provisions the administrator `admin` with password `admin`. Before the tests of the `local`
+profile, [`KattaTestRealm`](hub/src/test/java/cloud/katta/testsetup/KattaTestRealm.java) adds the test configuration:
 
-| User    | Password | Katta Roles (`realmRoles`) | Keycloak Roles (`realm-management`) | Groups     |
-|---------|----------|----------------------------|-------------------------------------|------------|
-| `admin` | `admin`  | `admin`                    | `realm-admin`                       |            |
-| `alice` | `asd`    | `user`, `create-vaults`    |                                     |            |
-| `bob`   | `asd`    | `user`, `create-vaults`    |                                     |            |
-| `carol` | `asd`    | `user`                     |                                     | `groupies` |
-| `dave`  | `asd`    | `user`                     |                                     | `groupies` |
-| `erin`  | `asd`    | `user`                     |                                     | `groupies` |
+- It enables direct access grants in client `cryptomator` for the password grant of the integration tests.
+- It creates the user `HUB_USER` with password `HUB_PASSWORD` of the env file (`alice` with password `asd`) and the roles
+  `user` and `create-vaults` using the API of Katta Server.
 
-The realm also contains the service account `system` of client `cryptomatorhub-system` used by Katta Server, and the
-service account `cli` of client `cryptomatorhub-cli`.
+The setup is idempotent. When you start the environment yourself with the commands above, run the integration tests with
+`HubTestSetupDockerExtension.LocalAlreadyRunning`, which adds the test configuration to the running environment.
 
 #### MinIO
 MinIO provisions the root user `minioadmin` with password `minioadmin`, and the user `testuser` with password `top-secret`
