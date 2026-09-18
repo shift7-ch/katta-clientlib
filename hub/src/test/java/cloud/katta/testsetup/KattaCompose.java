@@ -47,18 +47,26 @@ public final class KattaCompose {
 
     /**
      * @param envFile Classpath resource with variables for the compose file
-     * @return Variables from the env file with the Keycloak realm and setup files of this project
+     * @return Variables of the env file
      */
-    private static Map<String, String> environment(final String envFile) throws IOException {
+    public static Properties properties(final String envFile) throws IOException {
         final Properties properties = new Properties();
         try (InputStream in = Objects.requireNonNull(KattaCompose.class.getResourceAsStream(envFile), envFile)) {
             properties.load(in);
         }
+        return properties;
+    }
+
+    /**
+     * @param envFile Classpath resource with variables for the compose file
+     * @return Variables from the env file with the setup files of this project
+     */
+    private static Map<String, String> environment(final String envFile) throws IOException {
+        final Properties properties = properties(envFile);
         final Map<String, String> env = new HashMap<>();
         for(String name : properties.stringPropertyNames()) {
             env.put(name, properties.getProperty(name));
         }
-        env.put("KEYCLOAK_REALM_FILE", resource("/keycloak/cryptomator-realm.json").getAbsolutePath());
         env.put("SETUP_DIR", resource("/setup").getAbsolutePath());
         return env;
     }

@@ -14,6 +14,8 @@ import org.testcontainers.containers.ComposeContainer;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import cloud.katta.client.ApiException;
+
 
 /**
  * Profiles:
@@ -42,12 +44,26 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     }
 
     /**
+     * Add the test configuration to the realm of katta-compose, which is not used by the hybrid profile with an existing Keycloak.
+     */
+    protected void setupRealm(final HubTestConfig.Setup setup) throws IOException {
+        log.info("Setup realm for {}", setup.dockerConfig);
+        try {
+            KattaTestRealm.setup(KattaCompose.properties(setup.dockerConfig.envFile), setup);
+        }
+        catch(ApiException e) {
+            throw new IOException(e);
+        }
+    }
+
+    /**
      * Local
      */
     public static class Local extends HubTestSetupDockerExtension {
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
             this.setupDocker(AbstractHubTest.LOCAL_DOCKER_CONFIG);
+            this.setupRealm(AbstractHubTest.LOCAL_TEST_CONFIG);
         }
 
         @Override
@@ -61,6 +77,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
         @Override
         public void beforeAll(final ExtensionContext context) throws URISyntaxException, IOException {
             this.setupDocker(AbstractHubTest.LOCAL_DOCKER_CONFIG);
+            this.setupRealm(AbstractHubTest.LOCAL_TEST_CONFIG);
         }
 
         @Override
