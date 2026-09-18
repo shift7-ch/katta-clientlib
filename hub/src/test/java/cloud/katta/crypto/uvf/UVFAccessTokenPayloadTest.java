@@ -17,8 +17,7 @@ import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.util.Base64URL;
 
 import static cloud.katta.crypto.KeyHelper.decodeKeyPair;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UVFAccessTokenPayloadTest {
     // key pairs from frontend tests (crypto.spec.ts):
@@ -59,6 +58,30 @@ class UVFAccessTokenPayloadTest {
         final UVFAccessTokenPayload accessTokenDecrypted = userKeys.decryptAccessToken(accessToken);
         assertEquals("very secret", accessTokenDecrypted.key());
         assertNull(accessTokenDecrypted.recoveryKey);
+    }
+
+    @Test
+    void encryptForUserOmitsRecoveryKey() throws Exception {
+        final ECKeyPair ecKeyPair = decodeKeyPair(USER_PUB_KEY, USER_PRIV_KEY);
+        final UserKeys userKeys = new UserKeys(ecKeyPair, P384KeyPair.generate());
+        final HubVaultKeys jwks = HubVaultKeys.create();
+        final UVFAccessTokenPayload ownerToken = new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey());
+        assertNotNull(ownerToken.recoveryKey());
+
+        final UVFAccessTokenPayload granted = userKeys.decryptAccessToken(ownerToken.encryptForUser(userKeys.ecdhKeyPair().getPublic()));
+        assertEquals(ownerToken.key(), granted.key());
+        assertNull(granted.recoveryKey());
+    }
+
+    @Test
+    void encryptForUserIncludesRecoveryKeyForOwner() throws Exception {
+        final ECKeyPair ecKeyPair = decodeKeyPair(USER_PUB_KEY, USER_PRIV_KEY);
+        final UserKeys userKeys = new UserKeys(ecKeyPair, P384KeyPair.generate());
+        final HubVaultKeys jwks = HubVaultKeys.create();
+        final UVFAccessTokenPayload ownerToken = new UVFAccessTokenPayload(jwks.memberKey(), jwks.recoveryKey());
+
+        final UVFAccessTokenPayload granted = userKeys.decryptAccessToken(ownerToken.encryptForUser(userKeys.ecdhKeyPair().getPublic(), true));
+        assertEquals(ownerToken, granted);
     }
 
     @Test

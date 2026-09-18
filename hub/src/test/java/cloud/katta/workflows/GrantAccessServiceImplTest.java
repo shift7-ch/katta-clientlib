@@ -4,10 +4,13 @@
 
 package cloud.katta.workflows;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 import cloud.katta.client.api.VaultResourceApi;
@@ -21,6 +24,8 @@ import cloud.katta.crypto.uvf.VaultMetadataAutomaticAccessGrantDto;
 import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import com.nimbusds.jose.JWEObjectJSON;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -61,5 +66,40 @@ class GrantAccessServiceImplTest {
         final GrantAccessServiceImpl grantAccessService = new GrantAccessServiceImpl(vaults, vaultServiceMock, wotServiceMock);
         grantAccessService.grantAccessToUsersRequiringAccessGrant(vaultId, aliceKeys);
         verify(vaults, times(expectedNumberOfUploads)).apiVaultsVaultIdAccessTokensPost(eq(vaultId), any());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testGrantAccessNeverSharesRecoveryKey() throws Exception {
+        final VaultResourceApi vaults = mock(VaultResourceApi.class);
+        final VaultService vaultServiceMock = mock(VaultService.class);
+        final WoTService wotServiceMock = mock(WoTService.class);
+        final UUID vaultId = UUID.randomUUID();
+
+        final UserKeys aliceKeys = UserKeys.create();
+        final UserKeys bobKeys = UserKeys.create();
+        final MemberDto bob = new MemberDto()
+                .id(UUID.randomUUID().toString())
+                .ecdhPublicKey(bobKeys.encodedEcdhPublicKey())
+                .ecdsaPublicKey(bobKeys.encodedEcdsaPublicKey());
+
+        when(vaults.apiVaultsVaultIdGet(vaultId)).thenReturn(new VaultDto().id(vaultId));
+        when(vaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId)).thenReturn(Collections.singletonList(bob));
+        final HubVaultKeys vaultKeys = HubVaultKeys.create();
+        // Alice is owner, i.e. her own access token carries the vault's private recovery key
+        when(vaultServiceMock.getVaultAccessToken(vaultId, aliceKeys)).thenReturn(new UVFAccessTokenPayload(vaultKeys.memberKey(), vaultKeys.recoveryKey()));
+        when(vaultServiceMock.getVaultMetadata(vaultId)).thenReturn(
+                JWEObjectJSON.parse(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
+                        .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(true).trustThreshold(-1)),
+                        "apiUrl", vaultId, vaultKeys.serialize()).encrypt()));
+        when(wotServiceMock.getTrustLevelsPerUserId(aliceKeys)).thenReturn(Collections.emptyMap());
+
+        new GrantAccessServiceImpl(vaults, vaultServiceMock, wotServiceMock).grantAccessToUsersRequiringAccessGrant(vaultId, aliceKeys);
+
+        final ArgumentCaptor<Map<String, String>> tokens = ArgumentCaptor.forClass(Map.class);
+        verify(vaults).apiVaultsVaultIdAccessTokensPost(eq(vaultId), tokens.capture());
+        final UVFAccessTokenPayload granted = bobKeys.decryptAccessToken(tokens.getValue().get(bob.getId()));
+        assertEquals(new UVFAccessTokenPayload(vaultKeys.memberKey()).key(), granted.key());
+        assertNull(granted.recoveryKey());
     }
 }

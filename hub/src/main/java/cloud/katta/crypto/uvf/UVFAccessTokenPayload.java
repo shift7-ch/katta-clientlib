@@ -82,14 +82,29 @@ public class UVFAccessTokenPayload extends JWEPayload {
     }
 
     /**
-     * Encrypts the access token for a given user.
+     * Encrypts the access token for a given user, granting member-level access only. The recovery key is never included,
+     * matching the reference implementation of the automatic access grant flow (<code>AutomaticAccessGrantAgent.vue</code>).
      *
      * @param userPublicKey the public key of the user
      * @return User-specific access token for the given vault.
+     * @see #encryptForUser(ECPublicKey, boolean)
      */
     public String encryptForUser(final ECPublicKey userPublicKey) throws SecurityFailure {
+        return this.encryptForUser(userPublicKey, false);
+    }
+
+    /**
+     * Encrypts the access token for a given user.
+     *
+     * @param userPublicKey    the public key of the user
+     * @param includeOwnerKeys whether to share the vault's private recovery key along with the member key. Only ever true
+     *                         for recipients holding the {@link cloud.katta.client.model.Role#OWNER} role on this vault.
+     * @return User-specific access token for the given vault.
+     */
+    public String encryptForUser(final ECPublicKey userPublicKey, final boolean includeOwnerKeys) throws SecurityFailure {
         try {
-            return JWE.ecdhEsEncrypt(this, "org.cryptomator.hub.userkey", userPublicKey);
+            return JWE.ecdhEsEncrypt(includeOwnerKeys ? this : new UVFAccessTokenPayload(memberKey, null),
+                    "org.cryptomator.hub.userkey", userPublicKey);
         }
         catch(JsonProcessingException | JOSEException e) {
             throw new SecurityFailure(e.getMessage(), e);

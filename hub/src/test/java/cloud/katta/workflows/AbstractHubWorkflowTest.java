@@ -45,6 +45,7 @@ import cloud.katta.client.model.UserDto;
 import cloud.katta.client.model.VaultDto;
 import cloud.katta.crypto.AccountKeyPayload;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.protocols.hub.HubStorageLocationService;
@@ -54,7 +55,7 @@ import cloud.katta.testsetup.MethodIgnorableSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 abstract class AbstractHubWorkflowTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubWorkflowTest.class.getName());
@@ -148,6 +149,14 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
 
             checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 1, 0, 1, 0, 0);
+
+            log.info("S05 {} recovery key stays with the vault creator", setup);
+            final UVFAccessTokenPayload aliceToken = new VaultServiceImpl(hubSession).getVaultAccessToken(vaultId, userKeys);
+            assertNotNull(aliceToken.recoveryKey(), "vault creator keeps the recovery key");
+            // Admin was added as OWNER in S02, but the automatic access grant flow only ever hands out member-level access
+            final UVFAccessTokenPayload adminToken = new VaultServiceImpl(new VaultResourceApi(adminApiClient)).getVaultAccessToken(vaultId, adminKeys);
+            assertEquals(aliceToken.key(), adminToken.key());
+            assertNull(adminToken.recoveryKey(), "automatic access grant never shares the recovery key");
         }
     }
 
