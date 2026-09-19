@@ -18,6 +18,7 @@ import ch.cyberduck.core.Session;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
@@ -34,6 +35,8 @@ import ch.cyberduck.core.vault.VaultException;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 import ch.cyberduck.core.vault.VaultVersion;
+
+import cloud.katta.workflows.exceptions.AccessException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -170,6 +173,13 @@ public class HubUVFVaultProvider implements VaultProvider {
             try {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
+                final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+                try {
+                    setup.displayRecoveryKey(session.getHost(), keys.recoveryKey());
+                }
+                catch(AccessException e) {
+                    throw new LoginCanceledException(e);
+                }
                 try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
                         payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize())) {
                     log.debug("Create vault with ID {}", vaultId);
@@ -190,7 +200,6 @@ public class HubUVFVaultProvider implements VaultProvider {
                     // Upload JWE
                     log.debug("Grant access to vault {}", vaultId);
                     final UserDto userDto = HubSession.coerce(session).getMe();
-                    final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                     final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
                     // Share vault with myself including admin access with recovery key
                     vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
