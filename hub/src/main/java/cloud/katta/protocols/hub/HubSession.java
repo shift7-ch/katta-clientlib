@@ -9,19 +9,7 @@ import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.InteroperabilityException;
 import ch.cyberduck.core.exception.UnsupportedException;
-import ch.cyberduck.core.features.AttributesFinder;
-import ch.cyberduck.core.features.Copy;
-import ch.cyberduck.core.features.Delete;
-import ch.cyberduck.core.features.Directory;
-import ch.cyberduck.core.features.Find;
-import ch.cyberduck.core.features.Home;
-import ch.cyberduck.core.features.Location;
-import ch.cyberduck.core.features.Move;
-import ch.cyberduck.core.features.Read;
-import ch.cyberduck.core.features.Scheduler;
-import ch.cyberduck.core.features.Timestamp;
-import ch.cyberduck.core.features.Touch;
-import ch.cyberduck.core.features.Write;
+import ch.cyberduck.core.features.*;
 import ch.cyberduck.core.http.CustomServiceUnavailableRetryStrategy;
 import ch.cyberduck.core.http.ExecutionCountServiceUnavailableRetryStrategy;
 import ch.cyberduck.core.http.HttpSession;
@@ -284,6 +272,12 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
         }
         if(type == Scheduler.class) {
             return (T) access;
+        }
+        if(type == Share.class) {
+            return (T) new HubVaultShareFeature(this);
+        }
+        if(type == AclPermission.class) {
+            return (T) new HubVaultAclPermissionFeature(this);
         }
         if(type == Home.class) {
             return (T) (Home) Home::root;
