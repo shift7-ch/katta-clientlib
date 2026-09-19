@@ -1,11 +1,10 @@
+# Katta Client Library
+
 [![CI Build](https://github.com/shift7-ch/katta-clientlib/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/shift7-ch/katta-clientlib/actions/workflows/build.yml)
 [![Integration Tests](https://github.com/shift7-ch/katta-clientlib/actions/workflows/integration.yml/badge.svg)](https://github.com/shift7-ch/katta-clientlib/actions/workflows/integration.yml)
 
-# Katta: the secure and easy way to work in teams
 
-Katta brings zero-config storage management and zero-knowledge key management for teams and organizations.
-
-## Katta Client Library
+> [Katta](https://katta.cloud/): transform your S3 storage into a secure, team-friendly workspace with client-side encryption.
 
 This library implements the [Katta Server API](https://github.com/shift7-ch/katta-docs/blob/main/docs/introduction/OVERVIEW.md)
 as [Cyberduck](https://github.com/iterate-ch/cyberduck) protocol features for [Katta Desktop](https://github.com/shift7-ch/katta-desktop).
