@@ -173,7 +173,6 @@ public abstract class AbstractHubTest {
         preferences.setProperty("factory.vault.class", HubUVFVault.class.getName());
 
         preferences.setProperty("oauth.handler.scheme", "katta");
-        preferences.setProperty("hub.protocol.scheduler.period", 30);
         preferences.setProperty("cryptomator.vault.autodetect", false);
         preferences.setProperty("connection.unsecure.warning.http", false);
         preferences.setProperty("cloud.katta.min_api_level", 4);

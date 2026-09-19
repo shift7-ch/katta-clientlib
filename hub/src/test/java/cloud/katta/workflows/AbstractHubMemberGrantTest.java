@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import cloud.katta.client.ApiClient;
+import cloud.katta.client.ApiException;
 import cloud.katta.client.JSON;
 import cloud.katta.client.api.SettingsResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
@@ -51,10 +52,7 @@ import cloud.katta.testsetup.MethodIgnorableSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static cloud.katta.testsetup.HubTestUtilities.getAdminApiClient;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * The automatic access grant is callable by any vault member, not only by owners: a member holding an access token can
@@ -124,6 +122,10 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
             aliceVaults.apiVaultsVaultIdUsersUserIdPut(memberId, vaultId, Role.MEMBER);
             assertEquals(Collections.singletonList(memberId), aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).stream()
                     .map(MemberDto::getId).collect(Collectors.toList()));
+
+            final ApiException notGranted = assertThrows(ApiException.class,
+                    () -> new VaultResourceApi(memberApiClient).apiVaultsVaultIdAccessTokenGet(vaultId, false));
+            assertEquals(403, notGranted.getCode(), "No access token before the member grants one");
 
             log.info("S05 admin grants access although admin is only MEMBER of the vault");
             // None of the endpoints of the automatic access grant flow bypasses the vault role for the realm admin role
