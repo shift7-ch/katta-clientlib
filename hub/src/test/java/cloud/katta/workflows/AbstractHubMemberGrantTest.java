@@ -11,6 +11,8 @@ import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultVersion;
 
+import cloud.katta.client.api.AuthorityResourceApi;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -129,7 +131,8 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
 
             log.info("S05 admin grants access although admin is only MEMBER of the vault");
             // None of the endpoints of the automatic access grant flow bypasses the vault role for the realm admin role
-            new GrantAccessServiceImpl(new VaultResourceApi(adminApiClient), new UsersResourceApi(adminApiClient))
+            new GrantAccessServiceImpl(new VaultResourceApi(adminApiClient),
+                    new AuthorityResourceApi(adminApiClient), new UsersResourceApi(adminApiClient))
                     .grantAccessToUsersRequiringAccessGrant(adminKeys);
 
             assertTrue(aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).isEmpty(), "No pending access grants left");
