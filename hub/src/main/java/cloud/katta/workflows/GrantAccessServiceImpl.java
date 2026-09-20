@@ -49,11 +49,11 @@ public class GrantAccessServiceImpl implements GrantAccessService {
     private final WoTService woTService;
 
     public GrantAccessServiceImpl(final HubSession hubSession) {
-        this(new VaultResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
+        this(new VaultResourceApi(hubSession.getClient()), new AuthorityResourceApi(hubSession.getClient()), new UsersResourceApi(hubSession.getClient()));
     }
 
-    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final UsersResourceApi usersResourceApi) {
-        this(vaultResourceApi, new AuthorityResourceApi(usersResourceApi.getApiClient()),
+    public GrantAccessServiceImpl(final VaultResourceApi vaultResourceApi, final AuthorityResourceApi authorityResourceApi, final UsersResourceApi usersResourceApi) {
+        this(vaultResourceApi, authorityResourceApi,
                 new VaultServiceImpl(vaultResourceApi), new WoTServiceImpl(usersResourceApi));
     }
 
