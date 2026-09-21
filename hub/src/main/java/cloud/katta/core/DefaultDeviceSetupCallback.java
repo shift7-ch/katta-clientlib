@@ -88,7 +88,11 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
     @Override
     public void displayRecoveryKey(final Host bookmark, final P384KeyPair recoveryKey) throws AccessException {
         try {
-            prompt.warn(bookmark, "The following recovery key can be used to restore access to the vault. ",
+            prompt.warn(bookmark, String.format("%s %s",
+                            LocaleFactory.localizedString(
+                                    "The following recovery key can be used to restore access to the vault.", "Hub"),
+                            LocaleFactory.localizedString(
+                                    "I understand that I will lose access to the vault in the event of an emergency if I don't have the recovery key.", "Hub")),
                     this.generateRecoveryKey(recoveryKey),
                     LocaleFactory.localizedString("Create Vault", "Cryptomator"),
                     LocaleFactory.localizedString("Cancel", "Alert"), null);

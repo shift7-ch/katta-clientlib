@@ -31,12 +31,14 @@ public class RecoveryKeyController extends AlertController {
         alert.setAlertStyle(NSAlert.NSInformationalAlertStyle);
         alert.setMessageText(LocaleFactory.localizedString("Recovery Key", "Hub"));
         alert.setInformativeText(new StringAppender()
-                .append(LocaleFactory.localizedString("The following recovery key can be used to restore access to the vault.", "Hub"))
+                .append(LocaleFactory.localizedString(
+                        "The following recovery key can be used to restore access to the vault.", "Hub"))
                 .toString());
         alert.addButtonWithTitle(LocaleFactory.localizedString("Create Vault", "Cryptomator"));
         alert.addButtonWithTitle(LocaleFactory.localizedString("Cancel", "Alert"));
         alert.setShowsSuppressionButton(true);
-        alert.suppressionButton().setTitle(LocaleFactory.localizedString("I understand that I will lose access to the vault in the event of an emergency if I don't have the recovery key.", "Hub"));
+        alert.suppressionButton().setTitle(LocaleFactory.localizedString(
+                "I understand that I will lose access to the vault in the event of an emergency if I don't have the recovery key.", "Hub"));
         alert.suppressionButton().setState(NSCell.NSOffState);
         return alert;
     }
