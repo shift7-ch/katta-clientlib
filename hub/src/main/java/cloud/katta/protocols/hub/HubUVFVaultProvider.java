@@ -36,8 +36,6 @@ import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultUnlockCancelException;
 import ch.cyberduck.core.vault.VaultVersion;
 
-import cloud.katta.workflows.exceptions.AccessException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -66,6 +64,7 @@ import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.STSChainedAssumeRoleRequestInterceptor;
 import cloud.katta.workflows.VaultServiceImpl;
+import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
 public class HubUVFVaultProvider implements VaultProvider {
@@ -174,12 +173,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
                 final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
-                try {
-                    setup.displayRecoveryKey(session.getHost(), keys.recoveryKey());
-                }
-                catch(AccessException e) {
-                    throw new LoginCanceledException(e);
-                }
+                setup.displayRecoveryKey(session.getHost(), keys.recoveryKey());
                 try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
                         payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize())) {
                     log.debug("Create vault with ID {}", vaultId);
@@ -221,10 +215,13 @@ public class HubUVFVaultProvider implements VaultProvider {
                     return vault;
                 }
             }
-            catch(SecurityFailure | ApiException e) {
+            catch(AccessException | SecurityFailure | ApiException e) {
                 storage.close();
                 throw e;
             }
+        }
+        catch(AccessException e) {
+            throw new LoginCanceledException(e);
         }
         catch(SecurityFailure e) {
             throw new VaultException(e.getMessage(), e);
