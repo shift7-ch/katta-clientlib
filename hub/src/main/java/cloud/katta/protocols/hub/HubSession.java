@@ -158,11 +158,11 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
                 host.getProtocol().getOAuthClientId(),
                 host.getProtocol().getOAuthClientSecret(),
                 host.getProtocol().getOAuthScopes(),
-                host.getProtocol().isOAuthPKCE(), prompt)
+                host.getProtocol().isOAuthPKCE(), prompt, cancel)
                 .setFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()))
                 .setRedirectUri(host.getProtocol().getOAuthRedirectUrl());
         configuration.setServiceUnavailableRetryStrategy(new CustomServiceUnavailableRetryStrategy(host,
-                new ExecutionCountServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService))));
+                new ExecutionCountServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService, cancel))));
         configuration.addInterceptorLast(authorizationService);
         return new HubApiClient(host, configuration.build());
     }
@@ -170,7 +170,7 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
     @Override
     public void login(final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
         final Credentials credentials = host.getCredentials();
-        final OAuthTokens tokens = authorizationService.validate(credentials.getOauth());
+        final OAuthTokens tokens = authorizationService.validate(credentials.getOauth(), cancel);
         if(null != tokens.getAccessToken()) {
             host.setProperty(CREATE_VAULTS_ENABLE_PROPERTY,
                     String.valueOf(RealmAccess.parse(host, tokens.getAccessToken()).contains(RealmRole.CREATE_VAULTS.getValue())));
