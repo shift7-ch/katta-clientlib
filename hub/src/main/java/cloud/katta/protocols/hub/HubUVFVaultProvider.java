@@ -145,7 +145,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     payload = location.toPayload(bucket, settings);
                     storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
                         @Override
-                        protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
+                        protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt, final CancelCallback cancel) {
                             final OAuth2RequestInterceptor interceptor = session.getFeature(OAuth2RequestInterceptor.class);
                             log.debug("Configure with shared OAuth interceptor for vault {}", vaultId);
                             configuration.addInterceptorLast(interceptor);
@@ -273,7 +273,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                         }.setRegion(location.getRegion());
                         storage = new S3Session(host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
                             @Override
-                            protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt) {
+                            protected S3CredentialsStrategy configureCredentialsStrategy(final HttpClientBuilder configuration, final LoginCallback prompt, final CancelCallback cancel) {
                                 final OAuth2RequestInterceptor interceptor = session.getFeature(OAuth2RequestInterceptor.class);
                                 log.debug("Configure with shared OAuth interceptor for vault {}", vaultId);
                                 configuration.addInterceptorLast(interceptor);
