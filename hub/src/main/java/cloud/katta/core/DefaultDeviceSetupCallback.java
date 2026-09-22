@@ -64,7 +64,7 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                     new StringAppender()
                             .append(MessageFormat.format(LocaleFactory.localizedString("This is your first login to {0} on this device.", "Hub"),
                                     BookmarkNameProvider.toHostname(bookmark)))
-                            .append(LocaleFactory.localizedString("Your Account Key is required to link this browser to your account.", "Hub")).toString(),
+                            .append(LocaleFactory.localizedString("Your Account Key is required to authorize this device.", "Hub")).toString(),
                     new LoginOptions()
                             .usernamePlaceholder(LocaleFactory.localizedString("Device Name", "Hub"))
                             // Customize device name
