@@ -55,6 +55,6 @@ class DefaultDeviceSetupCallbackTest {
         final DefaultDeviceSetupCallback callback = new DefaultDeviceSetupCallback(promptMappingByPlaceholder());
         final AccountKeyAndDeviceName result = callback.displayAccountKeyAndAskDeviceName(new Host(new HubProtocol()), ACCOUNT_KEY);
         assertEquals(ACCOUNT_KEY, result.accountKey());
-        assertEquals(DEVICE_NAME, result.deviceName());
+        assertEquals(AccountKeyAndDeviceName.COMPUTER_NAME, result.deviceName());
     }
 }

@@ -46,10 +46,10 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
                             .user(false)
                             .passwordPlaceholder(LocaleFactory.localizedString("Device Name", "Hub"))
                             // Input device name
-                            .password(true)
+                            .password(false)
                             .save(false).keychain(false)
             );
-            return new AccountKeyAndDeviceName(input.getUsername(), input.getPassword());
+            return new AccountKeyAndDeviceName(input.getUsername(), AccountKeyAndDeviceName.COMPUTER_NAME);
         }
         catch(LoginCanceledException e) {
             throw new AccessException(e);
