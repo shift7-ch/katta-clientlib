@@ -12,7 +12,7 @@ Format (UVF) and Cryptomator Hub concepts.
 It is a Maven multi-module build (`groupId` `cloud.katta`). Java **8** bytecode is enforced for non-test main code (`maven-enforcer-plugin`,
 `maxJdkVersion 1.8`); CI compiles/tests with JDK 21. Cyberduck artifacts come from `repo.maven.cyberduck.io` (see `<repositories>` in `pom.xml`).
 
-Related repositories that used to live here:
+Related repositories:
 
 - [katta-admin-cli](https://github.com/shift7-ch/katta-admin-cli) — the admin CLI (`cloud.katta.cli.Katta`) for provisioning storage backends and uploading
   storage profiles, formerly the `admin-cli` module.
@@ -21,10 +21,10 @@ Related repositories that used to live here:
 
 ## Modules
 
-| Module | Artifact              | Purpose                                                                                                                                                  |
-|--------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `hub`  | `katta-clientlib-hub` | Core library: generated API client, crypto, workflows, and the `hub` / S3 Cyberduck protocols. Also holds all test fixtures. Most logic lives here.     |
-| `osx`  | `katta-clientlib-osx` | macOS `NSAlert`-based UI controllers (`ch.cyberduck.binding`) implementing the device-setup / first-login prompts. Depends on `katta-clientlib-hub`. |
+- `hub` (`katta-clientlib-hub`) — core library: generated API client, crypto, workflows, and the `hub` / S3 Cyberduck protocols. Also holds all test
+  fixtures. Most logic lives here.
+- `osx` (`katta-clientlib-osx`) — macOS `NSAlert`-based UI controllers (`ch.cyberduck.binding`) implementing the device-setup / first-login prompts. Depends
+  on `katta-clientlib-hub`.
 
 ## Build & test commands
 
@@ -37,7 +37,7 @@ mvn clean verify -DskipITs
 
 # Single unit test class / method
 mvn -pl hub test -Dtest=UserKeysTest
-mvn -pl hub test -Dtest=UserKeysTest#recoverUserKeyPair
+mvn -pl hub test -Dtest=UserKeysTest#testEncryptWithAccountKeyAndRecoverWithAccountKey
 
 # Single integration test with debug logging
 mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \
@@ -51,8 +51,9 @@ mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \
   `**/*.java` and runs only `<groups>hub</groups>` in the `integration-test` phase.
 - `@HubIntegrationTest` (`@Tag("hub")`) marks integration tests. `AbstractHubTest` carries it, and the `AbstractHub*Test` bases in `hub/src/test/.../workflows/`
   extend it, so many `*Test` classes are integration tests — check the base class before assuming a `*Test` is a pure unit test.
-- Integration tests start the full Keycloak + MinIO + Katta Server stack through `HubTestSetupDockerExtension` / Testcontainers (see below), so Docker must be
-  running and runs are slow.
+- Integration tests start containers through `HubTestSetupDockerExtension` / Testcontainers (see below), so Docker must be running and runs are slow. The
+  `Local*` variants start the full Keycloak + MinIO + Katta Server stack; the `HybridTesting*` variants start only Katta Server and use existing remote
+  Keycloak and MinIO.
 
 ## Architecture
 
@@ -62,8 +63,9 @@ mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \
 `openapi-generator-maven-plugin` (generator `java`, library `jersey2`) generates `cloud.katta.client`,
 `cloud.katta.client.api`, `cloud.katta.client.model` into `hub/target/generated-sources/openapi`. **This generated code is not committed.** The plugin output
 directory is the `hub` module base directory, so generator metadata also lands in `hub/.openapi-generator/` — do not commit it either. To pick up server
-API changes, replace `openapi.json` (from the server's `/q/openapi.json`) and rebuild. `HubApiClient` (committed) subclasses the generated `ApiClient` to wire in
-Cyberduck's HTTP stack, timeouts and user-agent. Custom Jackson deserializers for polymorphic DTOs live in `cloud.katta.protocols.hub.serializer`.
+API changes, replace `openapi.json` (from the server's `/q/openapi.json`) and rebuild. `HubApiClient` (committed) subclasses the generated `ApiClient` to wire
+in Cyberduck's HTTP stack, timeouts and user-agent. `cloud.katta.protocols.hub.serializer` holds Cyberduck `ch.cyberduck.core.serializer.Deserializer`
+implementations that adapt API DTOs (`ConfigDto`, storage profiles) into Cyberduck profile settings.
 
 ### Crypto (`cloud.katta.crypto`)
 
@@ -71,20 +73,22 @@ Zero-knowledge key hierarchy, mirroring the Cryptomator Hub / UVF TypeScript imp
 
 - `DeviceKeys` (per-device EC keypair) decrypts → `UserKeys` (per-user EC keypair, stored server-side as JWE) → decrypts vault **member key** (AES); vault
   **owners** additionally get the **recovery key**.
-- `JWE` / `JWT` / `KeyHelper` wrap Nimbus JOSE. `*Payload` classes are typed JWE/JWT payload bodies.
-- `cloud.katta.crypto.uvf` — `UVFMetadataPayload` (`vault.uvf`), `UVFAccessTokenPayload`, `HubVaultKeys`. These are deliberate counterparts of specific files in
-  `katta-server` / the UVF spec; keep them in sync (see class Javadoc links).
+- `JWE` / `JWT` wrap Nimbus JOSE; `JWEPayload` subclasses (`UserKeyPayload`, `AccountKeyPayload`, …) are typed JWE payload bodies. `KeyHelper` encodes and
+  decodes EC keys (Java `KeyFactory`, Cryptomator cryptolib) and derives device IDs.
+- `cloud.katta.crypto.uvf` — `UVFMetadataPayload` (`vault.uvf`), `UVFAccessTokenPayload`, `HubVaultKeys`. These are deliberate counterparts of specific files
+  in `katta-server` / the UVF spec; keep them in sync (see class Javadoc links).
 - `cloud.katta.crypto.wot` — Web-of-Trust signature verification (`WoT`, `SignedKeys`).
 
 ### Workflows (`cloud.katta.workflows`)
 
-`*Service` interface + `*ServiceImpl` pairs orchestrating multi-step server interactions, each taking a `HubSession`:
+`*Service` interface + `*ServiceImpl` pairs orchestrating multi-step interactions. The server-facing services take a `HubSession`; `DeviceKeysService` is the
+exception and works on the local keychain (`PasswordStore`) for a `Host` / `UserDto`:
 
 - `UserKeysService` — first login / device pairing: get-or-create the user keypair, setup-code handling.
-- `DeviceKeysService` — device registration.
+- `DeviceKeysService` — get-or-create the device keypair and store it in the keychain.
 - `GrantAccessService` — grant a user access to a vault (re-encrypt member key for their user key); also driven automatically by
   `HubGrantAccessSchedulerService` for pending access requests.
-- `VaultService` — create vaults, fetch the user-specific vault access token and encrypted `vault.uvf` metadata.
+- `VaultService` — fetch the user-specific vault access token and encrypted `vault.uvf` metadata. Vault creation is in `HubUVFVaultProvider`.
 - `WoTService` — sign/verify other users' keys.
 
 ### Protocols (`cloud.katta.protocols`)
@@ -93,8 +97,8 @@ Zero-knowledge key hierarchy, mirroring the Cryptomator Hub / UVF TypeScript imp
   `google-auto-service`). `HubSession` is the entry point: authenticates via OAuth (Cyberduck manages tokens), pairs the device, caches `UserKeys` in an
   `ExpiringObjectHolder`, and exposes vault listing/registry/metadata features (`HubVaultRegistry`, `HubUVFVaultProvider`, `HubVaultListService`,
   `HubStorageProfile`, …).
-- `protocols.s3` — `STSChainedAssumeRoleRequestInterceptor` implements AWS role-chaining / token exchange for the
-  `S3` and `S3STS` Katta modes (temporary credentials from an OIDC access token via STS).
+- `protocols.s3` — `STSChainedAssumeRoleRequestInterceptor` implements AWS role-chaining / token exchange for `S3_STS` storage profiles (temporary
+  credentials from an OIDC access token via STS). `S3_STATIC` profiles use permanent credentials and do not use it.
 
 ## Integration test environment (Docker Compose)
 
@@ -105,18 +109,19 @@ local katta-compose checkout, replace the Git URL with the absolute path to its 
 Project-specific inputs stay in `hub/src/test/resources`:
 
 - `keycloak/cryptomator-realm.json` — Keycloak realm with the test users (listed in `README.md`), passed as `KEYCLOAK_REALM_FILE`.
-- `setup/` — storage-profile and bucket-policy JSON (`aws_static`, `aws_sts`, `minio_static`, `minio_sts`), passed as `SETUP_DIR`.
+- `setup/` — passed as `SETUP_DIR`. Each of `aws_static`, `aws_sts`, `minio_static`, `minio_sts` has a `storage_profile.json`; the `minio_*` directories also
+  hold the bucket policies (`create_bucket_policy.json`, `access_bucket_policy.json`).
 - `.local.env` (profile `local`, fully local) and `.chipotle.env` (profile `hybrid`, Keycloak/MinIO on `testing.katta.cloud` + AWS S3; CI writes it from the
   `HYBRID_ENV` secret).
 
 `cloud.katta.testsetup.KattaCompose` builds the Testcontainers `ComposeContainer` from these (loads the env file, sets `KEYCLOAK_REALM_FILE` / `SETUP_DIR`,
 selects the profile, waits for the `hub` service healthcheck). `HubTestSetupDockerExtension` wraps it in `Local*` / `HybridTesting*` variants, each with
-`KeepRunning` and `AlreadyRunning` modes to skip teardown or setup. Commands to start the stack manually are in `README.md`; profiles and endpoints are documented
-in katta-compose.
+`KeepRunning` and `AlreadyRunning` modes to skip teardown or setup. Commands to start the stack manually are in `README.md`; profiles and endpoints are
+documented in katta-compose.
 
 ## Conventions
 
-- `.editorconfig` is authoritative: 4-space indent, LF, final newline, max line length 160, UTF-8. IntelliJ formatting keys are pinned there.
+- `.editorconfig` is authoritative: 4-space indent (2 for `*.yml`), LF, final newline, max line length 160, UTF-8. IntelliJ formatting keys are pinned there.
 - Every source file starts with the `Copyright (c) <year> shift7 GmbH. All rights reserved.` header.
 - CI: `build.yml` (pull requests) and `integration.yml` (push to `main`, nightly) both run `mvn verify` including integration tests; `deploy.yml` publishes
   snapshots from `main`.
