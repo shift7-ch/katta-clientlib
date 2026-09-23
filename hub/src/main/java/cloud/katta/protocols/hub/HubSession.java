@@ -46,7 +46,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -176,6 +178,8 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
                     String.valueOf(RealmAccess.parse(host, tokens.getAccessToken()).contains(RealmRole.CREATE_VAULTS.getValue())));
         }
         credentials.setOauth(tokens);
+        // Create or update user as done by web frontend after login. User is otherwise only known to hub after periodic sync from Keycloak
+        this.putMe();
         // Ensure device key is available
         final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
         log.debug("Configured with setup prompt {}", setup);
@@ -250,6 +254,23 @@ public class HubSession extends HttpSession<HubApiClient> implements AutoCloseab
             final UserDto me = new UsersResourceApi(client).apiUsersMeGet(true);
             log.debug("Retrieved user {}", me.getId());
             return me;
+        }
+        catch(ApiException e) {
+            throw new HubExceptionMappingService().map(e);
+        }
+    }
+
+    /**
+     * Create user with name, email and picture from access token claims. Setup code, keys and devices are left
+     * untouched as no user DTO is sent.
+     */
+    private void putMe() throws BackgroundException {
+        try {
+            // Generated apiUsersMePut requires a DTO which would overwrite setup code and keys
+            // Workaround for https://github.com/cryptomator/hub/issues/497
+            client.invokeAPI("UsersResourceApi.apiUsersMePut", "/api/users/me", "PUT", new ArrayList<>(), null,
+                    new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), client.selectHeaderAccept(),
+                    client.selectHeaderContentType("application/json"), null, null, true);
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);
