@@ -5,7 +5,7 @@
     "endpoint": "${MINIO_SCHEME}://${MINIO_HOSTNAME}:${MINIO_PORT}",
     "storageClass": "STANDARD",
     "pathStyleAccessEnabled": true,
-    "bucketPrefix": "katta-test-",
+    "bucketPrefix": "katta-",
     "region": "eu-central-1",
     "regions": [
         "eu-west-1",
