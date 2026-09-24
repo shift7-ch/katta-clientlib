@@ -22,8 +22,8 @@ services:
         set -eux
         mc alias set myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
         mc admin user add myminio ${MINIO_USER_ACCESS_KEY} ${MINIO_USER_SECRET_KEY}
-        mc admin policy attach myminio testuser_accesspolicy --user ${MINIO_USER_ACCESS_KEY}
-        mc admin policy attach myminio testuser_createpolicy --user ${MINIO_USER_ACCESS_KEY}
+        mc admin policy attach myminio katta-staticaccessbucketpolicy --user ${MINIO_USER_ACCESS_KEY}
+        mc admin policy attach myminio katta-staticcreatebucketpolicy --user ${MINIO_USER_ACCESS_KEY}
 
   # the last service must not exit for `up --wait` to succeed, so let it wait for the user as well
   wait:
