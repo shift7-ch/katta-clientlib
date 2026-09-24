@@ -30,6 +30,8 @@ import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultRegistry;
 import ch.cyberduck.core.vault.VaultVersion;
 
+import cloud.katta.client.api.AuthorityResourceApi;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -402,7 +404,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                 final UserKeys userKeys = new UserKeysServiceImpl(adminHubSession).getUserKeys(adminHubSession.getHost(), adminHubSession.getMe(),
                         new DeviceKeysServiceImpl().getDeviceKeys(adminHubSession.getHost(), adminHubSession.getMe()));
                 new GrantAccessServiceImpl(
-                        new VaultResourceApi(adminHubSession.getClient()),
+                        new VaultResourceApi(adminHubSession.getClient()), new AuthorityResourceApi(adminHubSession.getClient()),
                         new UsersResourceApi(adminHubSession.getClient())).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
                 assertEquals(new VaultResourceApi(adminHubSession.getClient()).apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).size(), 0);
             }
