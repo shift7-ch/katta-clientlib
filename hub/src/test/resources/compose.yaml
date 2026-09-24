@@ -7,7 +7,7 @@ include:
 
 services:
   # MinIO user with static access credentials for the "MinIO S3 static" storage profile of these tests.
-  # Not part of katta-compose, which only sets up the OIDC providers and policies for STS.
+  # katta-compose creates the policies attached here, but no user to attach them to.
   minio_setup_testuser:
     profiles: [ local ]
     image: quay.io/minio/mc:RELEASE.2024-11-05T11-29-45Z
@@ -22,8 +22,6 @@ services:
         set -eux
         mc alias set myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
         mc admin user add myminio ${MINIO_USER_ACCESS_KEY} ${MINIO_USER_SECRET_KEY}
-        mc admin policy create myminio testuser_accesspolicy /setup/minio_static/access_bucket_policy.json
-        mc admin policy create myminio testuser_createpolicy /setup/minio_static/create_bucket_policy.json
         mc admin policy attach myminio testuser_accesspolicy --user ${MINIO_USER_ACCESS_KEY}
         mc admin policy attach myminio testuser_createpolicy --user ${MINIO_USER_ACCESS_KEY}
 
