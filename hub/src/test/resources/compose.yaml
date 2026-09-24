@@ -1,6 +1,6 @@
 # Docker Compose environment for integration tests from https://github.com/shift7-ch/katta-compose.
 # Replace the reference after # with a tag to use a release, or the URL with the absolute path to compose.yaml
-# in a local checkout. The Keycloak realm and setup files of this project are passed with KEYCLOAK_REALM_FILE
-# and SETUP_DIR.
+# in a local checkout. The MinIO policies are the ones of katta-compose; the storage profiles of these tests are
+# read from the classpath, see AbstractHubWorkflowTest.
 include:
   - https://github.com/shift7-ch/katta-compose.git#main

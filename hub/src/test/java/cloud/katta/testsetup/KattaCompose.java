@@ -59,7 +59,7 @@ public final class KattaCompose {
 
     /**
      * @param envFile Classpath resource with variables for the compose file
-     * @return Variables from the env file with the setup files of this project
+     * @return Variables from the env file
      */
     private static Map<String, String> environment(final String envFile) throws IOException {
         final Properties properties = properties(envFile);
@@ -67,7 +67,6 @@ public final class KattaCompose {
         for(String name : properties.stringPropertyNames()) {
             env.put(name, properties.getProperty(name));
         }
-        env.put("SETUP_DIR", resource("/setup").getAbsolutePath());
         return env;
     }
 
