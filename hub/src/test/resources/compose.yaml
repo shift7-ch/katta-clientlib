@@ -37,8 +37,13 @@ services:
         /tmp/mc admin policy attach myminio katta-staticaccessbucketpolicy --user ${MINIO_USER_ACCESS_KEY}
         /tmp/mc admin policy attach myminio katta-staticcreatebucketpolicy --user ${MINIO_USER_ACCESS_KEY}
 
-  # the last service must not exit for `up --wait` to succeed, so let it wait for the user as well
-  wait:
+  # `up --wait` fails on a one-shot container that nothing waits for, and a service of the included
+  # compose file cannot be overridden to depend on it, so mirror the wait service of katta-compose.
+  wait_testuser:
+    profiles: [ local ]
+    image: alpine/curl:8.17.0
+    entrypoint: [ "sleep" ]
+    command: [ "infinity" ]
     depends_on:
       minio_setup_testuser:
         condition: service_completed_successfully
