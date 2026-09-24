@@ -61,7 +61,8 @@ class ObjectMapperTest {
                         "/setup/minio_static/storage_profile.json")), StandardCharsets.UTF_8)
                 .replace("${MINIO_SCHEME}", "http")
                 .replace("${MINIO_HOSTNAME}", "minio")
-                .replace("${MINIO_PORT}", "9000");
+                .replace("${MINIO_PORT}", "9000")
+                .replace("${MINIO_BUCKET_PREFIX}", "katta-");
         final StorageProfileS3StaticDto profile = mapper.readValue(minioStaticJson, StorageProfileS3StaticDto.class);
         assertEquals(Protocol.S3_STATIC, profile.getProtocol());
         assertEquals("http://minio:9000", profile.getEndpoint());
@@ -78,7 +79,8 @@ class ObjectMapperTest {
                         "/setup/minio_sts/storage_profile.json")), StandardCharsets.UTF_8)
                 .replace("${MINIO_SCHEME}", "http")
                 .replace("${MINIO_HOSTNAME}", "minio")
-                .replace("${MINIO_PORT}", "9000");
+                .replace("${MINIO_PORT}", "9000")
+                .replace("${MINIO_BUCKET_PREFIX}", "katta-");
         final StorageProfileS3STSDto profile = mapper.readValue(minioSTSJson, StorageProfileS3STSDto.class);
         assertEquals("katta-", profile.getBucketPrefix());
         assertEquals("eu-central-1", profile.getRegion());
