@@ -10,7 +10,7 @@
                 "s3:ListBucketMultipartUploads"
             ],
             "Resource": [
-                "arn:aws:s3:::katta-test-*"
+                "arn:aws:s3:::katta-*"
             ]
         },
         {
@@ -23,7 +23,7 @@
                 "s3:PutObject"
             ],
             "Resource": [
-                "arn:aws:s3:::katta-test-*/*"
+                "arn:aws:s3:::katta-*/*"
             ]
         }
     ]
