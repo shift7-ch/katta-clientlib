@@ -80,7 +80,7 @@ class ObjectMapperTest {
                 .replace("${MINIO_HOSTNAME}", "minio")
                 .replace("${MINIO_PORT}", "9000");
         final StorageProfileS3STSDto profile = mapper.readValue(minioSTSJson, StorageProfileS3STSDto.class);
-        assertEquals("katta-test-", profile.getBucketPrefix());
+        assertEquals("katta-", profile.getBucketPrefix());
         assertEquals("eu-central-1", profile.getRegion());
         assertEquals(Arrays.asList("eu-west-1", "eu-west-2", "eu-west-3", "eu-north-1", "eu-south-1", "eu-south-2", "eu-central-1", "eu-central-2"), profile.getRegions());
         assertTrue(profile.getPathStyleAccessEnabled());
