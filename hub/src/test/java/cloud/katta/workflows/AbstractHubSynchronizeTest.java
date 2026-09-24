@@ -129,7 +129,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"))
-                        .replace("${MINIO_BUCKET_PREFIX}", configuration.getProperty("MINIO_BUCKET_PREFIX"));
+                        .replace("${MINIO_BUCKET_PREFIX}", configuration.getProperty("MINIO_BUCKET_PREFIX", "katta-test-"));
                 adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(json, StorageProfileS3StaticDto.class)));
             }
             catch(ApiException e) {
@@ -146,7 +146,7 @@ abstract class AbstractHubSynchronizeTest extends AbstractHubTest {
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
                         .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"))
-                        .replace("${MINIO_BUCKET_PREFIX}", configuration.getProperty("MINIO_BUCKET_PREFIX"));
+                        .replace("${MINIO_BUCKET_PREFIX}", configuration.getProperty("MINIO_BUCKET_PREFIX", "katta-test-"));
                 adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(mapper.readValue(json, StorageProfileS3STSDto.class)));
             }
             catch(ApiException e) {
