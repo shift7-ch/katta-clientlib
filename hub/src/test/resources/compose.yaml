@@ -23,7 +23,7 @@ services:
     entrypoint: [ "/bin/sh","-c" ]
     command:
       - |
-        set -eux
+        set -euo pipefail
         case "$$(uname -m)" in
           x86_64) arch=amd64; sha=$$MC_SHA256_amd64 ;;
           aarch64) arch=arm64; sha=$$MC_SHA256_arm64 ;;
