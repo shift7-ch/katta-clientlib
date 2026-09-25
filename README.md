@@ -65,6 +65,14 @@ docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/re
 docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local down
 ```
 
+The endpoints are the subdomains `hub.localhost`, `keycloak.localhost` and `minio.localhost` of katta-compose, which
+resolve to the loopback address on the host and to the containers inside the Docker network. The JVM running the tests
+uses the system resolver, which on macOS does not resolve subdomains of `localhost`. Add them to `/etc/hosts`:
+
+```
+127.0.0.1 hub.localhost keycloak.localhost minio.localhost
+```
+
 For the `hybrid` profile with Keycloak and MinIO on `testing.katta.cloud` and AWS S3, use
 [`.chipotle.env`](hub/src/test/resources/.chipotle.env) instead. CI writes its values from a repository secret.
 

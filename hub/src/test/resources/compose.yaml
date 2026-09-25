@@ -3,7 +3,7 @@
 # in a local checkout. The MinIO policies are the ones of katta-compose; the storage profiles of these tests are
 # read from the classpath, see AbstractHubWorkflowTest.
 include:
-  - https://github.com/shift7-ch/katta-compose.git#main
+  - https://github.com/shift7-ch/katta-compose.git#issues/9
 
 services:
   # MinIO user with static access credentials for the "MinIO S3 static" storage profile of these tests.
