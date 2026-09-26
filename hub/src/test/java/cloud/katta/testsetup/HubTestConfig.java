@@ -94,8 +94,6 @@ public class HubTestConfig {
             public String toString() {
                 final StringBuilder sb = new StringBuilder("UserConfig{");
                 sb.append("username='").append(username).append('\'');
-                sb.append(", password='").append(password).append('\'');
-                sb.append(", setupCode='").append(setupCode).append('\'');
                 sb.append('}');
                 return sb.toString();
             }
@@ -120,7 +118,6 @@ public class HubTestConfig {
             final StringBuilder sb = new StringBuilder("VaultSpec{");
             sb.append("storageProfileName='").append(storageProfileName).append('\'');
             sb.append(", username='").append(username).append('\'');
-            sb.append(", password='").append(password).append('\'');
             sb.append(", region='").append(region).append('\'');
             sb.append('}');
             return sb.toString();
