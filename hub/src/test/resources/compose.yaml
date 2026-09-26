@@ -1,6 +1,49 @@
 # Docker Compose environment for integration tests from https://github.com/shift7-ch/katta-compose.
 # Replace the reference after # with a tag to use a release, or the URL with the absolute path to compose.yaml
-# in a local checkout. The Keycloak realm and setup files of this project are passed with KEYCLOAK_REALM_FILE
-# and SETUP_DIR.
+# in a local checkout. The MinIO policies are the ones of katta-compose; the storage profiles of these tests are
+# read from the classpath, see AbstractHubWorkflowTest.
 include:
   - https://github.com/shift7-ch/katta-compose.git#main
+
+services:
+  # MinIO user with static access credentials for the "MinIO S3 static" storage profile of these tests.
+  # katta-compose creates the policies attached here, but no user to attach them to.
+  # MinIO no longer publishes its client image publicly, so mc is downloaded from its release assets
+  # on GitHub, as katta-compose and the Helm chart of katta-helm do.
+  minio_setup_testuser:
+    profiles: [ local ]
+    image: alpine/curl:8.17.0
+    depends_on:
+      minio_setup:
+        condition: service_completed_successfully
+    environment:
+      MC_VERSION: RELEASE.2025-08-13T08-35-41Z
+      MC_SHA256_amd64: 01f866e9c5f9b87c2b09116fa5d7c06695b106242d829a8bb32990c00312e891
+      MC_SHA256_arm64: 14c8c9616cfce4636add161304353244e8de383b2e2752c0e9dad01d4c27c12c
+    entrypoint: [ "/bin/sh","-c" ]
+    command:
+      - |
+        set -euo pipefail
+        case "$$(uname -m)" in
+          x86_64) arch=amd64; sha=$$MC_SHA256_amd64 ;;
+          aarch64) arch=arm64; sha=$$MC_SHA256_arm64 ;;
+          *) echo "Unsupported architecture $$(uname -m)" >&2; exit 1 ;;
+        esac
+        curl -fsSL -o /tmp/mc "https://github.com/minio/mc/releases/download/$$MC_VERSION/mc.linux-$$arch.$$MC_VERSION"
+        echo "$$sha  /tmp/mc" | sha256sum -c
+        chmod +x /tmp/mc
+        /tmp/mc alias set myminio ${MINIO_SCHEME}://minio:${MINIO_PORT} minioadmin minioadmin
+        /tmp/mc admin user add myminio ${MINIO_USER_ACCESS_KEY} ${MINIO_USER_SECRET_KEY}
+        /tmp/mc admin policy attach myminio katta-staticaccessbucketpolicy --user ${MINIO_USER_ACCESS_KEY}
+        /tmp/mc admin policy attach myminio katta-staticcreatebucketpolicy --user ${MINIO_USER_ACCESS_KEY}
+
+  # `up --wait` fails on a one-shot container that nothing waits for, and a service of the included
+  # compose file cannot be overridden to depend on it, so mirror the wait service of katta-compose.
+  wait_testuser:
+    profiles: [ local ]
+    image: alpine/curl:8.17.0
+    entrypoint: [ "sleep" ]
+    command: [ "infinity" ]
+    depends_on:
+      minio_setup_testuser:
+        condition: service_completed_successfully

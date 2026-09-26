@@ -53,16 +53,24 @@ Git URL with the absolute path to `compose.yaml` in the checkout.
 ## Integration Test Environment
 
 Integration tests run Katta Server, Keycloak, PostgreSQL and MinIO with [katta-compose](https://github.com/shift7-ch/katta-compose),
-using the setup files and env files of this project in [`hub/src/test/resources`](hub/src/test/resources).
+using the storage profiles and env files of this project in [`hub/src/test/resources`](hub/src/test/resources); the MinIO
+policies are the ones of katta-compose.
 katta-compose renders the Keycloak realm from the Helm chart of Katta Server.
 Refer to katta-compose for the One-Stop Shop Demo, its profiles and endpoints.
 
 To start the environment of the integration tests yourself, use
 
 ```bash
-export SETUP_DIR=$PWD/hub/src/test/resources/setup
 docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local up --wait
 docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local down
+```
+
+The endpoints are the subdomains `hub.localhost`, `keycloak.localhost` and `minio.localhost` of katta-compose, which
+resolve to the loopback address on the host and to the containers inside the Docker network. The JVM running the tests
+uses the system resolver, which on macOS does not resolve subdomains of `localhost`. Add them to `/etc/hosts`:
+
+```
+127.0.0.1 hub.localhost keycloak.localhost minio.localhost
 ```
 
 For the `hybrid` profile with Keycloak and MinIO on `testing.katta.cloud` and AWS S3, use

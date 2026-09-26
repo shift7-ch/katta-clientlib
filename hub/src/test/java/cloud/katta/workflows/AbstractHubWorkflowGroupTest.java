@@ -91,7 +91,8 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
                 final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
-                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
+                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"))
+                        .replace("${MINIO_BUCKET_PREFIX}", configuration.getProperty("MINIO_BUCKET_PREFIX", "katta-test-"));
                 final StorageProfileS3StaticDto storageProfile = mapper.readValue(json, StorageProfileS3StaticDto.class)
                         .storageClass(S3StorageClass.STANDARD);
                 adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(storageProfile));
@@ -100,7 +101,8 @@ abstract class AbstractHubWorkflowGroupTest extends AbstractHubTest {
                 final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
                         .replace("${MINIO_SCHEME}", configuration.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", configuration.getProperty("MINIO_HOSTNAME"))
-                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"));
+                        .replace("${MINIO_PORT}", configuration.getProperty("MINIO_PORT"))
+                        .replace("${MINIO_BUCKET_PREFIX}", configuration.getProperty("MINIO_BUCKET_PREFIX", "katta-test-"));
                 final StorageProfileS3STSDto storageProfile = mapper.readValue(json, StorageProfileS3STSDto.class)
                         .storageClass(S3StorageClass.STANDARD);
                 adminStorageProfileApi.apiStorageprofilePost(new StorageProfileDto(storageProfile));
