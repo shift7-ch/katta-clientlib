@@ -13,6 +13,7 @@ import ch.cyberduck.core.exception.ConnectionCanceledException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cryptomator.cryptolib.common.P384KeyPair;
 
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.workflows.exceptions.AccessException;
@@ -29,7 +30,7 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
     @Override
     public AccountKeyAndDeviceName displayAccountKeyAndAskDeviceName(final Host bookmark, final String accountKey) throws AccessException {
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Display Account Key for %s", bookmark));
+            log.debug("Display account key for {}", bookmark);
         }
         final AccountKeyAndDeviceName input = new AccountKeyAndDeviceName(accountKey, AccountKeyAndDeviceName.COMPUTER_NAME);
         final SheetController sheet = new FirstLoginController(input);
@@ -44,7 +45,7 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
     @Override
     public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) throws AccessException {
         if(log.isDebugEnabled()) {
-            log.debug(String.format("Ask for Account Key for %s", bookmark));
+            log.debug("Ask for account key for {}", bookmark);
         }
         final AccountKeyAndDeviceName accountKeyAndDeviceName = new AccountKeyAndDeviceName(StringUtils.EMPTY, AccountKeyAndDeviceName.COMPUTER_NAME);
         final DeviceSetupController sheet = new DeviceSetupController(bookmark, accountKeyAndDeviceName);
@@ -54,5 +55,18 @@ public class PromptDeviceSetupCallback implements DeviceSetupCallback {
                 throw new AccessException(new ConnectionCanceledException());
         }
         return accountKeyAndDeviceName;
+    }
+
+    @Override
+    public void displayRecoveryKey(final Host bookmark, final P384KeyPair recoveryKey) throws AccessException {
+        if(log.isDebugEnabled()) {
+            log.debug("Display recovery key {}", bookmark);
+        }
+        final RecoveryKeyController sheet = new RecoveryKeyController(this.generateRecoveryKey(recoveryKey));
+        switch(controller.alert(sheet)) {
+            case SheetCallback.CANCEL_OPTION:
+            case SheetCallback.ALTERNATE_OPTION:
+                throw new AccessException(new ConnectionCanceledException());
+        }
     }
 }
