@@ -64,7 +64,11 @@ public final class KattaTestRealm {
     public static void setup(final Properties env, final HubTestConfig.Setup setup) throws IOException, ApiException {
         final String keycloakUrl = env.getProperty("HUB_KEYCLOAK_URL") + env.getProperty("HUB_KEYCLOAK_BASEPATH", "");
         enableDirectAccessGrants(keycloakUrl, env.getProperty("HUB_KEYCLOAK_REALM"), setup.clientId);
-        createUser(HubTestUtilities.getAdminApiClient(setup), setup.userConfig);
+        final ApiClient adminApiClient = HubTestUtilities.getAdminApiClient(setup);
+        createUser(adminApiClient, setup.userConfig);
+        if(setup.memberConfig != null) {
+            createUser(adminApiClient, setup.memberConfig);
+        }
     }
 
     private static void enableDirectAccessGrants(final String keycloakUrl, final String realm, final String clientId) throws IOException {

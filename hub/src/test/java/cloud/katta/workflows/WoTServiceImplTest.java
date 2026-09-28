@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 class WoTServiceImplTest {
@@ -97,6 +98,55 @@ class WoTServiceImplTest {
         Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
 
         assertEquals(Collections.singletonMap(bob.getId(), 5), wot.getTrustLevelsPerUserId(aliceKeys));
+    }
+
+    @Test
+    void testGetTrustLevelsPerUserIdForCandidates() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
+        final List<String> bobSignatureChain = new LinkedList<>();
+        final int len = 5;
+
+        final UserKeys bobKeys = UserKeys.create();
+        final UserDto bob = new UserDto()
+                .id(UUID.randomUUID().toString())
+                .name("bob")
+                .ecdhPublicKey(encodePublicKey(bobKeys.ecdhKeyPair().getPublic()))
+                .ecdsaPublicKey(encodePublicKey(bobKeys.ecdsaKeyPair().getPublic()));
+
+        UserDto previousUser = bob;
+        UserKeys previousKeys = bobKeys;
+        for(int i = 0; i < len; i++) {
+            final UserKeys userKeys = UserKeys.create();
+            final UserDto user = new UserDto()
+                    .id(UUID.randomUUID().toString())
+                    .name(String.format("user%s", i))
+                    .ecdhPublicKey(encodePublicKey(userKeys.ecdhKeyPair().getPublic()))
+                    .ecdsaPublicKey(encodePublicKey(userKeys.ecdsaKeyPair().getPublic()));
+            bobSignatureChain.add(0, WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(), previousUser));
+
+            previousUser = user;
+            previousKeys = userKeys;
+        }
+        final UserKeys aliceKeys = previousKeys;
+
+        final TrustedUserDto bobTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(bobSignatureChain);
+
+        final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
+        final AuthorityResourceApi authoritiesMock = Mockito.mock(AuthorityResourceApi.class);
+        final WoTServiceImpl wot = new WoTServiceImpl(usersMock, authoritiesMock);
+        Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Collections.singletonList(bobTrust));
+
+        // Chains are verified against the candidates handed in, the keys are not fetched a second time
+        assertEquals(Collections.singletonMap(bob.getId(), len), wot.getTrustLevelsPerUserId(aliceKeys, Collections.singletonList(bob)));
+        Mockito.verify(authoritiesMock, never()).apiAuthoritiesGet(Mockito.anyList());
+
+        // A candidate whose public key is not the one attested by the chain is not trusted, i.e. a server substituting
+        // an attacker-controlled key for an otherwise trusted user cannot have us encrypt for it
+        final UserDto substituted = new UserDto()
+                .id(bob.getId())
+                .name(bob.getName())
+                .ecdhPublicKey(encodePublicKey(UserKeys.create().ecdhKeyPair().getPublic()))
+                .ecdsaPublicKey(bob.getEcdsaPublicKey());
+        assertEquals(Collections.emptyMap(), wot.getTrustLevelsPerUserId(aliceKeys, Collections.singletonList(substituted)));
     }
 
     @Test
