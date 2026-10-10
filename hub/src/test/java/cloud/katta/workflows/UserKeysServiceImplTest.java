@@ -8,6 +8,7 @@ import ch.cyberduck.core.Host;
 import ch.cyberduck.core.PasswordStoreFactory;
 import ch.cyberduck.core.exception.ConnectionCanceledException;
 
+import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -84,6 +85,11 @@ class UserKeysServiceImplTest extends AbstractHubTest {
                                 return input.get();
                             }
                             throw new AccessException(new ConnectionCanceledException());
+                        }
+
+                        @Override
+                        public void displayRecoveryKey(final Host bookmark, final P384KeyPair recoveryKey) throws AccessException {
+                            return;
                         }
                     }));
         }
