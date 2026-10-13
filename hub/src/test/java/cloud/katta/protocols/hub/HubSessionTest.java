@@ -40,8 +40,8 @@ class HubSessionTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodSource("arguments")
     void testMinApiLevel(final HubTestConfig config) {
-        PreferencesFactory.get().setProperty("cloud.katta.min_api_level", 5);
+        PreferencesFactory.get().setProperty("cloud.katta.min_api_level", 6);
         final InteroperabilityException exception = assertThrows(InteroperabilityException.class, () -> setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault));
-        assertTrue(exception.getDetail().startsWith("Client requires API level at least 5, found 4, for"));
+        assertTrue(exception.getDetail().startsWith("Client requires API level at least 6, found 5, for"));
     }
 }
