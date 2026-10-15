@@ -71,9 +71,9 @@ public abstract class AbstractHubTest {
                     LOCAL_PROPERTIES.getProperty("HUB_ADMIN_USER"),
                     LOCAL_PROPERTIES.getProperty("HUB_ADMIN_PASSWORD"),
                     staticSetupCode()))
-            .withMemberConfig(new HubTestConfig.Setup.UserConfig(
-                    LOCAL_PROPERTIES.getProperty("HUB_MEMBER_USER"),
-                    LOCAL_PROPERTIES.getProperty("HUB_MEMBER_PASSWORD"),
+            .withAdditionalUserConfigs(new HubTestConfig.Setup.UserConfig(
+                    LOCAL_PROPERTIES.getProperty("HUB_USER_2"),
+                    LOCAL_PROPERTIES.getProperty("HUB_PASSWORD_2"),
                     staticSetupCode()))
             .withDockerConfig(LOCAL_DOCKER_CONFIG);
 

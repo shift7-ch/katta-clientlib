@@ -65,7 +65,8 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
     @ParameterizedTest
     @MethodIgnorableSource(value = "arguments")
     void testGrantAccessAsMember(final HubTestConfig config) throws Exception {
-        assertNotNull(config.setup.memberConfig, "Second regular test user required");
+        assertFalse(config.setup.additionalUserConfigs.isEmpty(), "Second regular test user required");
+        final HubTestConfig.Setup.UserConfig secondUser = config.setup.additionalUserConfigs.get(0);
         try (final HubSession hubSession = setupConnection(config.setup.hubURL, config.setup.userConfig, config.vault)) {
             final ApiClient adminApiClient = getAdminApiClient(config.setup);
             final Properties env = new Properties();
@@ -108,10 +109,10 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
 
             log.info("S02 admin and the second user set up their user keys");
             final UserKeys adminKeys = setupUserKeys(adminApiClient, config.setup.adminConfig);
-            final ApiClient memberApiClient = HubTestUtilities.getApiClient(config.setup, config.setup.memberConfig);
-            final UserKeys memberKeys = setupUserKeys(memberApiClient, config.setup.memberConfig);
+            final ApiClient secondUserApiClient = HubTestUtilities.getApiClient(config.setup, secondUser);
+            final UserKeys secondUserKeys = setupUserKeys(secondUserApiClient, secondUser);
             final String adminId = new UsersResourceApi(adminApiClient).apiUsersMeGet(false).getId();
-            final String memberId = new UsersResourceApi(memberApiClient).apiUsersMeGet(false).getId();
+            final String secondUserId = new UsersResourceApi(secondUserApiClient).apiUsersMeGet(false).getId();
 
             log.info("S03 alice adds admin as member of the vault and grants access, giving admin an access token");
             final VaultResourceApi aliceVaults = new VaultResourceApi(hubSession.getClient());
@@ -121,12 +122,12 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, aliceKeys);
 
             log.info("S04 alice adds the second user as member, leaving them without an access token");
-            aliceVaults.apiVaultsVaultIdUsersUserIdPut(memberId, vaultId, Role.MEMBER);
-            assertEquals(Collections.singletonList(memberId), aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).stream()
+            aliceVaults.apiVaultsVaultIdUsersUserIdPut(secondUserId, vaultId, Role.MEMBER);
+            assertEquals(Collections.singletonList(secondUserId), aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).stream()
                     .map(MemberDto::getId).collect(Collectors.toList()));
 
             final ApiException notGranted = assertThrows(ApiException.class,
-                    () -> new VaultResourceApi(memberApiClient).apiVaultsVaultIdAccessTokenGet(vaultId, false));
+                    () -> new VaultResourceApi(secondUserApiClient).apiVaultsVaultIdAccessTokenGet(vaultId, false));
             assertEquals(403, notGranted.getCode(), "No access token before the member grants one");
 
             log.info("S05 admin grants access although admin is only MEMBER of the vault");
@@ -136,7 +137,7 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
                     .grantAccessToUsersRequiringAccessGrant(adminKeys);
 
             assertTrue(aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).isEmpty(), "No pending access grants left");
-            final UVFAccessTokenPayload granted = new VaultServiceImpl(new VaultResourceApi(memberApiClient)).getVaultAccessToken(vaultId, memberKeys);
+            final UVFAccessTokenPayload granted = new VaultServiceImpl(new VaultResourceApi(secondUserApiClient)).getVaultAccessToken(vaultId, secondUserKeys);
             assertNotNull(granted.key());
             assertNull(granted.recoveryKey(), "Member-level access only");
         }
