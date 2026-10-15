@@ -109,7 +109,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                     .map(AuthorityDto::getActualInstance)
                     .filter(authority -> authority instanceof UserDto)
                     .map(authority -> (UserDto) authority)
-                    .filter(user -> user.getEcdhPublicKey() != null)
+                    .filter(user -> user.getEcdhPublicKey() != null && user.getEcdsaPublicKey() != null)
                     .collect(Collectors.toList());
             // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter
             // than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key:
