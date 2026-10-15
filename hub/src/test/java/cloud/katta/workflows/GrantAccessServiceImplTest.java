@@ -42,12 +42,14 @@ class GrantAccessServiceImplTest {
     @ParameterizedTest
     @CsvSource({
             "false,-1,2,0", // automatic access grant disabled -> no upload
-            "true,-1,2,1",  // negative maxWotDepth value -> 1 upload
+            "true,-1,2,1",  // maxWotDepth -1 grants to anyone -> 1 upload
+            "true,-2,2,0",  // any other negative maxWotDepth grants to no one -> no upload
+            "true,,2,1",    // missing maxWotDepth requires a verified chain of any length -> 1 upload
             "true,3,2,1",   // maxWotDepth > bobTrustLevel -> 1 upload
             "true,2,2,1",   // maxWotDepth == bobTrustLevel -> 1 upload
             "true,1,2,0",   // maxWotDepth < bobTrustLevel -> no upload
     })
-    void testGrantAccess(final boolean automaticAccessGrantEnabled, final int maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws Exception {
+    void testGrantAccess(final boolean automaticAccessGrantEnabled, final Integer maxWotDepth, final int bobTrustLevel, final int expectedNumberOfUploads) throws Exception {
         final VaultResourceApi vaults = mock(VaultResourceApi.class);
         final AuthorityResourceApi authorities = mock(AuthorityResourceApi.class);
         final VaultService vaultServiceMock = mock(VaultService.class);
@@ -194,7 +196,7 @@ class GrantAccessServiceImplTest {
                 .ecdsaPublicKey(keys.encodedEcdsaPublicKey());
     }
 
-    private static JWEObjectJSON metadata(final UUID vaultId, final HubVaultKeys vaultKeys, final boolean enabled, final int trustThreshold) throws Exception {
+    private static JWEObjectJSON metadata(final UUID vaultId, final HubVaultKeys vaultKeys, final boolean enabled, final Integer trustThreshold) throws Exception {
         return JWEObjectJSON.parse(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
                 .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(enabled).trustThreshold(trustThreshold)),
                 "apiUrl", vaultId, vaultKeys.serialize()).encrypt());
