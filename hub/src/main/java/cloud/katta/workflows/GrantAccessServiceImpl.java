@@ -114,13 +114,15 @@ public class GrantAccessServiceImpl implements GrantAccessService {
             // 2. For users, who are considered trustworthy (i.e. the signature chain between the current user and the to-be-trusted user is shorter
             // than a configurable threshold), use the verified ECDH public key to encrypt the vault's member key:
             // trustThreshold: -1 means "grant to anyone", where 0, 1, 2 would be the number of edges between any vault owner and the grantee.
-            final int trustThreshold = ofNullable(vaultMetadata.automaticAccessGrant().getTrustThreshold()).orElse(-1);
-            final Map<String, Integer> verifiedTrustedUsers = trustThreshold < 0
+            // Matches AutomaticAccessGrantAgent.vue: any other negative value grants to no one, a missing value requires a verified chain of any length.
+            final int trustThreshold = ofNullable(vaultMetadata.automaticAccessGrant().getTrustThreshold()).orElse(Integer.MAX_VALUE);
+            final boolean grantToAnyone = trustThreshold == -1;
+            final Map<String, Integer> verifiedTrustedUsers = grantToAnyone
                     ? Collections.<String, Integer>emptyMap()
                     : woTService.getTrustLevelsPerUserId(userKeys, candidates);
             final Map<String, String> accessTokens = new HashMap<>();
             for(final UserDto user : candidates) {
-                if(trustThreshold >= 0) {
+                if(!grantToAnyone) {
                     final Integer trustLevel = verifiedTrustedUsers.get(user.getId());
                     if(trustLevel == null) {
                         log.warn("Ignoring user {} for vault {} - no trust level", user.getId(), vaultId);
@@ -132,7 +134,6 @@ public class GrantAccessServiceImpl implements GrantAccessService {
                         continue;
                     }
                 }
-                // else: -1 means grant to all
                 // Member-level access only: the vault's recovery key is never shared through the automatic access grant flow
                 accessTokens.put(user.getId(), accessToken.encryptForUser(decodePublicKey(user.getEcdhPublicKey()), false));
             }
