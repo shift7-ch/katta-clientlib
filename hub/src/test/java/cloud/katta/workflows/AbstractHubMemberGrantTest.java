@@ -11,8 +11,6 @@ import ch.cyberduck.core.vault.VaultCredentials;
 import ch.cyberduck.core.vault.VaultProvider;
 import ch.cyberduck.core.vault.VaultVersion;
 
-import cloud.katta.client.api.AuthorityResourceApi;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +29,7 @@ import java.util.stream.Collectors;
 import cloud.katta.client.ApiClient;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.JSON;
+import cloud.katta.client.api.AuthorityResourceApi;
 import cloud.katta.client.api.SettingsResourceApi;
 import cloud.katta.client.api.StorageProfileResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
@@ -88,7 +87,8 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
                 final String json = IOUtils.toString(Objects.requireNonNull(in), StandardCharsets.UTF_8)
                         .replace("${MINIO_SCHEME}", env.getProperty("MINIO_SCHEME"))
                         .replace("${MINIO_HOSTNAME}", env.getProperty("MINIO_HOSTNAME"))
-                        .replace("${MINIO_PORT}", env.getProperty("MINIO_PORT"));
+                        .replace("${MINIO_PORT}", env.getProperty("MINIO_PORT"))
+                        .replace("${MINIO_BUCKET_PREFIX}", env.getProperty("MINIO_BUCKET_PREFIX", "katta-test-"));
                 final ObjectMapper mapper = new JSON().getMapper();
                 storageProfileApi.apiStorageprofilePost(new StorageProfileDto(
                         mapper.readValue(json, StorageProfileS3StaticDto.class).storageClass(S3StorageClass.STANDARD)));
