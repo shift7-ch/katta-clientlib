@@ -85,7 +85,7 @@ public class GrantAccessServiceImpl implements GrantAccessService {
     @Override
     public void grantAccessToUsersRequiringAccessGrant(final UUID vaultId, final UserKeys userKeys) throws ApiException, AccessException, SecurityFailure {
         final Set<String> candidateUserIds = vaultResourceApi.apiVaultsUsersRequiringAccessGrantGet(NO_LONG_POLL).get(vaultId.toString());
-        if(null == candidateUserIds || candidateUserIds.isEmpty()) {
+        if(candidateUserIds.isEmpty()) {
             log.info("No users requiring access grant for vault {}", vaultId);
             return;
         }
