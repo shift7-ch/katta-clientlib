@@ -4,12 +4,12 @@
 
 package cloud.katta.testsetup;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import ch.cyberduck.core.PreferencesUseragentProvider;
 import ch.cyberduck.core.http.UserAgentHttpRequestInitializer;
 import ch.cyberduck.core.oauth.OAuth2AuthorizationService;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -55,7 +55,7 @@ public final class KattaTestRealm {
     }
 
     /**
-     * Enable direct access grants for the password grant of the tests and create the test user with Katta Server,
+     * Enable direct access grants for the password grant of the tests and create the test users with Katta Server,
      * which adds it to Keycloak and its database at once.
      *
      * @param env   Variables of the env file passed to katta-compose
@@ -64,7 +64,11 @@ public final class KattaTestRealm {
     public static void setup(final Properties env, final HubTestConfig.Setup setup) throws IOException, ApiException {
         final String keycloakUrl = env.getProperty("HUB_KEYCLOAK_URL") + env.getProperty("HUB_KEYCLOAK_BASEPATH", "");
         enableDirectAccessGrants(keycloakUrl, env.getProperty("HUB_KEYCLOAK_REALM"), setup.clientId);
-        createUser(HubTestUtilities.getAdminApiClient(setup), setup.userConfig);
+        final ApiClient adminApiClient = HubTestUtilities.getAdminApiClient(setup);
+        createUser(adminApiClient, setup.userConfig);
+        for(final HubTestConfig.Setup.UserConfig user : setup.additionalUserConfigs) {
+            createUser(adminApiClient, user);
+        }
     }
 
     private static void enableDirectAccessGrants(final String keycloakUrl, final String realm, final String clientId) throws IOException {
