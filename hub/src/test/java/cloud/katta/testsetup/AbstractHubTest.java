@@ -17,6 +17,7 @@ import ch.cyberduck.core.ssl.DefaultX509TrustManager;
 import ch.cyberduck.core.threading.CancelCallback;
 import ch.cyberduck.core.vault.VaultRegistryFactory;
 
+import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.provider.Arguments;
@@ -235,6 +236,11 @@ public abstract class AbstractHubTest {
                 return new AccountKeyAndDeviceName(userConfig.setupCode,
                         String.format("%s %s", AccountKeyAndDeviceName.COMPUTER_NAME, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
                                 .format(ZonedDateTime.now(ZoneId.of("Europe/Zurich")))));
+            }
+
+            @Override
+            public void displayRecoveryKey(final Host bookmark, final P384KeyPair recoveryKey) {
+                return;
             }
 
             @Override

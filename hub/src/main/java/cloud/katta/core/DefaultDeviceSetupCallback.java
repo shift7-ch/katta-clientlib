@@ -13,11 +13,14 @@ import ch.cyberduck.core.LoginCallback;
 import ch.cyberduck.core.LoginCallbackFactory;
 import ch.cyberduck.core.LoginOptions;
 import ch.cyberduck.core.StringAppender;
+import ch.cyberduck.core.exception.ConnectionCanceledException;
 import ch.cyberduck.core.exception.LoginCanceledException;
 
 import java.text.MessageFormat;
 
 import cloud.katta.workflows.exceptions.AccessException;
+
+import org.cryptomator.cryptolib.common.P384KeyPair;
 
 public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
 
@@ -78,6 +81,23 @@ public class DefaultDeviceSetupCallback implements DeviceSetupCallback {
             return new AccountKeyAndDeviceName(input.getPassword(), input.getUsername());
         }
         catch(LoginCanceledException e) {
+            throw new AccessException(e);
+        }
+    }
+
+    @Override
+    public void displayRecoveryKey(final Host bookmark, final P384KeyPair recoveryKey) throws AccessException {
+        try {
+            prompt.warn(bookmark, String.format("%s %s",
+                            LocaleFactory.localizedString(
+                                    "The following recovery key can be used to restore access to the vault.", "Hub"),
+                            LocaleFactory.localizedString(
+                                    "I understand that I will lose access to the vault in the event of an emergency if I don't have the recovery key.", "Hub")),
+                    this.generateRecoveryKey(recoveryKey),
+                    LocaleFactory.localizedString("Create Vault", "Cryptomator"),
+                    LocaleFactory.localizedString("Cancel", "Alert"), null);
+        }
+        catch(ConnectionCanceledException e) {
             throw new AccessException(e);
         }
     }
