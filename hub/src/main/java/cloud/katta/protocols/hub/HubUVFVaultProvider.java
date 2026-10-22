@@ -296,7 +296,8 @@ public class HubUVFVaultProvider implements VaultProvider {
                 final Path bucket = new Path(vaultStorageMetadata.getBucket(),
                         EnumSet.of(Path.Type.directory, Path.Type.volume, Path.Type.vault),
                         new DefaultPathAttributes()
-                                .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
+                                .setFileId(vaultId.toString())
+                            .setRegion(HubStorageLocationService.StorageLocation.fromMetadata(vaultStorageMetadata).getIdentifier())
                                 .setDisplayname(vaultStorageMetadata.getNickname())
                 );
                 try {

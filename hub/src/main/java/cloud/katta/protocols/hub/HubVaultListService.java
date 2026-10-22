@@ -59,7 +59,9 @@ public class HubVaultListService implements ListService {
                                 new VaultVersion(VaultVersion.Type.UVF), new VaultCredentials());
                         log.info("Loaded vault {}", vault.getHome());
                         registry.add(vault);
-                        vaults.add(vault.getHome());
+                        final Path home = vault.getHome();
+                        home.attributes().setAcl(new HubVaultAclPermissionFeature(session).getPermission(home));
+                        vaults.add(home);
                         listener.chunk(directory, vaults);
                     }
                     catch(VaultUnlockCancelException e) {
