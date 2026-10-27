@@ -12,6 +12,11 @@ import cloud.katta.crypto.UserKeys;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
+/**
+ * Automatic access grant flow. Grants member-level access only, the vault's recovery key is never shared. Vault owners
+ * are therefore never granted access automatically, they are excluded by the server and require a manual grant by
+ * another owner.
+ */
 public interface GrantAccessService {
     /**
      * Grant access to all users requiring an access grant on any vault the current user holds an access token for, i.e.
