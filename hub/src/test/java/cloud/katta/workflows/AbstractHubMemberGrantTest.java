@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
@@ -57,7 +58,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * The automatic access grant is callable by any vault member, not only by owners: a member holding an access token can
- * decrypt the vault and therefore re-share it. Adding members stays owner-gated and is not exercised here.
+ * decrypt the vault and therefore re-share it. Adding members stays owner-gated and is not exercised here. Vault owners
+ * are never granted access automatically, they require a manual grant by another owner.
  */
 abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
     private static final Logger log = LogManager.getLogger(AbstractHubMemberGrantTest.class.getName());
@@ -121,20 +123,30 @@ abstract class AbstractHubMemberGrantTest extends AbstractHubTest {
                     new DeviceKeysServiceImpl().getDeviceKeys(hubSession.getHost(), hubSession.getMe()));
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, aliceKeys);
 
-            log.info("S04 alice adds the second user as member, leaving them without an access token");
-            aliceVaults.apiVaultsVaultIdUsersUserIdPut(secondUserId, vaultId, Role.MEMBER);
+            // None of the endpoints of the automatic access grant flow bypasses the vault role for the realm admin role
+            final GrantAccessServiceImpl adminGrantAccessService = new GrantAccessServiceImpl(new VaultResourceApi(adminApiClient),
+                    new AuthorityResourceApi(adminApiClient), new UsersResourceApi(adminApiClient));
+
+            log.info("S04 alice adds the second user as owner, leaving them without an access token");
+            aliceVaults.apiVaultsVaultIdUsersUserIdPut(secondUserId, vaultId, Role.OWNER);
             assertEquals(Collections.singletonList(secondUserId), aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).stream()
                     .map(MemberDto::getId).collect(Collectors.toList()));
 
+            log.info("S05 admin does not grant access to the second user as vault owners are never granted access automatically");
+            adminGrantAccessService.grantAccessToUsersRequiringAccessGrant(adminKeys);
+            final List<MemberDto> pendingOwners = aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId);
+            assertEquals(Collections.singletonList(secondUserId), pendingOwners.stream()
+                    .map(MemberDto::getId).collect(Collectors.toList()), "Owner still awaiting a manual access grant");
+            assertEquals(Role.OWNER, pendingOwners.get(0).getVaultRole());
             final ApiException notGranted = assertThrows(ApiException.class,
                     () -> new VaultResourceApi(secondUserApiClient).apiVaultsVaultIdAccessTokenGet(vaultId, false));
-            assertEquals(403, notGranted.getCode(), "No access token before the member grants one");
+            assertEquals(403, notGranted.getCode(), "No access token for the owner after the automatic access grant");
 
-            log.info("S05 admin grants access although admin is only MEMBER of the vault");
-            // None of the endpoints of the automatic access grant flow bypasses the vault role for the realm admin role
-            new GrantAccessServiceImpl(new VaultResourceApi(adminApiClient),
-                    new AuthorityResourceApi(adminApiClient), new UsersResourceApi(adminApiClient))
-                    .grantAccessToUsersRequiringAccessGrant(adminKeys);
+            log.info("S06 alice changes the role of the second user to member");
+            aliceVaults.apiVaultsVaultIdUsersUserIdPut(secondUserId, vaultId, Role.MEMBER);
+
+            log.info("S07 admin grants access although admin is only MEMBER of the vault");
+            adminGrantAccessService.grantAccessToUsersRequiringAccessGrant(adminKeys);
 
             assertTrue(aliceVaults.apiVaultsVaultIdUsersRequiringAccessGrantGet(vaultId).isEmpty(), "No pending access grants left");
             final UVFAccessTokenPayload granted = new VaultServiceImpl(new VaultResourceApi(secondUserApiClient)).getVaultAccessToken(vaultId, secondUserKeys);
