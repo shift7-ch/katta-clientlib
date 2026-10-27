@@ -122,12 +122,12 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             final UUID vaultId = UUID.fromString(StringUtils.removeStart(cryptomator.getHome().getName(), storageProfileWrapper.getBucketPrefix()));
             checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 0, 1, 0, 0);
 
-            log.info("S02 {} alice shares vault with admin as owner", setup);
+            log.info("S02 {} alice shares vault with admin as member", setup);
             final List<UserDto> userDtos = new UsersResourceApi(adminApiClient).apiUsersGet().stream().map(UserKeysServiceImpl::withCountsToUserDto).collect(Collectors.toList());
             String adminId = userDtos.stream().filter(u -> "admin".equals(u.getName())).findFirst().get().getId();
 
-            new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultId, Role.OWNER);
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 1, 0, 1, 0, 0);
+            new VaultResourceApi(hubSession.getClient()).apiVaultsVaultIdUsersUserIdPut(adminId, vaultId, Role.MEMBER);
+            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 1, 1, 0, 0);
 
             log.info("S03 {} admin uploads user keys", setup);
             final UserKeys adminKeys = UserKeys.create();
@@ -140,7 +140,7 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
                     .privateKeys(adminKeys.encryptWithAccountKey(adminAccountKey))
                     .setupCode(new AccountKeyPayload(adminAccountKey).encryptForUser(adminKeys.ecdhKeyPair().getPublic()));
             users.apiUsersMePut(admin);
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 1, 0, 1, 0, 1);
+            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 1, 1, 0, 1);
 
             log.info("S04 {} alice adds trust to admin", setup);
             final UserKeys userKeys = new UserKeysServiceImpl(hubSession).getUserKeys(hubSession.getHost(), hubSession.getMe(),
@@ -150,12 +150,12 @@ abstract class AbstractHubWorkflowTest extends AbstractHubTest {
             log.info("S04 {} alice grants access to admin", setup);
             new GrantAccessServiceImpl(hubSession).grantAccessToUsersRequiringAccessGrant(vaultId, userKeys);
 
-            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 1, 0, 1, 0, 0);
+            checkNumberOfVaults(hubSession, adminApiClient, config, vaultId, 0, 1, 1, 0, 0);
 
             log.info("S05 {} recovery key stays with the vault creator", setup);
             final UVFAccessTokenPayload aliceToken = new VaultServiceImpl(hubSession).getVaultAccessToken(vaultId, userKeys);
             assertNotNull(aliceToken.recoveryKey(), "vault creator keeps the recovery key");
-            // Admin was added as OWNER in S02, but the automatic access grant flow only ever hands out member-level access
+            // Admin was added as MEMBER in S02, as vault owners are never granted access automatically
             final UVFAccessTokenPayload adminToken = new VaultServiceImpl(new VaultResourceApi(adminApiClient)).getVaultAccessToken(vaultId, adminKeys);
             assertEquals(aliceToken.key(), adminToken.key());
             assertNull(adminToken.recoveryKey(), "automatic access grant never shares the recovery key");

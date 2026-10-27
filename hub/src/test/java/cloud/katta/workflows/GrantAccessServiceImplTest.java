@@ -133,6 +133,24 @@ class GrantAccessServiceImplTest {
     }
 
     @Test
+    void testGrantAccessVaultWithoutPendingUsers() throws Exception {
+        final VaultResourceApi vaults = mock(VaultResourceApi.class);
+        final AuthorityResourceApi authorities = mock(AuthorityResourceApi.class);
+        final VaultService vaultServiceMock = mock(VaultService.class);
+        final WoTService wotServiceMock = mock(WoTService.class);
+        final UUID vaultId = UUID.randomUUID();
+
+        // Missing from the response, e.g. when only vault owners are awaiting an access grant
+        when(vaults.apiVaultsUsersRequiringAccessGrantGet(0)).thenReturn(
+                Collections.singletonMap(UUID.randomUUID().toString(), Collections.singleton(UUID.randomUUID().toString())));
+
+        new GrantAccessServiceImpl(vaults, authorities, vaultServiceMock, wotServiceMock).grantAccessToUsersRequiringAccessGrant(vaultId, UserKeys.create());
+
+        verifyNoInteractions(vaultServiceMock, authorities, wotServiceMock);
+        verify(vaults, never()).apiVaultsVaultIdAccessTokensAutoPost(any(), any());
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void testGrantAccessNeverSharesRecoveryKey() throws Exception {
         final VaultResourceApi vaults = mock(VaultResourceApi.class);
