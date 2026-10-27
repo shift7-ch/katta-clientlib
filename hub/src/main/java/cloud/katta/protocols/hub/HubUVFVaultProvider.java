@@ -150,7 +150,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             log.debug("Configure with shared OAuth interceptor for vault {}", vaultId);
                             configuration.addInterceptorLast(interceptor);
                             return new STSAssumeRoleWithWebIdentityCredentialsStrategy(interceptor,
-                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt) {
+                                    host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class), prompt, cancel) {
                                 @Override
                                 public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
                                     return super.refresh(oauthCredentials);
@@ -279,7 +279,8 @@ public class HubUVFVaultProvider implements VaultProvider {
                                 configuration.addInterceptorLast(interceptor);
                                 return new STSChainedAssumeRoleRequestInterceptor(HubSession.coerce(session), interceptor, vaultId,
                                         storageProfile.getStsRoleAccessBucketAssumeRoleTaggedSession(), storageProfile.getStsSessionTag(),
-                                        host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class)) {
+                                        host, session.getFeature(X509TrustManager.class), session.getFeature(X509KeyManager.class),
+                                        prompt, cancel) {
                                     @Override
                                     public TemporaryAccessTokens refresh(final Credentials credentials) throws BackgroundException {
                                         return super.refresh(oauthCredentials);
