@@ -11,6 +11,7 @@ import ch.cyberduck.core.Session;
 import ch.cyberduck.core.exception.BackgroundException;
 import ch.cyberduck.core.features.Bulk;
 import ch.cyberduck.core.features.Read;
+import ch.cyberduck.core.features.Upload;
 import ch.cyberduck.core.features.Write;
 import ch.cyberduck.core.http.UserAgentHttpRequestInitializer;
 import ch.cyberduck.core.io.StatusOutputStream;
@@ -61,7 +62,7 @@ public class HubTestUtilities {
     public static byte[] write(final Session<?> session, final Path file, final byte[] content) throws BackgroundException, IOException {
         final TransferStatus status = new TransferStatus()
                 .setLength(content.length);
-        status.setChecksum(session.getFeature(Write.class).checksum(file, status).compute(new ByteArrayInputStream(content), status));
+        status.setChecksum(session.getFeature(Upload.class).checksum(file, status).compute(new ByteArrayInputStream(content), status));
         session.getFeature(Bulk.class).pre(Transfer.Type.upload, Collections.singletonMap(new TransferItem(file), status), new DisabledConnectionCallback());
         try (final StatusOutputStream<?> out = session.getFeature(Write.class).write(file, status, new DisabledConnectionCallback())) {
             IOUtils.copyLarge(new ByteArrayInputStream(content), out);
