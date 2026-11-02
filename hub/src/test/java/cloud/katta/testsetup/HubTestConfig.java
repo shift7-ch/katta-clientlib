@@ -4,6 +4,10 @@
 
 package cloud.katta.testsetup;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class HubTestConfig {
     public final Setup setup;
     public final VaultSpec vault;
@@ -27,6 +31,10 @@ public class HubTestConfig {
         public String clientId = "cryptomator";
         public UserConfig adminConfig;
         public UserConfig userConfig;
+        /**
+         * Regular users besides {@link #userConfig}. Only set up for environments where {@link KattaTestRealm} creates the test users.
+         */
+        public List<UserConfig> additionalUserConfigs = Collections.emptyList();
         public DockerConfig dockerConfig;
 
         public Setup withHubURL(final String hubURL) {
@@ -44,6 +52,11 @@ public class HubTestConfig {
             return this;
         }
 
+        public Setup withAdditionalUserConfigs(final UserConfig... additionalUserConfigs) {
+            this.additionalUserConfigs = Arrays.asList(additionalUserConfigs);
+            return this;
+        }
+
         public Setup withDockerConfig(final DockerConfig dockerConfig) {
             this.dockerConfig = dockerConfig;
             return this;
@@ -55,6 +68,7 @@ public class HubTestConfig {
             sb.append("hubURL='").append(hubURL).append('\'');
             sb.append(", adminConfig=").append(adminConfig);
             sb.append(", userConfig=").append(userConfig);
+            sb.append(", additionalUserConfigs=").append(additionalUserConfigs);
             sb.append(", dockerConfig=").append(dockerConfig);
             sb.append('}');
             return sb.toString();

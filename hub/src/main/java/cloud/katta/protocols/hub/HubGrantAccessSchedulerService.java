@@ -13,19 +13,11 @@ import ch.cyberduck.core.shared.ThreadPoolSchedulerFeature;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
-
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.UsersResourceApi;
-import cloud.katta.client.api.VaultResourceApi;
-import cloud.katta.client.model.Role;
-import cloud.katta.client.model.VaultDto;
 import cloud.katta.core.DeviceSetupCallback;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.workflows.GrantAccessServiceImpl;
-import cloud.katta.workflows.exceptions.AccessException;
-import cloud.katta.workflows.exceptions.SecurityFailure;
 
 public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<Host> {
     private static final Logger log = LogManager.getLogger(HubGrantAccessSchedulerService.class);
@@ -42,23 +34,8 @@ public class HubGrantAccessSchedulerService extends ThreadPoolSchedulerFeature<H
         log.info("Scheduler for {}", session.getHost());
         try {
             final UserKeys userKeys = session.getUserKeys(DeviceSetupCallback.disabled);
-            final List<VaultDto> accessibleVaults = new VaultResourceApi(session.getClient()).apiVaultsAccessibleGet(Role.OWNER);
-            final GrantAccessServiceImpl service = new GrantAccessServiceImpl(
-                    new VaultResourceApi(session.getClient()),
-                    new UsersResourceApi(session.getClient()));
-            for(final VaultDto accessibleVault : accessibleVaults) {
-                if(Boolean.TRUE.equals(accessibleVault.getArchived())) {
-                    log.debug("Skip archived vault {}", accessibleVault);
-                    continue;
-                }
-                try {
-                    service.grantAccessToUsersRequiringAccessGrant(accessibleVault.getId(), userKeys);
-                }
-                catch(ApiException | AccessException | SecurityFailure e) {
-                    log.warn("Grant access for vault {} failed with error {}", accessibleVault.getId(), e.getMessage());
-                    // Continue with next vault
-                }
-            }
+            // Single request for all vaults this user can re-share, failures per vault are logged and skipped
+            new GrantAccessServiceImpl(session).grantAccessToUsersRequiringAccessGrant(userKeys);
         }
         catch(ApiException e) {
             throw new HubExceptionMappingService().map(e);

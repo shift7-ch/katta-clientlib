@@ -9,21 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import cloud.katta.client.ApiException;
-import cloud.katta.client.api.AuthorityResourceApi;
 import cloud.katta.client.api.UsersResourceApi;
-import cloud.katta.client.model.AuthorityDto;
 import cloud.katta.client.model.TrustedUserDto;
 import cloud.katta.client.model.UserDto;
-import cloud.katta.client.model.WithCounts;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.wot.SignedKeys;
 import cloud.katta.crypto.wot.WoT;
@@ -32,7 +26,6 @@ import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 
 import static cloud.katta.crypto.KeyHelper.encodePublicKey;
-import static cloud.katta.workflows.UserKeysServiceImpl.withCountsToUserDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -42,61 +35,50 @@ import static org.mockito.Mockito.times;
 class WoTServiceImplTest {
 
     @Test
-    void testGetTrustLevelsPerUserId() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
+    void testGetTrustLevelsPerUserIdForCandidates() throws ParseException, JOSEException, ApiException, AccessException, SecurityFailure {
         final List<String> bobSignatureChain = new LinkedList<>();
         final int len = 5;
 
         final UserKeys bobKeys = UserKeys.create();
-        final WithCounts bob = new WithCounts()
+        final UserDto bob = new UserDto()
                 .id(UUID.randomUUID().toString())
                 .name("bob")
                 .ecdhPublicKey(encodePublicKey(bobKeys.ecdhKeyPair().getPublic()))
                 .ecdsaPublicKey(encodePublicKey(bobKeys.ecdsaKeyPair().getPublic()));
-        WithCounts previousUser = bob;
-        UserKeys previousKeys = bobKeys;
 
+        UserDto previousUser = bob;
+        UserKeys previousKeys = bobKeys;
         for(int i = 0; i < len; i++) {
             final UserKeys userKeys = UserKeys.create();
-            final WithCounts user = new WithCounts()
+            final UserDto user = new UserDto()
                     .id(UUID.randomUUID().toString())
                     .name(String.format("user%s", i))
                     .ecdhPublicKey(encodePublicKey(userKeys.ecdhKeyPair().getPublic()))
                     .ecdsaPublicKey(encodePublicKey(userKeys.ecdsaKeyPair().getPublic()));
-            final String signature = WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(), withCountsToUserDto(previousUser));
-            bobSignatureChain.add(0, signature);
+            bobSignatureChain.add(0, WoT.sign(userKeys.ecdsaKeyPair().getPrivate(), user.getId(), previousUser));
 
             previousUser = user;
             previousKeys = userKeys;
         }
-        final WithCounts alice = previousUser;
         final UserKeys aliceKeys = previousKeys;
 
-        final UserKeys oscarKeys = UserKeys.create();
-        final WithCounts oscar = new WithCounts()
-                .id(UUID.randomUUID().toString())
-                .name("oscar")
-                .ecdhPublicKey(encodePublicKey(oscarKeys.ecdhKeyPair().getPublic()))
-                .ecdsaPublicKey(encodePublicKey(oscarKeys.ecdsaKeyPair().getPublic()));
-
-        // valid signature chain
-        final TrustedUserDto bobTrust = new TrustedUserDto();
-        bobTrust.setTrustedUserId(bob.getId());
-        bobTrust.setSignatureChain(bobSignatureChain);
-
-        // invalid signature chain
-        final TrustedUserDto oscarTrust = new TrustedUserDto();
-        oscarTrust.setTrustedUserId(bob.getId());
-        oscarTrust.setSignatureChain(bobSignatureChain);
+        final TrustedUserDto bobTrust = new TrustedUserDto().trustedUserId(bob.getId()).signatureChain(bobSignatureChain);
 
         final UsersResourceApi usersMock = Mockito.mock(UsersResourceApi.class);
-        final AuthorityResourceApi authoritiesMock = Mockito.mock(AuthorityResourceApi.class);
-        final WoTServiceImpl wot = new WoTServiceImpl(usersMock, authoritiesMock);
-        Mockito.when(usersMock.apiUsersMeGet(true)).thenReturn(withCountsToUserDto(alice));
-        Mockito.when(authoritiesMock.apiAuthoritiesGet(Stream.of(bob, bob).map(WithCounts::getId).collect(Collectors.toList()))).thenReturn(Arrays.asList(
-                new AuthorityDto(withCountsToUserDto(alice)), new AuthorityDto(withCountsToUserDto(bob)), new AuthorityDto(withCountsToUserDto(oscar))));
-        Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Arrays.asList(bobTrust, oscarTrust));
+        final WoTServiceImpl wot = new WoTServiceImpl(usersMock);
+        Mockito.when(usersMock.apiUsersTrustedGet()).thenReturn(Collections.singletonList(bobTrust));
 
-        assertEquals(Collections.singletonMap(bob.getId(), 5), wot.getTrustLevelsPerUserId(aliceKeys));
+        // Chains are verified against the candidates handed in
+        assertEquals(Collections.singletonMap(bob.getId(), len), wot.getTrustLevelsPerUserId(aliceKeys, Collections.singletonList(bob)));
+
+        // A candidate whose public key is not the one attested by the chain is not trusted, i.e. a server substituting
+        // an attacker-controlled key for an otherwise trusted user cannot have us encrypt for it
+        final UserDto substituted = new UserDto()
+                .id(bob.getId())
+                .name(bob.getName())
+                .ecdhPublicKey(encodePublicKey(UserKeys.create().ecdhKeyPair().getPublic()))
+                .ecdsaPublicKey(bob.getEcdsaPublicKey());
+        assertEquals(Collections.emptyMap(), wot.getTrustLevelsPerUserId(aliceKeys, Collections.singletonList(substituted)));
     }
 
     @Test
