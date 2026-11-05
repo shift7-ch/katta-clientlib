@@ -8,12 +8,12 @@
     <groupId>cloud.katta</groupId>
     <artifactId>katta-clientlib</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
 
     <scm>
         <url>https://github.com/shift7-ch/katta-clientlib</url>
         <connection>scm:git:https://github.com/shift7-ch/katta-clientlib.git</connection>
-        <tag>HEAD</tag>
+        <tag>1.0.3</tag>
     </scm>
 
     <modules>
