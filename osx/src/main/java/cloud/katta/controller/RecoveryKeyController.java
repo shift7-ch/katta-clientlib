@@ -56,12 +56,6 @@ public class RecoveryKeyController extends AlertController {
     }
 
     @Override
-    public void focus() {
-        super.focus();
-        window.makeFirstResponder(recoveryKeyField);
-    }
-
-    @Override
     public boolean validate(final int option) {
         if(SheetCallback.DEFAULT_OPTION == option) {
             if(!this.isSuppressed()) {
