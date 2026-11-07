@@ -14,12 +14,57 @@ import ch.cyberduck.binding.application.SheetCallback;
 import ch.cyberduck.core.LocaleFactory;
 import ch.cyberduck.core.StringAppender;
 
+import org.rococoa.ObjCClass;
+import org.rococoa.Rococoa;
+import org.rococoa.cocoa.CGFloat;
+import org.rococoa.cocoa.foundation.NSRect;
+import org.rococoa.cocoa.foundation.NSSize;
+
 public class RecoveryKeyController extends AlertController {
+
+    /**
+     * Visible height of the recovery key. Scroll for the remaining lines.
+     */
+    private static final double RECOVERY_KEY_FIELD_HEIGHT = 160;
+    private static final double RECOVERY_KEY_FIELD_WIDTH = 300;
 
     @Outlet
     private final NSTextView recoveryKeyField = NSTextView.create();
 
+    @Outlet
+    private final NSScrollView scrollView = NSScrollView.create(new NSRect(0, RECOVERY_KEY_FIELD_HEIGHT));
+
     private final String recoveryKey;
+
+    /**
+     * Temporary binding until available in ch.cyberduck.binding.application
+     */
+    public static abstract class NSScrollView extends NSView {
+        private static final _Class CLASS = Rococoa.createClass("NSScrollView", _Class.class);
+
+        /**
+         * NSBorderType
+         */
+        public static final int NSNoBorder = 0;
+
+        public static NSScrollView create(final NSRect frameRect) {
+            return CLASS.alloc().initWithFrame(frameRect);
+        }
+
+        public interface _Class extends ObjCClass {
+            NSScrollView alloc();
+        }
+
+        public abstract NSScrollView initWithFrame(NSRect frameRect);
+
+        public abstract void setDocumentView(NSView view);
+
+        public abstract void setBorderType(int type);
+
+        public abstract void setDrawsBackground(boolean flag);
+
+        public abstract void setHasVerticalScroller(boolean flag);
+    }
 
     public RecoveryKeyController(final String recoveryKey) {
         this.recoveryKey = recoveryKey;
@@ -46,13 +91,30 @@ public class RecoveryKeyController extends AlertController {
     @Override
     public NSView getAccessoryView(final NSAlert alert) {
         final NSView accessoryView = NSView.create();
-        {
-            recoveryKeyField.setEditable(false);
-            recoveryKeyField.setSelectable(true);
-            recoveryKeyField.setString(recoveryKey);
-            this.addAccessorySubview(accessoryView, recoveryKeyField);
-        }
+        recoveryKeyField.setEditable(false);
+        recoveryKeyField.setSelectable(true);
+        // Blend in with the alert in both light and dark appearance
+        recoveryKeyField.setDrawsBackground(false);
+        // Wrap words within the width of the scroll view set in awakeFromNib
+        recoveryKeyField.setHorizontallyResizable(false);
+        recoveryKeyField.setVerticallyResizable(true);
+        recoveryKeyField.setString(recoveryKey);
+        // Wrap the recovery key within the width of the clip view and scroll for lines not visible
+        recoveryKeyField.setFrameSize(new NSSize(RECOVERY_KEY_FIELD_WIDTH, RECOVERY_KEY_FIELD_HEIGHT));
+        scrollView.setBorderType(NSScrollView.NSNoBorder);
+        scrollView.setDrawsBackground(false);
+        scrollView.setHasVerticalScroller(true);
+        scrollView.setDocumentView(recoveryKeyField);
+        scrollView.setFrameSize(new NSSize(RECOVERY_KEY_FIELD_WIDTH, RECOVERY_KEY_FIELD_HEIGHT));
+        accessoryView.addSubview(scrollView);
         return accessoryView;
+    }
+
+    @Override
+    protected NSRect getFrame(final NSView accessory) {
+        final NSRect frame = super.getFrame(accessory);
+        frame.size.width = new CGFloat(RECOVERY_KEY_FIELD_WIDTH);
+        return frame;
     }
 
     @Override
