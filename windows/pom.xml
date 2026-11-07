@@ -33,27 +33,45 @@
             <version>${cyberduck.version}</version>
             <type>nupkg</type>
         </dependency>
+        <dependency>
+            <groupId>ch.cyberduck</groupId>
+            <artifactId>Cyberduck.Cryptomator</artifactId>
+            <version>${cyberduck.version}</version>
+            <type>nupkg</type>
+        </dependency>
+        <dependency>
+            <groupId>ch.cyberduck</groupId>
+            <artifactId>Cyberduck.Protocols</artifactId>
+            <version>${cyberduck.version}</version>
+            <type>nupkg</type>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <!-- Provide hub and its dependencies as IKVM references to the .NET build -->
+                <!-- Provide hub as IKVM input and the Cyberduck packages to the .NET build -->
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.8.1</version>
                 <executions>
                     <execution>
-                        <id>copy-libs</id>
+                        <id>copy-hub</id>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>copy-dependencies</goal>
+                            <goal>copy</goal>
                         </goals>
                         <configuration>
+                            <!-- Dependencies are provided by the Cyberduck packages -->
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>cloud.katta</groupId>
+                                    <artifactId>katta-clientlib-hub</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <destFileName>katta-clientlib-hub.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
                             <outputDirectory>${libs.dir}</outputDirectory>
-                            <includeScope>runtime</includeScope>
-                            <!-- Provided by the Cyberduck.Core package -->
-                            <excludeGroupIds>ch.cyberduck</excludeGroupIds>
-                            <excludeTypes>nupkg,pom</excludeTypes>
                         </configuration>
                     </execution>
                     <execution>

@@ -1,0 +1,5 @@
+{
+  "msbuild-sdks": {
+    "IKVM.NET.Sdk": "8.16.1"
+  }
+}

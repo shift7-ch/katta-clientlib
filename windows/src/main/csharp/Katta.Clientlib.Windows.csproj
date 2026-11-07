@@ -28,24 +28,19 @@
   <ItemGroup>
     <PackageReference Include="IKVM" Version="8.16.1" />
     <PackageReference Include="Cyberduck.Core" Version="$(CyberduckVersion)" />
+    <PackageReference Include="Cyberduck.Cryptomator" Version="$(CyberduckVersion)" />
   </ItemGroup>
 
   <!--
-    Hub classes. Either reference an already compiled assembly (-p:HubAssembly=...),
-    for example the one shipped with the hosting application to avoid duplicate types,
-    or compile katta-clientlib-hub.jar copied by Maven to $(LibsDir).
+    Hub classes. Either reference an assembly already containing them (-p:HubAssembly=...), for example the one
+    of the hosting application which provides the classes at runtime, or compile katta-clientlib-hub.jar copied
+    by Maven to $(LibsDir). Compile time reference only, not distributed with this assembly.
   -->
   <ItemGroup Condition="'$(HubAssembly)' != ''">
     <Reference Include="$(HubAssembly)" />
   </ItemGroup>
   <ItemGroup Condition="'$(HubAssembly)' == ''">
-    <KattaHubDependency Include="$(LibsDir)\*.jar" Exclude="$(LibsDir)\katta-clientlib-hub-*.jar" />
-    <IkvmReference Include="$(LibsDir)\katta-clientlib-hub-$(KattaVersion).jar">
-      <AssemblyName>katta-clientlib-hub</AssemblyName>
-      <AssemblyVersion>1.0.0.0</AssemblyVersion>
-      <!-- Third party dependencies of hub, Cyberduck classes are provided by Cyberduck.Core -->
-      <Compile>@(KattaHubDependency)</Compile>
-    </IkvmReference>
+    <ProjectReference Include="..\hub\Katta.Clientlib.Hub.ikvmproj" SetPlatform="Platform=AnyCPU" PrivateAssets="all" Private="false" />
   </ItemGroup>
 
 </Project>
