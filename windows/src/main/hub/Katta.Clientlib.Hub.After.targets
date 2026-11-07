@@ -1,0 +1,13 @@
+<Project>
+
+  <!--
+    Referenced assemblies (Cyberduck.Core, ...) have been compiled by IKVM and cannot be exported to jars again,
+    IKVM4023. Resolve them as assembly references only, same as Cyberduck.java.After.targets.
+  -->
+  <Target Name="_CompileJava" DependsOnTargets="ExportReferences;_ResolveClasspathFiles" Inputs="@(Compile);@(ClasspathFiles)" Outputs="$(_CompileJavaStampFile)">
+    <Touch Files="$(_CompileJavaStampFile)" AlwaysCreate="true" ForceTouch="true" />
+  </Target>
+
+  <Target Name="ExportReferences" />
+
+</Project>

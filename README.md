@@ -22,6 +22,7 @@ This is a Maven multi-module project:
 |------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`hub`](hub)                       | `katta-clientlib-hub`   | Core client library. Contains the OpenAPI-generated Katta Server API client, the Cyberduck `hub` protocol, the workflow services (device and user key management, vault creation, access grants, Web of Trust) and the S3/STS storage-access extensions. |
 | [`osx`](osx)                       | `katta-clientlib-osx`   | macOS integration. Cocoa binding controllers (`ch.cyberduck:binding`) that wire the workflows into the Cyberduck desktop UI, e.g. first-login and device-setup prompts.                                                                                  |
+| [`windows`](windows) | `katta-clientlib-windows` | Windows integration (built on Windows only, requires the .NET SDK). WPF dialogs implementing `DeviceSetupCallback` as `Cloud.Katta.Controller.PromptDeviceSetupCallback`, packaged as `Cloud.Katta.Clientlib.Windows.dll` and a NuGet package for Mountain Duck. Enable with `factory.devicesetupcallback.class.windows=Cloud.Katta.Controller.PromptDeviceSetupCallback`. |
 
 
 ## Development Setup

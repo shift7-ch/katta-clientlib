@@ -21,6 +21,21 @@
         <module>osx</module>
     </modules>
 
+    <profiles>
+        <profile>
+            <!-- WPF dialogs require the .NET SDK and Windows -->
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <modules>
+                <module>windows</module>
+            </modules>
+        </profile>
+    </profiles>
+
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>

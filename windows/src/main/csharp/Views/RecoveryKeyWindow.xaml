@@ -1,0 +1,23 @@
+<views:DialogWindow x:Class="Cloud.Katta.Views.RecoveryKeyWindow"
+                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:Cloud.Katta.Views"
+                    xmlns:katta="clr-namespace:Cloud.Katta"
+                    Title="{x:Static katta:Strings.RecoveryKey}" Width="460">
+    <StackPanel Margin="16">
+        <TextBlock Text="{x:Static katta:Strings.RecoveryKey}" FontSize="16" FontWeight="SemiBold" />
+        <TextBlock Text="{x:Static katta:Strings.RecoveryKeyInfo}" TextWrapping="Wrap" Margin="0,8,0,12" />
+        <!-- Wrap within the dialog and scroll for lines not visible -->
+        <TextBox Text="{Binding RecoveryKey, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="160"
+                 VerticalScrollBarVisibility="Auto" AutomationProperties.Name="{x:Static katta:Strings.RecoveryKey}" />
+        <Button Content="{x:Static katta:Strings.Copy}" HorizontalAlignment="Right" Margin="0,4,0,0" Padding="12,2" Click="OnCopy" />
+        <CheckBox Margin="0,12,0,0" IsChecked="{Binding Confirmed}">
+            <TextBlock Text="{x:Static katta:Strings.RecoveryKeyConfirm}" TextWrapping="Wrap" />
+        </CheckBox>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="{x:Static katta:Strings.CreateVault}" IsDefault="True" MinWidth="88" Margin="0,0,8,0"
+                    IsEnabled="{Binding CanFinish}" Click="OnFinish" />
+            <Button Content="{x:Static katta:Strings.Cancel}" IsCancel="True" MinWidth="88" Click="OnCancel" />
+        </StackPanel>
+    </StackPanel>
+</views:DialogWindow>
