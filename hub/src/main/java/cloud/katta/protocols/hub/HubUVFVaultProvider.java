@@ -18,6 +18,7 @@ import ch.cyberduck.core.Session;
 import ch.cyberduck.core.TemporaryAccessTokens;
 import ch.cyberduck.core.UUIDRandomStringService;
 import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.LoginCanceledException;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.features.Vault;
 import ch.cyberduck.core.oauth.OAuth2RequestInterceptor;
@@ -63,6 +64,7 @@ import cloud.katta.model.StorageProfileDtoWrapper;
 import cloud.katta.protocols.hub.exceptions.HubExceptionMappingService;
 import cloud.katta.protocols.s3.STSChainedAssumeRoleRequestInterceptor;
 import cloud.katta.workflows.VaultServiceImpl;
+import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 
 public class HubUVFVaultProvider implements VaultProvider {
@@ -170,6 +172,8 @@ public class HubUVFVaultProvider implements VaultProvider {
             try {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
+                final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
+                setup.displayRecoveryKey(session.getHost(), keys.recoveryKey());
                 try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
                         payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize())) {
                     log.debug("Create vault with ID {}", vaultId);
@@ -190,7 +194,6 @@ public class HubUVFVaultProvider implements VaultProvider {
                     // Upload JWE
                     log.debug("Grant access to vault {}", vaultId);
                     final UserDto userDto = HubSession.coerce(session).getMe();
-                    final DeviceSetupCallback setup = prompt.getFeature(DeviceSetupCallback.class);
                     final UserKeys userKeys = HubSession.coerce(session).getUserKeys(setup);
                     // Share vault with myself including admin access with recovery key
                     vaultResourceApi.apiVaultsVaultIdAccessTokensPost(vaultId, Collections.singletonMap(userDto.getId(),
@@ -212,10 +215,13 @@ public class HubUVFVaultProvider implements VaultProvider {
                     return vault;
                 }
             }
-            catch(SecurityFailure | ApiException e) {
+            catch(AccessException | SecurityFailure | ApiException e) {
                 storage.close();
                 throw e;
             }
+        }
+        catch(AccessException e) {
+            throw new LoginCanceledException(e);
         }
         catch(SecurityFailure e) {
             throw new VaultException(e.getMessage(), e);

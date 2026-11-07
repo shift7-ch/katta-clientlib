@@ -11,7 +11,11 @@ import ch.cyberduck.core.nio.LocalProtocol;
 
 import cloud.katta.crypto.DeviceKeys;
 import cloud.katta.crypto.UserKeys;
+import cloud.katta.crypto.uvf.HubVaultKeys;
+import cloud.katta.crypto.uvf.WordEncoder;
 import cloud.katta.workflows.exceptions.AccessException;
+
+import org.cryptomator.cryptolib.common.P384KeyPair;
 
 public interface DeviceSetupCallback {
 
@@ -23,6 +27,11 @@ public interface DeviceSetupCallback {
 
         @Override
         public AccountKeyAndDeviceName askForAccountKeyAndDeviceName(final Host bookmark) throws AccessException {
+            throw new AccessException("Disabled");
+        }
+
+        @Override
+        public void displayRecoveryKey(final Host bookmark, final P384KeyPair recoveryKey) throws AccessException {
             throw new AccessException("Disabled");
         }
     };
@@ -44,6 +53,16 @@ public interface DeviceSetupCallback {
     AccountKeyAndDeviceName askForAccountKeyAndDeviceName(Host bookmark) throws AccessException;
 
     /**
+     * Display the recovery key of a new vault to the vault owner prior to creating the vault. The recovery key
+     * is not shown again and must be stored securely by the user to restore access to the vault.
+     *
+     * @param bookmark    Hub connection
+     * @param recoveryKey Recovery key pair of the vault to be created. Use {@link #generateRecoveryKey(P384KeyPair)} for a human-readable representation of its private part
+     * @throws AccessException Canceled prompt by user to abort vault creation
+     */
+    void displayRecoveryKey(Host bookmark, P384KeyPair recoveryKey) throws AccessException;
+
+    /**
      * Generate initial account key
      *
      * @return Random UUID
@@ -58,6 +77,16 @@ public interface DeviceSetupCallback {
 
     default UserKeys generateUserKeys() {
         return UserKeys.create();
+    }
+
+    /**
+     * Encodes the private part of the recovery key in a human-readable representation to be displayed to the
+     * vault owner. The encoding is interchangeable with the recovery key displayed in the web frontend.
+     *
+     * @return Private recovery key encoded as a list of words separated by {@value WordEncoder#DELIMITER}
+     */
+    default String generateRecoveryKey(final P384KeyPair recoveryKey) {
+        return new WordEncoder().encodePadded(HubVaultKeys.createRecoveryKey(recoveryKey));
     }
 
     final class AccountKeyAndDeviceName {
