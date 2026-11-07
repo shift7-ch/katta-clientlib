@@ -5,6 +5,7 @@ using System.Windows;
 using ch.cyberduck.core;
 using ch.cyberduck.core.exception;
 using cloud.katta.core;
+using cloud.katta.crypto;
 using cloud.katta.workflows.exceptions;
 using Cloud.Katta.ViewModels;
 using Cloud.Katta.Views;
@@ -63,10 +64,19 @@ namespace Cloud.Katta.Controller
             Log.debug($"Display recovery key {bookmark}");
             OnDispatcher<object>(() =>
             {
-                Show(new RecoveryKeyWindow(new RecoveryKeyViewModel(((DeviceSetupCallback)this).generateRecoveryKey(recoveryKey))));
+                Show(new RecoveryKeyWindow(new RecoveryKeyViewModel(generateRecoveryKey(recoveryKey))));
                 return null;
             });
         }
+
+        public string generateAccountKey() => DeviceSetupCallback.__DefaultMethods.generateAccountKey(this);
+
+        public DeviceKeys generateDeviceKey() => DeviceSetupCallback.__DefaultMethods.generateDeviceKey(this);
+
+        public UserKeys generateUserKeys() => DeviceSetupCallback.__DefaultMethods.generateUserKeys(this);
+
+        public string generateRecoveryKey(P384KeyPair recoveryKey) =>
+            DeviceSetupCallback.__DefaultMethods.generateRecoveryKey(this, recoveryKey);
 
         /// <exception cref="AccessException">Dialog canceled</exception>
         private static void Show(Window window)
