@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Copyright (c) 2026 shift7 GmbH. All rights reserved. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Cloud.Katta.Clientlib.Windows</AssemblyName>
+    <RootNamespace>Cloud.Katta</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Version Condition="'$(KattaVersion)' != ''">$(KattaVersion)</Version>
+    <PackageId>Cloud.Katta.Clientlib.Windows</PackageId>
+    <Description>WPF implementation of DeviceSetupCallback for Katta Hub on Windows</Description>
+    <Authors>shift7 GmbH</Authors>
+    <CyberduckVersion Condition="'$(CyberduckVersion)' == ''">9.6.0</CyberduckVersion>
+    <LibsDir Condition="'$(LibsDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\target\libs</LibsDir>
+  </PropertyGroup>
+
+  <!-- IKVM, same conventions as Cyberduck.java.props -->
+  <PropertyGroup Label="IKVM">
+    <ClassLoader>ikvm.runtime.AppDomainAssemblyClassLoader</ClassLoader>
+    <DisableImplicitIkvmPackageReference>true</DisableImplicitIkvmPackageReference>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>IKVM0100;IKVM0101;IKVM0105;IKVM0111;$(NoWarn)</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IKVM" Version="8.16.1" />
+    <PackageReference Include="Cyberduck.Core" Version="$(CyberduckVersion)" />
+  </ItemGroup>
+
+  <!--
+    Hub classes. Either reference an already compiled assembly (-p:HubAssembly=...),
+    for example the one shipped with the hosting application to avoid duplicate types,
+    or compile katta-clientlib-hub.jar copied by Maven to $(LibsDir).
+  -->
+  <ItemGroup Condition="'$(HubAssembly)' != ''">
+    <Reference Include="$(HubAssembly)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(HubAssembly)' == ''">
+    <KattaHubDependency Include="$(LibsDir)\*.jar" Exclude="$(LibsDir)\katta-clientlib-hub-*.jar" />
+    <IkvmReference Include="$(LibsDir)\katta-clientlib-hub-$(KattaVersion).jar">
+      <AssemblyName>katta-clientlib-hub</AssemblyName>
+      <AssemblyVersion>1.0.0.0</AssemblyVersion>
+      <!-- Third party dependencies of hub, Cyberduck classes are provided by Cyberduck.Core -->
+      <Compile>@(KattaHubDependency)</Compile>
+    </IkvmReference>
+  </ItemGroup>
+
+</Project>
