@@ -34,13 +34,24 @@
   <!--
     Hub classes. Either reference an assembly already containing them (-p:HubAssembly=...), for example the one
     of the hosting application which provides the classes at runtime, or compile katta-clientlib-hub.jar copied
-    by Maven to $(LibsDir). Compile time reference only, not distributed with this assembly.
+    by Maven to $(LibsDir). The compiled assembly is distributed in the package as the hosting application does
+    not contain the hub classes.
   -->
   <ItemGroup Condition="'$(HubAssembly)' != ''">
     <Reference Include="$(HubAssembly)" />
   </ItemGroup>
   <ItemGroup Condition="'$(HubAssembly)' == ''">
-    <ProjectReference Include="..\hub\Katta.Clientlib.Hub.ikvmproj" SetPlatform="Platform=AnyCPU" PrivateAssets="all" Private="false" />
+    <ProjectReference Include="..\hub\Katta.Clientlib.Hub.ikvmproj" SetPlatform="Platform=AnyCPU" PrivateAssets="all" />
   </ItemGroup>
+
+  <!-- Include the compiled hub assembly next to this assembly in the package -->
+  <PropertyGroup Condition="'$(HubAssembly)' == ''">
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeHubAssembly</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+  <Target Name="IncludeHubAssembly">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)' == 'katta-clientlib-hub'" />
+    </ItemGroup>
+  </Target>
 
 </Project>
