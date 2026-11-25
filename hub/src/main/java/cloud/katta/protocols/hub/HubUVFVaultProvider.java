@@ -212,7 +212,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     return vault;
                 }
             }
-            catch(SecurityFailure | ApiException e) {
+            catch(SecurityFailure | ApiException | BackgroundException e) {
                 storage.close();
                 throw e;
             }
