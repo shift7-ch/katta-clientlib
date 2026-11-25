@@ -58,5 +58,7 @@ class P384KeyPairTest {
         keyPair.destroy();
         assertTrue(keyPair.isDestroyed());
         assertThrows(IllegalStateException.class, keyPair::getPrivate);
+        assertThrows(IllegalStateException.class, keyPair::getPublic);
+        assertThrows(IllegalStateException.class, keyPair::keyPair);
     }
 }

@@ -69,6 +69,9 @@ public class ECKeyPair implements Destroyable {
     }
 
     public KeyPair keyPair() {
+        if(destroyed) {
+            throw new IllegalStateException("Key pair destroyed");
+        }
         return keyPair;
     }
 
