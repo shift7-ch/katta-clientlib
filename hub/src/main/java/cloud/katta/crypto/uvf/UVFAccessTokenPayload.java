@@ -4,9 +4,6 @@
 
 package cloud.katta.crypto.uvf;
 
-
-import org.cryptomator.cryptolib.common.P384KeyPair;
-
 import javax.annotation.Nullable;
 import java.security.interfaces.ECPublicKey;
 import java.util.Base64;
@@ -14,6 +11,7 @@ import java.util.Objects;
 
 import cloud.katta.crypto.JWE;
 import cloud.katta.crypto.JWEPayload;
+import cloud.katta.crypto.P384KeyPair;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;

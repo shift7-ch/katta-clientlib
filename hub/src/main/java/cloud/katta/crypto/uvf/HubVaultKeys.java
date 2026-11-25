@@ -6,12 +6,12 @@ package cloud.katta.crypto.uvf;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cryptomator.cryptolib.common.P384KeyPair;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Base64;
 
+import cloud.katta.crypto.P384KeyPair;
 import cloud.katta.workflows.exceptions.SecurityFailure;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEAlgorithm;

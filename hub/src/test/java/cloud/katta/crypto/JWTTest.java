@@ -4,7 +4,6 @@
 
 package cloud.katta.crypto;
 
-import org.cryptomator.cryptolib.common.ECKeyPair;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;

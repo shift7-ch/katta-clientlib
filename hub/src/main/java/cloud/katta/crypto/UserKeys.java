@@ -4,9 +4,6 @@
 
 package cloud.katta.crypto;
 
-import org.cryptomator.cryptolib.common.ECKeyPair;
-import org.cryptomator.cryptolib.common.P384KeyPair;
-
 import javax.security.auth.Destroyable;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;

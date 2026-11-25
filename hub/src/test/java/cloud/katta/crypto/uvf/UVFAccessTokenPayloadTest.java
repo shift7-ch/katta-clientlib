@@ -4,10 +4,10 @@
 
 package cloud.katta.crypto.uvf;
 
-import org.cryptomator.cryptolib.common.ECKeyPair;
-import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 
+import cloud.katta.crypto.ECKeyPair;
+import cloud.katta.crypto.P384KeyPair;
 import cloud.katta.crypto.UserKeys;
 import com.amazonaws.util.Base64;
 import com.nimbusds.jose.JWEAlgorithm;
