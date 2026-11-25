@@ -5,92 +5,123 @@
 package cloud.katta.protocols.hub;
 
 import ch.cyberduck.core.cryptomator.impl.uvf.JWKSetUVFVaultMetadataProvider;
-import ch.cyberduck.core.vault.VaultException;
+import ch.cyberduck.core.exception.BackgroundException;
+import ch.cyberduck.core.exception.UnsupportedException;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import org.cryptomator.cryptolib.api.CryptoException;
+import org.cryptomator.cryptolib.api.LockedVault;
+import org.cryptomator.cryptolib.api.UvfLockedVault;
+import org.cryptomator.cryptolib.api.UvfUnlockedVault;
 
+import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
+
+import cloud.katta.crypto.JWEPayload;
 import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JWEHeader;
-import com.nimbusds.jose.JWEObjectJSON;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 
+/**
+ * Vault metadata of vaults managed by Hub. The storage configuration and the automatic access grant are custom fields
+ * in the encrypted payload of vault.uvf.
+ */
 public class HubVaultMetadataUVFProvider extends JWKSetUVFVaultMetadataProvider {
 
-    private static final String UVF_SPEC_VERSION_KEY_PARAM = "uvf.spec.version";
-    private static final String UVF_VAULT_METADATA_ORIGIN_HEADER = "cloud.katta.origin";
-
     /**
-     *
-     * @param apiURL  API URL that goes into custom header param "cloud.katta.origin"
-     * @param vaultId The vault ID that goes into custom header param "cloud.katta.origin"
-     * @param payload Vault metadata payload
-     * @param keys    Member key and recovery key
-     * @see <a href="https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header">UVF Specification of JWE Header</a>
+     * Contents of vault.uvf from Hub. Null when creating a vault
      */
-    public HubVaultMetadataUVFProvider(final UVFMetadataPayload payload, final String apiURL, final UUID vaultId, final JWKSet keys) throws SecurityFailure {
-        this(new JWEObjectJSON(
-                new JWEHeader.Builder(EncryptionMethod.A256GCM)
-                        // kid goes into recipient-specific header
-                        .customParam(UVF_VAULT_METADATA_ORIGIN_HEADER, URI.create(String.format("%s/vaults/%s/uvf/vault.uvf",
-                                apiURL, vaultId.toString())).normalize().toString())
-                        .jwkURL(URI.create("jwks.json"))
-                        // Omit an "application/" prefix of a media type value in a "cty" Header Parameter
-                        .contentType("json")
-                        .criticalParams(Collections.singleton(UVF_SPEC_VERSION_KEY_PARAM))
-                        .customParam(UVF_SPEC_VERSION_KEY_PARAM, 1)
-                        .build(), new Payload(toMap(payload))), keys);
-    }
+    @Nullable
+    private final String metadata;
 
     /**
-     * Provider to create or load vault.
-     *
-     * @param keys          Member key and recovery key
-     * @param vaultMetadata Encrypted metadata payload containing configuration and data related to the vault.
+     * Payload with custom fields for a new vault. Null when loading a vault
      */
-    public HubVaultMetadataUVFProvider(final JWEObjectJSON vaultMetadata, final HubVaultKeys keys) {
-        this(vaultMetadata, keys.memberKey());
-    }
+    @Nullable
+    private final UVFMetadataPayload payload;
 
-    public HubVaultMetadataUVFProvider(final JWEObjectJSON vaultMetadata, final JWK key) {
-        super(vaultMetadata, new JWKSet(key));
-    }
-
-    public HubVaultMetadataUVFProvider(final JWEObjectJSON vaultMetadata, final JWKSet keys) {
-        super(vaultMetadata, keys);
-    }
-
-    private static Map<String, Object> toMap(final UVFMetadataPayload payload) throws SecurityFailure {
-        try {
-            return payload.toMap();
-        }
-        catch(JsonProcessingException e) {
-            throw new SecurityFailure(e);
-        }
+    /**
+     * Provider to create a new vault.
+     *
+     * @param payload Storage configuration and automatic access grant
+     * @param keys    Member key and recovery key with private key
+     */
+    public HubVaultMetadataUVFProvider(final UVFMetadataPayload payload, final HubVaultKeys keys) throws SecurityFailure {
+        super(keys.serialize());
+        this.metadata = null;
+        this.payload = payload;
     }
 
     /**
-     * Decrypt and deserialize the payload.
+     * Provider to load a vault.
      *
-     * @throws SecurityFailure Failure during decryption or deserialization.
+     * @param metadata Contents of vault.uvf from Hub
+     * @param keys     Member key
+     */
+    public HubVaultMetadataUVFProvider(final String metadata, final HubVaultKeys keys) {
+        this(metadata, new JWKSet(keys.memberKey()));
+    }
+
+    /**
+     * Provider to load a vault.
+     *
+     * @param metadata Contents of vault.uvf from Hub
+     * @param keys     Member key
+     */
+    public HubVaultMetadataUVFProvider(final String metadata, final JWKSet keys) {
+        super(keys);
+        this.metadata = metadata;
+        this.payload = null;
+    }
+
+    @Override
+    public UvfUnlockedVault create() throws BackgroundException {
+        // TODO Write payload with storage configuration and automatic access grant as custom fields and
+        //  org.cryptomator.hub.canonical to the protected header once supported by cryptolib (#614). Return the same
+        //  vault on repeated calls, the metadata is uploaded to Hub before UVFVault.create calls this again.
+        throw new UnsupportedException("Writing custom fields to vault metadata not supported");
+    }
+
+    /**
+     * @return Contents of vault.uvf from Hub
+     */
+    @Nullable
+    public String getMetadata() {
+        return metadata;
+    }
+
+    /**
+     * Decrypt the vault metadata and read the custom fields.
+     *
+     * @return Storage configuration and automatic access grant
+     * @throws SecurityFailure Failure parsing or decrypting the vault metadata or reading custom fields
      */
     public UVFMetadataPayload getPayload() throws SecurityFailure {
+        if(null == metadata) {
+            throw new SecurityFailure("Missing vault metadata");
+        }
         try {
-            return UVFMetadataPayload.fromJSON(this.decrypt(), UVFMetadataPayload.class);
+            final LockedVault locked = LockedVault.parse(metadata.getBytes(StandardCharsets.US_ASCII));
+            if(!(locked instanceof UvfLockedVault)) {
+                throw new SecurityFailure("Unsupported vault metadata");
+            }
+            final UvfUnlockedVault unlocked = this.unlock((UvfLockedVault) locked);
+            try {
+                return JWEPayload.fromMap(unlocked.customFields(), UVFMetadataPayload.class);
+            }
+            finally {
+                unlocked.destroy();
+            }
         }
-        catch(JsonProcessingException e) {
-            throw new SecurityFailure(e);
+        catch(CryptoException e) {
+            throw new SecurityFailure(e.getMessage(), e);
         }
-        catch(VaultException e) {
+        catch(BackgroundException e) {
             throw new SecurityFailure(e.getDetail(false), e);
+        }
+        catch(IllegalArgumentException e) {
+            // Custom fields not matching payload
+            throw new SecurityFailure(e.getMessage(), e);
         }
     }
 }

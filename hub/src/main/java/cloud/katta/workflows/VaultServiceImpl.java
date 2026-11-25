@@ -4,7 +4,6 @@
 
 package cloud.katta.workflows;
 
-import java.text.ParseException;
 import java.util.UUID;
 
 import cloud.katta.client.ApiException;
@@ -13,7 +12,6 @@ import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.protocols.hub.HubSession;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.nimbusds.jose.JWEObjectJSON;
 
 public class VaultServiceImpl implements VaultService {
 
@@ -34,13 +32,7 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public JWEObjectJSON getVaultMetadata(final UUID vaultId) throws ApiException, SecurityFailure {
-        final String vaultMetadataFile = vaultResource.apiVaultsVaultIdUvfVaultUvfGet(vaultId);
-        try {
-            return JWEObjectJSON.parse(vaultMetadataFile);
-        }
-        catch(ParseException e) {
-            throw new SecurityFailure(e);
-        }
+    public String getVaultMetadata(final UUID vaultId) throws ApiException {
+        return vaultResource.apiVaultsVaultIdUvfVaultUvfGet(vaultId);
     }
 }

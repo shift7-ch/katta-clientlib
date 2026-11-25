@@ -10,7 +10,6 @@ import cloud.katta.client.ApiException;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.nimbusds.jose.JWEObjectJSON;
 
 public interface VaultService {
 
@@ -28,12 +27,11 @@ public interface VaultService {
     UVFAccessTokenPayload getVaultAccessToken(UUID vaultId, UserKeys userKeys) throws ApiException, SecurityFailure;
 
     /**
-     * Retrieve JSON Web Encryption (JWE) object containing the metadata of the vault.
+     * Retrieve the metadata of the vault.
      *
      * @param vaultId Vault ID
-     * @return Encrypted vault.uvf JWE
-     * @throws ApiException    If an error occurs while retrieving the vault metadata from the server.
-     * @throws SecurityFailure If the returned JWE metadata cannot be parsed.
+     * @return Contents of vault.uvf
+     * @throws ApiException If an error occurs while retrieving the vault metadata from the server.
      */
-    JWEObjectJSON getVaultMetadata(UUID vaultId) throws ApiException, SecurityFailure;
+    String getVaultMetadata(UUID vaultId) throws ApiException;
 }

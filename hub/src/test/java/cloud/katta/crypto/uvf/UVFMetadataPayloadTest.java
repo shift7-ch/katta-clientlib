@@ -6,15 +6,11 @@ package cloud.katta.crypto.uvf;
 
 import ch.cyberduck.core.AlphanumericRandomStringService;
 
-import org.cryptomator.cryptolib.api.UVFMasterkey;
 import org.junit.jupiter.api.Test;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,13 +25,5 @@ class UVFMetadataPayloadTest {
         // restricting to alphanumeric does work
         final byte[] rootDirId2 = new AlphanumericRandomStringService(4).random().getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(rootDirId2, new String(rootDirId2, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8));
-    }
-
-    @Test
-    void testUVFMasterkeyFromUvfMetadataPayload() throws Exception {
-        final UVFMetadataPayload uvfMetadataPayload = UVFMetadataPayload.create();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonNullableModule());
-        UVFMasterkey.fromDecryptedPayload(mapper.writeValueAsString(uvfMetadataPayload));
     }
 }
