@@ -307,7 +307,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     throw new VaultUnlockCancelException(bucket, e);
                 }
                 log.debug("Connected to {} for vault {}", storage, vaultId);
-                final HubUVFVault vault = new HubUVFVault(storage, bucket);
+                final HubUVFVault vault = new HubUVFVault(storage, bucket, vaultMetadataProvider.getMetadata());
                 try {
                     vault.load(session, vaultMetadataProvider);
                 }
