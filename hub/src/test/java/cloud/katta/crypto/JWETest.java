@@ -6,7 +6,6 @@ package cloud.katta.crypto;
 
 import ch.cyberduck.core.cryptomator.random.FastSecureRandomProvider;
 
-import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 
 import java.security.NoSuchAlgorithmException;

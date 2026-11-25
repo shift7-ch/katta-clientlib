@@ -25,6 +25,14 @@ public abstract class JWEPayload {
         return mapper.readValue(jwe, valueType);
     }
 
+    /**
+     * @param map Decoded JSON object
+     * @throws IllegalArgumentException If the map does not match the value type
+     */
+    public static <T extends JWEPayload> T fromMap(final Map<String, ?> map, final Class<T> valueType) {
+        return mapper.convertValue(map, valueType);
+    }
+
     public Map<String, Object> toMap() throws JsonProcessingException {
         return mapper.readValue(this.toJSON(), HashMap.class);
     }

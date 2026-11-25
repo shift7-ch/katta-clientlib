@@ -6,7 +6,6 @@ package cloud.katta.crypto.wot;
 
 import ch.cyberduck.core.Host;
 
-import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +21,7 @@ import java.util.UUID;
 import cloud.katta.client.ApiException;
 import cloud.katta.client.model.TrustedUserDto;
 import cloud.katta.client.model.UserDto;
+import cloud.katta.crypto.P384KeyPair;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.workflows.UserKeysService;

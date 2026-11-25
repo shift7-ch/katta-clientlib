@@ -42,6 +42,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -170,8 +171,7 @@ public class HubUVFVaultProvider implements VaultProvider {
             try {
                 final HubUVFVault vault = new HubUVFVault(storage, bucket);
                 final HubVaultKeys keys = HubVaultKeys.create();
-                try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(
-                        payload, HubSession.coerce(session).getClient().getBasePath(), vaultId, keys.serialize())) {
+                try (final HubVaultMetadataUVFProvider vaultMetadataProvider = new HubVaultMetadataUVFProvider(payload, keys)) {
                     log.debug("Create vault with ID {}", vaultId);
                     final VaultDto vaultDto = new VaultDto()
                             .id(vaultId)
@@ -179,7 +179,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                             .description(null)
                             .archived(false)
                             .creationTime(DateTime.now())
-                            .uvfMetadataFile(vaultMetadataProvider.encrypt())
+                            .uvfMetadataFile(new String(vaultMetadataProvider.create().serializeConfig(), StandardCharsets.US_ASCII))
                             .uvfKeySet(keys.serialize().toPublicJWKSet().toString());
                     // Create vault in Hub
                     final VaultResourceApi vaultResourceApi = new VaultResourceApi(HubSession.coerce(session).getClient());
@@ -212,7 +212,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     return vault;
                 }
             }
-            catch(SecurityFailure | ApiException e) {
+            catch(SecurityFailure | ApiException | BackgroundException e) {
                 storage.close();
                 throw e;
             }
@@ -307,7 +307,7 @@ public class HubUVFVaultProvider implements VaultProvider {
                     throw new VaultUnlockCancelException(bucket, e);
                 }
                 log.debug("Connected to {} for vault {}", storage, vaultId);
-                final HubUVFVault vault = new HubUVFVault(storage, bucket);
+                final HubUVFVault vault = new HubUVFVault(storage, bucket, vaultMetadataProvider.getMetadata());
                 try {
                     vault.load(session, vaultMetadataProvider);
                 }

@@ -4,10 +4,6 @@
 
 package cloud.katta.crypto;
 
-import org.cryptomator.cryptolib.common.ECKeyPair;
-import org.cryptomator.cryptolib.common.MessageDigestSupplier;
-import org.cryptomator.cryptolib.common.P384KeyPair;
-
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -20,7 +16,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.function.Supplier;
 
 import cloud.katta.crypto.exceptions.NotECKeyException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
@@ -30,8 +25,13 @@ public final class KeyHelper {
 
     // adapted from org.cryptomator.ui.keyloading.hub.HubKeyLoadingModule
     public static String getDeviceIdFromDeviceKeyPair(final ECKeyPair deviceKeyPair) {
-        final Supplier<MessageDigest> instance = MessageDigestSupplier.SHA256.instance();
-        final byte[] hashedKey = instance.get().digest(deviceKeyPair.getPublic().getEncoded());
+        final byte[] hashedKey;
+        try {
+            hashedKey = MessageDigest.getInstance("SHA-256").digest(deviceKeyPair.getPublic().getEncoded());
+        }
+        catch(NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
         return BaseEncoding.base16().encode(hashedKey);
     }
 

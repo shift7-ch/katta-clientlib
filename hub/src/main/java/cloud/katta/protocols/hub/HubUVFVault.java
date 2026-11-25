@@ -14,10 +14,14 @@ import ch.cyberduck.core.features.Delete;
 import ch.cyberduck.core.features.Find;
 import ch.cyberduck.core.shared.DefaultAttributesFinderFeature;
 import ch.cyberduck.core.shared.DefaultFindFeature;
+import ch.cyberduck.core.vault.VaultException;
 import ch.cyberduck.core.vault.VaultMetadataProvider;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Unified vault format (UVF) implementation for Katta
@@ -31,13 +35,32 @@ public class HubUVFVault extends UVFVault {
     private final Session<?> storage;
 
     /**
+     * Contents of vault.uvf from Hub. Null when creating a vault
+     */
+    @Nullable
+    private final String metadata;
+
+    /**
+     * Vault to create
      *
      * @param storage Storage connection
      * @param bucket  Vault UVF metadata
      */
     public HubUVFVault(final Session<?> storage, final Path bucket) {
+        this(storage, bucket, null);
+    }
+
+    /**
+     * Vault to load
+     *
+     * @param storage  Storage connection
+     * @param bucket   Vault UVF metadata
+     * @param metadata Contents of vault.uvf from Hub
+     */
+    public HubUVFVault(final Session<?> storage, final Path bucket, @Nullable final String metadata) {
         super(bucket);
         this.storage = storage;
+        this.metadata = metadata;
     }
 
     @Override
@@ -98,6 +121,20 @@ public class HubUVFVault extends UVFVault {
         log.debug("Initialize vault {}", this.getHome());
         // Initialize cryptors
         super.load(storage, metadata);
+    }
+
+    /**
+     * The canonical copy of vault.uvf is in Hub. The copy in the bucket is only written when the vault is created.
+     *
+     * @param session Storage connection
+     * @return Contents of vault.uvf from Hub
+     */
+    @Override
+    protected byte[] readMetadata(final Session<?> session) throws BackgroundException {
+        if(null == metadata) {
+            throw new VaultException(String.format("Missing vault metadata from Hub for vault %s", this.getHome().getName()));
+        }
+        return metadata.getBytes(StandardCharsets.US_ASCII);
     }
 
     @Override

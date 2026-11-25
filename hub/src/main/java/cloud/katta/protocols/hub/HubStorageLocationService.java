@@ -132,7 +132,7 @@ public class HubStorageLocationService implements Location {
          * @param settings Katta Server settings
          */
         public UVFMetadataPayload toPayload(final Path bucket, final Credentials credentials, final SettingsDto settings) {
-            return UVFMetadataPayload.create()
+            return new UVFMetadataPayload()
                     .withStorage(new VaultMetadataStorageDto()
                             .username(credentials.getUsername()).password(credentials.getPassword())
                             .provider(storageProfileId)

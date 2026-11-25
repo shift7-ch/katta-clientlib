@@ -4,7 +4,6 @@
 
 package cloud.katta.crypto;
 
-import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;

@@ -4,7 +4,6 @@
 
 package cloud.katta.workflows;
 
-import org.cryptomator.cryptolib.common.P384KeyPair;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -18,6 +17,7 @@ import cloud.katta.client.ApiException;
 import cloud.katta.client.api.UsersResourceApi;
 import cloud.katta.client.model.TrustedUserDto;
 import cloud.katta.client.model.UserDto;
+import cloud.katta.crypto.P384KeyPair;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.wot.SignedKeys;
 import cloud.katta.crypto.wot.WoT;

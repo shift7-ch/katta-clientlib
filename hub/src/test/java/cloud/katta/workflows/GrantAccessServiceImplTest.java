@@ -24,12 +24,11 @@ import cloud.katta.client.model.UserDto;
 import cloud.katta.crypto.UserKeys;
 import cloud.katta.crypto.uvf.HubVaultKeys;
 import cloud.katta.crypto.uvf.UVFAccessTokenPayload;
+import cloud.katta.crypto.uvf.UVFMetadataFixture;
 import cloud.katta.crypto.uvf.UVFMetadataPayload;
 import cloud.katta.crypto.uvf.VaultMetadataAutomaticAccessGrantDto;
-import cloud.katta.protocols.hub.HubVaultMetadataUVFProvider;
 import cloud.katta.workflows.exceptions.AccessException;
 import cloud.katta.workflows.exceptions.SecurityFailure;
-import com.nimbusds.jose.JWEObjectJSON;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -214,9 +213,8 @@ class GrantAccessServiceImplTest {
                 .ecdsaPublicKey(keys.encodedEcdsaPublicKey());
     }
 
-    private static JWEObjectJSON metadata(final UUID vaultId, final HubVaultKeys vaultKeys, final boolean enabled, final Integer trustThreshold) throws Exception {
-        return JWEObjectJSON.parse(new HubVaultMetadataUVFProvider(new UVFMetadataPayload()
-                .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(enabled).trustThreshold(trustThreshold)),
-                "apiUrl", vaultId, vaultKeys.serialize()).encrypt());
+    private static String metadata(final UUID vaultId, final HubVaultKeys vaultKeys, final boolean enabled, final Integer trustThreshold) throws Exception {
+        return UVFMetadataFixture.create(vaultKeys, new UVFMetadataPayload()
+                .withAutomaticAccessGrant(new VaultMetadataAutomaticAccessGrantDto().enabled(enabled).trustThreshold(trustThreshold)));
     }
 }
