@@ -37,14 +37,14 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
 /**
- * Adds the test configuration to the realm of <a href="https://github.com/shift7-ch/katta-compose">katta-compose</a>, which is
+ * Adds the test configuration to the realm of the local scenario of <a href="https://github.com/shift7-ch/katta-server/tree/develop/deploy/compose/local">katta-server</a>, which is
  * rendered from the Helm chart of Katta Server and contains no test users.
  */
 public final class KattaTestRealm {
     private static final Logger log = LogManager.getLogger(KattaTestRealm.class.getName());
 
     /**
-     * Keycloak administrator of the master realm in katta-compose
+     * Keycloak administrator of the master realm in the local scenario
      */
     private static final String KEYCLOAK_ADMIN_USER = "admin";
     private static final String KEYCLOAK_ADMIN_PASSWORD = "admin";
@@ -58,7 +58,7 @@ public final class KattaTestRealm {
      * Enable direct access grants for the password grant of the tests and create the test users with Katta Server,
      * which adds it to Keycloak and its database at once.
      *
-     * @param env   Variables of the env file passed to katta-compose
+     * @param env   Variables of the env file passed to the compose file
      * @param setup Test setup with the admin and user credentials
      */
     public static void setup(final Properties env, final HubTestConfig.Setup setup) throws IOException, ApiException {

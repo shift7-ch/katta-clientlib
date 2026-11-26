@@ -45,43 +45,51 @@ mvn clean verify -Dit.test=cloud.katta.workflows.HubWorkflowGroupTest \\
 
 ### Docker Compose environment
 
-Integration tests start the Docker Compose environment of [katta-compose](https://github.com/shift7-ch/katta-compose)
-included with its Git URL in [`compose.yaml`](hub/src/test/resources/compose.yaml). Docker Compose fetches the
-referenced commit on first use. To run integration tests with a local checkout of katta-compose instead, replace the
-Git URL with the absolute path to `compose.yaml` in the checkout.
+Integration tests start a Docker Compose scenario of the deployment examples in
+[katta-server](https://github.com/shift7-ch/katta-server/tree/develop/deploy/compose), one include file per scenario,
+included with its Git URL:
+
+| Scenario | Include file | Env file | katta-server directory |
+|---|---|---|---|
+| `local` | [`compose-local.yaml`](hub/src/test/resources/compose-local.yaml) | [`.local.env`](hub/src/test/resources/.local.env) | `deploy/compose/local` |
+| `hybrid` | [`compose-hybrid.yaml`](hub/src/test/resources/compose-hybrid.yaml) | [`.chipotle.env`](hub/src/test/resources/.chipotle.env) | `deploy/compose/hybrid` |
+
+Docker Compose fetches the referenced commit on first use. To run integration tests with a local checkout of
+katta-server instead, replace the Git URL with the absolute path to `compose.yaml` in the scenario directory of the
+checkout.
 
 ## Integration Test Environment
 
-Integration tests run Katta Server, Keycloak, PostgreSQL and MinIO with [katta-compose](https://github.com/shift7-ch/katta-compose),
-using the storage profiles and env files of this project in [`hub/src/test/resources`](hub/src/test/resources); the MinIO
-policies are the ones of katta-compose.
-katta-compose renders the Keycloak realm from the Helm chart of Katta Server.
-Refer to katta-compose for the One-Stop Shop Demo, its profiles and endpoints.
+The `local` scenario runs Katta Server, Keycloak, PostgreSQL and MinIO, using the storage profiles and env files of this
+project in [`hub/src/test/resources`](hub/src/test/resources); the MinIO policies are the ones of katta-server.
+katta-server renders the Keycloak realm from its Helm chart.
 
 To start the environment of the integration tests yourself, use
 
 ```bash
-docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local up --wait
-docker compose -f hub/src/test/resources/compose.yaml --env-file hub/src/test/resources/.local.env --profile local down
+docker compose -f hub/src/test/resources/compose-local.yaml --env-file hub/src/test/resources/.local.env up --wait
+docker compose -f hub/src/test/resources/compose-local.yaml --env-file hub/src/test/resources/.local.env down
 ```
 
-The endpoints are the subdomains `hub.localhost`, `keycloak.localhost` and `minio.localhost` of katta-compose, which
-resolve to the loopback address on the host and to the containers inside the Docker network. The JVM running the tests
-uses the system resolver, which on macOS does not resolve subdomains of `localhost`. Add them to `/etc/hosts`:
+The endpoints `hub.localhost`, `keycloak.localhost` and `minio.localhost` resolve to the loopback address on the host,
+and `minio.localhost` also to the MinIO container inside the Docker network. The JVM running the tests uses the system
+resolver, which on macOS does not resolve subdomains of `localhost`. Add them to `/etc/hosts`:
 
 ```
 127.0.0.1 hub.localhost keycloak.localhost minio.localhost
 ```
 
-For the `hybrid` profile with Keycloak and MinIO on `testing.katta.cloud` and AWS S3, use
-[`.chipotle.env`](hub/src/test/resources/.chipotle.env) instead. CI writes its values from a repository secret.
+The `hybrid` scenario runs Katta Server and PostgreSQL against Keycloak and MinIO on `testing.katta.cloud` and AWS S3,
+configured by [`.chipotle.env`](hub/src/test/resources/.chipotle.env). CI writes its values from a repository secret.
+[`compose-hybrid.env`](hub/src/test/resources/compose-hybrid.env) maps its variables to the ones `deploy/compose/hybrid`
+reads.
 
 ### Provisioned Users
 
 #### Keycloak
 
-The realm of katta-compose provisions the administrator `admin` with password `admin`. Before the tests of the `local`
-profile, [`KattaTestRealm`](hub/src/test/java/cloud/katta/testsetup/KattaTestRealm.java) adds the test configuration:
+The realm of the `local` scenario provisions the administrator `admin` with password `admin`. Before the tests of the
+`local` scenario, [`KattaTestRealm`](hub/src/test/java/cloud/katta/testsetup/KattaTestRealm.java) adds the test configuration:
 
 - It enables direct access grants in client `cryptomator` for the password grant of the integration tests.
 - It creates the user `HUB_USER` with password `HUB_PASSWORD` of the env file (`alice` with password `asd`) and the roles

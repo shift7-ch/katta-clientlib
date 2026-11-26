@@ -17,8 +17,9 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Docker Compose environment from <a href="https://github.com/shift7-ch/katta-compose">katta-compose</a> configured
- * with the test environment of this project.
+ * Docker Compose environment from the deployment examples in
+ * <a href="https://github.com/shift7-ch/katta-server/tree/develop/deploy/compose">katta-server</a> configured with
+ * the test environment of this project.
  */
 public final class KattaCompose {
 
@@ -26,23 +27,23 @@ public final class KattaCompose {
     }
 
     /**
-     * @param envFile Classpath resource with variables for the compose file
-     * @param profile Compose profile to start
+     * @param envFile  Classpath resource with variables for the compose file
+     * @param scenario Scenario to start, selects the compose file {@code /compose-<scenario>.yaml}
      * @return Compose container that waits for Katta Server to be healthy when started
      */
-    public static ComposeContainer container(final String envFile, final String profile) throws IOException {
-        return new ComposeContainer(composeFile())
+    public static ComposeContainer container(final String envFile, final String scenario) throws IOException {
+        return new ComposeContainer(composeFile(scenario))
                 .withPull(true)
                 .withEnv(environment(envFile))
-                .withOptions(String.format("--profile=%s", profile))
                 .waitingFor("hub", new DockerHealthcheckWaitStrategy());
     }
 
     /**
-     * @return Compose file of this project including katta-compose
+     * @param scenario Scenario to start
+     * @return Compose file of this project including the scenario of katta-server
      */
-    private static File composeFile() {
-        return resource("/compose.yaml");
+    private static File composeFile(final String scenario) {
+        return resource(String.format("/compose-%s.yaml", scenario));
     }
 
     /**
