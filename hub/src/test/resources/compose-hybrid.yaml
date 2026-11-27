@@ -1,0 +1,8 @@
+# Docker Compose environment for the integration tests of the `hybrid` setup: Katta Server and PostgreSQL from
+# deploy/compose/hybrid of https://github.com/shift7-ch/katta-server, against the Keycloak and storage of .chipotle.env.
+# Replace the reference after # with a tag or commit to pin a release, or the URL with the absolute path to
+# deploy/compose/hybrid/compose.yaml in a local checkout.
+include:
+  - path: https://github.com/shift7-ch/katta-server.git#develop:deploy/compose/hybrid
+    # maps the variables of the env files of these tests to the ones deploy/compose/hybrid reads
+    env_file: compose-hybrid.env

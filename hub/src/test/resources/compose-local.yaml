@@ -1,17 +1,17 @@
-# Docker Compose environment for integration tests from https://github.com/shift7-ch/katta-compose.
-# Replace the reference after # with a tag to use a release, or the URL with the absolute path to compose.yaml
-# in a local checkout. The MinIO policies are the ones of katta-compose; the storage profiles of these tests are
-# read from the classpath, see AbstractHubWorkflowTest.
+# Docker Compose environment for the integration tests of the `local` setup: Katta Server, Keycloak, PostgreSQL and MinIO
+# from deploy/compose/local of https://github.com/shift7-ch/katta-server.
+# Replace the reference after # with a tag or commit to pin a release, or the URL with the absolute path to
+# deploy/compose/local/compose.yaml in a local checkout. The MinIO policies are the ones of katta-server; the storage
+# profiles of these tests are read from the classpath, see AbstractHubWorkflowTest.
 include:
-  - https://github.com/shift7-ch/katta-compose.git#main
+  - https://github.com/shift7-ch/katta-server.git#develop:deploy/compose/local
 
 services:
   # MinIO user with static access credentials for the "MinIO S3 static" storage profile of these tests.
-  # katta-compose creates the policies attached here, but no user to attach them to.
+  # katta-server creates the policies attached here, but no user to attach them to.
   # MinIO no longer publishes its client image publicly, so mc is downloaded from its release assets
-  # on GitHub, as katta-compose and the Helm chart of katta-helm do.
+  # on GitHub, as katta-server's minio/setup.sh does.
   minio_setup_testuser:
-    profiles: [ local ]
     image: alpine/curl:8.17.0
     depends_on:
       minio_setup:
@@ -38,9 +38,8 @@ services:
         /tmp/mc admin policy attach myminio katta-staticcreatebucketpolicy --user ${MINIO_USER_ACCESS_KEY}
 
   # `up --wait` fails on a one-shot container that nothing waits for, and a service of the included
-  # compose file cannot be overridden to depend on it, so mirror the wait service of katta-compose.
+  # compose file cannot be overridden to depend on it.
   wait_testuser:
-    profiles: [ local ]
     image: alpine/curl:8.17.0
     entrypoint: [ "sleep" ]
     command: [ "infinity" ]

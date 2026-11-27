@@ -44,7 +44,7 @@ public abstract class HubTestSetupDockerExtension implements BeforeAllCallback, 
     }
 
     /**
-     * Add the test configuration to the realm of katta-compose, which is not used by the hybrid profile with an existing Keycloak.
+     * Add the test configuration to the realm of the local scenario, which is not used by the hybrid scenario with an existing Keycloak.
      */
     protected void setupRealm(final HubTestConfig.Setup setup) throws IOException {
         log.info("Setup realm for {}", setup.dockerConfig);
