@@ -62,7 +62,8 @@ checkout.
 
 The `local` scenario runs Katta Server, Keycloak, PostgreSQL and MinIO, using the storage profiles and env files of this
 project in [`hub/src/test/resources`](hub/src/test/resources); the MinIO policies are the ones of katta-server.
-katta-server renders the Keycloak realm from its Helm chart.
+katta-server renders the Keycloak realm from its Helm chart. [`.local.env`](hub/src/test/resources/.local.env) sets the
+variables `deploy/compose/local` reads (see its `.env.template`), such as ports, realm, client secrets and license.
 
 To start the environment of the integration tests yourself, use
 
@@ -71,12 +72,13 @@ docker compose -f hub/src/test/resources/compose-local.yaml --env-file hub/src/t
 docker compose -f hub/src/test/resources/compose-local.yaml --env-file hub/src/test/resources/.local.env down
 ```
 
-The endpoints `hub.localhost`, `keycloak.localhost` and `minio.localhost` resolve to the loopback address on the host,
-and `minio.localhost` also to the MinIO container inside the Docker network. The JVM running the tests uses the system
-resolver, which on macOS does not resolve subdomains of `localhost`. Add them to `/etc/hosts`:
+The endpoints are Katta Server at `hub.localhost:8280`, Keycloak at `localhost:8380` and MinIO at `minio.localhost:9100`.
+`hub.localhost` and `minio.localhost` resolve to the loopback address on the host, and `minio.localhost` also to the MinIO
+container inside the Docker network. The JVM running the tests uses the system resolver, which on macOS does not resolve
+subdomains of `localhost`. Add them to `/etc/hosts`:
 
 ```
-127.0.0.1 hub.localhost keycloak.localhost minio.localhost
+127.0.0.1 hub.localhost minio.localhost
 ```
 
 The `hybrid` scenario runs Katta Server and PostgreSQL against Keycloak and MinIO on `testing.katta.cloud` and AWS S3,
